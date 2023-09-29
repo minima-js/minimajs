@@ -1,0 +1,13 @@
+export function isAsyncIterator<T>(obj: unknown): obj is AsyncIterable<T> {
+  if (!isObject(obj)) return false;
+  const method = obj[Symbol.asyncIterator];
+  if (typeof method != "function") return false;
+  const aIter = method.call(obj);
+  return aIter === obj;
+}
+
+export function isObject(
+  data: unknown
+): data is Record<string | symbol, unknown> {
+  return Object(data) === data;
+}

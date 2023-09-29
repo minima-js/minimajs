@@ -1,0 +1,19 @@
+{
+  "name": "@minimajs/multipart",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "tsc -w",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@fastify/busboy": "^1.2.1",
+    "@types/node": "^20.3.1"
+  },
+  "dependencies": {
+    "@minimajs/app": "*"
+  },
+  "files": [
+    "lib"
+  ]
+}

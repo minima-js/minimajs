@@ -1,0 +1,22 @@
+{
+  "name": "@minimajs/schema",
+  "version": "0.0.1",
+  "type": "module",
+  "exports": {
+    ".": "./lib/index.js"
+  },
+  "scripts": {
+    "dev": "tsc -w",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@minimajs/app": "*",
+    "yup": "^1.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.3.1"
+  },
+  "files": [
+    "lib"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "@minimajs/cookie",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": "./lib/index.js",
+  "scripts": {
+    "dev": "tsc -w",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^20.3.1",
+    "fastify": "^4.18.0"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^8.3.0",
+    "@minimajs/app": "*"
+  },
+  "files": [
+    "lib"
+  ]
+}

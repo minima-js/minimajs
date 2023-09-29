@@ -1,0 +1,19 @@
+{
+  "name": "@minimajs/auth",
+  "version": "0.0.1",
+  "type": "module",
+  "exports": "./lib/index.js",
+  "scripts": {
+    "dev": "tsc -w",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@minimajs/app": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.3.1"
+  },
+  "files": [
+    "lib"
+  ]
+}
