@@ -61,7 +61,10 @@ export function assertAborted(err: unknown) {
 }
 
 export function assertError(err: unknown): asserts err is Error {
-  if (!(err instanceof Error)) {
-    throw err;
+  if (err instanceof Error) {
+    return;
   }
+  throw err;
 }
+
+export function cleanup(callback: CallableFunction) {}

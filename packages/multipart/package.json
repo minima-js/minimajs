@@ -2,6 +2,10 @@
   "name": "@minimajs/multipart",
   "version": "0.0.1",
   "type": "module",
+  "exports": {
+    ".": "./lib/index.js",
+    "./helpers": "./lib/helpers.js"
+  },
   "scripts": {
     "dev": "tsc -w",
     "build": "tsc"

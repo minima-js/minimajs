@@ -1,6 +1,8 @@
-import { Busboy } from "@fastify/busboy";
+import { Busboy, type BusboyHeaders } from "@fastify/busboy";
 import { Readable } from "stream";
 import { getRequest, getHeaders } from "@minimajs/app";
+import type { IncomingHttpHeaders } from "node:http";
+import { AssertionError } from "assert";
 
 export class FileInfo {
   constructor(
@@ -10,20 +12,28 @@ export class FileInfo {
   ) {}
 }
 
+function assertContentType(
+  headers: IncomingHttpHeaders
+): asserts headers is BusboyHeaders {
+  if ("content-type" in headers) {
+    return;
+  }
+  throw new AssertionError({
+    message: "Invalid content type or not exists in header",
+  });
+}
+
 export async function getFile<T extends string>(name: T) {
   const [req, headers] = [getRequest().raw, getHeaders()] as const;
-  if (!headers["content-type"]) {
-    throw new Error("Invalid content type");
-  }
-
+  assertContentType(headers);
   return new Promise<[FileInfo, Readable]>((resolve, reject) => {
     const bb = new Busboy({
       limits: { files: 1 },
-      headers: headers as any,
+      headers,
     });
     bb.on("file", (uploadedName, file, filename, encoding, mimeType) => {
       if (uploadedName !== name) {
-        reject("Invalid filename");
+        reject("Filename not matched in the body");
       }
       resolve([new FileInfo(filename, encoding, mimeType), file]);
     });
