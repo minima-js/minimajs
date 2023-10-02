@@ -6,7 +6,7 @@
     "module": "NodeNext",
     "strict": true,
     "esModuleInterop": true,
-    "moduleResolution": "nodenext",
+    "moduleResolution": "NodeNext",
     "skipLibCheck": true,
     "verbatimModuleSyntax": true
   }

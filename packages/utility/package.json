@@ -1,0 +1,9 @@
+{
+  "name": "@minimajs/utility",
+  "version": "0.0.1",
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^20.8.0",
+    "typescript": "^5.2.2"
+  }
+}

@@ -11,11 +11,13 @@
     "build": "tsc"
   },
   "devDependencies": {
-    "@fastify/busboy": "^1.2.1",
-    "@types/node": "^20.3.1"
+    "@types/node": "^20.3.1",
+    "@types/uuid": "^9.0.4"
   },
   "dependencies": {
-    "@minimajs/app": "*"
+    "@fastify/busboy": "^1.2.1",
+    "@minimajs/app": "*",
+    "uuid": "^9.0.1"
   },
   "files": [
     "lib"
