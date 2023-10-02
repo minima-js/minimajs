@@ -12,7 +12,7 @@
   "scripts": {
     "dev": "tsc -w",
     "build": "yarn clean && tsc --build",
-    "clean": "rm -rf *.tsbuildinfo lib"
+    "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "dependencies": {
     "chalk": "^5.2.0",

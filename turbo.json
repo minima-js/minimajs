@@ -3,9 +3,8 @@
   "pipeline": {
     "build": {
       "cache": true,
-      "outputs": [
-        "lib/**"
-      ]
+      "dependsOn": ["^build"],
+      "outputs": ["lib/**"]
     },
     "dev": {
       "cache": false,
