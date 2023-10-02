@@ -6,6 +6,7 @@ import { createContext, getRequest, onSent, type Request } from "@minimajs/app";
 import { asyncIterator } from "./async-iterator.js";
 import { createReadStream } from "node:fs";
 import { unlink } from "node:fs/promises";
+import type { Readable } from "node:stream";
 
 function ensureContentType(
   headers: IncomingHttpHeaders
@@ -82,6 +83,7 @@ export function getMultipart() {
 
 interface MultipartMeta {
   fields: [string, string][];
+  streams: Readable[];
   files: [info: FileInfo, tmpFile: string][];
 }
 const [getMultipartMeta, setMultipartMeta] =
@@ -91,7 +93,7 @@ export async function getUploadedBody() {
   if (meta) {
     return getMetaBody(meta);
   }
-  meta = { files: [], fields: [] };
+  meta = { files: [], fields: [], streams: [] };
 
   for await (const part of getMultipart()) {
     if (isFile(part)) {
@@ -111,9 +113,11 @@ function getMetaBody(meta: MultipartMeta) {
     fields[name] = val;
   });
   meta.files.forEach(([info, tmpFile]) => {
+    const stream = createReadStream(tmpFile);
+    meta.streams.push(stream);
     fields[info.field] = File.create({
       ...info,
-      stream: createReadStream(tmpFile),
+      stream,
     });
   });
 
@@ -125,7 +129,8 @@ async function cleanup() {
   if (!meta) {
     return;
   }
+  meta.streams.forEach((x) => x.destroy());
   for (const [, tmp] of meta.files) {
-    await unlink(tmp);
+    await unlink(tmp).catch(() => {});
   }
 }

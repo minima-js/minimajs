@@ -1,10 +1,11 @@
-import { PassThrough, Readable } from "stream";
+import { Readable } from "stream";
 import { stream2buffer } from "./helpers.js";
 import { v4 as uuid } from "uuid";
 import { pipeline } from "stream/promises";
 import { createWriteStream } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
+import { nullStream } from "./stream.js";
 export interface FileInfo {
   readonly field: string;
   readonly filename: string;
@@ -44,8 +45,8 @@ export class File implements FileInfo {
     return filename;
   }
 
-  end() {
-    this.stream.pipe(new PassThrough({ objectMode: true }).end());
+  consume() {
+    return pipeline(this.stream, nullStream());
   }
 }
 
