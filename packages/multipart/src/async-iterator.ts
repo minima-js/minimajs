@@ -3,7 +3,9 @@ import { PassThrough, type TransformOptions } from "node:stream";
 class IteratorStream<T> extends PassThrough {
   writeAsync(val: T) {
     return new Promise<void>((resolve, reject) => {
-      this.write(val, undefined, (err) => (err ? reject(err) : resolve()));
+      this.write(val, undefined, (err) => {
+        err ? reject(err) : resolve();
+      });
     });
   }
 }

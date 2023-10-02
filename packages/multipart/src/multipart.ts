@@ -61,7 +61,7 @@ export function getFields() {
   bb.on("field", (fieldname, value) => {
     stream.push(new Field(fieldname, value));
   });
-  bb.on("error", (err) => stream.emit("error", err as any));
+  bb.on("error", (err) => stream.emit("error", err));
   bb.on("finish", () => stream.end());
   return iterator;
 }
@@ -76,7 +76,7 @@ export function getMultipart() {
   bb.on("file", (uploadedName, file, filename, encoding, mimeType) => {
     stream.write(new File(uploadedName, filename, encoding, mimeType, file));
   });
-  bb.on("error", (err) => stream.emit("error", err as any));
+  bb.on("error", (err) => stream.emit("error", err));
   bb.on("finish", () => stream.end());
   return iterator();
 }

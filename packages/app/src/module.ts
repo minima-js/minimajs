@@ -9,7 +9,7 @@ export type Interceptor = preHandlerHookHandler;
 
 export interface ModuleOptions extends RegisterOptions, PluginOptions {}
 
-async function assertCallback<T extends PluginOptions = {}>(
+async function toCallback<T extends PluginOptions = {}>(
   callback: PluginCallback<T>
 ): Promise<Plugin<T>> {
   if (callback instanceof Promise) {
@@ -28,7 +28,7 @@ export function interceptor<T extends PluginOptions = {}>(
     for (const handler of handlers) {
       app.addHook("preHandler", handler);
     }
-    callback = await assertCallback(callback);
+    callback = await toCallback(callback);
     return callback(app, opt);
   };
 }
