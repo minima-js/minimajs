@@ -66,5 +66,3 @@ export function assertError(err: unknown): asserts err is Error {
   }
   throw err;
 }
-
-export function cleanup(callback: CallableFunction) {}

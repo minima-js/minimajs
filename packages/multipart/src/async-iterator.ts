@@ -1,4 +1,4 @@
-import { PassThrough } from "node:stream";
+import { PassThrough, type TransformOptions } from "node:stream";
 
 class IteratorStream<T> extends PassThrough {
   writeAsync(val: T) {
@@ -8,8 +8,9 @@ class IteratorStream<T> extends PassThrough {
   }
 }
 
-export function asyncIterator<T>() {
+export function asyncIterator<T>(opt?: TransformOptions) {
   const stream = new IteratorStream<T>({
+    ...opt,
     objectMode: true,
   });
   async function* iterator() {
