@@ -50,7 +50,7 @@ export function getFiles() {
   bb.on("file", (uploadedName, file, filename, encoding, mimeType) => {
     stream.write(new File(uploadedName, filename, encoding, mimeType, file));
   });
-  bb.on("error", (er) => stream.emit("error", er as any));
+  bb.on("error", (er) => stream.emit("error", er));
   return iterator;
 }
 
@@ -94,7 +94,6 @@ export async function getUploadedBody() {
     return getMetaBody(meta);
   }
   meta = { files: [], fields: [], streams: [] };
-
   for await (const part of getMultipart()) {
     if (isFile(part)) {
       meta.files.push([part, await part.move()]);

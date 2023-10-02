@@ -1,5 +1,3 @@
-"use strict";
-
 const HEX = [
   "00",
   "01",

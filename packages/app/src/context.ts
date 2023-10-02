@@ -16,7 +16,7 @@ export function wrap(req: Request, reply: Response, cb: () => unknown) {
 
 export function getContext() {
   const context = local.getStore();
-  assert(context, "Maybe is not wrapped with async storage");
+  assert(context, "Maybe application is not wrapped with async storage");
   return context;
 }
 

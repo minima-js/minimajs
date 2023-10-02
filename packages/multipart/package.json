@@ -8,7 +8,8 @@
   },
   "scripts": {
     "dev": "tsc -w",
-    "build": "tsc"
+    "build": "yarn clean && tsc --build",
+    "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "devDependencies": {
     "@types/node": "^20.3.1",

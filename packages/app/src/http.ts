@@ -1,7 +1,7 @@
 import { StatusCodes } from "http-status-codes";
 import { getContext } from "./context.js";
 import { RedirectError, HttpError, BaseHttpError } from "./error.js";
-import type { Dict } from "./types.js";
+import type { ParsedUrlQuery } from "node:querystring";
 
 export function getRequest() {
   const { req } = getContext();
@@ -25,17 +25,17 @@ export function getHeaders() {
   return req.headers;
 }
 
-export function getQuery<T>(name?: string): T {
-  if (name === undefined) {
-    return getRequest().query as T;
-  }
-  const queries = getQuery<Dict<any>>();
-  return queries?.[name];
+export function getHeader<T = string | undefined>(name: string) {
+  const headers = getHeaders();
+  return headers[name] as T;
 }
 
-export function getHeader(name: string) {
-  const { req } = getContext();
-  return req.headers[name];
+export function getQueries<T = ParsedUrlQuery>() {
+  return getRequest().query as T;
+}
+export function getQuery<T>(name: string): T {
+  const queries = getQueries();
+  return queries[name] as T;
 }
 
 export function setHeader(name: string, value: string) {
