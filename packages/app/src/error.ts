@@ -42,12 +42,6 @@ export class RedirectError extends BaseHttpError {
   }
 }
 
-export class UnauthorizedError extends HttpError {
-  constructor(message: string) {
-    super(message, 401);
-  }
-}
-
 export function errorHandler(error: unknown, req: Request, reply: Response) {
   if (error instanceof BaseHttpError) {
     error.render(req, reply);
