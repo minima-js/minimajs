@@ -1,12 +1,18 @@
 import { StatusCodes } from "http-status-codes";
 import type { Request, Response } from "./types.js";
 
+type JSONFormatter = (err: HttpError) => Promise<unknown> | unknown;
+
 export abstract class BaseHttpError extends Error {
   abstract render(req: Request, res: Response): void;
 }
 
 export class HttpError extends BaseHttpError {
   public readonly statusCode: number;
+  public static toJSON: JSONFormatter = (err) => ({
+    message: err.message,
+  });
+
   constructor(message: string, statusCode: keyof typeof StatusCodes | number) {
     super(message);
     if (typeof statusCode !== "number") {
@@ -17,11 +23,11 @@ export class HttpError extends BaseHttpError {
   }
 
   toJSON(): unknown {
-    return { message: this.message };
+    return HttpError.toJSON(this);
   }
 
-  render(req: Request, res: Response) {
-    res.status(this.statusCode).send(this.toJSON());
+  async render(req: Request, res: Response) {
+    res.status(this.statusCode).send(await this.toJSON());
   }
 }
 

@@ -1,12 +1,9 @@
 import type { Server } from "node:http";
-import fastify, {
-  type FastifyBaseLogger,
-  type FastifyHttpOptions,
-  type FastifyInstance,
-} from "fastify";
+import fastify, { type FastifyInstance } from "fastify";
 import { appPlugin } from "./fastify/plugins.js";
 import { errorHandler } from "./error.js";
 import chalk from "chalk";
+import type { AppOptions } from "./types.js";
 export * from "./types.js";
 export * from "./logger.js";
 export * from "./module.js";
@@ -14,7 +11,7 @@ export * from "./http.js";
 export { createContext } from "./context.js";
 export { onSent } from "./hooks.js";
 
-function getDefaultConfig(): FastifyHttpOptions<Server, FastifyBaseLogger> {
+function getDefaultConfig(): AppOptions {
   return {
     trustProxy: true,
     disableRequestLogging: true,
@@ -31,11 +28,6 @@ function getDefaultConfig(): FastifyHttpOptions<Server, FastifyBaseLogger> {
   };
 }
 
-interface AppOptions extends FastifyHttpOptions<Server, FastifyBaseLogger> {
-  routes?: {
-    log: boolean;
-  };
-}
 export function createApp({
   routes = { log: true },
   ...opts

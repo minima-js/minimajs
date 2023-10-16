@@ -2,22 +2,28 @@ import { StatusCodes } from "http-status-codes";
 import { getContext } from "./context.js";
 import { RedirectError, HttpError, BaseHttpError } from "./error.js";
 import type { ParsedUrlQuery } from "node:querystring";
+import type { Request, Response } from "./types.js";
 
-export function getRequest() {
+export function getRequest(): Request {
   const { req } = getContext();
   return req;
+}
+export function getResponse(): Response {
+  return getContext().reply;
 }
 
 export function getBody<T = unknown>() {
   return getRequest().body as T;
 }
 
-export function setStatusCode(statusCode: keyof typeof StatusCodes | number) {
+export function setStatusCode(
+  statusCode: keyof typeof StatusCodes | number
+): Response {
   if (typeof statusCode !== "number") {
     statusCode = StatusCodes[statusCode];
   }
-  getContext().reply.statusCode = statusCode;
-  return statusCode;
+  const response = getResponse();
+  return response.status(statusCode);
 }
 
 export function getHeaders() {
@@ -38,7 +44,7 @@ export function getQuery<T>(name: string): T {
   return queries[name] as T;
 }
 
-export function setHeader(name: string, value: string) {
+export function setHeader(name: string, value: string): Response {
   const { reply } = getContext();
   return reply.header(name, value);
 }

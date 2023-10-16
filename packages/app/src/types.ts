@@ -1,4 +1,6 @@
 import type {
+  FastifyBaseLogger,
+  FastifyHttpOptions,
   FastifyInstance,
   FastifyPluginAsync,
   FastifyPluginOptions,
@@ -6,6 +8,7 @@ import type {
   FastifyRequest,
 } from "fastify";
 import { kPluginNameChain } from "./fastify/symbol.js";
+import type { Server } from "node:http";
 
 export type { FastifyRegister } from "fastify";
 export interface PluginOptions extends FastifyPluginOptions {
@@ -19,4 +22,10 @@ export interface Response extends FastifyReply {}
 export interface Plugin<Options extends PluginOptions = Record<never, never>>
   extends FastifyPluginAsync<Options> {}
 
+export interface AppOptions
+  extends FastifyHttpOptions<Server, FastifyBaseLogger> {
+  routes?: {
+    log: boolean;
+  };
+}
 export type Dict<T> = NodeJS.Dict<T>;

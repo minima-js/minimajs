@@ -1,6 +1,6 @@
 import { pino } from "pino";
 import pretty from "pino-pretty";
-import { getContext } from "./context.js";
+import { getContextOrNull as getContext } from "./context.js";
 import type { App, Dict } from "./types.js";
 import { kPluginNameChain } from "./fastify/symbol.js";
 

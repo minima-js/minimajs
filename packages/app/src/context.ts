@@ -20,6 +20,11 @@ export function getContext() {
   return context;
 }
 
+export function getContextOrNull() {
+  const context = local.getStore();
+  return context ?? null;
+}
+
 export function createContext<T>(value?: T | (() => T)) {
   const kName = Symbol();
   function getValue() {
