@@ -16,13 +16,12 @@ export function wrap(req: Request, reply: Response, cb: () => unknown) {
 
 export function getContext() {
   const context = local.getStore();
-  assert(context, "Maybe application is not wrapped with async storage");
+  assert(context, "Can't access the data outside of request");
   return context;
 }
 
 export function getContextOrNull() {
-  const context = local.getStore();
-  return context ?? null;
+  return local.getStore() || null;
 }
 
 export function createContext<T>(value?: T | (() => T)) {

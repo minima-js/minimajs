@@ -19,21 +19,35 @@ async function toCallback<T extends PluginOptions = {}>(
   return callback;
 }
 
+function getModuleName(callback: any, opt: InterceptorOption) {
+  return opt.name ?? callback.name;
+}
+
+export interface InterceptorOption {
+  name?: string;
+}
+
 export function interceptor<T extends PluginOptions = {}>(
   handlers: Interceptor[],
-  callback: PluginCallback<T>
+  callback: PluginCallback<T>,
+  opt: InterceptorOption = {}
 ) {
-  return async function plugin(app: App, opt: PluginOptions & T) {
+  async function module(app: App, opt: PluginOptions & T) {
     callback = callback as Plugin<T>;
     for (const handler of handlers) {
       app.addHook("preHandler", handler);
     }
     callback = await toCallback(callback);
     return callback(app, opt);
-  };
+  }
+  (module as any)[Symbol.for("fastify.display-name")] = getModuleName(
+    callback,
+    opt
+  );
+  return module;
 }
 
 export async function dynamic<T>(mod: Promise<T>, prop: keyof T) {
   const x = await mod;
-  return { default: x[prop] };
+  return { default: x[prop], name: prop };
 }

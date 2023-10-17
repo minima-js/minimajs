@@ -4,7 +4,7 @@ type OnSentCallback = () => void | Promise<void>;
 interface Hooks {
   onSent: Set<OnSentCallback>;
 }
-const [getHooks] = createContext<Hooks>({ onSent: new Set() });
+const [getHooks] = createContext<Hooks>(() => ({ onSent: new Set() }));
 
 export function onSent(cb: OnSentCallback) {
   const hooks = getHooks();
