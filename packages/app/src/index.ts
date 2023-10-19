@@ -1,9 +1,9 @@
 import type { Server } from "node:http";
-import fastify, { type FastifyInstance } from "fastify";
+import fastify from "fastify";
 import { appPlugin } from "./fastify/plugins.js";
 import { errorHandler } from "./error.js";
 import chalk from "chalk";
-import type { AppOptions } from "./types.js";
+import type { App, AppOptions } from "./types.js";
 export * from "./types.js";
 export * from "./logger.js";
 export * from "./module.js";
@@ -31,7 +31,7 @@ function getDefaultConfig(): AppOptions {
 export function createApp({
   routes = { log: true },
   ...opts
-}: AppOptions = {}): FastifyInstance {
+}: AppOptions = {}): App {
   const app = fastify<Server>({
     ...getDefaultConfig(),
     ...opts,
@@ -46,19 +46,22 @@ export function createApp({
     app.log.info("finished all requests");
   }
 
+  function logRoutes() {
+    console.log(
+      chalk.magenta(
+        app.printRoutes({
+          commonPrefix: false,
+        })
+      )
+    );
+  }
+
   process.on("SIGTERM", quit);
   process.on("SIGUSR2", quit);
 
   if (routes.log) {
-    app.addHook("onReady", () => {
-      console.log(
-        chalk.magenta(
-          app.printRoutes({
-            commonPrefix: false,
-          })
-        )
-      );
-    });
+    app.addHook("onReady", logRoutes);
   }
+
   return app;
 }
