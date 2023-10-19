@@ -15,7 +15,7 @@ export class HttpError extends BaseHttpError {
   public readonly statusCode: number;
 
   public static render: Renderer = function render(err, _, res) {
-    res.status(err.statusCode).send(err);
+    res.status(err.statusCode).send(err.toJSON());
   };
 
   constructor(message: string, statusCode: keyof typeof StatusCodes | number) {

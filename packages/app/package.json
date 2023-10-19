@@ -6,6 +6,7 @@
     ".": "./lib/index.js",
     "./response": "./lib/response.js",
     "./error": "./lib/error.js",
+    "./hooks": "./lib/hooks.js",
     "./context": "./lib/context.js",
     "./utils": "./lib/utils.js"
   },

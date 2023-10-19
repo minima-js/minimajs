@@ -1,7 +1,7 @@
 import { wrap } from "../context.js";
 import type { App } from "../types.js";
 import { handleResponse } from "../response.js";
-import { triggerOnSent } from "../hooks.js";
+import { triggerOnSent } from "./hooks.js";
 
 type CF = CallableFunction;
 

@@ -1,19 +1,6 @@
-import { createContext } from "./context.js";
-
-type OnSentCallback = () => void | Promise<void>;
-interface Hooks {
-  onSent: Set<OnSentCallback>;
-}
-const [getHooks] = createContext<Hooks>(() => ({ onSent: new Set() }));
-
-export function onSent(cb: OnSentCallback) {
+import { getHooks, type HookCallback } from "./fastify/hooks.js";
+export type { HookCallback };
+export function onSent(cb: HookCallback) {
   const hooks = getHooks();
   hooks.onSent.add(cb);
-}
-
-export async function triggerOnSent() {
-  const hooks = getHooks();
-  for (const hook of hooks.onSent) {
-    await hook();
-  }
 }

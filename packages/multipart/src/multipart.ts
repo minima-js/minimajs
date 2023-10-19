@@ -2,11 +2,12 @@ import { Busboy, type BusboyConfig, type BusboyHeaders } from "@fastify/busboy";
 import assert from "node:assert";
 import type { IncomingHttpHeaders } from "node:http";
 import { Field, File, isFile, type FileInfo } from "./file.js";
-import { createContext, getRequest, onSent, type Request } from "@minimajs/app";
+import { createContext, getRequest, type Request } from "@minimajs/app";
 import { asyncIterator } from "./async-iterator.js";
 import { createReadStream } from "node:fs";
 import { unlink } from "node:fs/promises";
 import type { Readable } from "node:stream";
+import { onSent } from "@minimajs/app/hooks";
 
 function ensureContentType(
   headers: IncomingHttpHeaders
