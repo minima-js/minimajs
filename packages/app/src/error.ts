@@ -1,5 +1,5 @@
 import { StatusCodes } from "http-status-codes";
-import type { Request, Response } from "./types.js";
+import type { App, Request, Response } from "./types.js";
 
 type Renderer = (
   err: HttpError,
@@ -14,8 +14,22 @@ export abstract class BaseHttpError extends Error {
 export class HttpError extends BaseHttpError {
   public readonly statusCode: number;
 
+  public static create(err: unknown): BaseHttpError {
+    if (err instanceof BaseHttpError) {
+      return err;
+    }
+    if (err instanceof Error) {
+      return new HttpError(err.message, "INTERNAL_SERVER_ERROR");
+    }
+    return new HttpError("Unable to handle request", "INTERNAL_SERVER_ERROR");
+  }
+
   public static render: Renderer = function render(err, _, res) {
     res.status(err.statusCode).send(err.toJSON());
+  };
+
+  public static toJSON = function toJSON(err: HttpError): unknown {
+    return { message: err.message };
   };
 
   constructor(message: string, statusCode: keyof typeof StatusCodes | number) {
@@ -28,9 +42,7 @@ export class HttpError extends BaseHttpError {
   }
 
   public toJSON(): unknown {
-    return {
-      message: this.message,
-    };
+    return HttpError.toJSON(this);
   }
 
   async render(req: Request, res: Response) {
@@ -50,9 +62,13 @@ export class RedirectError extends BaseHttpError {
 }
 
 export function errorHandler(error: unknown, req: Request, reply: Response) {
-  if (error instanceof BaseHttpError) {
-    error.render(req, reply);
-    return;
-  }
-  throw error;
+  HttpError.create(error).render(req, reply);
+}
+
+/**
+ * Yet to be implemented
+ */
+const kErrorRenderer = Symbol("ErrorHandler");
+export function renderError(app: App, render: Renderer) {
+  app.decorate(kErrorRenderer, render);
 }
