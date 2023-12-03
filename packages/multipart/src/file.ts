@@ -2,10 +2,9 @@ import { Readable } from "stream";
 import { stream2buffer } from "./helpers.js";
 import { v4 as uuid } from "uuid";
 import { pipeline } from "node:stream/promises";
-import { createWriteStream } from "fs";
+import { createReadStream, createWriteStream } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
-import { nullStream } from "./stream.js";
 
 export interface FileInfo {
   readonly field: string;
@@ -13,24 +12,34 @@ export interface FileInfo {
   readonly encoding: string;
   readonly mimeType: string;
   readonly stream: Readable;
+  readonly tmpFile?: string;
 }
 
 export class File implements FileInfo {
+  #stream?: Readable;
   constructor(
     public readonly field: string,
     public readonly filename: string,
     public readonly encoding: string,
     public readonly mimeType: string,
-    public readonly stream: Readable
-  ) {}
+    stream?: Readable,
+    public readonly tmpFile?: string
+  ) {
+    this.#stream = stream;
+  }
 
-  static create(info: FileInfo & { stream: Readable }) {
+  get stream() {
+    return this.#stream ?? createReadStream(this.tmpFile!);
+  }
+
+  static create(info: FileInfo) {
     return new File(
       info.field,
       info.filename,
       info.encoding,
       info.mimeType,
-      info.stream
+      info.stream,
+      info.tmpFile
     );
   }
 
@@ -44,10 +53,6 @@ export class File implements FileInfo {
     }
     await pipeline(this.stream, createWriteStream(filename));
     return filename;
-  }
-
-  consume() {
-    return pipeline(this.stream, nullStream());
   }
 }
 

@@ -1,0 +1,16 @@
+{
+  "name": "@minimajs/azure-blob",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "tsc -w"
+  },
+  "devDependencies": {
+    "@types/node": "^20.6.5",
+    "@types/uuid": "^9.0.7"
+  },
+  "dependencies": {
+    "@azure/storage-blob": "^12.17.0",
+    "uuid": "^9.0.1"
+  }
+}

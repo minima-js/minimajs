@@ -1,0 +1,8 @@
+{
+  "name": "@minimajs/disk",
+  "version": "0.0.1",
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^20.6.5"
+  }
+}
