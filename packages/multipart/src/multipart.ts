@@ -1,11 +1,12 @@
 import { Busboy, type BusboyConfig, type BusboyHeaders } from "@fastify/busboy";
 import assert from "node:assert";
 import type { IncomingHttpHeaders } from "node:http";
-import { Field, File, isFile, type FileInfo } from "./file.js";
+import { File, isFile, type FileInfo } from "./file.js";
 import { createContext, getRequest, type Request } from "@minimajs/app";
 import { asyncIterator } from "./async-iterator.js";
 import { unlink } from "node:fs/promises";
 import { onSent } from "@minimajs/app/hooks";
+import { nullStream } from "./stream.js";
 
 function ensureContentType(
   headers: IncomingHttpHeaders
@@ -30,10 +31,11 @@ function busboy(req: Request, opt: Omit<BusboyConfig, "headers">) {
 export async function getFile<T extends string>(name: T) {
   const req = getRequest();
   return new Promise<File>((resolve, reject) => {
-    const bb = busboy(req, { limits: { files: 1, fields: 0 } });
+    const bb = busboy(req, { limits: { fields: 0 } });
     bb.on("file", (uploadedName, file, filename, encoding, mimeType) => {
       if (uploadedName !== name) {
-        reject("Filename not matched in the body");
+        file.pipe(nullStream());
+        return;
       }
       resolve(new File(uploadedName, filename, encoding, mimeType, file));
     });
@@ -54,29 +56,30 @@ export function getFiles() {
   return iterator();
 }
 
-export function getFields() {
+export function getFields<T extends Record<string, string>>() {
   const req = getRequest();
-  const [stream, iterator] = asyncIterator<Field>();
+  const values: any = {};
   const bb = busboy(req, {
     limits: { files: 0 },
   });
   bb.on("field", (name, value) => {
-    stream.push(new Field(name, value));
+    values[name] = value;
   });
-  bb.on("error", (err) => stream.emit("error", err));
-  bb.on("finish", () => stream.end());
-  return iterator();
+  return new Promise<T>((resolve, reject) => {
+    bb.on("error", reject);
+    bb.on("finish", () => resolve(values));
+  });
 }
 
 export function getMultipart() {
   const req = getRequest();
-  const [stream, iterator] = asyncIterator<Field | File>();
+  const [stream, iterator] = asyncIterator<[string, string | File]>();
   const bb = busboy(req, {});
   bb.on("field", (name, value) => {
-    stream.push(new Field(name, value));
+    stream.push([name, value]);
   });
-  bb.on("file", (uploadedName, file, filename, encoding, mimeType) => {
-    stream.write(new File(uploadedName, filename, encoding, mimeType, file));
+  bb.on("file", (name, file, filename, encoding, mimeType) => {
+    stream.write([name, new File(name, filename, encoding, mimeType, file)]);
   });
   bb.on("error", (err) => stream.emit("error", err));
   bb.on("finish", () => stream.end());
@@ -91,18 +94,20 @@ interface MultipartMeta {
 const [getMultipartMeta, setMultipartMeta] =
   createContext<MultipartMeta | null>();
 
-export async function getUploadedBody() {
+export async function getUploadedBody<
+  T extends object = Record<string, string | File>
+>() {
   let meta = getMultipartMeta();
   if (meta) {
-    return getMetaBody(meta);
+    return getMetaBody(meta) as T;
   }
   meta = { files: [], fields: [] };
-  for await (const part of getMultipart()) {
-    if (isFile(part)) {
-      meta.files.push([part, await part.move()]);
+  for await (const [name, value] of getMultipart()) {
+    if (isFile(value)) {
+      meta.files.push([value, await value.move()]);
       continue;
     }
-    meta.fields.push([part.name, part.value]);
+    meta.fields.push([name, value]);
   }
   setMultipartMeta(meta);
   onSent(cleanup);
