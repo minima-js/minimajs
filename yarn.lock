@@ -221,6 +221,8 @@ __metadata:
     "@minimajs/app": "*"
     "@types/node": ^20.3.1
     fastify: ^4.24.2
+  peerDependencies:
+    "@minimajs/app": "*"
   languageName: unknown
   linkType: soft
 
@@ -253,6 +255,8 @@ __metadata:
     "@types/node": ^20.3.1
     "@types/uuid": ^9.0.4
     uuid: ^9.0.1
+  peerDependencies:
+    "@minimajs/app": "*"
   languageName: unknown
   linkType: soft
 
@@ -263,6 +267,8 @@ __metadata:
     "@minimajs/app": "*"
     "@types/node": ^20.3.1
     yup: ^1.3.2
+  peerDependencies:
+    "@minimajs/app": "*"
   languageName: unknown
   linkType: soft
 
