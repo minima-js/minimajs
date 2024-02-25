@@ -1,9 +1,9 @@
-import { Readable } from "stream";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
+import { createReadStream, createWriteStream } from "node:fs";
+import { unlink } from "node:fs/promises";
 import { stream2buffer } from "./helpers.js";
 import { v4 as uuid } from "uuid";
-import { pipeline } from "node:stream/promises";
-import { unlink } from "node:fs/promises";
-import { createReadStream, createWriteStream } from "fs";
 import { extname, join } from "path";
 import { tmpdir } from "os";
 import { nullStream } from "./stream.js";
@@ -68,12 +68,16 @@ export function isFile(f: unknown): f is File {
 
 export class UploadedFile extends File {
   #streams = new Set<Readable>();
-  constructor(info: FileInfo, public readonly tmpFile: string) {
+  constructor(
+    info: FileInfo,
+    public readonly tmpFile: string,
+    private readonly signal: AbortSignal
+  ) {
     super(info.field, info.filename, info.encoding, info.mimeType);
   }
 
   get stream(): Readable {
-    const stream = createReadStream(this.tmpFile);
+    const stream = createReadStream(this.tmpFile, { signal: this.signal });
     this.#streams.add(stream);
     stream.on("close", () => {
       this.#streams.delete(stream);

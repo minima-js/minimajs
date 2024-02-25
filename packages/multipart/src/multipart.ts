@@ -1,11 +1,12 @@
-import { Busboy, type BusboyConfig, type BusboyHeaders } from "@fastify/busboy";
-import assert from "node:assert";
 import type { IncomingHttpHeaders } from "node:http";
+import assert from "node:assert";
+import { Busboy, type BusboyConfig, type BusboyHeaders } from "@fastify/busboy";
 import { File, isFile, UploadedFile } from "./file.js";
 import { createContext, getRequest, type Request } from "@minimajs/app";
 import { asyncIterator } from "./async-iterator.js";
 import { onSent } from "@minimajs/app/hooks";
 import { nullStream } from "./stream.js";
+import { getSignal } from "@minimajs/app/context";
 
 function ensureContentType(
   headers: IncomingHttpHeaders
@@ -95,10 +96,11 @@ export async function getUploadedBody() {
   if (body) {
     return body;
   }
+  const signal = getSignal();
   body = {};
   for await (const [name, value] of getBody()) {
     if (isFile(value)) {
-      body[name] = new UploadedFile(value, await value.move());
+      body[name] = new UploadedFile(value, await value.move(), signal);
       continue;
     }
     body[name] = value;

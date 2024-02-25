@@ -13,7 +13,7 @@
   "packageManager": "yarn@3.6.3",
   "devDependencies": {
     "rimraf": "^5.0.5",
-    "turbo": "^1.10.15",
-    "typescript": "^5.2.2"
+    "turbo": "^1.12.4",
+    "typescript": "5.2.2"
   }
 }

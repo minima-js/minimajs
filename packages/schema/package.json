@@ -11,7 +11,7 @@
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "dependencies": {
-    "yup": "^1.3.2"
+    "yup": "^1.3.3"
   },
   "peerDependencies": {
     "@minimajs/app": "*"
