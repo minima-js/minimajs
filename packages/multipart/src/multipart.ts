@@ -1,10 +1,9 @@
 import { Busboy, type BusboyConfig, type BusboyHeaders } from "@fastify/busboy";
 import assert from "node:assert";
 import type { IncomingHttpHeaders } from "node:http";
-import { File, isFile, type FileInfo } from "./file.js";
+import { File, isFile, UploadedFile } from "./file.js";
 import { createContext, getRequest, type Request } from "@minimajs/app";
 import { asyncIterator } from "./async-iterator.js";
-import { unlink } from "node:fs/promises";
 import { onSent } from "@minimajs/app/hooks";
 import { nullStream } from "./stream.js";
 
@@ -71,7 +70,7 @@ export function getFields<T extends Record<string, string>>() {
   });
 }
 
-export function getMultipart() {
+export function getBody() {
   const req = getRequest();
   const [stream, iterator] = asyncIterator<[string, string | File]>();
   const bb = busboy(req, {});
@@ -86,55 +85,38 @@ export function getMultipart() {
   return iterator();
 }
 
-interface MultipartMeta {
-  fields: [string, string][];
-  files: [info: FileInfo, tmpFile: string][];
-}
+type UploadedBody = Record<string, string | UploadedFile>;
 
 const [getMultipartMeta, setMultipartMeta] =
-  createContext<MultipartMeta | null>();
+  createContext<UploadedBody | null>();
 
-export async function getUploadedBody<
-  T extends object = Record<string, string | File>
->() {
-  let meta = getMultipartMeta();
-  if (meta) {
-    return getMetaBody(meta) as T;
+export async function getUploadedBody() {
+  let body = getMultipartMeta();
+  if (body) {
+    return body;
   }
-  meta = { files: [], fields: [] };
-  for await (const [name, value] of getMultipart()) {
+  body = {};
+  for await (const [name, value] of getBody()) {
     if (isFile(value)) {
-      meta.files.push([value, await value.move()]);
+      body[name] = new UploadedFile(value, await value.move());
       continue;
     }
-    meta.fields.push([name, value]);
+    body[name] = value;
   }
-  setMultipartMeta(meta);
+  setMultipartMeta(body);
   onSent(cleanup);
-  return getUploadedBody();
-}
-
-function getMetaBody(meta: MultipartMeta) {
-  const fields: Record<string, File | string> = {};
-  meta.fields.forEach(([name, val]) => {
-    fields[name] = val;
-  });
-  meta.files.forEach(([info, tmpFile]) => {
-    fields[info.field] = File.create({
-      ...info,
-      tmpFile: tmpFile,
-    });
-  });
-
-  return fields;
+  return body;
 }
 
 async function cleanup() {
-  const meta = getMultipartMeta();
-  if (!meta) {
+  const body = getMultipartMeta();
+  if (!body) {
     return;
   }
-  for (const [, tmp] of meta.files) {
-    await unlink(tmp).catch(() => {});
+  for (const [, file] of Object.entries(body)) {
+    if (!isFile(file)) {
+      continue;
+    }
+    await file.flush();
   }
 }

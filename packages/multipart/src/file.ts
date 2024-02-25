@@ -2,10 +2,12 @@ import { Readable } from "stream";
 import { stream2buffer } from "./helpers.js";
 import { v4 as uuid } from "uuid";
 import { pipeline } from "node:stream/promises";
+import { unlink } from "node:fs/promises";
 import { createReadStream, createWriteStream } from "fs";
 import { extname, join } from "path";
 import { tmpdir } from "os";
 import { nullStream } from "./stream.js";
+import assert from "node:assert";
 
 export interface FileInfo {
   readonly field: string;
@@ -13,45 +15,34 @@ export interface FileInfo {
   readonly encoding: string;
   readonly mimeType: string;
   readonly stream: Readable;
-  readonly tmpFile?: string;
 }
 
 export class File implements FileInfo {
-  #stream?: Readable;
-  #tmpFile?: string;
   constructor(
     public readonly field: string,
     public readonly filename: string,
     public readonly encoding: string,
     public readonly mimeType: string,
-    stream?: Readable,
-    tmpFile?: string
-  ) {
-    this.#tmpFile = tmpFile;
-    this.#stream = stream;
-  }
-
-  get tmpFile() {
-    return this.#tmpFile;
-  }
-
-  get stream() {
-    return this.#stream ?? createReadStream(this.tmpFile!);
-  }
+    private readonly _stream?: Readable
+  ) {}
 
   get ext() {
     return extname(this.filename);
   }
 
-  static create(info: FileInfo) {
+  static create(info: FileInfo, _: any) {
     return new File(
       info.field,
       info.filename,
       info.encoding,
       info.mimeType,
-      info.stream,
-      info.tmpFile
+      info.stream
     );
+  }
+
+  get stream() {
+    assert(this._stream, "stream is empty");
+    return this._stream;
   }
 
   buffer() {
@@ -73,4 +64,27 @@ export class File implements FileInfo {
 
 export function isFile(f: unknown): f is File {
   return f instanceof File;
+}
+
+export class UploadedFile extends File {
+  #streams = new Set<Readable>();
+  constructor(info: FileInfo, public readonly tmpFile: string) {
+    super(info.field, info.filename, info.encoding, info.mimeType);
+  }
+
+  get stream(): Readable {
+    const stream = createReadStream(this.tmpFile);
+    this.#streams.add(stream);
+    stream.on("close", () => {
+      this.#streams.delete(stream);
+    });
+    return stream;
+  }
+
+  async flush() {
+    for (const stream of this.#streams) {
+      stream.destroy();
+    }
+    await unlink(this.tmpFile).catch((_) => false);
+  }
 }

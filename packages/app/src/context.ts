@@ -22,7 +22,7 @@ export function wrap(req: Request, reply: Response, cb: () => unknown) {
 
 export function getContext() {
   const context = local.getStore();
-  assert(context, "Can't access the data outside of request");
+  assert(context, "Unable to access the context beyond the request scope.");
   return context;
 }
 
