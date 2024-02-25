@@ -5,9 +5,22 @@ import { Readable } from "node:stream";
 
 export abstract class BaseHttpResponse {
   constructor() {}
-  render(req: IncomingMessage, res: ServerResponse) {
+  render(_: IncomingMessage, __: ServerResponse) {
     throw new Error("Must implement render method");
   }
+}
+
+export function createAbortController(
+  message: IncomingMessage,
+  response: ServerResponse
+) {
+  const controller = new AbortController();
+  response.on("close", () => {
+    if (message.destroyed) {
+      controller.abort();
+    }
+  });
+  return controller;
 }
 
 export function handleResponse(

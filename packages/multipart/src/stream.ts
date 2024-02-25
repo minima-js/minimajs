@@ -2,7 +2,7 @@ import { Writable } from "stream";
 
 export function nullStream() {
   return new Writable({
-    write(chunk, enc, callback) {
+    write(_, __, callback) {
       setImmediate(callback);
     },
   });
