@@ -14,10 +14,10 @@
     "yup": "^1.3.3"
   },
   "peerDependencies": {
-    "@minimajs/app": "*"
+    "@minimajs/server": "*"
   },
   "devDependencies": {
-    "@minimajs/app": "*",
+    "@minimajs/server": "*",
     "@types/node": "^20.3.1"
   },
   "files": [

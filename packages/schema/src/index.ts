@@ -1,4 +1,4 @@
-import { getBody, getHeaders, getQueries } from "@minimajs/app";
+import { getBody, getHeaders, getQueries } from "@minimajs/server";
 import type { ObjectShape } from "yup";
 import { validator, validatorAsync } from "./validation.js";
 

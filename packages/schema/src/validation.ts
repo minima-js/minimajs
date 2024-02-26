@@ -1,4 +1,4 @@
-import { BaseHttpError } from "@minimajs/app/error";
+import { BaseHttpError } from "@minimajs/server/error";
 import { object, type InferType, type ObjectShape, ObjectSchema } from "yup";
 import { ValidationError } from "./error.js";
 

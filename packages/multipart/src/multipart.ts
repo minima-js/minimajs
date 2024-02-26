@@ -2,11 +2,14 @@ import type { IncomingHttpHeaders } from "node:http";
 import assert from "node:assert";
 import { Busboy, type BusboyConfig, type BusboyHeaders } from "@fastify/busboy";
 import { File, isFile, UploadedFile } from "./file.js";
-import { createContext, getRequest, type Request } from "@minimajs/app";
+import { createContext, getRequest, type Request } from "@minimajs/server";
 import { asyncIterator } from "./async-iterator.js";
-import { onSent } from "@minimajs/app/hooks";
+import { defer } from "@minimajs/server/hooks";
 import { nullStream } from "./stream.js";
-import { getSignal } from "@minimajs/app/context";
+import { getSignal } from "@minimajs/server/context";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { v4 as uuid } from "uuid";
 
 function ensureContentType(
   headers: IncomingHttpHeaders
@@ -102,13 +105,14 @@ export async function getUploadedBody<
   const newBody = {} as any;
   for await (const [name, value] of getBody()) {
     if (isFile(value)) {
-      newBody[name] = new UploadedFile(value, await value.move(), signal);
+      const filename = await value.move(tmpdir(), uuid());
+      newBody[name] = new UploadedFile(value, join(tmpdir(), filename), signal);
       continue;
     }
     newBody[name] = value;
   }
   setMultipartMeta(newBody);
-  onSent(cleanup);
+  defer(cleanup);
   return newBody;
 }
 

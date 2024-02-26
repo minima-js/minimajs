@@ -9,7 +9,7 @@
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "dependencies": {
-    "@minimajs/app": "*"
+    "@minimajs/server": "*"
   },
   "devDependencies": {
     "@types/node": "^20.3.1"

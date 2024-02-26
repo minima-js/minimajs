@@ -5,7 +5,6 @@ import { unlink } from "node:fs/promises";
 import { stream2buffer } from "./helpers.js";
 import { v4 as uuid } from "uuid";
 import { extname, join } from "path";
-import { tmpdir } from "os";
 import { nullStream } from "./stream.js";
 import assert from "node:assert";
 
@@ -49,11 +48,11 @@ export class File implements FileInfo {
     return stream2buffer(this.stream);
   }
 
-  async move(filename?: string) {
+  async move(dir = process.cwd(), filename?: string) {
     if (!filename) {
-      filename = join(tmpdir(), uuid());
+      filename = `${uuid()}.${this.ext}`;
     }
-    await pipeline(this.stream, createWriteStream(filename));
+    await pipeline(this.stream, createWriteStream(join(dir, filename)));
     return filename;
   }
 

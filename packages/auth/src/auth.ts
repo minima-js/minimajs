@@ -1,5 +1,5 @@
-import { type Request, type Response, createContext } from "@minimajs/app";
-import { BaseHttpError as HttpError } from "@minimajs/app/error";
+import { type Request, type Response, createContext } from "@minimajs/server";
+import { BaseHttpError as HttpError } from "@minimajs/server/error";
 
 interface Auth<T> {
   data?: T;

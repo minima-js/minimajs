@@ -1,4 +1,4 @@
-import { getContext } from "@minimajs/app/context";
+import { getContext } from "@minimajs/server/context";
 import type { CookieSerializeOptions } from "@fastify/cookie";
 import fastifyCookie from "@fastify/cookie";
 

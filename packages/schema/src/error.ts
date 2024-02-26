@@ -1,4 +1,4 @@
-import { HttpError } from "@minimajs/app/error";
+import { HttpError } from "@minimajs/server/error";
 import { ValidationError as BaseValidation } from "yup";
 
 export class ValidationError extends HttpError {

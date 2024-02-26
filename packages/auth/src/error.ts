@@ -1,4 +1,4 @@
-import { HttpError } from "@minimajs/app/error";
+import { HttpError } from "@minimajs/server/error";
 
 export class UnauthorizedError extends HttpError {
   constructor(message: string) {
