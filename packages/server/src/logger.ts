@@ -2,7 +2,7 @@ import { pino } from "pino";
 import pretty from "pino-pretty";
 import { getContextOrNull as getContext } from "./context.js";
 import type { App, Dict } from "./types.js";
-import { kPluginNameChain, kRequestContext } from "./fastify/symbol.js";
+import { kPluginNameChain, kRequestContext } from "./internal/symbol.js";
 
 const stream = pretty.default({
   colorize: true,

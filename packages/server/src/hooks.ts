@@ -1,4 +1,4 @@
-import { getHooks, type HookCallback } from "./context.js";
+import { getHooks, type HookCallback } from "./internal/context.js";
 
 export function onSent(cb: HookCallback) {
   const hooks = getHooks();

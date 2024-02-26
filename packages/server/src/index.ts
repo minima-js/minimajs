@@ -1,6 +1,6 @@
 import type { Server } from "node:http";
 import fastify from "fastify";
-import { appPlugin } from "./fastify/plugins.js";
+import { appPlugin } from "./internal/plugins.js";
 import { errorHandler } from "./error.js";
 import chalk from "chalk";
 import type { App, AppOptions } from "./types.js";

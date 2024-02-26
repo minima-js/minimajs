@@ -7,7 +7,7 @@ import type {
   FastifyReply,
   FastifyRequest,
 } from "fastify";
-import { kPluginNameChain } from "./fastify/symbol.js";
+import { kPluginNameChain } from "./internal/symbol.js";
 import type { Server } from "node:http";
 
 export type { FastifyRegister } from "fastify";
