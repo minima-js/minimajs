@@ -11,4 +11,5 @@ export const appPlugin = function minimajs(fastify: App, _: {}, next: CF) {
   fastify.addHook("onResponse", triggerOnSent);
   next();
 };
+
 (appPlugin as any)[Symbol.for("skip-override")] = true;

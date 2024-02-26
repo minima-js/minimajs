@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "@minimajs/app": "*",
+    "@minimajs/schema": "*",
     "@types/node": "^20.11.20",
     "@types/uuid": "^9.0.4"
   },
@@ -21,7 +22,8 @@
     "uuid": "^9.0.1"
   },
   "peerDependencies": {
-    "@minimajs/app": "*"
+    "@minimajs/app": "*",
+    "@minimajs/schema": "*"
   },
   "files": [
     "lib"

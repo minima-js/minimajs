@@ -259,15 +259,17 @@ __metadata:
   dependencies:
     "@fastify/busboy": ^1.2.1
     "@minimajs/app": "*"
+    "@minimajs/schema": "*"
     "@types/node": ^20.11.20
     "@types/uuid": ^9.0.4
     uuid: ^9.0.1
   peerDependencies:
     "@minimajs/app": "*"
+    "@minimajs/schema": "*"
   languageName: unknown
   linkType: soft
 
-"@minimajs/schema@workspace:packages/schema":
+"@minimajs/schema@*, @minimajs/schema@workspace:packages/schema":
   version: 0.0.0-use.local
   resolution: "@minimajs/schema@workspace:packages/schema"
   dependencies:

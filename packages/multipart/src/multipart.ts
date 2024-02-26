@@ -91,23 +91,25 @@ type UploadedBody = Record<string, string | UploadedFile>;
 const [getMultipartMeta, setMultipartMeta] =
   createContext<UploadedBody | null>();
 
-export async function getUploadedBody() {
-  let body = getMultipartMeta();
+export async function getUploadedBody<
+  T extends UploadedBody = UploadedBody
+>(): Promise<T> {
+  const body = getMultipartMeta() as T;
   if (body) {
     return body;
   }
   const signal = getSignal();
-  body = {};
+  const newBody = {} as any;
   for await (const [name, value] of getBody()) {
     if (isFile(value)) {
-      body[name] = new UploadedFile(value, await value.move(), signal);
+      newBody[name] = new UploadedFile(value, await value.move(), signal);
       continue;
     }
-    body[name] = value;
+    newBody[name] = value;
   }
-  setMultipartMeta(body);
+  setMultipartMeta(newBody);
   onSent(cleanup);
-  return body;
+  return newBody;
 }
 
 async function cleanup() {

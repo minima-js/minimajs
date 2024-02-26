@@ -1,12 +1,4 @@
-import { createContext } from "../context.js";
-
-export type HookCallback = () => void | Promise<void>;
-
-interface Hooks {
-  onSent: Set<HookCallback>;
-}
-
-export const [getHooks] = createContext<Hooks>(() => ({ onSent: new Set() }));
+import { getHooks } from "../context.js";
 
 export async function triggerOnSent() {
   const hooks = getHooks();
