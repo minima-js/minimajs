@@ -9,6 +9,9 @@ export type Renderer = (
 ) => Promise<void> | void;
 
 export abstract class BaseHttpError extends Error {
+  static is(value: unknown): value is BaseHttpError {
+    return value instanceof this;
+  }
   abstract render(req: Request, res: Response): void;
 }
 
@@ -24,10 +27,6 @@ export class HttpError extends BaseHttpError {
     }
     return new HttpError("Unable to handle request", "INTERNAL_SERVER_ERROR");
   }
-
-  public static render: Renderer = function render(err, _, res) {
-    res.status(err.statusCode).send(err.toJSON());
-  };
 
   public static toJSON = function toJSON(err: HttpError): unknown {
     return { message: err.message };
@@ -47,7 +46,7 @@ export class HttpError extends BaseHttpError {
   }
 
   async render(req: Request, res: Response) {
-    const doRender = getRender(req.server);
+    const doRender = getRenderer(req.server);
     return doRender(this, req, res);
   }
 }
@@ -67,14 +66,11 @@ export function errorHandler(error: unknown, req: Request, reply: Response) {
   HttpError.create(error).render(req, reply);
 }
 
-/**
- * Yet to be implemented
- */
 export function renderError(app: App, render: Renderer) {
   app.decorate(kErrorRenderer, render);
 }
 
-function getRender(app: App): Renderer {
+function getRenderer(app: App): Renderer {
   return (
     app[kErrorRenderer] ??
     function render(err, _, res) {

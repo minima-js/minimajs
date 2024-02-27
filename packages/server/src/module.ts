@@ -1,5 +1,6 @@
 import type { RegisterOptions, preHandlerHookHandler } from "fastify";
 import type { App, Plugin, PluginOptions } from "./types.js";
+import { setPluginName } from "./internal/plugins.js";
 
 export type PluginCallback<T extends PluginOptions> =
   | Plugin<T>
@@ -40,10 +41,7 @@ export function interceptor<T extends PluginOptions = {}>(
     callback = await toCallback(callback);
     return callback(app, opt);
   }
-  (module as any)[Symbol.for("fastify.display-name")] = getModuleName(
-    callback,
-    opt
-  );
+  setPluginName(module, getModuleName(callback, opt));
   return module;
 }
 

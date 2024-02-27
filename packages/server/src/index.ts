@@ -39,6 +39,9 @@ export function createApp({
 
   app.register(appPlugin);
   app.setErrorHandler(errorHandler);
+  app.addContentTypeParser("multipart/form-data", (_, __, done) => {
+    done(null);
+  });
 
   async function quit(sig: string) {
     app.log.info(`${sig}: %s`, "closing server");

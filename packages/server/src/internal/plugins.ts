@@ -4,6 +4,14 @@ import { wrap, getHooks } from "./context.js";
 
 type CF = CallableFunction;
 
+export function setPluginName(cb: any, name: string) {
+  cb[Symbol.for("fastify.display-name")] = name;
+  return cb;
+}
+export function setPluginOverride(cb: any, override: boolean) {
+  cb[Symbol.for("skip-override")] = override;
+}
+
 export async function triggerOnSent() {
   const hooks = getHooks();
   for (const hook of hooks.onSent) {
@@ -18,4 +26,4 @@ export const appPlugin = function minimajs(fastify: App, _: {}, next: CF) {
   next();
 };
 
-(appPlugin as any)[Symbol.for("skip-override")] = true;
+setPluginOverride(appPlugin, true);

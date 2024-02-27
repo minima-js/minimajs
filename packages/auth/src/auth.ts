@@ -25,11 +25,10 @@ export function createAuth<T>(callback: AuthCallback<T>) {
       const data = await callback(req, res);
       setAuth$1({ data });
     } catch (error) {
-      if (error instanceof HttpError) {
-        setAuth$1({ error });
-        return;
+      if (!HttpError.is(error)) {
+        throw error;
       }
-      throw error;
+      setAuth$1({ error });
     }
   }
   return [interceptor, authGuard, getAuth] as const;
