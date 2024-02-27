@@ -27,6 +27,7 @@ export function createAuth<T>(callback: AuthCallback<T>) {
     } catch (error) {
       if (error instanceof HttpError) {
         setAuth$1({ error });
+        return;
       }
       throw error;
     }

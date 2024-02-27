@@ -1,14 +1,10 @@
 # MinimaJs (A framework for backend)
 
-- Improve the overall response time of API requests by optimizing the backend framework's performance.
-- Reduce the memory footprint of the backend framework to optimize resource utilization and improve scalability.
-- Enhance the developer experience by providing comprehensive documentation, tutorials, and examples for the backend framework.
+- Implementing functional programming to address and eliminate diamond dependency issues.
+- Minimize the backend framework's memory usage to enhance resource efficiency and scalability.
 - Enable support for additional integrations and plugins to extend the functionality and versatility of the backend framework.
-- Enforcing functional programming
 
 ## Demo - A hello world
-
-everything is a module
 
 - register module and route
 
