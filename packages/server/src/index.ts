@@ -8,6 +8,7 @@ export * from "./types.js";
 export * from "./logger.js";
 export * from "./module.js";
 export * from "./http.js";
+export * from "./hooks.js";
 export { createContext } from "./context.js";
 
 function getDefaultConfig(): AppOptions {

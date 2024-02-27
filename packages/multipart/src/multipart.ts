@@ -4,7 +4,7 @@ import { Busboy, type BusboyConfig, type BusboyHeaders } from "@fastify/busboy";
 import { File, isFile, UploadedFile } from "./file.js";
 import { createContext, getRequest, type Request } from "@minimajs/server";
 import { asyncIterator } from "./async-iterator.js";
-import { defer } from "@minimajs/server/hooks";
+import { defer } from "@minimajs/server";
 import { nullStream } from "./stream.js";
 import { getSignal } from "@minimajs/server/context";
 import { join } from "node:path";

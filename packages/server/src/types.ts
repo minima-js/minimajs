@@ -7,8 +7,9 @@ import type {
   FastifyReply,
   FastifyRequest,
 } from "fastify";
-import { kPluginNameChain } from "./internal/symbol.js";
+import { kErrorRenderer, kPluginNameChain } from "./internal/symbol.js";
 import type { Server } from "node:http";
+import type { Renderer } from "./error.js";
 
 export type { FastifyRegister } from "fastify";
 export interface PluginOptions extends FastifyPluginOptions {
@@ -16,6 +17,7 @@ export interface PluginOptions extends FastifyPluginOptions {
 }
 export interface App extends FastifyInstance {
   [kPluginNameChain]?: string[];
+  [kErrorRenderer]?: Renderer;
 }
 export interface Request extends FastifyRequest {}
 export interface Response extends FastifyReply {}

@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import { createAbortController } from "../response.js";
+import { createAbortController } from "./response.js";
 import type { Request, Response } from "../types.js";
 import assert from "node:assert";
 

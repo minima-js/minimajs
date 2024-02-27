@@ -4,6 +4,7 @@
 - Reduce the memory footprint of the backend framework to optimize resource utilization and improve scalability.
 - Enhance the developer experience by providing comprehensive documentation, tutorials, and examples for the backend framework.
 - Enable support for additional integrations and plugins to extend the functionality and versatility of the backend framework.
+- Enforcing functional programming
 
 ## Demo - A hello world
 
@@ -23,7 +24,10 @@ everything is a module
 
 #
 
-## App
+## Server
+
+- signals
+- defer
 
 ### Modules
 
@@ -32,7 +36,6 @@ everything is a module
 ### Encapsulation
 
 - app.register()
-- app.addHook()
 
 ### Middleware & Interceptor
 
@@ -77,7 +80,11 @@ just forget about conflict and typing
 - guard
 - middleware
 
-#
+## Schema
+
+- createBody
+- createHeader
+- custom validation
 
 ## Docker & Deployment
 
@@ -87,13 +94,6 @@ just forget about conflict and typing
 #
 
 ## Gems
-
-### env
-
-built with env support
-
-- env()
-- .env, .env.{name}.local
 
 ### generators & streams
 

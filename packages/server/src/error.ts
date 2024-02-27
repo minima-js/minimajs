@@ -1,7 +1,8 @@
 import { StatusCodes } from "http-status-codes";
 import type { App, Request, Response } from "./types.js";
+import { kErrorRenderer } from "./internal/symbol.js";
 
-type Renderer = (
+export type Renderer = (
   err: HttpError,
   req: Request,
   res: Response
@@ -46,7 +47,8 @@ export class HttpError extends BaseHttpError {
   }
 
   async render(req: Request, res: Response) {
-    return HttpError.render(this, req, res);
+    const doRender = getRender(req.server);
+    return doRender(this, req, res);
   }
 }
 
@@ -68,7 +70,15 @@ export function errorHandler(error: unknown, req: Request, reply: Response) {
 /**
  * Yet to be implemented
  */
-const kErrorRenderer = Symbol("ErrorHandler");
 export function renderError(app: App, render: Renderer) {
   app.decorate(kErrorRenderer, render);
+}
+
+function getRender(app: App): Renderer {
+  return (
+    app[kErrorRenderer] ??
+    function render(err, _, res) {
+      res.status(err.statusCode).send(err.toJSON());
+    }
+  );
 }

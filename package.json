@@ -10,7 +10,7 @@
     "dev": "turbo run dev --parallel --continue",
     "build": "turbo run build"
   },
-  "packageManager": "yarn@3.6.3",
+  "packageManager": "yarn@4.1.0",
   "devDependencies": {
     "rimraf": "^5.0.5",
     "turbo": "^1.12.4",

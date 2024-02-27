@@ -1,5 +1,5 @@
 import type { App } from "../types.js";
-import { handleResponse } from "../response.js";
+import { handleResponse } from "./response.js";
 import { wrap, getHooks } from "./context.js";
 
 type CF = CallableFunction;
