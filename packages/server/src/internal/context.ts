@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+import assert from "node:assert";
 import { createAbortController } from "./response.js";
 import type { Request, Response } from "../types.js";
-import assert from "node:assert";
 
 export type HookCallback = () => void | Promise<void>;
 
@@ -12,7 +12,7 @@ export interface Hooks {
 interface Context {
   readonly req: Request;
   readonly reply: Response;
-  readonly local: Map<string | symbol, unknown>;
+  readonly local: Map<symbol, unknown>;
   readonly abortController: AbortController;
   readonly hooks: Hooks;
 }

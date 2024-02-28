@@ -5,12 +5,15 @@ import fastifyCookie from "@fastify/cookie";
 export { fastifyCookie as cookiePlugin };
 export { type CookieSerializeOptions };
 
-export function getCookie(name: string, def?: string | null) {
+export function getCookie(
+  name: string,
+  def: string | null = null
+): string | null {
   const cookies = getCookies();
   return cookies[name] ?? def;
 }
 
-export function getCookies() {
+export function getCookies(): Record<string, string> {
   const { req }: any = getContext();
   return req.cookies;
 }
