@@ -1,14 +1,8 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import type { Request, Response } from "../types.js";
+import type { App, Request, Response } from "../types.js";
 import { isAsyncIterator } from "../utils/iterable.js";
 import { Readable } from "node:stream";
-
-export abstract class BaseHttpResponse {
-  constructor() {}
-  render(_: IncomingMessage, __: ServerResponse) {
-    throw new Error("Must implement render method");
-  }
-}
+import { kResponseDecorator } from "./symbol.js";
 
 export function createAbortController(
   message: IncomingMessage,
@@ -24,7 +18,7 @@ export function createAbortController(
 }
 
 export function handleResponse(
-  req: Request,
+  request: Request,
   res: Response,
   body: unknown,
   next: CallableFunction
@@ -34,10 +28,17 @@ export function handleResponse(
     Readable.from(body).pipe(res.raw);
     return;
   }
-  if (body instanceof BaseHttpResponse) {
-    res.hijack();
-    body.render(req.raw, res.raw);
-    return;
+  decorateResponse(request.server, body)
+    .then((newBody) => {
+      next(null, newBody);
+    })
+    .catch((err) => next(err));
+}
+
+async function decorateResponse(app: App, body: unknown) {
+  const decorator = app[kResponseDecorator];
+  if (!decorator) {
+    return body;
   }
-  next();
+  return decorator(body);
 }

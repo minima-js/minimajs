@@ -1,12 +1,17 @@
 import { StatusCodes } from "http-status-codes";
 import type { App, Request, Response } from "./types.js";
-import { kErrorRenderer } from "./internal/symbol.js";
+import { kErrorDecorator } from "./internal/symbol.js";
 
-export type Renderer = (
-  err: HttpError,
-  req: Request,
-  res: Response
-) => Promise<void> | void;
+export type Decorator = (err: HttpError) => Promise<[number, unknown]>;
+
+function getDecorator(app: App): Decorator {
+  return (
+    app[kErrorDecorator] ??
+    async function render(err) {
+      return [err.statusCode, err.toJSON()];
+    }
+  );
+}
 
 export abstract class BaseHttpError extends Error {
   static is(value: unknown): value is BaseHttpError {
@@ -46,8 +51,12 @@ export class HttpError extends BaseHttpError {
   }
 
   async render(req: Request, res: Response) {
-    const doRender = getRenderer(req.server);
-    return doRender(this, req, res);
+    res.hijack();
+    const decorator = getDecorator(req.server);
+    const [status, payload] = await decorator(this);
+    const { raw: response } = res;
+    response.statusCode = status;
+    response.end(res.serialize(payload));
   }
 }
 
@@ -66,15 +75,6 @@ export function errorHandler(error: unknown, req: Request, reply: Response) {
   HttpError.create(error).render(req, reply);
 }
 
-export function renderError(app: App, render: Renderer) {
-  app.decorate(kErrorRenderer, render);
-}
-
-function getRenderer(app: App): Renderer {
-  return (
-    app[kErrorRenderer] ??
-    function render(err, _, res) {
-      res.status(err.statusCode).send(err.toJSON());
-    }
-  );
+export function decorate(app: App, render: Decorator) {
+  app.decorate(kErrorDecorator, render);
 }

@@ -21,5 +21,6 @@ export function createContext<T>(value?: T | (() => T)) {
     const { local } = getContext();
     local.set(kName, val);
   }
+
   return [getValue, setValue] as const;
 }

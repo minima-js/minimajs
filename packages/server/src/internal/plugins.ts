@@ -8,6 +8,7 @@ export function setPluginName(cb: any, name: string) {
   cb[Symbol.for("fastify.display-name")] = name;
   return cb;
 }
+
 export function setPluginOverride(cb: any, override: boolean) {
   cb[Symbol.for("skip-override")] = override;
 }

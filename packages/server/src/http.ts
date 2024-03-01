@@ -1,6 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import { getContext } from "./context.js";
-import { RedirectError, HttpError, BaseHttpError } from "./error.js";
+import { RedirectError, HttpError } from "./error.js";
 import type { ParsedUrlQuery } from "node:querystring";
 import type { Request, Response } from "./types.js";
 
@@ -58,12 +58,6 @@ export function abort(
   statusCode: keyof typeof StatusCodes | number
 ): never {
   throw new HttpError(message, statusCode);
-}
-
-export function assertAborted(err: unknown) {
-  if (err instanceof BaseHttpError) {
-    throw err;
-  }
 }
 
 export function assertError(err: unknown): asserts err is Error {
