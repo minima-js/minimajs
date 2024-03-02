@@ -13,8 +13,8 @@ import {
   kPluginNameChain,
 } from "./internal/symbol.js";
 import type { Server } from "node:http";
-import type { Decorator as ErrorDecorator } from "./error.js";
-import type { Decorator as ResponseDecorator } from "./response.js";
+import type { ErrorDecorator } from "./error.js";
+import type { ResponseDecorator } from "./response.js";
 
 export type { FastifyRegister } from "fastify";
 export interface PluginOptions extends FastifyPluginOptions {

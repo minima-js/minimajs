@@ -6,8 +6,8 @@
     "dev": "tsc -w"
   },
   "devDependencies": {
-    "@types/node": "^20.6.5",
-    "@types/uuid": "^9.0.7"
+    "@types/node": "^20.11.24",
+    "@types/uuid": "^9.0.8"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.17.0",

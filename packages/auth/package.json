@@ -8,11 +8,12 @@
     "build": "tsc",
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
-  "dependencies": {
+  "peerDependencies": {
     "@minimajs/server": "*"
   },
   "devDependencies": {
-    "@types/node": "^20.3.1"
+    "@minimajs/server": "*",
+    "@types/node": "^20.11.24"
   },
   "files": [
     "lib"

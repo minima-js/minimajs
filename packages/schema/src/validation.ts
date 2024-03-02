@@ -1,5 +1,10 @@
-import { BaseHttpError } from "@minimajs/server/error";
-import { object, type InferType, type ObjectShape, ObjectSchema } from "yup";
+import {
+  object,
+  type InferType,
+  type ObjectShape,
+  ObjectSchema,
+  ValidationError as BaseError,
+} from "yup";
 import { ValidationError } from "./error.js";
 
 type DataCallback = () => unknown;
@@ -36,8 +41,8 @@ async function validateObjectAsync(schema: ObjectSchema<any>, data: unknown) {
   }
 }
 function dealWithException(err: unknown): never {
-  if (err instanceof BaseHttpError || !(err instanceof Error)) {
-    throw err;
+  if (err instanceof BaseError) {
+    throw new ValidationError(err);
   }
-  throw new ValidationError(err);
+  throw err;
 }

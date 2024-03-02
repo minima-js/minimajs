@@ -124,22 +124,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fastify/busboy@npm:^1.2.1":
-  version: 1.2.1
-  resolution: "@fastify/busboy@npm:1.2.1"
-  dependencies:
-    text-decoding: "npm:^1.0.0"
-  checksum: 10/1d1963c64992c5f4cd26aceb399dbddfcf2824e5259a7b92c77d2137e67d55e6bc416efe430bf59e897e3a57dad66fec8e51297f4858b855c3b38c7c17818b43
+"@fastify/busboy@npm:^2.1.1":
+  version: 2.1.1
+  resolution: "@fastify/busboy@npm:2.1.1"
+  checksum: 10/2bb8a7eca8289ed14c9eb15239bc1019797454624e769b39a0b90ed204d032403adc0f8ed0d2aef8a18c772205fa7808cf5a1b91f21c7bfc7b6032150b1062c5
   languageName: node
   linkType: hard
 
-"@fastify/cookie@npm:^8.3.0":
-  version: 8.3.0
-  resolution: "@fastify/cookie@npm:8.3.0"
+"@fastify/cookie@npm:^9.3.1":
+  version: 9.3.1
+  resolution: "@fastify/cookie@npm:9.3.1"
   dependencies:
-    cookie: "npm:^0.5.0"
+    cookie-signature: "npm:^1.1.0"
     fastify-plugin: "npm:^4.0.0"
-  checksum: 10/abcf55efc79abb013f54c83d5e3ea46b09c77af0ba35be5aebfc863117f7cdbbc20c0d91a586c89c533b1588031867230bfe2050064c0d251b6ac1bb302e9b62
+  checksum: 10/b3ae999316a775c9167900b73bf02125504fedc7b3121c3a766c827caf18e10959f060d22495f6d7247cfc7b375c9761765af615c67691cb39afcc5d3677e9fb
   languageName: node
   linkType: hard
 
@@ -192,7 +190,9 @@ __metadata:
   resolution: "@minimajs/auth@workspace:packages/auth"
   dependencies:
     "@minimajs/server": "npm:*"
-    "@types/node": "npm:^20.3.1"
+    "@types/node": "npm:^20.11.24"
+  peerDependencies:
+    "@minimajs/server": "*"
   languageName: unknown
   linkType: soft
 
@@ -201,8 +201,8 @@ __metadata:
   resolution: "@minimajs/azure-blob@workspace:packages/azure-blob"
   dependencies:
     "@azure/storage-blob": "npm:^12.17.0"
-    "@types/node": "npm:^20.6.5"
-    "@types/uuid": "npm:^9.0.7"
+    "@types/node": "npm:^20.11.24"
+    "@types/uuid": "npm:^9.0.8"
     uuid: "npm:^9.0.1"
   languageName: unknown
   linkType: soft
@@ -211,9 +211,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@minimajs/cookie@workspace:packages/cookie"
   dependencies:
-    "@fastify/cookie": "npm:^8.3.0"
+    "@fastify/cookie": "npm:^9.3.1"
     "@minimajs/server": "npm:*"
-    "@types/node": "npm:^20.3.1"
+    "@types/node": "npm:^20.11.24"
     fastify: "npm:^4.26.1"
   peerDependencies:
     "@minimajs/server": "*"
@@ -224,7 +224,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@minimajs/disk@workspace:packages/disk"
   dependencies:
-    "@types/node": "npm:^20.6.5"
+    "@types/node": "npm:^20.11.24"
   languageName: unknown
   linkType: soft
 
@@ -244,11 +244,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@minimajs/multipart@workspace:packages/multipart"
   dependencies:
-    "@fastify/busboy": "npm:^1.2.1"
+    "@fastify/busboy": "npm:^2.1.1"
     "@minimajs/schema": "npm:*"
     "@minimajs/server": "npm:*"
-    "@types/node": "npm:^20.11.20"
-    "@types/uuid": "npm:^9.0.4"
+    "@types/node": "npm:^20.11.24"
+    "@types/uuid": "npm:^9.0.8"
     uuid: "npm:^9.0.1"
   peerDependencies:
     "@minimajs/schema": "*"
@@ -261,7 +261,7 @@ __metadata:
   resolution: "@minimajs/schema@workspace:packages/schema"
   dependencies:
     "@minimajs/server": "npm:*"
-    "@types/node": "npm:^20.3.1"
+    "@types/node": "npm:^20.11.24"
     yup: "npm:^1.3.3"
   peerDependencies:
     "@minimajs/server": "*"
@@ -272,7 +272,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@minimajs/server@workspace:packages/server"
   dependencies:
-    "@types/node": "npm:^20.11.20"
+    "@types/node": "npm:^20.11.24"
     chalk: "npm:^5.3.0"
     fastify: "npm:^4.26.1"
     http-status-codes: "npm:^2.3.0"
@@ -285,7 +285,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@minimajs/utility@workspace:packages/utility"
   dependencies:
-    "@types/node": "npm:^20.8.0"
+    "@types/node": "npm:^20.11.24"
   languageName: unknown
   linkType: soft
 
@@ -322,33 +322,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^20.11.20":
-  version: 20.11.20
-  resolution: "@types/node@npm:20.11.20"
+"@types/node@npm:^20.11.24":
+  version: 20.11.24
+  resolution: "@types/node@npm:20.11.24"
   dependencies:
     undici-types: "npm:~5.26.4"
-  checksum: 10/ff449bdc94810dadb54e0f77dd587c6505ef79ffa5a208c16eb29b223365b188f4c935a3abaf0906a01d05257c3da1f72465594a841d35bcf7b6deac7a6938fb
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:^20.3.1":
-  version: 20.3.1
-  resolution: "@types/node@npm:20.3.1"
-  checksum: 10/21440822013405d0406b291db9ad8bb19b811499a9a675dd9e3ca620c9231828534b111043a7f661babbe28503e7ddaed3b3681aceb95df23ce0a04d2aff3223
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:^20.6.5":
-  version: 20.6.5
-  resolution: "@types/node@npm:20.6.5"
-  checksum: 10/4a3af776dbaea9564f3dd89d799766fa1253184ed52783ee5c9a178b6f366f593c96faa1c588c78a62dfa21db8ff2ba504b7267bc3f4ba90ba6f68f297e8965e
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:^20.8.0":
-  version: 20.8.0
-  resolution: "@types/node@npm:20.8.0"
-  checksum: 10/04108e4e54b4a5f500934bfa1c4551d35398886c7e8b3e047d663b9a66f0c3243e4f6a0fe0515e0295a7cf5e0190b6d49d54b4a36ac09ea416918a880c2234f3
+  checksum: 10/7f34bfae5f9b98b9910230af4b4c52dc7fb2d1e96fdebfbc3d7576f8ab3d100076f193f9469add9e7418b455294155e7e6a028498cc5e98f9d49349875a459cf
   languageName: node
   linkType: hard
 
@@ -361,17 +340,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/uuid@npm:^9.0.4":
-  version: 9.0.4
-  resolution: "@types/uuid@npm:9.0.4"
-  checksum: 10/356e2504456eaebbc43a5af5ca6c07d71f5ae5520b5767cb1c62cd0ec55475fc4ee3d16a2874f4a5fce78e40e8583025afd3a7d9ba41f82939de310665f53f0e
-  languageName: node
-  linkType: hard
-
-"@types/uuid@npm:^9.0.7":
-  version: 9.0.7
-  resolution: "@types/uuid@npm:9.0.7"
-  checksum: 10/c7321194aeba9ea173efd1e721403bdf4e7ae6945f8f8cdbc87c791f4b505ccf3dbc4a8883d90b394ef13b7c2dc778045792b05dbb23b3c746f8ea347804d448
+"@types/uuid@npm:^9.0.8":
+  version: 9.0.8
+  resolution: "@types/uuid@npm:9.0.8"
+  checksum: 10/b8c60b7ba8250356b5088302583d1704a4e1a13558d143c549c408bf8920535602ffc12394ede77f8a8083511b023704bc66d1345792714002bfa261b17c5275
   languageName: node
   linkType: hard
 
@@ -549,6 +521,13 @@ __metadata:
   dependencies:
     delayed-stream: "npm:~1.0.0"
   checksum: 10/2e969e637d05d09fa50b02d74c83a1186f6914aae89e6653b62595cc75a221464f884f55f231b8f4df7a49537fba60bdc0427acd2bf324c09a1dbb84837e36e4
+  languageName: node
+  linkType: hard
+
+"cookie-signature@npm:^1.1.0":
+  version: 1.2.1
+  resolution: "cookie-signature@npm:1.2.1"
+  checksum: 10/b871138a81382173d51dde5c1c56e8b313bc4b9e5f2f67d0d63be50fd43b92a25cb9bd72c2fc2935c0c6cb6cce834e7e2fd12830d7ec289ccac5bdec19dd14eb
   languageName: node
   linkType: hard
 
@@ -1351,13 +1330,6 @@ __metadata:
   version: 3.1.1
   resolution: "strip-json-comments@npm:3.1.1"
   checksum: 10/492f73e27268f9b1c122733f28ecb0e7e8d8a531a6662efbd08e22cccb3f9475e90a1b82cab06a392f6afae6d2de636f977e231296400d0ec5304ba70f166443
-  languageName: node
-  linkType: hard
-
-"text-decoding@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "text-decoding@npm:1.0.0"
-  checksum: 10/73c604f285d86d653815a5c32b86ffef9ffe27074bc3e5da3718ac46bba7c04775bb3da7b13c60e3a6525d1acce7cc3442b39e25a3a43f211c866ba9ba414207
   languageName: node
   linkType: hard
 

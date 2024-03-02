@@ -2,9 +2,13 @@ import { StatusCodes } from "http-status-codes";
 import type { App, Request, Response } from "./types.js";
 import { kErrorDecorator } from "./internal/symbol.js";
 
-export type Decorator = (err: HttpError) => Promise<[number, unknown]>;
+export type ErrorDecorator = (
+  err: HttpError
+) =>
+  | [statusCode: number, payload: unknown]
+  | Promise<[statusCode: number, payload: unknown]>;
 
-function getDecorator(app: App): Decorator {
+function getDecorator(app: App): ErrorDecorator {
   return (
     app[kErrorDecorator] ??
     async function render(err) {
@@ -75,6 +79,6 @@ export function errorHandler(error: unknown, req: Request, reply: Response) {
   HttpError.create(error).render(req, reply);
 }
 
-export function decorate(app: App, render: Decorator) {
+export function decorate(app: App, render: ErrorDecorator) {
   app.decorate(kErrorDecorator, render);
 }
