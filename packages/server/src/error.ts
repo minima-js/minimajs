@@ -2,20 +2,20 @@ import { StatusCodes } from "http-status-codes";
 import type { App, Request, Response } from "./types.js";
 import { kErrorDecorator } from "./internal/symbol.js";
 
-export type ErrorDecorator = (
-  err: HttpError
-) =>
-  | [statusCode: number, payload: unknown]
-  | Promise<[statusCode: number, payload: unknown]>;
-
 function getDecorator(app: App): ErrorDecorator {
   return (
     app[kErrorDecorator] ??
-    async function render(err) {
+    function render(err) {
       return [err.statusCode, err.toJSON()];
     }
   );
 }
+
+export type ErrorDecorator = (
+  error: HttpError
+) =>
+  | [statusCode: number, payload: unknown]
+  | Promise<[statusCode: number, payload: unknown]>;
 
 export abstract class BaseHttpError extends Error {
   static is(value: unknown): value is BaseHttpError {
@@ -27,21 +27,15 @@ export abstract class BaseHttpError extends Error {
 export class HttpError extends BaseHttpError {
   public readonly statusCode: number;
 
-  public static create(err: unknown): BaseHttpError {
-    if (err instanceof BaseHttpError) {
-      return err;
-    }
-    if (err instanceof Error) {
-      return new HttpError(err.message, "INTERNAL_SERVER_ERROR");
-    }
-    return new HttpError("Unable to handle request", "INTERNAL_SERVER_ERROR");
-  }
-
   public static toJSON = function toJSON(err: HttpError): unknown {
     return { message: err.message };
   };
 
-  constructor(message: string, statusCode: keyof typeof StatusCodes | number) {
+  constructor(
+    message: string,
+    statusCode: keyof typeof StatusCodes | number,
+    public readonly base?: unknown
+  ) {
     super(message);
     if (typeof statusCode !== "number") {
       this.statusCode = StatusCodes[statusCode];
@@ -60,6 +54,10 @@ export class HttpError extends BaseHttpError {
     const [status, payload] = await decorator(this);
     const { raw: response } = res;
     response.statusCode = status;
+    if (typeof payload === "string") {
+      response.end(payload);
+      return;
+    }
     response.end(res.serialize(payload));
   }
 }
@@ -75,10 +73,14 @@ export class RedirectError extends BaseHttpError {
   }
 }
 
-export function errorHandler(error: unknown, req: Request, reply: Response) {
-  HttpError.create(error).render(req, reply);
+export function decorateError(app: App, render: ErrorDecorator) {
+  app.decorate(kErrorDecorator, render);
 }
 
-export function decorate(app: App, render: ErrorDecorator) {
-  app.decorate(kErrorDecorator, render);
+export function errorHandler(error: unknown, req: Request, reply: Response) {
+  const handler = BaseHttpError.is(error)
+    ? error
+    : (req.server.log.error(error),
+      new HttpError("Unable to process request", 500, error));
+  handler.render(req, reply);
 }

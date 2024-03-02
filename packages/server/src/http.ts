@@ -8,6 +8,7 @@ export function getRequest(): Request {
   const { req } = getContext();
   return req;
 }
+
 export function getResponse(): Response {
   return getContext().reply;
 }
@@ -39,6 +40,7 @@ export function getHeader<T = string | undefined>(name: string) {
 export function getQueries<T = ParsedUrlQuery>() {
   return getRequest().query as T;
 }
+
 export function getQuery<T>(name: string): T {
   const queries = getQueries();
   return queries[name] as T;

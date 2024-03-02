@@ -11,7 +11,7 @@ export * from "./http.js";
 export * from "./hooks.js";
 export { createContext } from "./context.js";
 
-function getDefaultConfig(): AppOptions {
+function getDefaultConfig(override: AppOptions): AppOptions {
   return {
     trustProxy: true,
     disableRequestLogging: true,
@@ -25,6 +25,7 @@ function getDefaultConfig(): AppOptions {
         },
       },
     },
+    ...override,
   };
 }
 
@@ -32,15 +33,11 @@ export function createApp({
   routes = { log: true },
   ...opts
 }: AppOptions = {}): App {
-  const app = fastify<Server>({
-    ...getDefaultConfig(),
-    ...opts,
-  });
-
+  const app = fastify<Server>(getDefaultConfig(opts));
   app.register(appPlugin);
   app.setErrorHandler(errorHandler);
-  app.addContentTypeParser("multipart/form-data", (_, __, done) => {
-    done(null);
+  app.addContentTypeParser("multipart/form-data", (_, __, next) => {
+    next(null);
   });
 
   async function quit(sig: string) {
