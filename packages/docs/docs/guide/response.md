@@ -47,3 +47,19 @@ async function* getDates() {
 
 app.get("/", getDates);
 ```
+
+## Hooks
+
+Using `defer`
+
+```ts
+function saveUser() {
+  // saving user
+  // save some log
+  defer(() => {
+    console.log("deleting log");
+    // delete log
+    // this will executed after request context completed
+  });
+}
+```

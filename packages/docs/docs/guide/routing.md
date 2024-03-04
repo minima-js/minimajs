@@ -26,6 +26,8 @@ app.post("/", createUser);
 app.put("/;user", updateUser);
 app.patch("/;user", patchUser);
 app.delete("/:user", deleteUser);
+app.head("/:user", getHead);
+app.options("/:user", getOption);
 ```
 
 ## Route Parameters

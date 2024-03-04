@@ -9,6 +9,7 @@ let's starts with create a middleware
 ```ts
 // src/payments/middleware.ts
 import { getRequest } from "@minimajs/server";
+
 export async function loggerMiddleware() {
   const req = getRequest();
   console.log(req.url);
@@ -17,6 +18,7 @@ export async function loggerMiddleware() {
 // src/index.ts
 import { interceptor } from "@minimajs/server";
 import { loggerMiddleware } from "./payments/middleware";
+
 // wrap paymentModule with interceptor
 app.register(interceptor([loggerMiddleware], paymentModule), {
   prefix: "/payments",
