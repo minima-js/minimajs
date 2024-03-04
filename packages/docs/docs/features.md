@@ -1,8 +1,7 @@
-# MinimaJs (A framework for backend)
-
-- Implementing functional programming to address and eliminate diamond dependency issues.
-- Minimize the backend framework's memory usage to enhance resource efficiency and scalability.
-- Enable support for additional integrations and plugins to extend the functionality and versatility of the backend framework.
+---
+slug: /features
+sidebar_position: 3
+---
 
 ## Demo - A hello world
 
