@@ -6,9 +6,6 @@ const config: Config = {
   favicon: "img/favicon.ico",
   baseUrl: "/",
   url: "http://minimajs.github.io/",
-
-  /* Your site config here */
-
   presets: [
     [
       "@docusaurus/preset-classic",
