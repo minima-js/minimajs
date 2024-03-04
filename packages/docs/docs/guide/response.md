@@ -1,4 +1,9 @@
-## Response
+---
+title: Response
+sidebar_position: 5
+---
+
+## Return value as response
 
 just return the value will be a response
 
@@ -8,7 +13,7 @@ app.get("/", () => {
 });
 ```
 
-async response
+## Async
 
 ```ts
 app.get("/", async () => {
@@ -17,7 +22,9 @@ app.get("/", async () => {
 });
 ```
 
-any readable stream or a generators are also a valid response
+## Streams
+
+Any Readable streams are a valid response
 
 ```ts
 import { createReadStream } from "node:fs";
@@ -27,7 +34,7 @@ app.get("/", async () => {
 });
 ```
 
-generator as response
+# Generators
 
 ```ts
 import { setTimeout as sleep } from "node:timers/promise";

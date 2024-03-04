@@ -1,4 +1,9 @@
-### Basic Routing
+---
+title: Routing
+sidebar_position: 3
+---
+
+## The Basic
 
 ```ts
 app.get("/", () => "Welcome Home!");
@@ -11,7 +16,7 @@ curl http://localhost:1234
 > Welcome Home!
 ```
 
-### Available methods
+## Available methods
 
 The router allows you to register routes that respond to any HTTP verb:
 
@@ -23,7 +28,7 @@ app.patch("/;user", patchUser);
 app.delete("/:user", deleteUser);
 ```
 
-### Route Parameters
+## Route Parameters
 
 ```ts
 app.get("/users/:user", () => {
@@ -41,7 +46,7 @@ app.get("/posts/:post/comments/:comment", () => {
 });
 ```
 
-Optionals parameters
+## Optionals parameters
 
 ```ts
 app.get("/posts/:post?", () => {

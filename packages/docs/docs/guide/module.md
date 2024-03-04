@@ -1,3 +1,7 @@
+---
+title: Module
+---
+
 ## Defining Modules
 
 in Minima, everything is a module, and a module is nothing but a async function.

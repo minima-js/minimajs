@@ -1,6 +1,9 @@
 ---
 slug: /features
-sidebar_position: 3
+sidebar_position: 10
+tags:
+  - Features
+  - All is well
 ---
 
 ## Demo - A hello world
