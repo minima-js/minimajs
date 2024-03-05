@@ -1,40 +1,50 @@
 ---
 title: Middleware
+sidebar_position: 7
+tags:
+  - middleware
+  - interceptor
+  - module
 ---
 
-How a framework could exists without a middleware??
+How could a framework exist without middleware? It's a fundamental component, enabling modular and reusable code for request handling.
 
-let's starts with create a middleware
+Let's start by creating a middleware:
 
-```ts
-// src/payments/middleware.ts
+```ts title="src/payments/middleware.ts"
 import { getRequest } from "@minimajs/server";
 
 export async function loggerMiddleware() {
   const req = getRequest();
   console.log(req.url);
 }
+```
 
-// src/index.ts
+In this example, we've created a simple logger middleware that logs the URL of incoming requests.
+
+Next, let's integrate this middleware into our application:
+
+```ts title="src/index.ts"
 import { interceptor } from "@minimajs/server";
 import { loggerMiddleware } from "./payments/middleware";
 
-// wrap paymentModule with interceptor
+// Register the loggerMiddleware with an interceptor
 app.register(interceptor([loggerMiddleware], paymentModule), {
   prefix: "/payments",
 });
 ```
 
-Yes I know what you are thinking? you wan't to use existing express middleware.
+Here, we've used the `interceptor` function to wrap our `paymentModule` with the `loggerMiddleware`, ensuring that all requests to the `/payments` endpoint are logged.
 
-I got you.
+But what if you want to leverage existing Express middleware? Not a problem! `interceptor` is fully compatible with Express middleware:
 
-interceptor is also fully compatible with express middleware
-
-```ts
+```typescript title="src/index.ts"
 import { yourExpressMiddleware } from "middleware/factory";
 
+// Integrate your Express middleware with the interceptor
 app.register(interceptor([yourExpressMiddleware], paymentModule), {
   prefix: "/payments",
 });
 ```
+
+With `interceptor`, you can seamlessly use Express middleware within your minimajs application, making it easy to transition existing codebases or leverage a rich ecosystem of middleware libraries.

@@ -3,25 +3,18 @@ title: Getting started
 sidebar_position: 2
 tags:
   - installation
+  - app
 ---
 
 ## Installation
 
-With yarn
-
-```bash
-yarn add @minimajs/server
-```
-
-Or with npm
-
-```sh
+```bash npm2yarn
 npm i @minimajs/server
 ```
 
 Let's starts with creating app
 
-Directory tree
+Directory structure
 
 ```
 .
@@ -32,18 +25,14 @@ Directory tree
 └── package.json
 ```
 
-package.json
-
-```json
+```json title="package.json"
 {
   "name": "hello-nodejs",
   "type": "module" // this is important
 }
 ```
 
-src/index.ts
-
-```ts
+```ts title="src/index.ts"
 import { createApp } from "@minimajs/server";
 
 const app = createApp();
@@ -57,13 +46,13 @@ That's all!
 
 Now either use `tsc` (Typescript) to compile your code or follow along
 
-```sh
-yarn add -D ebx
+```bash npm2yarn
+npm i --save-dev ebx
 ```
 
 Add following inside your `package.json` file
 
-```json
+```json title="package.json"
 {
   "scripts": {
     "dev": "ebx src/index.ts -wsr",

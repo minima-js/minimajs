@@ -1,6 +1,8 @@
 ---
 title: Routing
 sidebar_position: 3
+tags:
+  - app
 ---
 
 ## The Basic

@@ -1,6 +1,11 @@
 ---
 title: Http Helpers
 sidebar_position: 4
+tags:
+  - request
+  - response
+  - error
+  - context
 ---
 
 The request/response are globally accessible anywhere from request contexts.
