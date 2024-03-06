@@ -4,7 +4,8 @@
   "type": "module",
   "exports": {
     ".": "./lib/index.js",
-    "./helpers": "./lib/helpers.js"
+    "./helpers": "./lib/helpers.js",
+    "./unstable": "./lib/unstable.js"
   },
   "scripts": {
     "dev": "tsc -w",

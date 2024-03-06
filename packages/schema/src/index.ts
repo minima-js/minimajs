@@ -18,12 +18,14 @@ export function createHeadersAsync<T extends ObjectShape>(obj: T) {
   return validatorAsync(obj, getHeaders);
 }
 
-export function createQuery<T extends ObjectShape>(obj: T) {
+export function createQueries<T extends ObjectShape>(obj: T) {
   return validator(obj, getQueries);
 }
 
-export function createQueryAsync<T extends ObjectShape>(obj: T) {
+export function createQueriesAsync<T extends ObjectShape>(obj: T) {
   return validatorAsync(obj, getQueries);
 }
 
 export * from "yup";
+export { ValidationError } from "./error.js";
+export { ValidationError as BaseError } from "yup";

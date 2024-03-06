@@ -72,6 +72,10 @@ export class RedirectError extends BaseHttpError {
     res.redirect(this.statusCode, this.url);
   }
 }
+export class ValidationError extends HttpError {
+  public static statusCode = 422;
+  public statusCode: number = ValidationError.statusCode;
+}
 
 export function decorateError(app: App, render: ErrorDecorator) {
   app.decorate(kErrorDecorator, render);

@@ -77,9 +77,23 @@ export function getQueries<T = ParsedUrlQuery>() {
   return getRequest().query as T;
 }
 
-export function getQuery<T>(name: string): T {
+export function getQuery<T>(name: string, castTo: CastTo<T>): T | undefined;
+export function getQuery<T>(name: string, castTo: CastTo<T>, required: true): T;
+export function getQuery<T>(
+  name: string,
+  cast?: CastTo<T>,
+  required = false
+): any {
   const queries = getQueries();
-  return queries[name] as T;
+  const value = queries[name];
+  if (required && value === undefined) {
+    abort(`querystring ${name} was expected`, 422);
+  }
+  if (cast) {
+    if (!value) return value;
+    return cast(value);
+  }
+  return value;
 }
 
 export function setHeader(name: string, value: string): Response {

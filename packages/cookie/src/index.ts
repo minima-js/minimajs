@@ -2,7 +2,7 @@ import { getContext } from "@minimajs/server/context";
 import type { CookieSerializeOptions } from "@fastify/cookie";
 import fastifyCookie from "@fastify/cookie";
 
-export { fastifyCookie as cookiePlugin };
+export { fastifyCookie as plugin };
 export { type CookieSerializeOptions };
 
 export function getCookie(
