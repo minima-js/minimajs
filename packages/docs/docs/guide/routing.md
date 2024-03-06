@@ -45,6 +45,7 @@ You may define as many route parameters as required by your route:
 
 ```ts
 app.get("/posts/:post/comments/:comment", () => {
+  // highlight-next-line
   const params = getParams<{ post: string; comment: string }>();
   return [params.post, params.comment];
 });
@@ -53,6 +54,7 @@ app.get("/posts/:post/comments/:comment", () => {
 ## Optionals parameters
 
 ```ts
+// highlight-next-line
 app.get("/posts/:post?", () => {
   const params = getParams<{ post?: string }>();
   return [params.post ?? "not defined"];

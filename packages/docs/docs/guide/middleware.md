@@ -29,6 +29,7 @@ import { interceptor } from "@minimajs/server";
 import { loggerMiddleware } from "./payments/middleware";
 
 // Register the loggerMiddleware with an interceptor
+// highlight-next-line
 app.register(interceptor([loggerMiddleware], paymentModule), {
   prefix: "/payments",
 });
@@ -38,10 +39,11 @@ Here, we've used the `interceptor` function to wrap our `paymentModule` with the
 
 But what if you want to leverage existing Express middleware? Not a problem! `interceptor` is fully compatible with Express middleware:
 
-```typescript title="src/index.ts"
+```ts title="src/index.ts"
 import { yourExpressMiddleware } from "middleware/factory";
 
 // Integrate your Express middleware with the interceptor
+// highlight-next-line
 app.register(interceptor([yourExpressMiddleware], paymentModule), {
   prefix: "/payments",
 });

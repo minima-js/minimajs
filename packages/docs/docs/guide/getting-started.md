@@ -55,9 +55,11 @@ Add following inside your `package.json` file
 ```json title="package.json"
 {
   "scripts": {
+    // highlight-start
     "dev": "ebx src/index.ts -wsr",
     "build": "ebx src/index.ts",
     "start": "node dist/index.js"
+    // highlight-end
   }
 }
 ```

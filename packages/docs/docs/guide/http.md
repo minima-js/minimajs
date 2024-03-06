@@ -15,6 +15,7 @@ The request/response are globally accessible anywhere from request contexts.
 ```ts
 import { getBody, getRequest } from "@minimajs/server";
 app.get("/", () => {
+  // highlight-next-line
   const request = getRequest();
   return request.url;
 });
@@ -25,6 +26,7 @@ And even you can use request in nested function calls
 
 ```ts
 function getURL() {
+  // highlight-next-line
   return getRequest().url;
 }
 app.get("/", () => {
@@ -88,11 +90,13 @@ Using `defer`
 function saveUser() {
   // saving user
   // save some log
+  // highlight-start
   defer(() => {
     console.log("deleting log");
     // delete log
     // this will executed after request context completed
   });
+  // highlight-end
 }
 ```
 

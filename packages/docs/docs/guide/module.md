@@ -13,8 +13,7 @@ In Minima, everything is a module, and a module is essentially an asynchronous f
 
 ### Creating a Module
 
-```typescript
-// src/payments/index.ts
+```typescript title="src/payments/index.ts"
 import { type App } from "@minimajs/server";
 
 async function getPayments() {
@@ -25,8 +24,9 @@ async function getPayments() {
 export async function paymentModule(app: App) {
   app.get("/", getPayments);
 }
+```
 
-// src/index.ts
+```ts title="src/index.ts"
 // ...
 app.register(paymentModule, { prefix: "/payments" });
 ```

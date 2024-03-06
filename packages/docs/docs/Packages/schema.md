@@ -5,8 +5,8 @@ sidebar_position: 1
 
 ## Installation
 
-```sh
-yarn add @minimajs/schema
+```sh npm2yarn
+npm i @minimajs/schema
 ```
 
 ```ts
