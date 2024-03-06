@@ -4,13 +4,12 @@
   "homepage": "https://minima-js.github.io",
   "repository": {
     "type": "github",
-    "directory": "/",
     "url": "git@github.com:minima-js/minima-js.github.io"
   },
   "scripts": {
     "start": "docusaurus start",
     "docs:build": "docusaurus build",
-    "deploy": "gh-pages --dist build --repo git@github.com:minima-js/minima-js.github.io"
+    "deploy": "gh-pages --dist build --repo=git@github.com:minima-js/minima-js.github.io"
   },
   "dependencies": {
     "@docusaurus/core": "^3.1.1",
