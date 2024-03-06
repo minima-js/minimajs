@@ -2,7 +2,7 @@ import { StatusCodes } from "http-status-codes";
 import { getContext } from "./context.js";
 import { RedirectError, HttpError } from "./error.js";
 import type { ParsedUrlQuery } from "node:querystring";
-import type { Request, Response } from "./types.js";
+import type { Dict, Request, Response } from "./types.js";
 
 export function getRequest(): Request {
   const { req } = getContext();
@@ -15,6 +15,42 @@ export function getResponse(): Response {
 
 export function getBody<T = unknown>() {
   return getRequest().body as T;
+}
+
+export function getParams<T = Dict<string>>(): T {
+  return getRequest().params as T;
+}
+
+type CastTo<T> = (value: unknown) => T;
+
+export function getParam(name: string): string;
+export function getParam<T>(
+  name: string,
+  cast: null,
+  required: false
+): string | undefined;
+export function getParam<T>(
+  name: string,
+  cast: CastTo<T>,
+  required: false
+): T | undefined;
+export function getParam<T>(name: string, cast: CastTo<T>): T;
+export function getParam(name: string, cast?: any, required = true): any {
+  const params = getRequest().params as any;
+  const value = params[name];
+  if (required && !value) {
+    abort("Not Found", 404);
+  }
+  if (cast === Number) {
+    if (!value) {
+      return value;
+    }
+    if (isNaN(value)) {
+      abort("Not Found", "NOT_FOUND");
+    }
+    return Number(value);
+  }
+  return value;
 }
 
 export function setStatusCode(

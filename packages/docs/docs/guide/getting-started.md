@@ -12,27 +12,33 @@ tags:
 npm i @minimajs/server
 ```
 
-Let's starts with creating app
+#### Directory Structure
 
-Directory structure
+Your project directory structure should look like this:
 
 ```
 .
 ├── src
-│   ├── index.ts // entry point
-│   └── user // module user
-│       └── index.ts // user module entry point
+│   ├── index.ts         // Entry point
+│   └── user             // User module
+│       └── index.ts     // User module entry point
 └── package.json
 ```
 
-```json title="package.json"
+#### Setting Up Your Project
+
+Ensure that your `package.json` file has the `"type": "module"` field to enable ECMAScript modules (ESM) support:
+
+```json
 {
   "name": "hello-nodejs",
-  "type": "module" // this is important
+  "type": "module"
 }
 ```
 
-```ts title="src/index.ts"
+#### Creating Your Application
+
+```typescript title="src/index.ts"
 import { createApp } from "@minimajs/server";
 
 const app = createApp();
@@ -42,9 +48,38 @@ app.get("/", () => "Welcome Home!");
 await app.listen({ port: 1234 });
 ```
 
+This code creates a MinimaJS application with a single route handler for the root URL ("/") that returns "Welcome Home!" as the response.
+
 That's all!
 
-Now either use `tsc` (Typescript) to compile your code or follow along
+Now, You have two options for compiling and running your TypeScript project:
+
+**Using tsc Compiler**:
+
+While you can compile your TypeScript code using the TypeScript Compiler (`tsc`) and then run the compiled JavaScript files, it might involve multiple steps. Here's how you can do it:
+
+```bash
+tsc
+node dist/index.js
+```
+
+```bash
+└── / (GET, HEAD)
+
+INFO (84531): Server listening at http://0.0.0.0:1234
+```
+
+```bash
+curl http://0.0.0.0:1234
+> Welcome Home!
+```
+
+**Using ebx Bundler**:
+
+On the other hand, you can utilize the `ebx` bundler, known for its lightning-fast performance and seamless bundling experience tailored specifically for Node.js projects.
+Read more https://npmjs.com/package/ebx
+
+Here's how you can leverage it:
 
 ```bash npm2yarn
 npm i --save-dev ebx
@@ -64,25 +99,34 @@ Add following inside your `package.json` file
 }
 ```
 
-Starting the project
+With `ebx`, you can directly bundle and execute your TypeScript code in a single step, significantly reducing build times and simplifying your workflow.
 
-```sh
+#### Development Workflow
+
+To start your project in development mode.
+
+```bash
 yarn dev
 ```
 
-Server is listening on http://127.0.0.1:1234
+This command compiles your TypeScript code and starts the server with automatic reloading enabled.
 
-```sh
-curl http://127.0.0.1:1234/
-> Welcome Home!
+#### Production Build
+
+To build your project for production deployment, run:
+
+```bash
+yarn build
 ```
 
-Read more about https://www.npmjs.com/package/ebx
+This command compiles your TypeScript code into JavaScript files in the `dist` directory.
 
-## Customizing App
+#### Starting the Server
 
-```ts
-const app = createApp({
-  disableLogging: false, // disable logging
-});
+Once your project is built, you can start the server using:
+
+```bash
+yarn start
 ```
+
+This command runs the compiled JavaScript files in the `dist` directory.
