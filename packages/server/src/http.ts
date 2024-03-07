@@ -1,9 +1,14 @@
 import { StatusCodes } from "http-status-codes";
 import { getContext } from "./context.js";
-import { RedirectError, HttpError, ValidationError } from "./error.js";
+import {
+  RedirectError,
+  HttpError,
+  BaseHttpError,
+  ValidationError,
+} from "./error.js";
 import type { ParsedUrlQuery } from "node:querystring";
 import type { Dict, Request, Response } from "./types.js";
-import { validateAndCast, type CastTo } from "./utils/validate.js";
+import { createAttribute } from "./utils/attribute.js";
 
 export function getRequest(): Request {
   const { req } = getContext();
@@ -22,31 +27,6 @@ export function getParams<T = Dict<string>>(): T {
   return getRequest().params as T;
 }
 
-export function getParam(name: string): string;
-export function getParam<T>(
-  name: string,
-  cast: null,
-  required: false
-): string | undefined;
-export function getParam<T>(
-  name: string,
-  cast: CastTo<T>,
-  required: false
-): T | undefined;
-export function getParam<T>(name: string, cast: CastTo<T>): T;
-export function getParam<T>(
-  name: string,
-  cast?: CastTo<T> | null,
-  required = true
-): T {
-  const params = getRequest().params as any;
-  try {
-    return validateAndCast(params[name], cast!, required);
-  } catch (err) {
-    abort("Not Found", 404);
-  }
-}
-
 export function setStatusCode(
   statusCode: keyof typeof StatusCodes | number
 ): Response {
@@ -62,38 +42,34 @@ export function getHeaders() {
   return req.headers;
 }
 
-export function getHeader<T = string | undefined>(name: string) {
-  const headers = getHeaders();
-  return headers[name] as T;
-}
-
 export function getQueries<T = ParsedUrlQuery>() {
   return getRequest().query as T;
 }
 
-export function getQuery(name: string): string | undefined;
-export function getQuery(name: string, cast: null, required: true): string;
-export function getQuery<T>(name: string, castTo: CastTo<T>): T | undefined;
-export function getQuery<T>(name: string, castTo: CastTo<T>, required: true): T;
-export function getQuery<T>(name: string, castTo: [CastTo<T>]): T[] | undefined;
-export function getQuery<T>(
-  name: string,
-  castTo: [CastTo<T>],
-  required: true
-): T[];
-export function getQuery<T>(
-  name: string,
-  cast?: CastTo<T> | [CastTo<T>] | null,
-  required = false
-) {
-  const queries = getQueries();
-  try {
-    return validateAndCast(queries[name], cast!, required);
-  } catch (err) {
-    assertError(err);
-    throw new ValidationError(`[${name}]: ${err.message}`);
-  }
-}
+export const getParam = createAttribute<string, string>(
+  getParams,
+  () => {
+    abort("Not Found", 404);
+  },
+  true
+);
+
+export const getHeader = createAttribute<string | undefined, string>(
+  getHeaders,
+  throwAttributeError
+);
+
+export const getQuery = createAttribute<string | undefined, string>(
+  getQueries,
+  throwAttributeError,
+  false,
+  (val) => (val === undefined ? val : String(val))
+);
+
+export const getField = createAttribute<unknown | undefined, unknown>(
+  getBody,
+  throwAttributeError
+);
 
 export function setHeader(name: string, value: string): Response {
   const { reply } = getContext();
@@ -111,9 +87,20 @@ export function abort(
   throw new HttpError(message, statusCode);
 }
 
-export function assertError(err: unknown): asserts err is Error {
-  if (err instanceof Error) {
+abort.assert = function assertAbort(error: unknown): asserts error is Error {
+  if (BaseHttpError.is(error)) {
+    throw error;
+  }
+  if (error instanceof Error) {
     return;
   }
-  throw err;
+  throw error;
+};
+
+abort.is = function isAbortError(error: unknown): error is BaseHttpError {
+  return BaseHttpError.is(error);
+};
+
+function throwAttributeError(name: string, message: string): never {
+  throw new ValidationError(`${name}: ${message}`);
 }
