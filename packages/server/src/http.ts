@@ -1,6 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import { getContext } from "./context.js";
-import { RedirectError, HttpError } from "./error.js";
+import { RedirectError, HttpError, ValidationError } from "./error.js";
 import type { ParsedUrlQuery } from "node:querystring";
 import type { Dict, Request, Response } from "./types.js";
 
@@ -77,20 +77,43 @@ export function getQueries<T = ParsedUrlQuery>() {
   return getRequest().query as T;
 }
 
+export function getQuery(name: string): string | undefined;
+export function getQuery(name: string, cast: null, required: true): string;
+export function getQuery(name: string, cast: null, required: true): string;
 export function getQuery<T>(name: string, castTo: CastTo<T>): T | undefined;
 export function getQuery<T>(name: string, castTo: CastTo<T>, required: true): T;
+export function getQuery<T>(name: string, castTo: [CastTo<T>]): T[] | undefined;
 export function getQuery<T>(
   name: string,
-  cast?: CastTo<T>,
+  castTo: [CastTo<T>],
+  required: true
+): T[];
+export function getQuery<T>(
+  name: string,
+  cast?: CastTo<T> | [CastTo<T>] | null,
   required = false
 ): any {
   const queries = getQueries();
-  const value = queries[name];
+  let value = queries[name];
   if (required && value === undefined) {
-    abort(`querystring ${name} was expected`, 422);
+    throw new ValidationError(`querystring ${name} is ${value}`);
   }
   if (cast) {
     if (!value) return value;
+    if (Array.isArray(cast)) {
+      if (!Array.isArray(value)) {
+        value = [value];
+      }
+      const [toValue] = cast;
+      if (!toValue) {
+        throw new Error("invalid cast");
+      }
+      return value.map((v) => {
+        const nv = toValue(v);
+        if (Number.isNaN(nv)) throw new ValidationError(`${name} is NaN`);
+        return nv;
+      });
+    }
     return cast(value);
   }
   return value;
