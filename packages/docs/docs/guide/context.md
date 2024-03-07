@@ -33,6 +33,8 @@ app.get("/hello", helloHandler);
 
 Context is particularly useful for passing data from a middleware to a request callback:
 
+**Creating a Context**
+
 ```typescript title="src/hello/context.ts"
 import { createContext } from "@minimajs/server";
 
@@ -44,6 +46,8 @@ export interface User {
 // Create a context for storing and retrieving user data
 export const [getUser, setUser] = createContext<User>({ name: "" });
 ```
+
+**Creating a Middleware**
 
 ```ts title="src/hello/middleware.ts"
 import { getHeaders } from "@minimajs/server";
@@ -57,6 +61,8 @@ function userInterceptor() {
   }
 }
 ```
+
+**Defining a Module**
 
 ```ts title="src/hello/index.ts"
 import { type App } from "@minimajs/server";
@@ -73,6 +79,8 @@ export function helloModule(app: App) {
   app.get("/", helloHandler);
 }
 ```
+
+**Putting it All Together**
 
 ```ts title="src/index.ts"
 import { interceptor } from "@minimajs/server";

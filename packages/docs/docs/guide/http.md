@@ -300,12 +300,4 @@ async function findUser() {
 app.get("/users/:user", findUser);
 ```
 
-### assertError
-
-```typescript
-assertError(err: unknown): void
-```
-
-Asserts that the provided value is an instance of Error.
-
 These functions provide essential utilities for handling HTTP requests and responses within request context built-in `@minimajs/server`.
