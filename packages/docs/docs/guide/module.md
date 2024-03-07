@@ -7,9 +7,7 @@ tags:
   - interceptor
 ---
 
-## Defining Modules
-
-In Minima, everything is a module, and a module is essentially an asynchronous function.
+In Minimajs, everything is a module, and a module is essentially an asynchronous function.
 
 ### Creating a Module
 
@@ -26,15 +24,22 @@ export async function paymentModule(app: App) {
 }
 ```
 
+### Register module
+
 ```ts title="src/index.ts"
-// ...
 app.register(paymentModule, { prefix: "/payments" });
+```
+
+or root level
+
+```ts title="src/index.ts"
+app.register(paymentModule);
 ```
 
 In this example:
 
 - We define a module named `paymentModule` in `src/payments/index.ts`.
-- This module exports an asynchronous function that takes an `App` object as a parameter.
+- This module exports an asynchronous function that takes an `App` as a parameter.
 - Within the module function, we define a route handler `getPayments` to handle requests to the `/payments` endpoint.
 - Finally, we register the `paymentModule` with the application, specifying the prefix `/payments` for its routes in `src/index.ts`.
 

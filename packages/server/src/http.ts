@@ -3,6 +3,7 @@ import { getContext } from "./context.js";
 import { RedirectError, HttpError, ValidationError } from "./error.js";
 import type { ParsedUrlQuery } from "node:querystring";
 import type { Dict, Request, Response } from "./types.js";
+import { validateAndCast, type CastTo } from "./utils/validate.js";
 
 export function getRequest(): Request {
   const { req } = getContext();
@@ -21,8 +22,6 @@ export function getParams<T = Dict<string>>(): T {
   return getRequest().params as T;
 }
 
-type CastTo<T> = (value: unknown) => T;
-
 export function getParam(name: string): string;
 export function getParam<T>(
   name: string,
@@ -35,22 +34,17 @@ export function getParam<T>(
   required: false
 ): T | undefined;
 export function getParam<T>(name: string, cast: CastTo<T>): T;
-export function getParam(name: string, cast?: any, required = true): any {
+export function getParam<T>(
+  name: string,
+  cast?: CastTo<T> | null,
+  required = true
+): T {
   const params = getRequest().params as any;
-  const value = params[name];
-  if (required && !value) {
+  try {
+    return validateAndCast(params[name], cast!, required);
+  } catch (err) {
     abort("Not Found", 404);
   }
-  if (cast === Number) {
-    if (!value) {
-      return value;
-    }
-    if (isNaN(value)) {
-      abort("Not Found", "NOT_FOUND");
-    }
-    return Number(value);
-  }
-  return value;
 }
 
 export function setStatusCode(
@@ -79,7 +73,6 @@ export function getQueries<T = ParsedUrlQuery>() {
 
 export function getQuery(name: string): string | undefined;
 export function getQuery(name: string, cast: null, required: true): string;
-export function getQuery(name: string, cast: null, required: true): string;
 export function getQuery<T>(name: string, castTo: CastTo<T>): T | undefined;
 export function getQuery<T>(name: string, castTo: CastTo<T>, required: true): T;
 export function getQuery<T>(name: string, castTo: [CastTo<T>]): T[] | undefined;
@@ -92,31 +85,14 @@ export function getQuery<T>(
   name: string,
   cast?: CastTo<T> | [CastTo<T>] | null,
   required = false
-): any {
+) {
   const queries = getQueries();
-  let value = queries[name];
-  if (required && value === undefined) {
-    throw new ValidationError(`querystring ${name} is ${value}`);
+  try {
+    return validateAndCast(queries[name], cast!, required);
+  } catch (err) {
+    assertError(err);
+    throw new ValidationError(`[${name}]: ${err.message}`);
   }
-  if (cast) {
-    if (!value) return value;
-    if (Array.isArray(cast)) {
-      if (!Array.isArray(value)) {
-        value = [value];
-      }
-      const [toValue] = cast;
-      if (!toValue) {
-        throw new Error("invalid cast");
-      }
-      return value.map((v) => {
-        const nv = toValue(v);
-        if (Number.isNaN(nv)) throw new ValidationError(`${name} is NaN`);
-        return nv;
-      });
-    }
-    return cast(value);
-  }
-  return value;
 }
 
 export function setHeader(name: string, value: string): Response {

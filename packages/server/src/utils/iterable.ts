@@ -11,3 +11,10 @@ export function isObject(
 ): data is Record<string | symbol, unknown> {
   return Object(data) === data;
 }
+
+export function toArray<T>(value: T | T[]): T[] {
+  if (Array.isArray(value)) {
+    return value;
+  }
+  return [value];
+}
