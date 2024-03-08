@@ -3,27 +3,28 @@ import { toArray } from "./iterable.js";
 
 export type CastTo<T> = (value: unknown) => T;
 
-export function createAttribute<DT, DRT>(
+export function createAttribute<DT, DR extends boolean>(
   getValues: () => Dict<unknown>,
   throwError: (name: string, message: string) => never,
-  defaultRequired = false,
+  defaultRequired: DR,
   defaultCast?: CastTo<any>
 ) {
-  function getAttribute(name: string): DT;
-  function getAttribute(name: string, cast: null, required: true): DRT;
-  function getAttribute<T>(name: string, castTo: CastTo<T>): T | undefined;
+  function getAttribute(name: string): DR extends true ? DT : DT | undefined;
+  function getAttribute(name: string, cast: null, required: true): DT;
+  function getAttribute(name: string, cast: null, required: false): DT | undefined;
+
+  function getAttribute<T>(name: string, castTo: CastTo<T>): DR extends true ? T : T | undefined;
   function getAttribute<T>(name: string, castTo: CastTo<T>, required: true): T;
-  function getAttribute<T>(name: string, castTo: [CastTo<T>]): T[] | undefined;
-  function getAttribute<T>(
-    name: string,
-    castTo: [CastTo<T>],
-    required: true
-  ): T[];
+  function getAttribute<T>(name: string, castTo: CastTo<T>, required: false): T | undefined;
+
+  function getAttribute<T>(name: string, castTo: [CastTo<T>]): DR extends true ? T[] : T[] | undefined;
+  function getAttribute<T>(name: string, castTo: [CastTo<T>], required: false): T[] | undefined;
+  function getAttribute<T>(name: string, castTo: [CastTo<T>], required: true): T[];
 
   function getAttribute<T>(
     name: string,
     cast: CastTo<T> | [CastTo<T>] | null | undefined = defaultCast,
-    required = defaultRequired
+    required: boolean = defaultRequired
   ) {
     const queries = getValues();
     return validateAndCast(name, queries[name], cast!, required);
@@ -39,9 +40,7 @@ export function createAttribute<DT, DRT>(
       throwError(name, "value is undefined");
     }
     if (Array.isArray(cast)) {
-      return toArray(value).map((v) =>
-        validateAndCast(name, v, cast[0], required)
-      );
+      return toArray(value).map((v) => validateAndCast(name, v, cast[0], required));
     }
     if (cast) {
       const newValue = cast(value);

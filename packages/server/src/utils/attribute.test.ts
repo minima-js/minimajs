@@ -10,16 +10,13 @@ function getValues() {
     tags: ["hello", "world"],
   } satisfies Record<string, unknown>;
 }
+function throwAttributeError(name: string, message: string): never {
+  throw new Error(`${name}:${message}`);
+}
 
 describe("attribute", () => {
   describe("createAttribute", () => {
-    const getAttribute = createAttribute(
-      getValues,
-      (name, message) => {
-        throw new Error(`${name}:${message}`);
-      },
-      true
-    );
+    const getAttribute = createAttribute(getValues, throwAttributeError, true);
 
     test("getting undefined property", () => {
       expect(() => getAttribute("hello")).toThrow("hello:value is undefined");
@@ -46,26 +43,13 @@ describe("attribute", () => {
     });
 
     // with default casting
-    const getOptionalAttribute = createAttribute(
-      getValues,
-      (name, message) => {
-        throw new Error(`${name}:${message}`);
-      },
-      false
-    );
+    const getOptionalAttribute = createAttribute(getValues, throwAttributeError, false);
 
     test("default optional", () => {
       expect(getOptionalAttribute("hello")).toBeUndefined();
     });
 
-    const getStringAttribute = createAttribute(
-      getValues,
-      (name, message) => {
-        throw new Error(`${name}:${message}`);
-      },
-      false,
-      String
-    );
+    const getStringAttribute = createAttribute(getValues, throwAttributeError, false, String);
     test("default casting", () => {
       expect(getStringAttribute("number")).toBe("1234");
     });
