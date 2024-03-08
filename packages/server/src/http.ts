@@ -39,13 +39,13 @@ export function getQueries<T = ParsedUrlQuery>() {
   return getRequest().query as T;
 }
 
-export const getParam = createAttribute<string, true>(getParams, throwNotFound, true);
+export const getParam = createAttribute(getParams, throwNotFound, true);
 
-export const getHeader = createAttribute<string, false>(getHeaders, throwAttributeError, false);
+export const getHeader = createAttribute(getHeaders, throwAttributeError, false);
 
-export const getField = createAttribute<unknown, false>(getBody, throwAttributeError, false);
+export const getField = createAttribute(getBody, throwAttributeError, false);
 
-export const getQuery = createAttribute<string, false>(getQueries, throwAttributeError, false, (val) => {
+export const getQuery = createAttribute(getQueries, throwAttributeError, false, (val) => {
   return val === undefined ? val : String(val);
 });
 
