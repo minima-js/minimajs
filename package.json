@@ -12,6 +12,7 @@
   },
   "packageManager": "yarn@4.1.0",
   "devDependencies": {
+    "jest": "^29.7.0",
     "rimraf": "^5.0.5",
     "turbo": "^1.12.4",
     "typescript": "^5.3.3"
