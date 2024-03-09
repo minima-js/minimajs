@@ -6,6 +6,9 @@
       "dependsOn": ["^build"],
       "outputs": ["lib/**"]
     },
+    "clean": {
+      "cache": false
+    },
     "dev": {
       "cache": false,
       "persistent": true

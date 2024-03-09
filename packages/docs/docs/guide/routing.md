@@ -26,8 +26,8 @@ app.route(options);
 
 - `method`: currently it supports 'DELETE', 'GET', 'HEAD', 'PATCH', 'POST', 'PUT', 'OPTIONS', 'SEARCH', 'TRACE', 'PROPFIND', 'PROPPATCH', 'MKCOL', 'COPY', 'MOVE', 'LOCK' and 'UNLOCK'. It could also be an array of methods.
 - `url`: the path of the URL to match this route (alias: path).
-- `handler(request, reply)`: the function that will handle this request. The Fastify server will be bound to this when the handler is called. Note: using an arrow function will break the binding of this.
-- `bodyLimit`: prevents the default JSON body parser from parsing request bodies larger than this number of bytes. Must be an integer. You may also set this option globally when first creating the Fastify instance with fastify(options). Defaults to 1048576 (1 MiB).
+- `handler(request, reply)`: the function that will handle this request.
+- `bodyLimit`: prevents the default JSON body parser from parsing request bodies larger than this number of bytes. Must be an integer. You may also set this option globally when first creating the `app` instance with `createApp(options)`. Defaults to 1048576 (1 MiB).
 - `logLevel`: set log level for this route. See below.
 
 Example:

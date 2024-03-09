@@ -8,7 +8,8 @@
   ],
   "scripts": {
     "dev": "turbo run dev --parallel --continue",
-    "build": "turbo run build"
+    "build": "turbo run build",
+    "clean": "turbo run clean"
   },
   "packageManager": "yarn@4.1.0",
   "devDependencies": {
