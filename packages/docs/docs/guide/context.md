@@ -5,7 +5,11 @@ tags:
   - context
 ---
 
+### Introduction
+
 The concept of Context is fundamental to backend development, and it's a core feature of the minimajs framework. Context enables sharing data within the request scope without the need to explicitly pass it around.
+
+### Using Context
 
 Let's delve into this concept with examples:
 

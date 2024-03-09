@@ -45,7 +45,7 @@ export const getHeader = createAttribute(getHeaders, throwAttributeError, false)
 
 export const getField = createAttribute(getBody, throwAttributeError, false);
 
-export const getQuery = createAttribute(getQueries, throwAttributeError, false, (val) => {
+export const getQuery = createAttribute<string, false>(getQueries, throwAttributeError, false, (val) => {
   return val === undefined ? val : String(val);
 });
 

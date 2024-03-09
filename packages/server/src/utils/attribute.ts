@@ -1,9 +1,9 @@
 import type { Dict } from "../types.js";
 import { toArray } from "./iterable.js";
 
-export type CastTo<T> = (value: unknown) => T;
+export type CastTo<T, DT = unknown> = (value: DT) => T;
 
-type CastType<T> = CastTo<T> | [CastTo<T>] | null | undefined;
+type CastType<T, DT = unknown> = CastTo<T, DT> | [CastTo<T, DT>] | null | undefined;
 
 export function createAttribute<DT, DR extends boolean>(
   getValues: () => Dict<DT>,
@@ -16,7 +16,7 @@ export function createAttribute<DT, DR extends boolean>(
   function getAttribute(name: string, cast: null, required: true): DT;
   function getAttribute(name: string, cast: null, required: false): DT | undefined;
   // with casting
-  function getAttribute<T>(name: string, castTo: CastTo<T>): DR extends true ? T : T | undefined;
+  function getAttribute<T>(name: string, castTo: CastTo<T, DT>): DR extends true ? T : T | undefined;
   function getAttribute<T>(name: string, castTo: CastTo<T>, required: true): T;
   function getAttribute<T>(name: string, castTo: CastTo<T>, required: false): T | undefined;
   // with casting as an array
@@ -24,12 +24,12 @@ export function createAttribute<DT, DR extends boolean>(
   function getAttribute<T>(name: string, castTo: [CastTo<T>], required: false): T[] | undefined;
   function getAttribute<T>(name: string, castTo: [CastTo<T>], required: true): T[];
 
-  function getAttribute<T>(name: string, cast: CastType<T> = defaultCast, required: boolean = defaultRequired) {
+  function getAttribute<T>(name: string, cast: CastType<T, DT> = defaultCast, required: boolean = defaultRequired) {
     const queries = getValues();
     return validateAndCast(name, queries[name], cast!, required);
   }
 
-  function validateAndCast(name: string, value: unknown, cast?: CastType<unknown>, required?: boolean): unknown {
+  function validateAndCast(name: string, value: unknown, cast?: CastType<unknown, any>, required?: boolean): unknown {
     if (required && value === undefined) {
       throwError(name, "value is undefined");
     }

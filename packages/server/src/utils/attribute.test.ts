@@ -16,6 +16,7 @@ function throwAttributeError(name: string, message: string): never {
 
 describe("attribute", () => {
   describe("createAttribute", () => {
+    // required default
     const getAttribute = createAttribute(getValues, throwAttributeError, true);
 
     test("getting undefined property", () => {
@@ -42,11 +43,31 @@ describe("attribute", () => {
       expect(() => getAttribute("tags", Number)).toThrow("tags:value is NaN");
     });
 
-    // with default casting
+    // default optional
     const getOptionalAttribute = createAttribute(getValues, throwAttributeError, false);
 
     test("default optional", () => {
-      expect(getOptionalAttribute("hello")).toBeUndefined();
+      const hello = getOptionalAttribute("hello");
+
+      // @ts-expect-error
+      expect(() => hello.toString()).toThrow();
+
+      expect(hello).toBeUndefined();
+    });
+
+    test("default optional force required to be undefined", () => {
+      expect(() => {
+        const hello = getOptionalAttribute("hello", null, true);
+        return hello.toString();
+      }).toThrow();
+    });
+
+    test("default optional force required to be defined", () => {
+      const hello = getOptionalAttribute("company", null, true);
+      // @ts-expect-error
+      isNumber(hello);
+      isAnyOf<string | number | string[]>(hello);
+      expect(hello).toBeDefined();
     });
 
     const getStringAttribute = createAttribute(getValues, throwAttributeError, false, String);
@@ -55,3 +76,7 @@ describe("attribute", () => {
     });
   });
 });
+
+function isNumber<T>(_val: T extends number ? T : never) {}
+
+function isAnyOf<T>(_val: T) {}

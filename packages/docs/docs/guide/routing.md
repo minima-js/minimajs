@@ -5,7 +5,7 @@ tags:
   - app
 ---
 
-## The Basic
+### The Basic
 
 ```ts
 app.get("/", () => "Welcome Home!");
@@ -42,7 +42,7 @@ app.route({
 });
 ```
 
-## Available methods
+### Available methods
 
 The router allows you to register routes that respond to any HTTP verb:
 
@@ -57,7 +57,7 @@ app.options(path, [options], handler);
 app.all(path, [options], handler); // will add the same handler to all the supported methods.
 ```
 
-## Route Parameters
+### Route Parameters
 
 ```ts
 app.get("/users/:user", () => {
@@ -76,7 +76,7 @@ app.get("/posts/:post/comments/:comment", () => {
 });
 ```
 
-## Optionals parameters
+### Optionals parameters
 
 The last parameter can be made optional if you add a question mark ("?") to the end of the parameters name.
 
@@ -90,7 +90,7 @@ app.get("/posts/:post?", () => {
 
 In this case you can request /example/posts as well as /example/posts/1. The optional param will be undefined if not specified.
 
-## Wildcard
+### Wildcard
 
 For wildcard, use the star. Remember that static routes are always checked before parametric and wildcard.
 
@@ -102,7 +102,7 @@ app.get("/posts/*", () => {
 });
 ```
 
-## RegExp
+### RegExp
 
 Regular expression routes are supported as well, but be aware that you have to escape slashes. Take note that RegExp is also very expensive in terms of performance!
 

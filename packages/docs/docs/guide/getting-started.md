@@ -6,13 +6,13 @@ tags:
   - app
 ---
 
-## Installation
+### Installation
 
 ```bash npm2yarn
 npm i @minimajs/server
 ```
 
-#### Directory Structure
+### Directory Structure
 
 Your project directory structure should look like this:
 
@@ -25,7 +25,7 @@ Your project directory structure should look like this:
 └── package.json
 ```
 
-#### Setting Up Your Project
+### Setting Up Your Project
 
 Ensure that your `package.json` file has the `"type": "module"` field to enable ECMAScript modules (ESM) support:
 
@@ -36,7 +36,7 @@ Ensure that your `package.json` file has the `"type": "module"` field to enable 
 }
 ```
 
-#### Creating Your Application
+### Creating Your Application
 
 ```typescript title="src/index.ts"
 import { createApp } from "@minimajs/server";
@@ -54,7 +54,7 @@ That's all!
 
 Now, You have two options for compiling and running your TypeScript project:
 
-**Using tsc Compiler**:
+### Using tsc Compiler
 
 While you can compile your TypeScript code using the TypeScript Compiler (`tsc`) and then run the compiled JavaScript files, it might involve multiple steps. Here's how you can do it:
 
@@ -74,7 +74,7 @@ curl http://0.0.0.0:1234
 > Welcome Home!
 ```
 
-**Using ebx Bundler**:
+### Using ebx Bundler
 
 On the other hand, you can utilize the `ebx` bundler, known for its lightning-fast performance and seamless bundling experience tailored specifically for Node.js projects.
 Read more https://npmjs.com/package/ebx
@@ -101,7 +101,7 @@ Add following inside your `package.json` file
 
 With `ebx`, you can directly bundle and execute your TypeScript code in a single step, significantly reducing build times and simplifying your workflow.
 
-#### Development Workflow
+### Development Workflow
 
 To start your project in development mode.
 
@@ -111,7 +111,7 @@ yarn dev
 
 This command compiles your TypeScript code and starts the server with automatic reloading enabled.
 
-#### Production Build
+### Production Build
 
 To build your project for production deployment, run:
 
@@ -121,7 +121,7 @@ yarn build
 
 This command compiles your TypeScript code into JavaScript files in the `dist` directory.
 
-#### Starting the Server
+### Starting the Server
 
 Once your project is built, you can start the server using:
 
