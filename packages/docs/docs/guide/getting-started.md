@@ -36,7 +36,7 @@ Ensure that your `package.json` file has the `"type": "module"` field to enable 
 }
 ```
 
-### Creating Your Application
+#### Creating Your Application
 
 ```typescript title="src/index.ts"
 import { createApp } from "@minimajs/server";
