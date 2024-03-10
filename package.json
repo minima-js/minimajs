@@ -3,12 +3,18 @@
   "version": "0.0.1",
   "license": "MIT",
   "private": true,
+  "homepage": "https://minima-js.github.io/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/minima-js/minimajs"
+  },
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
     "dev": "turbo run dev --parallel --continue",
     "build": "turbo run build",
+    "test": "turbo run test",
     "clean": "turbo run clean"
   },
   "packageManager": "yarn@4.1.0",

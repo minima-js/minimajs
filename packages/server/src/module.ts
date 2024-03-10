@@ -1,18 +1,14 @@
 import type { RegisterOptions, preHandlerHookHandler } from "fastify";
 import type { App, Plugin, PluginOptions } from "./types.js";
-import { setPluginName } from "./internal/plugins.js";
+import { setPluginOption } from "./internal/plugins.js";
 
-export type PluginCallback<T extends PluginOptions> =
-  | Plugin<T>
-  | Promise<{ default: Plugin<T> }>;
+export type PluginCallback<T extends PluginOptions> = Plugin<T> | Promise<{ default: Plugin<T> }>;
 
 export type Interceptor = preHandlerHookHandler;
 
 export interface ModuleOptions extends RegisterOptions, PluginOptions {}
 
-async function toCallback<T extends PluginOptions = {}>(
-  callback: PluginCallback<T>
-): Promise<Plugin<T>> {
+async function toCallback<T extends PluginOptions = {}>(callback: PluginCallback<T>): Promise<Plugin<T>> {
   if (callback instanceof Promise) {
     const resolved = await callback;
     return resolved.default;
@@ -41,7 +37,7 @@ export function interceptor<T extends PluginOptions = {}>(
     callback = await toCallback(callback);
     return callback(app, opt);
   }
-  setPluginName(module, getModuleName(callback, opt));
+  setPluginOption(module, { name: getModuleName(callback, opt) });
   return module;
 }
 

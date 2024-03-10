@@ -1,6 +1,21 @@
-import { isObject, toArray } from "./iterable.js";
+import { isAsyncIterator, isObject, toArray } from "./iterable.js";
 
 describe("iterable", () => {
+  describe("isAsyncIterator", () => {
+    test("with async iterator", () => {
+      async function* hello() {
+        yield "hello";
+        yield "world";
+      }
+      expect(isAsyncIterator(hello())).toBeTruthy();
+    });
+    test("with normal function", () => {
+      async function hello() {
+        return "world";
+      }
+      expect(isAsyncIterator(hello())).toBeFalsy();
+    });
+  });
   describe("toArray", () => {
     test("with an array", () => {
       expect(toArray([])).toStrictEqual([]);

@@ -2,6 +2,12 @@
   "name": "@minimajs/server",
   "version": "0.0.1",
   "type": "module",
+  "homepage": "https://minima-js.github.io/",
+  "repository": {
+    "type": "github",
+    "directory": "packages/server",
+    "url": "https://github.com/minima-js/minimajs"
+  },
   "exports": {
     ".": "./lib/index.js",
     "./response": "./lib/response.js",
@@ -33,5 +39,17 @@
   ],
   "engines": {
     "node": ">=18.17.0"
-  }
+  },
+  "keywords": [
+    "web",
+    "framework",
+    "json",
+    "openapi",
+    "http",
+    "rest",
+    "restful",
+    "router",
+    "app",
+    "api"
+  ]
 }

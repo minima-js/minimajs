@@ -16,7 +16,8 @@ interface Context {
   readonly abortController: AbortController;
   readonly hooks: Hooks;
 }
-const local = new AsyncLocalStorage<Context>();
+
+export const contextStorage = new AsyncLocalStorage<Context>();
 
 function createContextWrap(req: Request, reply: Response): Context {
   return {
@@ -28,7 +29,7 @@ function createContextWrap(req: Request, reply: Response): Context {
   };
 }
 export function wrap(req: Request, reply: Response, cb: () => unknown) {
-  return local.run(Object.freeze(createContextWrap(req, reply)), cb);
+  return contextStorage.run(Object.freeze(createContextWrap(req, reply)), cb);
 }
 
 export function getHooks() {
@@ -36,11 +37,11 @@ export function getHooks() {
 }
 
 export function getContext() {
-  const context = local.getStore();
+  const context = contextStorage.getStore();
   assert(context, "Unable to access the context beyond the request scope.");
   return context;
 }
 
 export function getContextOrNull() {
-  return local.getStore() || null;
+  return contextStorage.getStore() || null;
 }

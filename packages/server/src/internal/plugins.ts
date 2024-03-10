@@ -4,13 +4,21 @@ import { wrap, getHooks } from "./context.js";
 
 type CF = CallableFunction;
 
-export function setPluginName(cb: any, name: string) {
-  cb[Symbol.for("fastify.display-name")] = name;
-  return cb;
+export interface PluginOption {
+  name?: string;
+  override?: boolean;
 }
 
-export function setPluginOverride(cb: any, override: boolean) {
-  cb[Symbol.for("skip-override")] = override;
+export function setPluginOption(cb: any, { name, override }: PluginOption = {}) {
+  if (name !== undefined) {
+    cb[Symbol.for("fastify.display-name")] = name;
+  }
+
+  if (override !== undefined) {
+    cb[Symbol.for("skip-override")] = override;
+  }
+
+  return cb;
 }
 
 export async function triggerOnSent() {
@@ -27,4 +35,4 @@ export const appPlugin = function minimajs(fastify: App, _: {}, next: CF) {
   next();
 };
 
-setPluginOverride(appPlugin, true);
+setPluginOption(appPlugin, { override: true });
