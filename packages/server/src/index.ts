@@ -1,7 +1,7 @@
 import type { Server } from "node:http";
 import fastify from "fastify";
 import { appPlugin } from "./internal/plugins.js";
-import { errorHandler } from "./error.js";
+import { NotFoundError, errorHandler } from "./error.js";
 import chalk from "chalk";
 import type { App, AppOptions } from "./types.js";
 export * from "./types.js";
@@ -29,13 +29,12 @@ function getDefaultConfig(override: AppOptions): AppOptions {
   };
 }
 
-export function createApp({
-  routes = { log: true },
-  ...opts
-}: AppOptions = {}): App {
+export function createApp({ routes = { log: true }, ...opts }: AppOptions = {}): App {
   const app = fastify<Server>(getDefaultConfig(opts));
   app.register(appPlugin);
   app.setErrorHandler(errorHandler);
+  app.setNotFoundHandler((req, res) => errorHandler(new NotFoundError(), req, res));
+
   app.addContentTypeParser("multipart/form-data", (_, __, next) => {
     next(null);
   });

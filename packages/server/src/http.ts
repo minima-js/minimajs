@@ -1,6 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import { getContext } from "./context.js";
-import { RedirectError, HttpError, BaseHttpError, ValidationError } from "./error.js";
+import { RedirectError, HttpError, BaseHttpError, ValidationError, NotFoundError } from "./error.js";
 import type { ParsedUrlQuery } from "node:querystring";
 import type { Dict, Request, Response } from "./types.js";
 import { createAttribute } from "./utils/attribute.js";
@@ -39,16 +39,6 @@ export function getQueries<T = ParsedUrlQuery>() {
   return getRequest().query as T;
 }
 
-export const getParam = createAttribute(getParams, throwNotFound, true);
-
-export const getHeader = createAttribute(getHeaders, throwAttributeError, false);
-
-export const getField = createAttribute(getBody, throwAttributeError, false);
-
-export const getQuery = createAttribute<string, false>(getQueries, throwAttributeError, false, (val) => {
-  return val === undefined ? val : String(val);
-});
-
 export function setHeader(name: string, value: string): Response {
   const { reply } = getContext();
   return reply.header(name, value);
@@ -61,6 +51,10 @@ export function redirect(path: string, isPermanent?: boolean): never {
 export function abort(message: string, statusCode: keyof typeof StatusCodes | number): never {
   throw new HttpError(message, statusCode);
 }
+
+abort.notFound = function abortNotFound(): never {
+  throw new NotFoundError();
+};
 
 abort.assert = function assertAbort(error: unknown): asserts error is Error {
   if (BaseHttpError.is(error)) {
@@ -80,6 +74,12 @@ function throwAttributeError(name: string, message: string): never {
   throw new ValidationError(`${name}: ${message}`);
 }
 
-function throwNotFound(): never {
-  abort("Not Found", 404);
-}
+export const getParam = createAttribute(getParams, abort.notFound, true);
+
+export const getHeader = createAttribute<string, false>(getHeaders as () => Dict<string>, throwAttributeError, false);
+
+export const getField = createAttribute(getBody, throwAttributeError, false);
+
+export const getQuery = createAttribute<string, false>(getQueries, throwAttributeError, false, (val) => {
+  return val === undefined ? val : String(val);
+});

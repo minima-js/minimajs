@@ -17,11 +17,11 @@
     "test": "turbo run test",
     "clean": "turbo run clean"
   },
-  "packageManager": "yarn@4.1.0",
+  "packageManager": "yarn@4.1.1",
   "devDependencies": {
     "jest": "^29.7.0",
     "rimraf": "^5.0.5",
-    "turbo": "^1.12.4",
-    "typescript": "^5.3.3"
+    "turbo": "^1.12.5",
+    "typescript": "^5.4.2"
   }
 }

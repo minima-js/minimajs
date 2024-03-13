@@ -15,7 +15,7 @@
   "devDependencies": {
     "@minimajs/schema": "*",
     "@minimajs/server": "*",
-    "@types/node": "^20.11.24",
+    "@types/node": "^20.11.27",
     "@types/uuid": "^9.0.8"
   },
   "dependencies": {

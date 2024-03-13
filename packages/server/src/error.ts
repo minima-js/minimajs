@@ -13,9 +13,7 @@ function getDecorator(app: App): ErrorDecorator {
 
 export type ErrorDecorator = (
   error: HttpError
-) =>
-  | [statusCode: number, payload: unknown]
-  | Promise<[statusCode: number, payload: unknown]>;
+) => [statusCode: number, payload: unknown] | Promise<[statusCode: number, payload: unknown]>;
 
 export abstract class BaseHttpError extends Error {
   static is(value: unknown): value is BaseHttpError {
@@ -31,11 +29,7 @@ export class HttpError extends BaseHttpError {
     return { message: err.message };
   };
 
-  constructor(
-    message: string,
-    statusCode: keyof typeof StatusCodes | number,
-    public readonly base?: unknown
-  ) {
+  constructor(message: string, statusCode: keyof typeof StatusCodes | number, public readonly base?: unknown) {
     super(message);
     if (typeof statusCode !== "number") {
       this.statusCode = StatusCodes[statusCode];
@@ -62,6 +56,18 @@ export class HttpError extends BaseHttpError {
   }
 }
 
+export class NotFoundError extends HttpError {
+  constructor(message = "") {
+    super(message, 404);
+  }
+  render(req: Request, res: Response): Promise<void> {
+    if (!this.message) {
+      this.message = `Route ${req.method}:${req.url} not found`;
+    }
+    return super.render(req, res);
+  }
+}
+
 export class RedirectError extends BaseHttpError {
   statusCode: number;
   constructor(public readonly url: string, isPermanent = false) {
@@ -72,6 +78,7 @@ export class RedirectError extends BaseHttpError {
     res.redirect(this.statusCode, this.url);
   }
 }
+
 export class ValidationError<T = unknown> extends HttpError {
   public static statusCode = 422;
   constructor(message: string, public readonly base?: T) {
@@ -86,7 +93,6 @@ export function decorateError(app: App, render: ErrorDecorator) {
 export function errorHandler(error: unknown, req: Request, reply: Response) {
   const handler = BaseHttpError.is(error)
     ? error
-    : (req.server.log.error(error),
-      new HttpError("Unable to process request", 500, error));
+    : (req.server.log.error(error), new HttpError("Unable to process request", 500, error));
   handler.render(req, reply);
 }

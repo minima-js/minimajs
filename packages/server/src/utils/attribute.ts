@@ -12,9 +12,9 @@ export function createAttribute<DT, DR extends boolean>(
   defaultCast?: CastTo<any>
 ) {
   // with default
-  function getAttribute(name: string): DR extends true ? DT : DT | undefined;
-  function getAttribute(name: string, cast: null, required: true): DT;
-  function getAttribute(name: string, cast: null, required: false): DT | undefined;
+  function getAttribute<T = DT>(name: string): DR extends true ? T : T | undefined;
+  function getAttribute<T = DT>(name: string, cast: null, required: true): T;
+  function getAttribute<T = DT>(name: string, cast: null, required: false): T | undefined;
   // with casting
   function getAttribute<T>(name: string, castTo: CastTo<T, DT>): DR extends true ? T : T | undefined;
   function getAttribute<T>(name: string, castTo: CastTo<T>, required: true): T;
