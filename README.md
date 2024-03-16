@@ -1,6 +1,6 @@
 Introducing the groundbreaking HTTP framework for Node.js - an innovation tailored for the modern developer seeking efficiency, elegance, and speed. This framework is designed with a forward-looking mindset, embracing the latest advancements in JavaScript while prioritizing ease of use and performance.
 
-## Highlights
+### Highlights
 
 - **Functional Approach**: Embracing the functional programming paradigm, this framework empowers developers to write clean, concise, and composable code, promoting modular design and scalability.
 
@@ -12,7 +12,7 @@ Introducing the groundbreaking HTTP framework for Node.js - an innovation tailor
 
 - **No Boilerplate Needed**: Bid farewell to boilerplate code. With its minimalist approach, eliminates unnecessary setup and configuration.
 
-## Getting started
+### Getting started
 
 Your project directory structure should look like this:
 
@@ -37,16 +37,16 @@ Ensure that your `package.json` file has the `"type": "module"` field to enable 
 Creating Your Application
 
 ```typescript title="src/index.ts"
-import { createApp } from "@minimajs/server";
+import { createApp, getParam } from "@minimajs/server";
 
 const app = createApp();
 
-app.get("/", () => "Welcome Home!");
+app.get("/:name", () => `Hello ${getParam("name")}!`);
 
 await app.listen({ port: 1234 });
 ```
 
-This code creates a MinimaJS application with a single route handler for the root URL `("/")` that returns `Welcome Home!` as the response.
+This code creates a MinimaJS application with a single route handler for the root URL `("/")` that returns `Welcome Home <name>` as the response.
 
 That's all!
 
@@ -66,8 +66,8 @@ node dist/index.js
 _Server listening at http://0.0.0.0:1234_
 
 ```bash
-curl http://0.0.0.0:1234
-> Welcome Home!
+curl http://0.0.0.0:1234?name=John
+> Welcome Home John
 ```
 
 **Using ebx Bundler**

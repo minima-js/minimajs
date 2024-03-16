@@ -16,6 +16,7 @@ export type ErrorDecorator = (
 ) => [statusCode: number, payload: unknown] | Promise<[statusCode: number, payload: unknown]>;
 
 export abstract class BaseHttpError extends Error {
+  abstract statusCode: number;
   static is(value: unknown): value is BaseHttpError {
     return value instanceof this;
   }
@@ -23,8 +24,7 @@ export abstract class BaseHttpError extends Error {
 }
 
 export class HttpError extends BaseHttpError {
-  public readonly statusCode: number;
-
+  public statusCode: number;
   public static toJSON = function toJSON(err: HttpError): unknown {
     return { message: err.message };
   };
@@ -69,7 +69,7 @@ export class NotFoundError extends HttpError {
 }
 
 export class RedirectError extends BaseHttpError {
-  statusCode: number;
+  public statusCode: number;
   constructor(public readonly url: string, isPermanent = false) {
     super();
     this.statusCode = isPermanent ? 301 : 302;

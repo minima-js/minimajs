@@ -12,6 +12,9 @@
     "test": {
       "cache": false
     },
+    "coverage": {
+      "cache": false
+    },
     "dev": {
       "cache": false,
       "persistent": true

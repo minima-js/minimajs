@@ -2980,7 +2980,6 @@ __metadata:
     "@types/uuid": "npm:^9.0.8"
     uuid: "npm:^9.0.1"
   peerDependencies:
-    "@minimajs/schema": "*"
     "@minimajs/server": "*"
   languageName: unknown
   linkType: soft

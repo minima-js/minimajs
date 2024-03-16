@@ -15,6 +15,7 @@
     "dev": "turbo run dev --parallel --continue",
     "build": "turbo run build",
     "test": "turbo run test",
+    "coverage": "turbo run coverage",
     "clean": "turbo run clean"
   },
   "packageManager": "yarn@4.1.1",

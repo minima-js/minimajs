@@ -1,4 +1,4 @@
-import { getBody, getHeaders, getQueries } from "@minimajs/server";
+import { getBody, getHeaders, getSearchParams } from "@minimajs/server";
 import type { ObjectShape } from "yup";
 import { validator, validatorAsync } from "./validation.js";
 
@@ -18,12 +18,12 @@ export function createHeadersAsync<T extends ObjectShape>(obj: T) {
   return validatorAsync(obj, getHeaders);
 }
 
-export function createQueries<T extends ObjectShape>(obj: T) {
-  return validator(obj, getQueries);
+export function createSearchParams<T extends ObjectShape>(obj: T) {
+  return validator(obj, getSearchParams);
 }
 
-export function createQueriesAsync<T extends ObjectShape>(obj: T) {
-  return validatorAsync(obj, getQueries);
+export function createSearchParamsAsync<T extends ObjectShape>(obj: T) {
+  return validatorAsync(obj, getSearchParams);
 }
 
 export * from "yup";

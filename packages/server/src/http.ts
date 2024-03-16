@@ -35,9 +35,14 @@ export function getHeaders() {
   return req.headers;
 }
 
-export function getQueries<T = ParsedUrlQuery>() {
+export function getSearchParams<T = ParsedUrlQuery>() {
   return getRequest().query as T;
 }
+
+/**
+ * @deprecated please use getSearchParams instead
+ */
+export const getQueries = getSearchParams;
 
 export function setHeader(name: string, value: string): Response {
   const { reply } = getContext();
@@ -48,7 +53,7 @@ export function redirect(path: string, isPermanent?: boolean): never {
   throw new RedirectError(path, isPermanent);
 }
 
-export function abort(message: string, statusCode: keyof typeof StatusCodes | number): never {
+export function abort(message: string, statusCode: keyof typeof StatusCodes | number = 400): never {
   throw new HttpError(message, statusCode);
 }
 
@@ -80,6 +85,11 @@ export const getHeader = createAttribute<string, false>(getHeaders as () => Dict
 
 export const getField = createAttribute(getBody, throwAttributeError, false);
 
-export const getQuery = createAttribute<string, false>(getQueries, throwAttributeError, false, (val) => {
+export const getSearchParam = createAttribute<string, false>(getSearchParams, throwAttributeError, false, (val) => {
   return val === undefined ? val : String(val);
 });
+
+/**
+ * @deprecated please use getSearchParam instead
+ */
+export const getQuery = getSearchParam;

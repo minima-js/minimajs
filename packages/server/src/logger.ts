@@ -44,4 +44,4 @@ function mixin(data: Dict<any>) {
   return data;
 }
 
-export const log = pino({ mixin }, stream);
+export const logger = pino({ mixin }, stream);

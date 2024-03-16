@@ -1,6 +1,6 @@
 {
   "name": "@minimajs/server",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "type": "module",
   "license": "MIT",
   "homepage": "https://minima-js.github.io/",
@@ -20,6 +20,7 @@
     "dev": "tsc -w",
     "build": "yarn clean && tsc -p ./tsconfig.build.json",
     "test": "yarn node --experimental-vm-modules $(yarn bin jest) lib",
+    "coverage": "yarn node --experimental-vm-modules $(yarn bin jest) --coverage",
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "dependencies": {

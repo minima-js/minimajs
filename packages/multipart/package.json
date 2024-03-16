@@ -1,6 +1,6 @@
 {
   "name": "@minimajs/multipart",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "exports": {
     ".": "./lib/index.js",
@@ -23,7 +23,6 @@
     "uuid": "^9.0.1"
   },
   "peerDependencies": {
-    "@minimajs/schema": "*",
     "@minimajs/server": "*"
   },
   "files": [

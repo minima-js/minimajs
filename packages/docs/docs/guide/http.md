@@ -63,10 +63,10 @@ getHeader<T = string | undefined>(name: string): T
 
 Retrieves the value of a specific request header.
 
-### getQueries
+### getSearchParams
 
 ```typescript
-getQueries<T = ParsedUrlQuery>(): T
+getSearchParams<T = ParsedUrlQuery>(): T
 ```
 
 Retrieves the URL query parameters.
@@ -74,11 +74,7 @@ Retrieves the URL query parameters.
 ### getParam
 
 ```typescript
-export function getParam<T>(
-  name: string,
-  cast?: CastTo<T> | null,
-  required?: boolean
-): T;
+export function getParam<T>(name: string, cast?: CastTo<T> | null, required?: boolean): T;
 ```
 
 Retrieves and validates parameters from the current request context. It optionally casts the values to a specified type and enforces that the parameter is required.
@@ -93,43 +89,36 @@ const paramName: string = getParam("name");
 const paramValue: number = getParam("age", Number);
 
 // Casting to an optional type with a specific cast function
-const optionalParamValue: number | undefined = getParam(
-  "optional",
-  Number,
-  false
-);
+const optionalParamValue: number | undefined = getParam("optional", Number, false);
 
 // Casting to an optional type with custom validation
-const customValidationParam: string | undefined = getParam(
-  "custom",
-  (value) => {
-    if (typeof value === "string" && value.length < 10) {
-      return value;
-    }
-    throw new Error("Invalid value");
+const customValidationParam: string | undefined = getParam("custom", (value) => {
+  if (typeof value === "string" && value.length < 10) {
+    return value;
   }
-);
+  throw new Error("Invalid value");
+});
 
 // Optional param
 const requiredParam: string | undefined = getParam("token", null, false);
 ```
 
-### getQuery
+### getSearchParam
 
 Retrieves and validates query parameters from the current request context. It optionally casts the values to a specified type or array of types and enforces that the parameter is required.
 
 ```ts
 // Basic usage
-const paramName: string | undefined = getQuery("name");
+const paramName: string | undefined = getSearchParam("name");
 
 // Casting to a specific type
-const paramValue: number | undefined = getQuery("age", Number);
+const paramValue: number | undefined = getSearchParam("age", Number);
 
 // Casting to an array of a specific type
-const paramValues: string[] | undefined = getQuery("tags", [String]);
+const paramValues: string[] | undefined = getSearchParam("tags", [String]);
 
 // Enforcing that the parameter is required
-const requiredParam: string = getQuery("token", null, true);
+const requiredParam: string = getSearchParam("token", null, true);
 ```
 
 ### getBody

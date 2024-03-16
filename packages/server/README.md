@@ -37,16 +37,16 @@ Ensure that your `package.json` file has the `"type": "module"` field to enable 
 Creating Your Application
 
 ```typescript title="src/index.ts"
-import { createApp } from "@minimajs/server";
+import { createApp, getParam } from "@minimajs/server";
 
 const app = createApp();
 
-app.get("/", () => "Welcome Home!");
+app.get("/:name", () => `Hello ${getParam("name")}!`);
 
 await app.listen({ port: 1234 });
 ```
 
-This code creates a MinimaJS application with a single route handler for the root URL `("/")` that returns `Welcome Home!` as the response.
+This code creates a MinimaJS application with a single route handler for the root URL `("/")` and a parameter `name`.
 
 That's all!
 
@@ -66,8 +66,8 @@ node dist/index.js
 _Server listening at http://0.0.0.0:1234_
 
 ```bash
-curl http://0.0.0.0:1234
-> Welcome Home!
+curl http://0.0.0.0:1234/John
+> Hello John!
 ```
 
 **Using ebx Bundler**
