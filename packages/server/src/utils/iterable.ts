@@ -6,9 +6,7 @@ export function isAsyncIterator<T>(obj: unknown): obj is AsyncIterable<T> {
   return aIter === obj;
 }
 
-export function isObject(
-  data: unknown
-): data is Record<string | symbol, unknown> {
+export function isObject(data: unknown): data is Record<string | symbol, unknown> {
   return Object(data) === data;
 }
 

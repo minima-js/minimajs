@@ -1,7 +1,15 @@
+import type { ParsedUrlQuery } from "node:querystring";
 import { StatusCodes } from "http-status-codes";
 import { getContext } from "./context.js";
-import { RedirectError, HttpError, BaseHttpError, ValidationError, NotFoundError } from "./error.js";
-import type { ParsedUrlQuery } from "node:querystring";
+import {
+  RedirectError,
+  HttpError,
+  BaseHttpError,
+  ValidationError,
+  NotFoundError,
+  type ErrorResponse,
+  type StatusCode,
+} from "./error.js";
 import type { Dict, Request, Response } from "./types.js";
 import { createAttribute } from "./utils/attribute.js";
 
@@ -53,8 +61,8 @@ export function redirect(path: string, isPermanent?: boolean): never {
   throw new RedirectError(path, isPermanent);
 }
 
-export function abort(message: string, statusCode: keyof typeof StatusCodes | number = 400): never {
-  throw new HttpError(message, statusCode);
+export function abort(response: ErrorResponse, statusCode: StatusCode = 400): never {
+  throw new HttpError(response, statusCode);
 }
 
 abort.notFound = function abortNotFound(): never {

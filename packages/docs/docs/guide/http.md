@@ -254,15 +254,15 @@ async function handleRequest() {
 Terminates the current operation with an optional message and HTTP status code.
 
 ```typescript
-abort(message: string, statusCode: keyof typeof StatusCodes | number): never
+abort(response: string | Record<string, unknown>, statusCode: StatusCode): never
 ```
 
 Throws an HttpError to abort the current operation with a specified message and status code.
 
 Parameters:
 
-1. `message` (string): A descriptive message explaining the reason for aborting the operation.
-1. `statusCode` (number | StatusCodes): An optional parameter indicating the HTTP status code associated with the abort.
+1. `response` (string | Record<string, unknown>): A descriptive message explaining the reason for aborting the operation.
+1. `statusCode` (StatusCode): An optional parameter indicating the HTTP status code associated with the abort.
 
 Examples:
 

@@ -261,7 +261,7 @@ const random = Math.random;
 
 function seed() {
   return (
-    HEX[(0xff * random()) | 0] +
+    HEX[(0xff * random()) | 0]! +
     HEX[(0xff * random()) | 0] +
     HEX[(0xff * random()) | 0] +
     HEX[(0xff * random()) | 0] +

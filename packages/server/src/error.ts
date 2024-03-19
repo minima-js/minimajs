@@ -1,6 +1,9 @@
 import { StatusCodes } from "http-status-codes";
-import type { App, Request, Response } from "./types.js";
+import type { App, Dict, Request, Response } from "./types.js";
 import { kErrorDecorator } from "./internal/symbol.js";
+
+export type ErrorResponse = string | Dict;
+export type StatusCode = keyof typeof StatusCodes | number;
 
 function getDecorator(app: App): ErrorDecorator {
   return (
@@ -23,14 +26,24 @@ export abstract class BaseHttpError extends Error {
   abstract render(req: Request, res: Response): void;
 }
 
+export interface HttpErrorOption {
+  message?: string;
+  cause?: string;
+  code?: string;
+  name?: string;
+  base?: unknown;
+}
 export class HttpError extends BaseHttpError {
   public statusCode: number;
+  public base?: unknown;
+
   public static toJSON = function toJSON(err: HttpError): unknown {
-    return { message: err.message };
+    return typeof err.response === "string" ? { message: err.message } : err.response;
   };
 
-  constructor(message: string, statusCode: keyof typeof StatusCodes | number, public readonly base?: unknown) {
-    super(message);
+  constructor(public readonly response: ErrorResponse, statusCode: StatusCode, option: HttpErrorOption = {}) {
+    super();
+    Object.assign(this, option);
     if (typeof statusCode !== "number") {
       this.statusCode = StatusCodes[statusCode];
     } else {
@@ -60,10 +73,9 @@ export class NotFoundError extends HttpError {
   constructor(message = "") {
     super(message, 404);
   }
+
   render(req: Request, res: Response): Promise<void> {
-    if (!this.message) {
-      this.message = `Route ${req.method}:${req.url} not found`;
-    }
+    this.message ||= `Route ${req.method}:${req.url} not found`;
     return super.render(req, res);
   }
 }
@@ -81,6 +93,7 @@ export class RedirectError extends BaseHttpError {
 
 export class ValidationError<T = unknown> extends HttpError {
   public static statusCode = 422;
+
   constructor(message: string, public readonly base?: T) {
     super(message, ValidationError.statusCode);
   }
@@ -93,6 +106,6 @@ export function decorateError(app: App, render: ErrorDecorator) {
 export function errorHandler(error: unknown, req: Request, reply: Response) {
   const handler = BaseHttpError.is(error)
     ? error
-    : (req.server.log.error(error), new HttpError("Unable to process request", 500, error));
+    : (req.server.log.error(error), new HttpError("Unable to process request", 500, { base: error }));
   handler.render(req, reply);
 }

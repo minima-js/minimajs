@@ -1,8 +1,3 @@
----
-title: Schema
-sidebar_position: 1
----
-
 Schema, built on top of Yup, provides a comprehensive set of validation tools and exposes everything from `@minimajs/schema` to facilitate seamless validation in your applications.
 
 ### Installation

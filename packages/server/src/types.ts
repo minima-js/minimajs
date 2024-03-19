@@ -7,11 +7,7 @@ import type {
   FastifyReply,
   FastifyRequest,
 } from "fastify";
-import {
-  kResponseDecorator,
-  kErrorDecorator,
-  kPluginNameChain,
-} from "./internal/symbol.js";
+import { kResponseDecorator, kErrorDecorator, kPluginNameChain } from "./internal/symbol.js";
 import type { Server } from "node:http";
 import type { ErrorDecorator } from "./error.js";
 import type { ResponseDecorator } from "./response.js";
@@ -27,13 +23,11 @@ export interface App extends FastifyInstance {
 }
 export interface Request extends FastifyRequest {}
 export interface Response extends FastifyReply {}
-export interface Plugin<Options extends PluginOptions = Record<never, never>>
-  extends FastifyPluginAsync<Options> {}
+export interface Plugin<Options extends PluginOptions = Record<never, never>> extends FastifyPluginAsync<Options> {}
 
-export interface AppOptions
-  extends FastifyHttpOptions<Server, FastifyBaseLogger> {
+export interface AppOptions extends FastifyHttpOptions<Server, FastifyBaseLogger> {
   routes?: {
     log: boolean;
   };
 }
-export type Dict<T> = NodeJS.Dict<T>;
+export type Dict<T = unknown> = NodeJS.Dict<T>;

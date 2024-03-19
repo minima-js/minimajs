@@ -14,7 +14,7 @@ The concept of Context is fundamental to backend development, and it's a core fe
 Let's delve into this concept with examples:
 
 ```typescript
-import { getQuery, createContext } from "@minimajs/server";
+import { getSearchParam, createContext } from "@minimajs/server";
 
 // Create a context for storing and retrieving a message
 const [getMessage, setMessage] = createContext<string>("");
@@ -27,7 +27,7 @@ function somethingForHello() {
 
 // Request handler for the '/hello' endpoint
 function helloHandler() {
-  const message = getQuery("message");
+  const message = getSearchParam("message");
   setMessage(`Hello ${message}`); // Set the message for the request scope
   somethingForHello(); // Use the message
 }
@@ -73,7 +73,7 @@ import { type App } from "@minimajs/server";
 
 // Request handler for the '/' endpoint
 function helloHandler() {
-  const message = getQuery("message");
+  const message = getSearchParam("message");
   setMessage(`Hello ${message}`); // Set the message for the request scope
   somethingForHello(); // Use the message
 }

@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "docusaurus start",
-    "docs:build": "docusaurus build",
+    "build": "docusaurus build",
     "deploy": "gh-pages --dist build --repo=git@github.com:minima-js/minima-js.github.io"
   },
   "dependencies": {
