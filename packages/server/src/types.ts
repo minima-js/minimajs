@@ -31,3 +31,4 @@ export interface AppOptions extends FastifyHttpOptions<Server, FastifyBaseLogger
   };
 }
 export type Dict<T = unknown> = NodeJS.Dict<T>;
+export type Next = (error: unknown, response?: unknown) => void;

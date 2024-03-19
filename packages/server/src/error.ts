@@ -1,6 +1,7 @@
 import { StatusCodes } from "http-status-codes";
 import type { App, Dict, Request, Response } from "./types.js";
 import { kErrorDecorator } from "./internal/symbol.js";
+import { isRequestAbortedError } from "./internal/response.js";
 
 export type ErrorResponse = string | Dict;
 export type StatusCode = keyof typeof StatusCodes | number;
@@ -34,12 +35,24 @@ export interface HttpErrorOption {
   base?: unknown;
 }
 export class HttpError extends BaseHttpError {
+  public static toJSON = function toJSON(err: HttpError): unknown {
+    return typeof err.response === "string" ? { message: err.response } : err.response;
+  };
+
+  public static create(err: unknown, statusCode = 500) {
+    if (err instanceof Error) {
+      return new HttpError("Unable to process request", statusCode, {
+        message: err.message,
+        name: err.name,
+        base: err,
+      });
+    }
+    return new HttpError("Unable to process request", statusCode, {
+      base: err,
+    });
+  }
   public statusCode: number;
   public base?: unknown;
-
-  public static toJSON = function toJSON(err: HttpError): unknown {
-    return typeof err.response === "string" ? { message: err.message } : err.response;
-  };
 
   constructor(public readonly response: ErrorResponse, statusCode: StatusCode, option: HttpErrorOption = {}) {
     super();
@@ -94,8 +107,8 @@ export class RedirectError extends BaseHttpError {
 export class ValidationError<T = unknown> extends HttpError {
   public static statusCode = 422;
 
-  constructor(message: string, public readonly base?: T) {
-    super(message, ValidationError.statusCode);
+  constructor(response: ErrorResponse, public readonly base?: T) {
+    super(response, ValidationError.statusCode);
   }
 }
 
@@ -104,8 +117,9 @@ export function decorateError(app: App, render: ErrorDecorator) {
 }
 
 export function errorHandler(error: unknown, req: Request, reply: Response) {
-  const handler = BaseHttpError.is(error)
-    ? error
-    : (req.server.log.error(error), new HttpError("Unable to process request", 500, { base: error }));
+  if (isRequestAbortedError(error)) {
+    return;
+  }
+  const handler = BaseHttpError.is(error) ? error : (req.server.log.error(error), HttpError.create(error));
   handler.render(req, reply);
 }
