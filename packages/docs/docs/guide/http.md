@@ -261,7 +261,7 @@ Throws an HttpError to abort the current operation with a specified message and 
 
 Parameters:
 
-1. `response` (string | Record<string, unknown>): A descriptive message explaining the reason for aborting the operation.
+1. `response` (string | Record&lt;string, unknown>): A descriptive message explaining the reason for aborting the operation.
 1. `statusCode` (StatusCode): An optional parameter indicating the HTTP status code associated with the abort.
 
 Examples:
