@@ -6,7 +6,7 @@ tags:
   - logger
 ---
 
-## MinimaJS: Integrated Logging with Pino
+# MinimaJS: Integrated Logging with Pino
 
 MinimaJS streamlines development by offering a built-in logger powered by Pino. This logger simplifies debugging and monitoring by providing informative messages about your application's execution.
 

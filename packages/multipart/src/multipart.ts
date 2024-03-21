@@ -6,13 +6,8 @@ import { getRequest, type Request } from "@minimajs/server";
 import { asyncIterator } from "./async-iterator.js";
 import { nullStream } from "./stream.js";
 
-function ensureContentType(
-  headers: IncomingHttpHeaders
-): asserts headers is BusboyHeaders {
-  assert(
-    "content-type" in headers,
-    "Invalid content type or not exists in header"
-  );
+function ensureContentType(headers: IncomingHttpHeaders): asserts headers is BusboyHeaders {
+  assert("content-type" in headers, "Invalid content type or not exists in header");
 }
 
 function busboy(req: Request, opt: Omit<BusboyConfig, "headers">) {
@@ -26,7 +21,7 @@ function busboy(req: Request, opt: Omit<BusboyConfig, "headers">) {
   return bb;
 }
 
-export async function getFile<T extends string>(name: T) {
+export async function getFile(name: string) {
   const req = getRequest();
   return new Promise<File>((resolve, reject) => {
     const bb = busboy(req, { limits: { fields: 0 } });

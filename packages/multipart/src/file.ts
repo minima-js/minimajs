@@ -18,6 +18,7 @@ export interface FileInfo {
 
 export class File implements FileInfo {
   #randomName?: string;
+  #buffer?: Buffer;
   constructor(
     public readonly field: string,
     public readonly filename: string,
@@ -31,9 +32,7 @@ export class File implements FileInfo {
   }
 
   get randomName() {
-    if (!this.#randomName) {
-      this.#randomName = `${uuid()}.${this.ext}`;
-    }
+    this.#randomName ??= `${uuid()}.${this.ext}`;
     return this.#randomName;
   }
 
@@ -46,8 +45,9 @@ export class File implements FileInfo {
     return this._stream;
   }
 
-  buffer() {
-    return stream2buffer(this.stream);
+  async buffer() {
+    this.#buffer ??= await stream2buffer(this.stream);
+    return this.#buffer;
   }
 
   async move(dir = process.cwd(), filename = this.randomName) {

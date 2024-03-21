@@ -7,7 +7,9 @@ tags:
   - interceptor
 ---
 
-In Minimajs, everything is a module, and a module is essentially an asynchronous function.
+# In Minimajs, everything is a module.
+
+**And a module is essentially an asynchronous function.**
 
 ### Creating a Module
 

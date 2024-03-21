@@ -204,7 +204,10 @@ Sets a response header.
 
 ### defer
 
+the `defer` allows scheduling tasks for execution after sending the response.
+
 ```ts
+import { defer } from "@minimajs/server";
 function saveUser() {
   // saving user
   // save some log

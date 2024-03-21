@@ -3,9 +3,69 @@ title: "MinimaJS vs. The Crowd"
 sidebar_position: 2
 ---
 
+## Streamlined Integration with Third-Party Services
+
+One of MinimaJS's defining strengths lies in its ability to simplify the integration of third-party services. Unlike traditional frameworks that often require a two-step process involving middleware and separate functions, MinimaJS empowers you to achieve the same functionality with a single, well-defined function.
+
+#### Example: Seamless Multipart File Upload Handling
+
+The provided code demonstrates how MinimaJS simplifies integrating multipart file upload functionalities:
+
+### Implementation
+
+```ts title="src/multipart.ts"
+import { getRequest, defer, getSignal } from "@minimajs/server";
+
+export interface UploadedBody {
+  [key: string]: {
+    name: string;
+    stream: ReadableStream;
+  };
+}
+
+export async function getUploadedBody<T extends UploadedBody = UploadedBody>(): Promise<T> {
+  const request = getRequest();
+  // Use the request object to access uploaded content (likely through a parsing library)
+  const abortSignal = getSignal();
+  // Utilize abortSignal for cancellation handling
+
+  // ... logic to process uploaded files (saving to temp location) ...
+  defer(cleanup); // Schedule cleanup after response is sent
+  return newBody; // Return the processed uploaded body object
+}
+
+// Cleanup function to handle temporary resources
+function cleanup() {
+  // Delete temporary files or perform other cleanup tasks
+}
+```
+
+### Utilization
+
+```ts title="src/post/upload-photos.ts"
+// upload handler function
+import { getUploadedBody } from "../multipart";
+
+async function handleUpload() {
+  const body = await getUploadedBody(); // No middleware needed, directly call the function
+  console.log(body.thumbnail.name); // Access uploaded file name
+  const thumbnailStream = body.thumbnail.stream; // Access uploaded file stream
+
+  // ... logic to save/process uploaded files (thumbnail and banner) ...
+
+  return "files uploaded successfully!";
+}
+```
+
+The `handleUpload` function in `post/upload-photos.ts` demonstrates how to effortlessly integrate the multipart handling functionality. It directly calls `getUploadedBody` without the need for middleware setup.
+
+full implementation here: https://github.com/minima-js/minimajs/blob/main/packages/multipart/src/unstable.ts
+
+## Basic CRUD operation using mongodb
+
 This demonstration showcases the elegance and efficiency of MinimaJS compared to traditional frameworks when constructing a basic CRUD application for interacting with MongoDB.
 
-## Entity Modeling:
+### Entity Modeling:
 
 We begin by defining the `Post` entity using Mongoose.
 
@@ -33,7 +93,7 @@ const postSchema = new Schema<IPost>({
 export const Post = model("Post", postSchema);
 ```
 
-## Controller: Fetching Posts
+### Controller: Fetching Posts
 
 The post controller handles CRUD operations.
 
@@ -62,7 +122,7 @@ export async function getPosts() {
 }
 ```
 
-creating a post module with `/posts` route
+Creating a post module with `/posts` route
 
 ```ts title="src/post/index.ts"
 import { type App } from "@minimajs/server";
@@ -74,7 +134,7 @@ export async function post(app: App) {
 }
 ```
 
-## Main Application Entry Point:
+### Main Application Entry Point:
 
 ```ts title="src/index.ts"
 import { createApp } from "@minimajs/server";
@@ -99,103 +159,7 @@ await app.listen({ port: 1234 });
 
 Wow!!.
 
-application is ready for list of posts api.
-
-## Next adding the rest apis
-
-Creating post
-
-```ts title="src/post/controller.ts"
-import { createBody, number, object, string } from "@minimajs/schema";
-import { Post } from "./entity";
-
-export type PostPayload = ReturnType<typeof getPostPayload>;
-/*
-type PostPayload = {
-    title: string;
-    content: string;
-    author: {
-        name: string;
-    };
-    status: "published" | "draft";
-}
-*/
-
-const getPostPayload = createBody({
-  title: string().required().max(255),
-  content: string().required(),
-  author: object({
-    name: string().required(),
-  }).required(),
-  status: string().oneOf(["published", "draft"]).default("draft"),
-});
-
-export function createPost() {
-  const payload = getPostPayload();
-  const post = new Post(payload);
-  return post.save();
-}
-```
-
-Find a post
-
-```ts title="src/post/controller.ts"
-import { abort, getParam } from "@minimajs/server";
-import { Post } from "./entity";
-
-export async function findPost() {
-  const id = getParam("post");
-  const post = await Post.findById(id);
-  if (!post) {
-    abort.notFound();
-  }
-  return post;
-}
-```
-
-Updating a post
-
-```ts title="src/post/controller.ts"
-import { createBody, string } from "@minimajs/schema";
-import { Post } from "./entity";
-
-const getUpdatePostPayload = createBody({
-  title: string().max(255),
-  content: string(),
-  status: string().oneOf(["published", "draft"]).default("draft"),
-});
-
-export async function updatePost() {
-  const payload = getUpdatePostPayload();
-  const post = await findPost(); // we can use same post;
-  await post.updateOne(payload);
-  return post;
-}
-```
-
-Finally delete
-
-```ts title="src/post/controller.ts"
-export async function deletePost() {
-  const post = await findPost();
-  await post.deleteOne();
-  return post;
-}
-```
-
-Adding routes in post module
-
-```ts title="src/post/index.ts"
-import { type App } from "@minimajs/server";
-import { createPost, deletePost, findPost, updatePost } from "./controller";
-
-export async function post(app: App) {
-  app.post("/", createPost);
-  app.get("/:post", findPost);
-  app.patch("/:post", updatePost);
-  app.delete("/:post", deletePost);
-}
-```
+Application is ready for list of posts api.
 
 ```bash
 yarn dev
@@ -210,14 +174,10 @@ bundles src/index.ts → dist...
 ↺ rs ⏎ to restart
 
 └── /posts (GET, HEAD, POST)
-    └── / (GET, HEAD, POST)
-        └── :post (GET, HEAD, PATCH, DELETE)
+    └── / (GET, HEAD)
 
-INFO (11978): Server listening at http://[::1]:1234
 INFO (11978): Server listening at http://127.0.0.1:1234
 ```
-
-your basic crud is ready.
 
 full source code:
 https://github.com/minima-js/starterkit/tree/crud-mongoose
