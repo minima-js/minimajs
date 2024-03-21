@@ -4,45 +4,43 @@ import {
   type ObjectShape,
   ObjectSchema,
   ValidationError as BaseError,
+  type ValidateOptions,
 } from "yup";
-import { ValidationError } from "./error.js";
+import { ValidationError } from "@minimajs/server/error";
 
 type DataCallback = () => unknown;
-export function validator<T extends ObjectShape>(obj: T, data: DataCallback) {
+export function validator<T extends ObjectShape>(obj: T, data: DataCallback, option: ValidateOptions) {
   const schema = object(obj);
   return function getData(): InferType<typeof schema> {
-    return validateObject(schema, data());
+    return validateObject(schema, data(), option);
   };
 }
 
-export function validatorAsync<T extends ObjectShape>(
-  obj: T,
-  data: DataCallback
-) {
+export function validatorAsync<T extends ObjectShape>(obj: T, data: DataCallback, option: ValidateOptions) {
   const schema = object(obj);
   return function getData(): Promise<InferType<typeof schema>> {
-    return validateObjectAsync(schema, data());
+    return validateObjectAsync(schema, data(), option);
   };
 }
 
-function validateObject(schema: ObjectSchema<any>, data: unknown) {
+function validateObject(schema: ObjectSchema<any>, data: unknown, option: ValidateOptions) {
   try {
-    return schema.validateSync(data);
+    return schema.validateSync(data, option);
   } catch (err) {
     dealWithException(err);
   }
 }
 
-async function validateObjectAsync(schema: ObjectSchema<any>, data: unknown) {
+async function validateObjectAsync(schema: ObjectSchema<any>, data: unknown, option: ValidateOptions) {
   try {
-    return await schema.validate(data);
+    return await schema.validate(data, option);
   } catch (err) {
     dealWithException(err);
   }
 }
 function dealWithException(err: unknown): never {
   if (err instanceof BaseError) {
-    throw new ValidationError(err);
+    throw new ValidationError(err.message, err);
   }
   throw err;
 }
