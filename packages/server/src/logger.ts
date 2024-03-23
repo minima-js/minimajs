@@ -1,12 +1,12 @@
 import { pino } from "pino";
-import pretty from "pino-pretty";
+import pinoPretty from "pino-pretty";
 import { getContextOrNull as getContext } from "./context.js";
 import type { App, Dict } from "./types.js";
 import { kPluginNameChain, kRequestContext } from "./internal/symbol.js";
 
-const stream = pretty.default({
+const stream = pinoPretty.default({
   colorize: true,
-  ignore: "time,hostname",
+  ignore: "hostname,pid",
 });
 
 function getPluginNames(server: App): string[] {

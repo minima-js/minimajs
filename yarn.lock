@@ -3003,11 +3003,12 @@ __metadata:
     "@types/jest": "npm:^29.5.12"
     "@types/node": "npm:^20.11.27"
     chalk: "npm:^5.3.0"
+    deepmerge: "npm:^4.3.1"
     fastify: "npm:^4.26.2"
     http-status-codes: "npm:^2.3.0"
     jest: "npm:^29.7.0"
     pino: "npm:^8.19.0"
-    pino-pretty: "npm:^10.3.1"
+    pino-pretty: "npm:^11.0.0"
   languageName: unknown
   linkType: soft
 
@@ -7423,7 +7424,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"deepmerge@npm:^4.2.2":
+"deepmerge@npm:^4.2.2, deepmerge@npm:^4.3.1":
   version: 4.3.1
   resolution: "deepmerge@npm:4.3.1"
   checksum: 10/058d9e1b0ff1a154468bf3837aea436abcfea1ba1d165ddaaf48ca93765fdd01a30d33c36173da8fbbed951dd0a267602bc782fe288b0fc4b7e1e7091afc4529
@@ -15573,9 +15574,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pino-pretty@npm:^10.3.1":
-  version: 10.3.1
-  resolution: "pino-pretty@npm:10.3.1"
+"pino-pretty@npm:^11.0.0":
+  version: 11.0.0
+  resolution: "pino-pretty@npm:11.0.0"
   dependencies:
     colorette: "npm:^2.0.7"
     dateformat: "npm:^4.6.3"
@@ -15593,7 +15594,7 @@ __metadata:
     strip-json-comments: "npm:^3.1.1"
   bin:
     pino-pretty: bin.js
-  checksum: 10/4284f125f7e8a5a10e856c8fd591ba34c30c0a0071a0b265a9eda43c3e447ba11d40b06cc67108675586358a5d1213a6ac3a92f6abd2896abfbab9a5b4c17072
+  checksum: 10/0d63dd92b3bd0c5ac85ded7fa5667c72998efd6b431f4ee89d27ec37758c1e44c5d458ad65e09757926bfef618b3ac51cb1126a3d9c0a1aaa4e4f1d34a97856b
   languageName: node
   linkType: hard
 

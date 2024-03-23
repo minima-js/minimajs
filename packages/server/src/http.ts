@@ -10,7 +10,7 @@ import {
   type ErrorResponse,
   type StatusCode,
 } from "./error.js";
-import type { Dict, Request, Response } from "./types.js";
+import type { Dict, HttpHeader, Request, Response } from "./types.js";
 import { createAttribute } from "./utils/attribute.js";
 
 export function getRequest(): Request {
@@ -52,7 +52,7 @@ export function getSearchParams<T = ParsedUrlQuery>() {
  */
 export const getQueries = getSearchParams;
 
-export function setHeader(name: string, value: string): Response {
+export function setHeader(name: HttpHeader, value: string): Response {
   const { reply } = getContext();
   return reply.header(name, value);
 }

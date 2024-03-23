@@ -13,6 +13,8 @@ import type { ErrorDecorator } from "./error.js";
 import type { ResponseDecorator } from "./response.js";
 
 export type { FastifyRegister } from "fastify";
+export type { HttpHeader, HTTPMethods, HttpCodes } from "fastify/types/utils.js";
+
 export interface PluginOptions extends FastifyPluginOptions {
   name?: string;
 }

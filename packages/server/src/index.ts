@@ -10,21 +10,28 @@ export * from "./module.js";
 export * from "./http.js";
 export * from "./hooks.js";
 export { createContext } from "./context.js";
+import merge from "deepmerge";
 
-function getDefaultConfig(override: AppOptions): AppOptions {
+function getDefaultConfig({ logger: loggerOverride, ...override }: AppOptions): AppOptions {
+  let logger = {
+    transport: {
+      target: "pino-pretty",
+      options: {
+        ignore: "hostname,pid,req.hostname,req.remoteAddress",
+        singleLine: true,
+        colorize: true,
+      },
+    },
+  };
+
+  if (loggerOverride && loggerOverride !== true) {
+    logger = merge(logger, loggerOverride);
+  }
+
   return {
     trustProxy: true,
     disableRequestLogging: true,
-    logger: {
-      transport: {
-        target: "pino-pretty",
-        options: {
-          ignore: "hostname,req.hostname,req.remoteAddress,time",
-          singleLine: true,
-          colorize: true,
-        },
-      },
-    },
+    logger,
     ...override,
   };
 }
