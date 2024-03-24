@@ -69,7 +69,7 @@ abort.notFound = function abortNotFound(): never {
   throw new NotFoundError();
 };
 
-abort.assert = function assertAbort(error: unknown): asserts error is Error {
+abort.assertNot = function assertNotAbort(error: unknown): asserts error is Error {
   if (BaseHttpError.is(error)) {
     throw error;
   }
@@ -77,6 +77,12 @@ abort.assert = function assertAbort(error: unknown): asserts error is Error {
     return;
   }
   throw error;
+};
+
+abort.assert = function assertAbort(error: unknown): asserts error is Error {
+  if (!BaseHttpError.is(error)) {
+    throw error;
+  }
 };
 
 abort.is = function isAbortError(error: unknown): error is BaseHttpError {

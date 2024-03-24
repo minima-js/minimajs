@@ -14,7 +14,8 @@
     "./response": "./lib/response.js",
     "./error": "./lib/error.js",
     "./context": "./lib/context.js",
-    "./utils": "./lib/utils.js"
+    "./utils": "./lib/utils/index.js",
+    "./logger": "./lib/logger.js"
   },
   "scripts": {
     "dev": "tsc -w",

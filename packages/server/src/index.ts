@@ -1,29 +1,21 @@
 import type { Server } from "node:http";
 import fastify from "fastify";
+import merge from "deepmerge";
+import chalk from "chalk";
 import { appPlugin } from "./internal/plugins.js";
 import { NotFoundError, errorHandler } from "./error.js";
-import chalk from "chalk";
 import type { App, AppOptions } from "./types.js";
-export * from "./types.js";
-export * from "./logger.js";
-export * from "./module.js";
+import { loggerOptions } from "./logger.js";
+
 export * from "./http.js";
 export * from "./hooks.js";
+export * from "./types.js";
+export * from "./module.js";
 export { createContext } from "./context.js";
-import merge from "deepmerge";
+export { logger } from "./logger.js";
 
 function getDefaultConfig({ logger: loggerOverride, ...override }: AppOptions): AppOptions {
-  let logger = {
-    transport: {
-      target: "pino-pretty",
-      options: {
-        ignore: "hostname,pid,req.hostname,req.remoteAddress",
-        singleLine: true,
-        colorize: true,
-      },
-    },
-  };
-
+  let logger = loggerOptions;
   if (loggerOverride && loggerOverride !== true) {
     logger = merge(logger, loggerOverride);
   }
@@ -31,7 +23,7 @@ function getDefaultConfig({ logger: loggerOverride, ...override }: AppOptions): 
   return {
     trustProxy: true,
     disableRequestLogging: true,
-    logger,
+    logger: loggerOverride === false ? false : logger,
     ...override,
   };
 }

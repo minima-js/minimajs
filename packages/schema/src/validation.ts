@@ -3,10 +3,10 @@ import {
   type InferType,
   type ObjectShape,
   ObjectSchema,
-  ValidationError as BaseError,
+  ValidationError as ValidationBaseError,
   type ValidateOptions,
 } from "yup";
-import { ValidationError } from "@minimajs/server/error";
+import { ValidationError } from "./error.js";
 
 type DataCallback = () => unknown;
 export function validator<T extends ObjectShape>(obj: T, data: DataCallback, option: ValidateOptions) {
@@ -39,8 +39,8 @@ async function validateObjectAsync(schema: ObjectSchema<any>, data: unknown, opt
   }
 }
 function dealWithException(err: unknown): never {
-  if (err instanceof BaseError) {
-    throw new ValidationError(err.message, err);
+  if (err instanceof ValidationBaseError) {
+    throw ValidationError.create(err);
   }
   throw err;
 }

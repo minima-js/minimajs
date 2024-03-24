@@ -35,7 +35,7 @@ export interface HttpErrorOption {
   base?: unknown;
 }
 export class HttpError extends BaseHttpError {
-  public static toJSON = function toJSON(err: HttpError): unknown {
+  public static toJSON = function toJSON<T extends HttpError = HttpError>(err: T): unknown {
     return typeof err.response === "string" ? { message: err.response } : err.response;
   };
 
@@ -104,11 +104,13 @@ export class RedirectError extends BaseHttpError {
   }
 }
 
-export class ValidationError<T = unknown> extends HttpError {
-  public static statusCode = 422;
-
-  constructor(response: ErrorResponse, public readonly base?: T) {
-    super(response, ValidationError.statusCode);
+export class ValidationError extends HttpError {
+  public static getStatusCode = function getStatusCode<T extends ValidationError>(_error: T) {
+    return 422;
+  };
+  constructor(response: ErrorResponse) {
+    super(response, 400);
+    this.statusCode = (this as any).constructor.getStatusCode(this);
   }
 }
 

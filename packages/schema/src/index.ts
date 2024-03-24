@@ -27,3 +27,4 @@ export function createSearchParamsAsync<T extends ObjectShape>(obj: T, option: V
 }
 
 export * from "yup";
+export { ValidationError, ValidationBaseError } from "./error.js";

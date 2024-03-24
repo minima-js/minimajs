@@ -1,13 +1,28 @@
-import { pino } from "pino";
-import pinoPretty from "pino-pretty";
+import { pino, type LoggerOptions } from "pino";
 import { getContextOrNull as getContext } from "./context.js";
 import type { App, Dict } from "./types.js";
 import { kPluginNameChain, kRequestContext } from "./internal/symbol.js";
+import merge from "deepmerge";
 
-const stream = pinoPretty.default({
-  colorize: true,
-  ignore: "hostname,pid",
-});
+export const loggerOptions: LoggerOptions = {
+  transport: {
+    target: "pino-pretty",
+    options: {
+      ignore: "hostname,pid",
+      singleLine: true,
+      colorize: true,
+    },
+  },
+};
+
+function mixin(data: Dict<any>) {
+  const name = getModuleName();
+  if (!name || data.name) {
+    return data;
+  }
+  data.name = name;
+  return data;
+}
 
 function getPluginNames(server: App): string[] {
   return server[kPluginNameChain] ?? [];
@@ -35,13 +50,8 @@ function getModuleName() {
   return local.get(kModuleName);
 }
 
-function mixin(data: Dict<any>) {
-  const name = getModuleName();
-  if (!name || data.name) {
-    return data;
-  }
-  data.name = name;
-  return data;
+export function createLogger(option: LoggerOptions) {
+  return pino(merge({ ...loggerOptions, mixin }, option));
 }
 
-export const logger = pino({ mixin }, stream);
+export const logger = createLogger({});
