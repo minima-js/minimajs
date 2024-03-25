@@ -40,13 +40,13 @@ In this example:
 When you run your application and make a request like `curl http://localhost:1234/services?name=John`, the console might display an output similar to:
 
 ```
-INFO (serviceModule:serviceHandler/21961): received service request with {"name":"John"}
+INFO (serviceModule:serviceHandler): received service request with {"name":"John"}
 ```
 
 **Breakdown of the Output:**
 
 - `INFO`: The log level (in this case, informational)
-- `(serviceModule:serviceHandler/21961)`: Indicates the source of the log message (&lt;Module Name>:&lt;Handler function>/&lt;Process Id>)
+- `(serviceModule:serviceHandler)`: Indicates the source of the log message (&lt;Module Name>:&lt;Handler function>)
 - `received service request with {"name":"John"}`: The actual log message with the interpolated search parameters object.
 
 **Embrace Streamlined Development with MinimaJS's Built-in Logging**

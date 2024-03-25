@@ -69,6 +69,8 @@ abort.notFound = function abortNotFound(): never {
   throw new NotFoundError();
 };
 
+abort.$404 = abort.notFound;
+
 abort.assertNot = function assertNotAbort(error: unknown): asserts error is Error {
   if (BaseHttpError.is(error)) {
     throw error;
