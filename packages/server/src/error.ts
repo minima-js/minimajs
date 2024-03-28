@@ -54,7 +54,7 @@ export class HttpError extends BaseHttpError {
   public statusCode: number;
   public base?: unknown;
 
-  constructor(public readonly response: ErrorResponse, statusCode: StatusCode, option: HttpErrorOption = {}) {
+  constructor(public response: ErrorResponse, statusCode: StatusCode, option: HttpErrorOption = {}) {
     super();
     Object.assign(this, option);
     if (typeof statusCode !== "number") {
@@ -89,7 +89,7 @@ export class NotFoundError extends HttpError {
   }
 
   render(req: Request, res: Response): Promise<void> {
-    this.message ||= `Route ${req.method}:${req.url} not found`;
+    this.response ||= `Route ${req.method}:${req.url} not found`;
     return super.render(req, res);
   }
 }

@@ -19,3 +19,8 @@ export function toArray<T>(value: null | T | T[]): T[] {
   }
   return [value];
 }
+
+export function toLastValue<T>(value: T | T[]): T {
+  if (Array.isArray(value)) return value[value.length - 1]!;
+  return value;
+}

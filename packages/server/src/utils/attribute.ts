@@ -33,17 +33,11 @@ export function createAttribute<DT, DR extends boolean>(
     if (required && value === undefined) {
       throwError(name, "value is undefined");
     }
-
     if (Array.isArray(cast)) {
       return toArray(value).map((v) => validateAndCast(name, v, cast[0], required));
     }
-
-    if (cast) {
-      const newValue = cast(value);
-      if (value && Number.isNaN(newValue)) {
-        throwError(name, "value is NaN");
-      }
-      return newValue;
+    if (cast && value !== undefined) {
+      return cast(value);
     }
     return value;
   }

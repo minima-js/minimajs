@@ -12,6 +12,7 @@ import {
 } from "./error.js";
 import type { Dict, HttpHeader, Request, Response } from "./types.js";
 import { createAttribute } from "./utils/attribute.js";
+import { toLastValue } from "./utils/iterable.js";
 
 export function getRequest(): Request {
   const { req } = getContext();
@@ -101,9 +102,7 @@ export const getHeader = createAttribute<string, false>(getHeaders as () => Dict
 
 export const getField = createAttribute(getBody, throwAttributeError, false);
 
-export const getSearchParam = createAttribute<string, false>(getSearchParams, throwAttributeError, false, (val) => {
-  return val === undefined ? val : String(val);
-});
+export const getSearchParam = createAttribute<string, false>(getSearchParams, throwAttributeError, false, toLastValue);
 
 /**
  * @deprecated please use getSearchParam instead
