@@ -29,17 +29,20 @@ Next, let's integrate this middleware into our application:
 **2. Just wrap your module with an `interceptor`.**
 
 ```ts title="src/payments/index.ts"
-// src/payments/index.ts
+import { interceptor } from "@minimajs/server";
 import { loggerMiddleware } from "./middleware.ts";
+
+// creating a payments module.
 async function payments(app: App) {
   // handling routes.
   app.get("/", handleGetRequest);
 }
+
 // highlight-next-line
 export const paymentsModule = interceptor([loggerMiddleware], payments);
 ```
 
-Here, we've used the `interceptor` function to wrap our `payments` with the `loggerMiddleware`.
+Here, we've used the `interceptor` function to wrap our `payments` module with the `loggerMiddleware`.
 
 **3. Register paymentModule**
 
@@ -61,6 +64,7 @@ But what if you want to leverage existing Express middleware? Not a problem! `in
 import { yourExpressMiddleware } from "@express/middleware-factory";
 
 // Integrate your Express middleware with the interceptor
+
 // highlight-next-line
 app.register(interceptor([yourExpressMiddleware], paymentModule), {
   prefix: "/payments",

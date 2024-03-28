@@ -1,15 +1,16 @@
 import { createContext } from "./context.js";
-import { contextStorage } from "./internal/context.js";
+import { wrap } from "./internal/context.js";
+import { fakeRequest, fakeResponse } from "./internal/context.test.js";
 
 describe("Context", () => {
   describe("createContext", () => {
     test("setter / getting", () => {
       const [getBody, setBody] = createContext();
-      contextStorage.run({ local: new Map() } as any, () => {
+      wrap(fakeRequest, fakeResponse, () => {
         setBody("Adil");
         expect(getBody()).toBe("Adil");
       });
-      contextStorage.run({ local: new Map() } as any, () => {
+      wrap(fakeRequest, fakeResponse, () => {
         expect(getBody()).toBeUndefined();
       });
     });

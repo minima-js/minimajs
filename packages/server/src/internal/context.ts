@@ -17,7 +17,7 @@ interface Context {
   readonly hooks: Hooks;
 }
 
-export const contextStorage = new AsyncLocalStorage<Context>();
+const contextStorage = new AsyncLocalStorage<Context>();
 
 function createContextWrap(req: Request, reply: Response): Context {
   return {
@@ -30,6 +30,10 @@ function createContextWrap(req: Request, reply: Response): Context {
 }
 export function wrap(req: Request, reply: Response, cb: () => unknown) {
   return contextStorage.run(Object.freeze(createContextWrap(req, reply)), cb);
+}
+
+export function safeWrap<T, U extends unknown[]>(cb: (...args: U) => T, ...args: U): T {
+  return contextStorage.run(null as any, () => cb(...args));
 }
 
 export function getHooks() {

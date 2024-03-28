@@ -17,12 +17,12 @@ export function createAttribute<DT, DR extends boolean>(
   function getAttribute<T = DT>(name: string, cast: null, required: false): T | undefined;
   // with casting
   function getAttribute<T>(name: string, castTo: CastTo<T, DT>): DR extends true ? T : T | undefined;
-  function getAttribute<T>(name: string, castTo: CastTo<T>, required: true): T;
-  function getAttribute<T>(name: string, castTo: CastTo<T>, required: false): T | undefined;
+  function getAttribute<T>(name: string, castTo: CastTo<T, DT>, required: true): T;
+  function getAttribute<T>(name: string, castTo: CastTo<T, DT>, required: false): T | undefined;
   // with casting as an array
-  function getAttribute<T>(name: string, castTo: [CastTo<T>]): DR extends true ? T[] : T[] | undefined;
-  function getAttribute<T>(name: string, castTo: [CastTo<T>], required: false): T[] | undefined;
-  function getAttribute<T>(name: string, castTo: [CastTo<T>], required: true): T[];
+  function getAttribute<T>(name: string, castTo: [CastTo<T, DT>]): DR extends true ? T[] : T[] | undefined;
+  function getAttribute<T>(name: string, castTo: [CastTo<T, DT>], required: false): T[] | undefined;
+  function getAttribute<T>(name: string, castTo: [CastTo<T, DT>], required: true): T[];
 
   function getAttribute<T>(name: string, cast: CastType<T, DT> = defaultCast, required: boolean = defaultRequired) {
     const queries = getValues();

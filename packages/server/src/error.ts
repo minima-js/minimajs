@@ -78,6 +78,7 @@ export class HttpError extends BaseHttpError {
       response.end(payload);
       return;
     }
+    response.setHeader("Content-Type", "application/json; charset=utf-8");
     response.end(res.serialize(payload));
   }
 }

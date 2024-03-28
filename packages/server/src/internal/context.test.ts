@@ -1,5 +1,5 @@
 // import { EventEmitter } from "stream";
-import { getContext, wrap } from "./context.js";
+import { getContext, safeWrap, wrap } from "./context.js";
 import { IncomingMessage, ServerResponse } from "http";
 import { type Request, type Response } from "../types.js";
 
@@ -36,6 +36,16 @@ describe("Context", () => {
       wrap(fakeRequest, fakeResponse, () => {
         expect(getContext().req).toBe(fakeRequest);
         expect(getContext().reply).toBe(fakeResponse);
+      });
+    });
+  });
+  describe("safe wrap", () => {
+    test("getting", () => {
+      wrap(fakeRequest, fakeResponse, () => {
+        expect(getContext()).not.toBeNull();
+        safeWrap(() => {
+          expect(getContext).toThrow("Unable to access the context beyond the request scope.");
+        });
       });
     });
   });
