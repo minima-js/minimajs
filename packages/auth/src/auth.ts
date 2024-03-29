@@ -9,10 +9,7 @@ interface Auth<T> {
 
 export type AuthCallback<T> = (req: Request, res: Response) => Promise<T>;
 
-export type GuardCallback<T> = (
-  data?: T,
-  error?: BaseHttpError
-) => Promise<boolean> | boolean;
+export type GuardCallback<T> = (data?: T, error?: BaseHttpError) => Promise<boolean> | boolean;
 
 export type GuardMessageCallback = (error?: BaseHttpError) => string;
 
@@ -21,10 +18,7 @@ export function createAuth<T>(callback: AuthCallback<T>) {
   function getAuth() {
     return getAuth$1().data;
   }
-  function createGuard(
-    callback?: GuardCallback<T>,
-    message?: string | GuardMessageCallback
-  ) {
+  function createGuard(callback?: GuardCallback<T>, message?: string | GuardMessageCallback) {
     return async function guard() {
       const { data, error } = getAuth$1();
       if (callback) {
