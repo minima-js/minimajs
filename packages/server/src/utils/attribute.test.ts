@@ -57,13 +57,13 @@ describe("attribute", () => {
 
     test("default optional force required to be undefined", () => {
       expect(() => {
-        const hello = getOptionalAttribute("hello", null, true);
+        const hello = getOptionalAttribute("hello", true);
         return hello.toString();
       }).toThrow();
     });
 
     test("default optional force required to be defined", () => {
-      const hello = getOptionalAttribute("company", null, true);
+      const hello = getOptionalAttribute("company", true);
       // @ts-expect-error
       isNumber(hello);
       isAnyOf<string | number | string[]>(hello);

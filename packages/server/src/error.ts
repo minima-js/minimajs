@@ -55,7 +55,7 @@ export class HttpError extends BaseHttpError {
   public base?: unknown;
 
   constructor(public response: ErrorResponse, statusCode: StatusCode, option: HttpErrorOption = {}) {
-    super();
+    super(typeof response === "string" ? response : "Unknown error");
     Object.assign(this, option);
     if (typeof statusCode !== "number") {
       this.statusCode = StatusCodes[statusCode];
@@ -84,8 +84,9 @@ export class HttpError extends BaseHttpError {
 }
 
 export class NotFoundError extends HttpError {
-  constructor(message = "") {
-    super(message, 404);
+  constructor(response: ErrorResponse = "") {
+    super(response, 404);
+    this.message = "Page not found";
   }
 
   render(req: Request, res: Response): Promise<void> {

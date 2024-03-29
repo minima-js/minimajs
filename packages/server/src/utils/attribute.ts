@@ -13,23 +13,32 @@ export function createAttribute<DT, DR extends boolean>(
 ) {
   // with default
   function getAttribute<T = DT>(name: string): DR extends true ? T : T | undefined;
-  function getAttribute<T = DT>(name: string, cast: null, required: true): T;
-  function getAttribute<T = DT>(name: string, cast: null, required: false): T | undefined;
+  function getAttribute<T = DT>(name: string, required: true): T;
+  function getAttribute<T = DT>(name: string, required: false): T | undefined;
+
   // with casting
   function getAttribute<T>(name: string, castTo: CastTo<T, DT>): DR extends true ? T : T | undefined;
   function getAttribute<T>(name: string, castTo: CastTo<T, DT>, required: true): T;
   function getAttribute<T>(name: string, castTo: CastTo<T, DT>, required: false): T | undefined;
+
   // with casting as an array
   function getAttribute<T>(name: string, castTo: [CastTo<T, DT>]): DR extends true ? T[] : T[] | undefined;
   function getAttribute<T>(name: string, castTo: [CastTo<T, DT>], required: false): T[] | undefined;
   function getAttribute<T>(name: string, castTo: [CastTo<T, DT>], required: true): T[];
 
-  function getAttribute<T>(name: string, cast: CastType<T, DT> = defaultCast, required: boolean = defaultRequired) {
+  function getAttribute<T>(
+    name: string,
+    cast: CastType<T, DT> | boolean = defaultCast,
+    required: boolean = defaultRequired
+  ) {
     const queries = getValues();
-    return validateAndCast(name, queries[name], cast!, required);
+    if (typeof cast === "boolean") {
+      return validateAndCast(name, queries[name], defaultCast, cast);
+    }
+    return validateAndCast(name, queries[name], cast, required);
   }
 
-  function validateAndCast(name: string, value: unknown, cast?: CastType<unknown, any>, required?: boolean): unknown {
+  function validateAndCast(name: string, value: unknown, cast: CastType<unknown, any>, required: boolean): unknown {
     if (required && value === undefined) {
       throwError(name, "value is undefined");
     }
@@ -37,7 +46,11 @@ export function createAttribute<DT, DR extends boolean>(
       return toArray(value).map((v) => validateAndCast(name, v, cast[0], required));
     }
     if (cast && value !== undefined) {
-      return cast(value);
+      const newVal = cast(value);
+      if (Number.isNaN(newVal)) {
+        throwError(name, "value is NaN");
+      }
+      return newVal;
     }
     return value;
   }

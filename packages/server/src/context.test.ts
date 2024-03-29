@@ -6,11 +6,11 @@ describe("Context", () => {
   describe("createContext", () => {
     test("setter / getting", () => {
       const [getBody, setBody] = createContext();
-      wrap(fakeRequest, fakeResponse, () => {
+      wrap(fakeRequest(), fakeResponse(), () => {
         setBody("Adil");
         expect(getBody()).toBe("Adil");
       });
-      wrap(fakeRequest, fakeResponse, () => {
+      wrap(fakeRequest(), fakeResponse(), () => {
         expect(getBody()).toBeUndefined();
       });
     });
