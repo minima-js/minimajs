@@ -2,6 +2,7 @@ import { ValidationError } from "./error.js";
 import { getBody, getParam, getRequest, getSearchParam } from "./http.js";
 import { wrap } from "./internal/context.js";
 import { fakeRequest, fakeResponse } from "./internal/context.test.js";
+import { setTimeout as sleep } from "node:timers/promises";
 
 describe("Http", () => {
   describe("getRequest", () => {
@@ -11,14 +12,14 @@ describe("Http", () => {
     });
   });
 
-  describe("getBody", () => {
+  test("getBody", () => {
     wrap(fakeRequest({ body: { message: "Hello, World!" } }), fakeResponse(), () => {
       expect(getBody()).toStrictEqual({ message: "Hello, World!" });
     });
   });
 
   describe("getSearchParams", () => {
-    describe("with value as string", () => {
+    test("with value as string", () => {
       wrap(fakeRequest({ query: { name: "John Doe", page: "2" } }), fakeResponse(), () => {
         expect<string | undefined>(getSearchParam("name")).toBe("John Doe");
         expect<string | undefined>(getSearchParam("page")).toBe("2");
@@ -30,7 +31,7 @@ describe("Http", () => {
         );
       });
     });
-    describe("with array as value", () => {
+    test("with array as value", () => {
       wrap(fakeRequest({ query: { page: ["1", "2"] } }), fakeResponse(), () => {
         expect<string | undefined>(getSearchParam("page")).toBe("2");
         expect<string>(getSearchParam("page", true)).toBe("2");
@@ -42,7 +43,7 @@ describe("Http", () => {
   });
 
   describe("getParam", () => {
-    describe("with value as string", () => {
+    test("with value as string", () => {
       wrap(fakeRequest({ params: { user: "hello" } }), fakeResponse(), () => {
         expect<string>(getParam("user")).toBe("hello");
         expect<() => string>(() => getParam("unknown")).toThrow("Page not found");
@@ -50,11 +51,17 @@ describe("Http", () => {
         expect<() => number | undefined>(() => getParam("user", Number)).toThrow("Page not found");
       });
     });
-    describe("with value as number", () => {
-      wrap(fakeRequest({ params: { user: "1234" } }), fakeResponse(), () => {
+    test("with value as number", async () => {
+      await wrap(fakeRequest({ params: { user: "1234" } }), fakeResponse(), async () => {
         expect<string>(getParam("user")).toBe("1234");
         expect<number>(getParam("user", Number)).toBe(1234);
+        expect<{ id: string }>(await getParam("user", getUser)).toStrictEqual(await getUser("1234"));
       });
     });
   });
 });
+
+async function getUser(id: string) {
+  await sleep(1);
+  return { id };
+}
