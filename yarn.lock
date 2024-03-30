@@ -2899,7 +2899,7 @@ __metadata:
   resolution: "@minimajs/auth@workspace:packages/auth"
   dependencies:
     "@minimajs/server": "npm:*"
-    "@types/node": "npm:^20.11.27"
+    "@types/node": "npm:^20.12.2"
   peerDependencies:
     "@minimajs/server": "*"
   languageName: unknown
@@ -2910,7 +2910,7 @@ __metadata:
   resolution: "@minimajs/azure-blob@workspace:packages/azure-blob"
   dependencies:
     "@azure/storage-blob": "npm:^12.17.0"
-    "@types/node": "npm:^20.11.27"
+    "@types/node": "npm:^20.12.2"
     "@types/uuid": "npm:^9.0.8"
     uuid: "npm:^9.0.1"
   languageName: unknown
@@ -2922,7 +2922,7 @@ __metadata:
   dependencies:
     "@fastify/cookie": "npm:^9.3.1"
     "@minimajs/server": "npm:*"
-    "@types/node": "npm:^20.11.27"
+    "@types/node": "npm:^20.12.2"
     fastify: "npm:^4.26.2"
   peerDependencies:
     "@minimajs/server": "*"
@@ -2933,7 +2933,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@minimajs/disk@workspace:packages/disk"
   dependencies:
-    "@types/node": "npm:^20.11.27"
+    "@types/node": "npm:^20.12.2"
   languageName: unknown
   linkType: soft
 
@@ -2976,7 +2976,7 @@ __metadata:
     "@fastify/busboy": "npm:^2.1.1"
     "@minimajs/schema": "npm:*"
     "@minimajs/server": "npm:*"
-    "@types/node": "npm:^20.11.27"
+    "@types/node": "npm:^20.12.2"
     "@types/uuid": "npm:^9.0.8"
     uuid: "npm:^9.0.1"
   peerDependencies:
@@ -2989,7 +2989,7 @@ __metadata:
   resolution: "@minimajs/schema@workspace:packages/schema"
   dependencies:
     "@minimajs/server": "npm:*"
-    "@types/node": "npm:^20.11.27"
+    "@types/node": "npm:^20.12.2"
     yup: "npm:^1.4.0"
   peerDependencies:
     "@minimajs/server": "*"
@@ -3001,7 +3001,7 @@ __metadata:
   resolution: "@minimajs/server@workspace:packages/server"
   dependencies:
     "@types/jest": "npm:^29.5.12"
-    "@types/node": "npm:^20.11.27"
+    "@types/node": "npm:^20.12.2"
     chalk: "npm:^5.3.0"
     deepmerge: "npm:^4.3.1"
     fastify: "npm:^4.26.2"
@@ -3016,7 +3016,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@minimajs/utility@workspace:packages/utility"
   dependencies:
-    "@types/node": "npm:^20.11.27"
+    "@types/node": "npm:^20.12.2"
   languageName: unknown
   linkType: soft
 
@@ -3771,12 +3771,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^20.11.27":
-  version: 20.11.27
-  resolution: "@types/node@npm:20.11.27"
+"@types/node@npm:^20.12.2":
+  version: 20.12.2
+  resolution: "@types/node@npm:20.12.2"
   dependencies:
     undici-types: "npm:~5.26.4"
-  checksum: 10/4be53485d499dd7c7896190e76a0ce1f6c6917d1f4d0b4b240b3670160fcbc548daed32beaac0fc92429b37dbeaa2496fc56f460acaab969bddb77394318a89b
+  checksum: 10/f1f0ebfe475aefa183763b856e0023b81b76554196e8676a45b9fcfd1012cdd20d32adefb3c0330001c0011e074676603c34c24821a4924228250ea13a75da43
   languageName: node
   linkType: hard
 

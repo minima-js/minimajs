@@ -3,6 +3,6 @@
   "version": "0.0.1",
   "type": "module",
   "devDependencies": {
-    "@types/node": "^20.11.27"
+    "@types/node": "^20.12.2"
   }
 }

@@ -3,7 +3,6 @@ import fastify from "fastify";
 import merge from "deepmerge";
 import chalk from "chalk";
 import { appPlugin } from "./internal/plugins.js";
-import { NotFoundError, errorHandler } from "./error.js";
 import type { App, AppOptions } from "./types.js";
 import { loggerOptions } from "./logger.js";
 
@@ -11,6 +10,7 @@ export * from "./http.js";
 export * from "./hooks.js";
 export * from "./types.js";
 export * from "./module.js";
+
 export { createContext } from "./context.js";
 export { logger } from "./logger.js";
 
@@ -31,12 +31,6 @@ function getDefaultConfig({ logger: loggerOverride, ...override }: AppOptions): 
 export function createApp({ routes = { log: true }, ...opts }: AppOptions = {}): App {
   const app = fastify<Server>(getDefaultConfig(opts));
   app.register(appPlugin);
-  app.setErrorHandler(errorHandler);
-  app.setNotFoundHandler((req, res) => errorHandler(new NotFoundError(), req, res));
-
-  app.addContentTypeParser("multipart/form-data", (_, __, next) => {
-    next(null);
-  });
 
   async function quit(sig: string) {
     app.log.info(`${sig}: %s`, "closing server");

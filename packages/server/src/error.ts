@@ -1,7 +1,7 @@
 import { StatusCodes } from "http-status-codes";
 import type { App, Dict, Request, Response } from "./types.js";
 import { kErrorDecorator } from "./internal/symbol.js";
-import { isRequestAbortedError } from "./internal/response.js";
+import { isRequestAbortedError, skipDecorator } from "./internal/response.js";
 
 export type ErrorResponse = string | Dict;
 export type StatusCode = keyof typeof StatusCodes | number;
@@ -27,13 +27,13 @@ export abstract class BaseHttpError extends Error {
   abstract render(req: Request, res: Response): void;
 }
 
-export interface HttpErrorOption {
+export interface HttpErrorOptions extends ErrorOptions {
   message?: string;
-  cause?: string;
   code?: string;
   name?: string;
   base?: unknown;
 }
+
 export class HttpError extends BaseHttpError {
   public static toJSON = function toJSON<T extends HttpError = HttpError>(err: T): unknown {
     return typeof err.response === "string" ? { message: err.response } : err.response;
@@ -54,9 +54,9 @@ export class HttpError extends BaseHttpError {
   public statusCode: number;
   public base?: unknown;
 
-  constructor(public response: ErrorResponse, statusCode: StatusCode, option: HttpErrorOption = {}) {
+  constructor(public response: ErrorResponse, statusCode: StatusCode, options?: HttpErrorOptions) {
     super(typeof response === "string" ? response : "Unknown error");
-    Object.assign(this, option);
+    Object.assign(this, options);
     if (typeof statusCode !== "number") {
       this.statusCode = StatusCodes[statusCode];
     } else {
@@ -69,17 +69,9 @@ export class HttpError extends BaseHttpError {
   }
 
   async render(req: Request, res: Response) {
-    res.hijack();
     const decorator = getDecorator(req.server);
     const [status, payload] = await decorator(this);
-    const { raw: response } = res;
-    response.statusCode = status;
-    if (typeof payload === "string") {
-      response.end(payload);
-      return;
-    }
-    response.setHeader("Content-Type", "application/json; charset=utf-8");
-    response.end(res.serialize(payload));
+    res.status(status).send(payload);
   }
 }
 
@@ -124,6 +116,7 @@ export function errorHandler(error: unknown, req: Request, reply: Response) {
   if (isRequestAbortedError(error)) {
     return;
   }
+  skipDecorator(reply);
   const handler = BaseHttpError.is(error) ? error : (req.server.log.error(error), HttpError.create(error));
   handler.render(req, reply);
 }

@@ -1,6 +1,7 @@
 import type { App } from "../types.js";
 import { handleResponse } from "./response.js";
 import { wrap, getHooks } from "./context.js";
+import { NotFoundError, errorHandler } from "../error.js";
 
 type CF = CallableFunction;
 
@@ -29,6 +30,11 @@ export async function triggerOnSent() {
 }
 
 export const appPlugin = function minimajs(fastify: App, _: {}, next: CF) {
+  fastify.setErrorHandler(errorHandler);
+  fastify.setNotFoundHandler((req, res) => errorHandler(new NotFoundError(), req, res));
+  fastify.addContentTypeParser("multipart/form-data", (_, __, next) => {
+    next(null);
+  });
   fastify.addHook("onRequest", wrap);
   fastify.addHook("preSerialization", handleResponse);
   fastify.addHook("onResponse", triggerOnSent);

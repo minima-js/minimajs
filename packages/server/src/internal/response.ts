@@ -1,13 +1,23 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { Readable } from "node:stream";
 import type { App, Next, Request, Response } from "../types.js";
-import { isAsyncIterator, isObject } from "../utils/iterable.js";
+import { isAsyncIterator } from "../utils/iterable.js";
 import { kResponseDecorator } from "./symbol.js";
 import { pipeline } from "node:stream/promises";
 
+const SkipResponseDecorator = Symbol("response-no-decorate");
 const ResponseAbort = Symbol("response");
+
+function isDecoratorSkipped(response: Response) {
+  return (response as any)[SkipResponseDecorator];
+}
+
+export function skipDecorator(response: Response) {
+  (response as any)[SkipResponseDecorator] = true;
+}
+
 export function isRequestAbortedError(err: unknown) {
-  if (isObject(err) && err.cause === ResponseAbort) {
+  if (err instanceof Error && err.cause === ResponseAbort) {
     return true;
   }
   return false;
@@ -24,6 +34,11 @@ export function createAbortController(message: IncomingMessage, response: Server
 }
 
 export function handleResponse(request: Request, res: Response, body: unknown, next: Next): void {
+  if (isDecoratorSkipped(res)) {
+    console.log("error found, skipping");
+    next(null, body);
+    return;
+  }
   if (isAsyncIterator(body)) {
     res.hijack();
     pipeline(Readable.from(body), res.raw).catch((err) => {
@@ -45,3 +60,4 @@ async function decorateResponse(app: App, body: unknown) {
   }
   return decorator(body);
 }
+console.log(new Error("a", { cause: "cause cool!!" }).cause);

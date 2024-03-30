@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "@minimajs/server": "*",
-    "@types/node": "^20.11.27"
+    "@types/node": "^20.12.2"
   },
   "files": [
     "lib"
