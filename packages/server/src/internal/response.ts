@@ -35,7 +35,6 @@ export function createAbortController(message: IncomingMessage, response: Server
 
 export function handleResponse(request: Request, res: Response, body: unknown, next: Next): void {
   if (isDecoratorSkipped(res)) {
-    console.log("error found, skipping");
     next(null, body);
     return;
   }
@@ -60,4 +59,3 @@ async function decorateResponse(app: App, body: unknown) {
   }
   return decorator(body);
 }
-console.log(new Error("a", { cause: "cause cool!!" }).cause);

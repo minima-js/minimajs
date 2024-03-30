@@ -1,6 +1,6 @@
 import { getContext, getContextOrNull } from "./internal/context.js";
 import { isCallable } from "./utils/callable.js";
-export { safeWrap as no } from "./internal/context.js";
+export { safeWrap } from "./internal/context.js";
 export { getContext, getContextOrNull };
 
 export function getSignal() {

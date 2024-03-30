@@ -40,7 +40,7 @@ export function createAttribute<DT, DR extends boolean>(
 
   function validateAndCast(name: string, value: unknown, cast: CastType<unknown, any>, required: boolean): unknown {
     if (required && value === undefined) {
-      throwError(name, "value is undefined");
+      throwError(name, "is required");
     }
     if (Array.isArray(cast)) {
       return toArray(value).map((v) => validateAndCast(name, v, cast[0], required));
@@ -48,7 +48,7 @@ export function createAttribute<DT, DR extends boolean>(
     if (cast && value !== undefined) {
       const newVal = cast(value);
       if (Number.isNaN(newVal)) {
-        throwError(name, "value is NaN");
+        throwError(name, `expects a number, received '${value}'`);
       }
       return newVal;
     }

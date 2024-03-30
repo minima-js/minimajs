@@ -70,9 +70,7 @@ abort.notFound = function abortNotFound(): never {
   throw new NotFoundError();
 };
 
-abort.$404 = abort.notFound;
-
-abort.assertNot = function assertNotAbort(error: unknown): asserts error is Error {
+abort.assertNot = function assertNotAborted(error: unknown): asserts error is Error {
   if (BaseHttpError.is(error)) {
     throw error;
   }
@@ -93,7 +91,7 @@ abort.is = function isAbortError(error: unknown): error is BaseHttpError {
 };
 
 function throwAttributeError(name: string, message: string): never {
-  throw new ValidationError(`${name}: ${message}`);
+  throw new ValidationError("`" + name + "` " + message);
 }
 
 export const getParam = createAttribute(getParams, abort.notFound, true);
