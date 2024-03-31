@@ -26,9 +26,8 @@ describe("Http", () => {
         expect<number | undefined>(getSearchParam("page", Number)).toBe(2);
         expect<number>(getSearchParam("page", Number, true)).toBe(2);
         expect<number[] | undefined>(getSearchParam("page", [Number])).toStrictEqual([2]);
-        expect<() => string>(() => getSearchParam("pages", true)).toThrow(
-          new ValidationError("pages: value is undefined")
-        );
+        expect<() => string>(() => getSearchParam("pages", true)).toThrow(new ValidationError("`pages` is required"));
+        expect<{ name: string } | undefined>(getSearchParam("name", getSearch)).toStrictEqual(getSearch("John Doe"));
       });
     });
     test("with array as value", () => {
@@ -36,7 +35,7 @@ describe("Http", () => {
         expect<string | undefined>(getSearchParam("page")).toBe("2");
         expect<string>(getSearchParam("page", true)).toBe("2");
         expect<() => number | undefined>(() => getSearchParam("page", Number)).toThrow(
-          new ValidationError("page: value is NaN")
+          new ValidationError("`page` expects a number, received '1,2'")
         );
       });
     });
@@ -60,6 +59,10 @@ describe("Http", () => {
     });
   });
 });
+
+function getSearch(name: string) {
+  return { name };
+}
 
 async function getUser(id: string) {
   await sleep(1);

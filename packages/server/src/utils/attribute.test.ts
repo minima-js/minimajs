@@ -20,7 +20,7 @@ describe("attribute", () => {
     const getAttribute = createAttribute(getValues, throwAttributeError, true);
 
     test("getting undefined property", () => {
-      expect(() => getAttribute("hello")).toThrow("hello:value is undefined");
+      expect(() => getAttribute("hello")).toThrow("hello:is required");
     });
 
     test("getting defined property", () => {
@@ -40,7 +40,7 @@ describe("attribute", () => {
     });
 
     test("invalid casting", () => {
-      expect(() => getAttribute("tags", Number)).toThrow("tags:value is NaN");
+      expect(() => getAttribute("tags", Number)).toThrow("tags:expects a number, received 'hello,world'");
     });
 
     // default optional

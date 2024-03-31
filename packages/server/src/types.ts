@@ -8,12 +8,14 @@ import type {
   FastifyRequest,
 } from "fastify";
 import { kResponseDecorator, kErrorDecorator, kPluginNameChain } from "./internal/symbol.js";
-import type { Server } from "node:http";
+import type { IncomingHttpHeaders, Server } from "node:http";
 import type { ErrorDecorator } from "./error.js";
 import type { ResponseDecorator } from "./response.js";
+import type { OmitIndexSignature } from "fastify/types/utils.js";
 
 export type { FastifyRegister } from "fastify";
 export type { HttpHeader, HTTPMethods, HttpCodes } from "fastify/types/utils.js";
+export type HttpHeaderIncoming = keyof OmitIndexSignature<IncomingHttpHeaders> | (string & Record<never, never>);
 
 export interface PluginOptions extends FastifyPluginOptions {
   name?: string;

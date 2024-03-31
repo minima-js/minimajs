@@ -10,7 +10,7 @@ import {
   type ErrorResponse,
   type StatusCode,
 } from "./error.js";
-import type { Dict, HttpHeader, Request, Response } from "./types.js";
+import type { Dict, HttpHeader, HttpHeaderIncoming, Request, Response } from "./types.js";
 import { createAttribute } from "./utils/attribute.js";
 import { toLastValue } from "./utils/iterable.js";
 
@@ -94,11 +94,12 @@ function throwAttributeError(name: string, message: string): never {
   throw new ValidationError("`" + name + "` " + message);
 }
 
-export const getParam = createAttribute(getParams, abort.notFound, true);
+export const getParam = createAttribute<string, true>(getParams, abort.notFound, true);
 
-export const getHeader = createAttribute<string, false>(getHeaders as () => Dict<string>, throwAttributeError, false);
+type GetHeaders = () => Record<HttpHeaderIncoming, string>;
+export const getHeader = createAttribute(getHeaders as unknown as GetHeaders, throwAttributeError, false);
 
-export const getField = createAttribute(getBody, throwAttributeError, false);
+export const getField = createAttribute<unknown, false>(getBody, throwAttributeError, false);
 
 export const getSearchParam = createAttribute<string, false>(getSearchParams, throwAttributeError, false, toLastValue);
 

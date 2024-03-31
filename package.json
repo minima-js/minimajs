@@ -16,7 +16,9 @@
     "build": "turbo run build",
     "test": "turbo run test",
     "coverage": "turbo run coverage",
-    "clean": "turbo run clean"
+    "clean": "turbo run clean",
+    "docs": "yarn --cwd=packages/docs start",
+    "docs:deploy": "yarn --cwd=packages/docs deploy"
   },
   "packageManager": "yarn@4.1.1",
   "devDependencies": {

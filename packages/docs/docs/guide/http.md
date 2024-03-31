@@ -57,24 +57,88 @@ Retrieves the request headers.
 
 ### getHeader
 
-```typescript
-getHeader<T = string | undefined>(name: string): T
-```
+**Function:** `getHeader(name: string, type?: Type<T> | [Type<T>] | boolean, required?: boolean): T | undefined`
 
-Retrieves the value of a specific request header.
+**Parameters:**
+
+- `name` (string): The name of the header to retrieve.
+- `type` (Type&gt;T> | [Type&gt;T>], optional): The desired type for the retrieved value.
+  - If provided, the function attempts to parse the value to the specified type.
+  - Can be a single type constructor (e.g., `String`, `Number`) or an array of type constructors (e.g., `[Number]`).
+- `required` (boolean, optional): Flag indicating if the parameter is mandatory. Defaults to `false`.
+  - If `true` and the parameter is missing, a `ValidationError` is thrown.
+
+**Throws:**
+
+- `ValidationError`: Thrown in the following cases:
+  - The required parameter is missing (`required` is set to `true`).
+  - Parsing the value to the specified type fails (e.g., converting a string "abc" to a number throws `ValidationError`).
 
 ### getSearchParams
 
 ```typescript
-getSearchParams<T = ParsedUrlQuery>(): T
+getSearchParams(): ParsedUrlQuery
 ```
 
-Retrieves the URL query parameters.
+Retrieves the request queries.
+
+### getSearchParam
+
+**Function:** `getSearchParam(name: string, type?: Type<T> | [Type<T>] | boolean, required?: boolean): T | undefined`
+
+**Parameters:**
+
+- `name` (string): The name of the search parameter to retrieve.
+- `type` (Type&gt;T> | [Type&gt;T>], optional): The desired type for the retrieved value.
+  - If provided, the function attempts to parse the value to the specified type.
+  - Can be a single type constructor (e.g., `String`, `Number`) or an array of type constructors (e.g., `[Number]`).
+- `required` (boolean, optional): Flag indicating if the parameter is mandatory. Defaults to `false`.
+  - If `true` and the parameter is missing, a `ValidationError` is thrown.
+
+**Return Type:**
+
+- `T | undefined`: The retrieved and parsed value (if successful) or `undefined` if the parameter is missing and not required.
+
+**Throws:**
+
+- `ValidationError`: Thrown in the following cases:
+  - The required parameter is missing (`required` is set to `true`).
+  - Parsing the value to the specified type fails (e.g., converting a string "abc" to a number throws `ValidationError`).
+
+**Examples:**
+
+**Retrieving a string value:**
+
+```typescript
+const name = getSearchParam("name"); // Returns "John Doe" if the parameter exists
+```
+
+**Retrieving a number value with type conversion:**
+
+```typescript
+const pageNumber = getSearchParam("page", Number); // Returns 2 if the parameter exists and has a valid number
+
+// Throws ValidationError if "page" is not a valid number
+expect(() => getSearchParam("page", Number)).toThrow(new ValidationError("`page` expects a number"));
+```
+
+**Retrieving an array of numbers with type conversion:**
+
+```typescript
+const pageNumbers = getSearchParam("tags", [String]); // Returns tags array of strings
+```
+
+**Handling missing required parameters:**
+
+```typescript
+// Throws ValidationError because "page" is missing and required
+expect(() => getSearchParam("page", true)).toThrow(new ValidationError("pages is required"));
+```
 
 ### getParam
 
 ```typescript
-export function getParam<T>(name: string, cast?: CastTo<T> | null, required?: boolean): T;
+export function getParam<T>(name: string, cast?: CastTo<T> | boolean, required?: boolean): T;
 ```
 
 Retrieves and validates parameters from the current request context. It optionally casts the values to a specified type and enforces that the parameter is required.
@@ -100,25 +164,7 @@ const customValidationParam: string | undefined = getParam("custom", (value) => 
 });
 
 // Optional param
-const requiredParam: string | undefined = getParam("token", null, false);
-```
-
-### getSearchParam
-
-Retrieves and validates query parameters from the current request context. It optionally casts the values to a specified type or array of types and enforces that the parameter is required.
-
-```ts
-// Basic usage
-const paramName: string | undefined = getSearchParam("name");
-
-// Casting to a specific type
-const paramValue: number | undefined = getSearchParam("age", Number);
-
-// Casting to an array of a specific type
-const paramValues: string[] | undefined = getSearchParam("tags", [String]);
-
-// Enforcing that the parameter is required
-const requiredParam: string = getSearchParam("token", null, true);
+const requiredParam: string | undefined = getParam("token", false);
 ```
 
 ### getBody
