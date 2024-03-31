@@ -8,7 +8,7 @@ function getValues() {
     duration: "21243",
     number: 1234,
     tags: ["hello", "world"],
-  } satisfies Record<string, unknown>;
+  };
 }
 function throwAttributeError(name: string, message: string): never {
   throw new Error(`${name}:${message}`);
@@ -20,23 +20,26 @@ describe("attribute", () => {
     const getAttribute = createAttribute(getValues, throwAttributeError, true);
 
     test("getting undefined property", () => {
-      expect(() => getAttribute("hello")).toThrow("hello:is required");
+      expect<() => string | number | string[]>(() => getAttribute("hello")).toThrow("hello:is required");
     });
 
     test("getting defined property", () => {
-      expect(getAttribute("firstName")).toBe("John");
+      expect<string | number | string[]>(getAttribute("firstName")).toBe("John");
     });
 
     test("getting defined property", () => {
-      expect(getAttribute("firstName")).toBe("John");
+      expect<string | number | string[]>(getAttribute("firstName")).toBe("John");
     });
 
     test("casting to number", () => {
-      expect(getAttribute("duration", Number)).toBe(21243);
+      expect<number>(getAttribute("duration", Number)).toBe(21243);
+    });
+    test("casting array to string", () => {
+      expect<string[]>(getAttribute("tags")).toStrictEqual(["hello", "world"]);
     });
 
     test("casting array to string", () => {
-      expect(getAttribute("tags", String)).toBe("hello,world");
+      expect<string>(getAttribute("tags", String)).toBe("hello,world");
     });
 
     test("invalid casting", () => {
@@ -44,7 +47,7 @@ describe("attribute", () => {
     });
 
     // default optional
-    const getOptionalAttribute = createAttribute(getValues, throwAttributeError, false);
+    const getOptionalAttribute = createAttribute(getValues, throwAttributeError, false, String);
 
     test("default optional", () => {
       const hello = getOptionalAttribute("hello");

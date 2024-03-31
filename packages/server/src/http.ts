@@ -94,14 +94,27 @@ function throwAttributeError(name: string, message: string): never {
   throw new ValidationError("`" + name + "` " + message);
 }
 
-export const getParam = createAttribute<string, true>(getParams, abort.notFound, true);
+export const getParam = createAttribute<string, string, true>(getParams, abort.notFound, true);
 
-type GetHeaders = () => Record<HttpHeaderIncoming, string>;
-export const getHeader = createAttribute(getHeaders as unknown as GetHeaders, throwAttributeError, false);
+function getHeadersDistinct() {
+  const { raw: request } = getRequest();
+  return request.headersDistinct as Record<HttpHeaderIncoming, string[]>;
+}
+export const getHeader = createAttribute<string[], string, false, HttpHeaderIncoming>(
+  getHeadersDistinct,
+  throwAttributeError,
+  false,
+  String
+);
 
-export const getField = createAttribute<unknown, false>(getBody, throwAttributeError, false);
+export const getField = createAttribute(getBody, throwAttributeError, false);
 
-export const getSearchParam = createAttribute<string, false>(getSearchParams, throwAttributeError, false, toLastValue);
+export const getSearchParam = createAttribute(
+  getSearchParams as () => Record<string, string | string[]>,
+  throwAttributeError,
+  false,
+  toLastValue
+);
 
 /**
  * @deprecated please use getSearchParam instead

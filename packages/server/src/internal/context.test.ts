@@ -25,9 +25,10 @@ class FakeRequest {
 class FakeResponse {
   raw: ServerResponse = new ServerResponse(mockIncomingMessage);
 }
-export const fakeRequest = (data: Dict = {}) => {
+export const fakeRequest = (data: Dict = {}, raw: Dict = {}) => {
   const req: Request = new FakeRequest() as any;
   Object.assign(req, data);
+  Object.assign(req.raw, raw);
   return req;
 };
 

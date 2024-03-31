@@ -4,11 +4,11 @@ export type CastTo<T, DT = unknown> = (value: DT) => T;
 
 type CastType<T, DT = unknown> = CastTo<T, DT> | [CastTo<T, DT>] | null | undefined;
 
-export function createAttribute<DT, DR extends boolean, N extends string = string>(
-  getValues: () => Record<N, DT>,
+export function createAttribute<OT, DT = OT, DR extends boolean = false, N extends string = string>(
+  getValues: () => Record<N, OT>,
   throwError: (name: N, message: string) => never,
   defaultRequired: DR,
-  defaultCast?: CastTo<any>
+  defaultCast?: CastTo<DT, OT>
 ) {
   // with default
   function getAttribute<T = DT>(name: N): DR extends true ? T : T | undefined;
@@ -16,20 +16,16 @@ export function createAttribute<DT, DR extends boolean, N extends string = strin
   function getAttribute<T = DT>(name: N, required: false): T | undefined;
 
   // with casting
-  function getAttribute<T>(name: N, castTo: CastTo<T, DT>): DR extends true ? T : T | undefined;
-  function getAttribute<T>(name: N, castTo: CastTo<T, DT>, required: true): T;
-  function getAttribute<T>(name: N, castTo: CastTo<T, DT>, required: false): T | undefined;
+  function getAttribute<T>(name: N, castTo: CastTo<T, OT>): DR extends true ? T : T | undefined;
+  function getAttribute<T>(name: N, castTo: CastTo<T, OT>, required: true): T;
+  function getAttribute<T>(name: N, castTo: CastTo<T, OT>, required: false): T | undefined;
 
   // with casting as an array
-  function getAttribute<T>(name: N, castTo: [CastTo<T, DT>]): DR extends true ? T[] : T[] | undefined;
-  function getAttribute<T>(name: N, castTo: [CastTo<T, DT>], required: false): T[] | undefined;
-  function getAttribute<T>(name: N, castTo: [CastTo<T, DT>], required: true): T[];
+  function getAttribute<T>(name: N, castTo: [CastTo<T, OT>]): DR extends true ? T[] : T[] | undefined;
+  function getAttribute<T>(name: N, castTo: [CastTo<T, OT>], required: false): T[] | undefined;
+  function getAttribute<T>(name: N, castTo: [CastTo<T, OT>], required: true): T[];
 
-  function getAttribute<T>(
-    name: N,
-    cast: CastType<T, DT> | boolean = defaultCast,
-    required: boolean = defaultRequired
-  ) {
+  function getAttribute(name: N, cast: CastType<any, OT> | boolean = defaultCast, required: boolean = defaultRequired) {
     const queries = getValues();
     if (typeof cast === "boolean") {
       return validateAndCast(name, queries[name], defaultCast, cast);
