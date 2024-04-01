@@ -5,6 +5,11 @@
   },
   "typescript.tsdk": ".yarn/sdks/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
-  "cSpell.words": ["deepmerge", "fastify", "minimajs", "pino"],
+  "cSpell.words": [
+    "deepmerge",
+    "fastify",
+    "minimajs",
+    "pino"
+  ],
   "editor.defaultFormatter": "esbenp.prettier-vscode"
 }

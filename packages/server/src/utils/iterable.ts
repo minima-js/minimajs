@@ -1,3 +1,5 @@
+export { default as merge } from "deepmerge";
+
 export function isAsyncIterator<T>(obj: unknown): obj is AsyncIterable<T> {
   if (!isObject(obj)) return false;
   const method = obj[Symbol.asyncIterator];
