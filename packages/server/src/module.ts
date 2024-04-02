@@ -23,7 +23,9 @@ function getModuleName(callback: any, opt: InterceptorOption) {
 export interface InterceptorOption {
   name?: string;
 }
-
+/**
+ * Attach middleware(s) to the module.
+ */
 export function interceptor<T extends PluginOptions = {}>(
   handlers: Interceptor[],
   callback: PluginCallback<T>,
