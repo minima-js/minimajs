@@ -28,6 +28,9 @@ function getDefaultConfig({ logger: loggerOverride, ...override }: AppOptions): 
   };
 }
 
+/**
+ * Create an app instance
+ */
 export function createApp({ routes = { log: true }, ...opts }: AppOptions = {}): App {
   const app = fastify<Server>(getDefaultConfig(opts));
   app.register(appPlugin);

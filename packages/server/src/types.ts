@@ -20,6 +20,10 @@ export type HttpHeaderIncoming = keyof OmitIndexSignature<IncomingHttpHeaders> |
 export interface PluginOptions extends FastifyPluginOptions {
   name?: string;
 }
+
+/**
+ * The App interface in Minimajs represents a customized server instance equipped for handling requests.
+ */
 export interface App extends FastifyInstance {
   [kPluginNameChain]?: string[];
   [kErrorDecorator]?: ErrorDecorator;
@@ -35,4 +39,4 @@ export interface AppOptions extends FastifyHttpOptions<Server, FastifyBaseLogger
   };
 }
 export type Dict<T = unknown> = NodeJS.Dict<T>;
-export type Next = (error: unknown, response?: unknown) => void;
+export type Next = (error?: unknown, response?: unknown) => void;

@@ -13,7 +13,9 @@ import {
 import type { Dict, HttpHeader, HttpHeaderIncoming, Request, Response } from "./types.js";
 import { createAttribute } from "./utils/attribute.js";
 import { toLastValue } from "./utils/iterable.js";
-
+/**
+ * Retrieves the HTTP request object.
+ */
 export function getRequest(): Request {
   const { req } = getContext();
   return req;
@@ -39,11 +41,17 @@ export function setStatusCode(statusCode: keyof typeof StatusCodes | number): Re
   return response.status(statusCode);
 }
 
+/**
+ * Retrieves the request headers.
+ */
 export function getHeaders() {
   const { req } = getContext();
   return req.headers;
 }
 
+/**
+ * Retrieves the querystring
+ */
 export function getSearchParams<T = ParsedUrlQuery>() {
   return getRequest().query as T;
 }
@@ -53,23 +61,37 @@ export function getSearchParams<T = ParsedUrlQuery>() {
  */
 export const getQueries = getSearchParams;
 
+/**
+ * Set Request header
+ */
 export function setHeader(name: HttpHeader, value: string): Response {
   const { reply } = getContext();
   return reply.header(name, value);
 }
-
+/**
+ * Redirect
+ */
 export function redirect(path: string, isPermanent?: boolean): never {
   throw new RedirectError(path, isPermanent);
 }
 
+/**
+ * Throws a HttpError with the given response and statusCode
+ */
 export function abort(response: ErrorResponse, statusCode: StatusCode = 400): never {
   throw new HttpError(response, statusCode);
 }
 
+/**
+ * Throws a NotFoundError (status 404).
+ */
 abort.notFound = function abortNotFound(): never {
   throw new NotFoundError();
 };
 
+/**
+ * Ensures an error is not an aborted error
+ */
 abort.assertNot = function assertNotAborted(error: unknown): asserts error is Error {
   if (BaseHttpError.is(error)) {
     throw error;
@@ -80,38 +102,52 @@ abort.assertNot = function assertNotAborted(error: unknown): asserts error is Er
   throw error;
 };
 
+/**
+ * Ensures an error is an aborted error.
+ */
 abort.assert = function assertAbort(error: unknown): asserts error is Error {
   if (!BaseHttpError.is(error)) {
     throw error;
   }
 };
 
+/**
+ * Checks if a given error is an aborted error
+ */
 abort.is = function isAbortError(error: unknown): error is BaseHttpError {
   return BaseHttpError.is(error);
 };
 
-function throwAttributeError(name: string, message: string): never {
-  throw new ValidationError("`" + name + "` " + message);
+function throwAttributeError(accessor: string, name: string, message: string): never {
+  throw new ValidationError(accessor + "`" + name + "` " + message);
 }
-
+/**
+ * Retrieves and validates parameters from the current request context. It optionally casts the values to a specified type and enforces that the parameter is required.
+ */
 export const getParam = createAttribute<string, string, true>(getParams, abort.notFound, true);
 
-function getHeadersDistinct() {
+export function getHeadersDistinct() {
   const { raw: request } = getRequest();
   return request.headersDistinct as Record<HttpHeaderIncoming, string[]>;
 }
+/**
+ * Retrieves and validates header from the current request context. It optionally casts the values to a specified type and enforces that the header is required.
+ */
 export const getHeader = createAttribute<string[], string, false, HttpHeaderIncoming>(
   getHeadersDistinct,
-  throwAttributeError,
+  throwAttributeError.bind(this, "Header "),
   false,
   String
 );
 
-export const getField = createAttribute(getBody, throwAttributeError, false);
+export const getField = createAttribute(getBody, throwAttributeError.bind(this, "Field "), false);
 
+/**
+ * Retrieves and validates search params from the current request context. It optionally casts the values to a specified type and enforces that the search param is required.
+ */
 export const getSearchParam = createAttribute(
   getSearchParams as () => Record<string, string | string[]>,
-  throwAttributeError,
+  throwAttributeError.bind(this, "Param "),
   false,
   toLastValue
 );
