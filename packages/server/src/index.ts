@@ -31,11 +31,7 @@ function getDefaultConfig({ logger: loggerOverride, ...override }: AppOptions): 
 /**
  * Create an app instance
  */
-export function createApp({
-  killSignal = ["SIGTERM", "SIGUSR2"],
-  routes = { log: true },
-  ...opts
-}: AppOptions = {}): App {
+export function createApp({ killSignal = ["SIGTERM"], routes = { log: true }, ...opts }: AppOptions = {}): App {
   const app = fastify<Server>(getDefaultConfig(opts));
   shutdownListener(app, killSignal);
   app.register(appPlugin);

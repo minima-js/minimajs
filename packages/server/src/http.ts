@@ -21,14 +21,23 @@ export function getRequest(): Request {
   return req;
 }
 
+/**
+ * Retrieves the HTTP response object.
+ */
 export function getResponse(): Response {
   return getContext().reply;
 }
 
+/**
+ * Retrieves the request body.
+ */
 export function getBody<T = unknown>() {
   return getRequest().body as T;
 }
 
+/**
+ * Retrieves the request params.
+ */
 export function getParams<T = Dict<string>>(): T {
   return getRequest().params as T;
 }
@@ -76,14 +85,14 @@ export function redirect(path: string, isPermanent?: boolean): never {
 }
 
 /**
- * Throws a HttpError with the given response and statusCode
+ * Abort the request with the given response and statusCode
  */
 export function abort(response: ErrorResponse, statusCode: StatusCode = 400): never {
   throw new HttpError(response, statusCode);
 }
 
 /**
- * Throws a NotFoundError (status 404).
+ * Abort the request with [Not found] (404)
  */
 abort.notFound = function abortNotFound(): never {
   throw new NotFoundError();
@@ -126,10 +135,11 @@ function throwAttributeError(accessor: string, name: string, message: string): n
  */
 export const getParam = createAttribute<string, string, true>(getParams, abort.notFound, true);
 
-export function getHeadersDistinct() {
+function getHeadersDistinct() {
   const { raw: request } = getRequest();
   return request.headersDistinct as Record<HttpHeaderIncoming, string[]>;
 }
+
 /**
  * Retrieves and validates header from the current request context. It optionally casts the values to a specified type and enforces that the header is required.
  */

@@ -11,9 +11,9 @@ export function shutdownListener(app: App, killSignal: Signal[]) {
   }
 
   function next(sig: Signal) {
-    // removing existing listener, otherwise function quite might execute again by process.kill function.
+    // Remove the existing listener to prevent the possibility of the 'quit' function being executed again by the 'process.kill' function.
     process.off(sig, quit);
-    // check if same signals are not attached again then quit the app.
+    // Verify that identical signals are not reattached before terminating the process with the same signal.
     if (process.listeners(sig).length === 0) {
       process.kill(process.pid, sig);
     }
