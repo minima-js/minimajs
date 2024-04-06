@@ -119,7 +119,7 @@ const name = getSearchParam("name"); // Returns "John Doe" if the parameter exis
 const pageNumber = getSearchParam("page", Number); // Returns 2 if the parameter exists and has a valid number
 
 // Throws ValidationError if "page" is not a valid number
-expect(() => getSearchParam("page", Number)).toThrow(new ValidationError("`page` expects a number"));
+expect(() => getSearchParam("page", Number)).toThrow(new ValidationError("Param `page` expects a number"));
 ```
 
 **Retrieving an array of numbers with type conversion:**

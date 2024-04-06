@@ -1,6 +1,6 @@
 import { Writable } from "stream";
 
-export function nullStream() {
+export function stream2null() {
   return new Writable({
     write(_, __, callback) {
       setImmediate(callback);

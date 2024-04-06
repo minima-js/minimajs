@@ -148,10 +148,9 @@ app.register(post, { prefix: "/posts" });
 
 // connecting to mongodb and wait for connection.
 const { connection } = await connect("mongodb://localhost/minimajs-starter-kit");
-app.addHook("onClose", () => {
-  connection.close();
-  // close the mongodb connection as soon as app closed, it will fast development speed.
-});
+
+// close the mongodb connection as soon as app closed.
+app.addHook("onClose", () => connection.close());
 
 // finally start the server.
 await app.listen({ port: 1234 });

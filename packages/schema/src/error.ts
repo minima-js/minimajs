@@ -2,9 +2,9 @@ import { ValidationError as ValidationBaseError } from "yup";
 import { ValidationError as BaseError } from "@minimajs/server/error";
 
 interface Params {
-  value: any;
-  originalValue: any;
-  label: any;
+  value: unknown;
+  originalValue: unknown;
+  label: string;
   path: string;
   spec: Spec;
   disableStackTrace: boolean;
@@ -26,10 +26,8 @@ export class ValidationError extends BaseError {
     return new ValidationError(err.message, err);
   }
 
-  name = "ValidationError";
-
   params?: Params;
-  value?: any;
+  value?: unknown;
   path?: string;
   type?: string;
 
@@ -39,16 +37,13 @@ export class ValidationError extends BaseError {
   constructor(public message: string, public base?: ValidationBaseError) {
     super(message);
     if (base) {
-      this.params = base.params as any;
+      this.params = base.params as unknown as Params;
       this.value = base.value;
       this.path = base.path;
       this.type = base.type;
       this.errors = base.errors;
       this.inner = base.inner.map((x) => ValidationError.create(x));
     }
-  }
-  toJSON(): unknown {
-    return ValidationError.toJSON(this);
   }
 }
 

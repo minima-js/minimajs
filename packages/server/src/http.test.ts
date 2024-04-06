@@ -26,7 +26,9 @@ describe("Http", () => {
         expect<number | undefined>(getSearchParam("page", Number)).toBe(2);
         expect<number>(getSearchParam("page", Number, true)).toBe(2);
         expect<number[] | undefined>(getSearchParam("page", [Number])).toStrictEqual([2]);
-        expect<() => string>(() => getSearchParam("pages", true)).toThrow(new ValidationError("`pages` is required"));
+        expect<() => string>(() => getSearchParam("pages", true)).toThrow(
+          new ValidationError("Param `pages` is required")
+        );
         expect<{ name: string | string[] } | undefined>(getSearchParam("name", getSearch)).toStrictEqual(
           getSearch("John Doe")
         );
@@ -37,7 +39,7 @@ describe("Http", () => {
         expect<string | undefined>(getSearchParam("page")).toBe("2");
         expect<string>(getSearchParam("page", true)).toBe("2");
         expect<() => number | undefined>(() => getSearchParam("page", Number)).toThrow(
-          new ValidationError("`page` expects a number, received '1,2'")
+          new ValidationError("Param `page` expects a number, received '1,2'")
         );
       });
     });

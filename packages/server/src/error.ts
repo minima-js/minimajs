@@ -53,7 +53,7 @@ export class HttpError extends BaseHttpError {
   }
   public statusCode: number;
   public base?: unknown;
-
+  declare ["constructor"]: typeof HttpError;
   constructor(public response: ErrorResponse, statusCode: StatusCode, options?: HttpErrorOptions) {
     super(typeof response === "string" ? response : "Unknown error");
     Object.assign(this, options);
@@ -65,7 +65,7 @@ export class HttpError extends BaseHttpError {
   }
 
   public toJSON(): unknown {
-    return HttpError.toJSON(this);
+    return this.constructor.toJSON(this);
   }
 
   async render(req: Request, res: Response) {
@@ -102,9 +102,17 @@ export class ValidationError extends HttpError {
   public static getStatusCode = function getStatusCode<T extends ValidationError>(_error: T) {
     return 422;
   };
+
+  declare ["constructor"]: typeof ValidationError;
   constructor(response: ErrorResponse) {
     super(response, 400);
-    this.statusCode = (this as any).constructor.getStatusCode(this);
+    this.statusCode = this.constructor.getStatusCode(this);
+  }
+}
+
+export class ForbiddenError extends HttpError {
+  constructor(response: ErrorResponse = "Forbidden") {
+    super(response, 403);
   }
 }
 

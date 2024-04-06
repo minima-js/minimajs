@@ -5,7 +5,7 @@ import { createWriteStream } from "node:fs";
 import { stream2buffer } from "./helpers.js";
 import { v4 as uuid } from "uuid";
 import { extname, join } from "path";
-import { nullStream } from "./stream.js";
+import { stream2null } from "./stream.js";
 import assert from "node:assert";
 
 export interface FileInfo {
@@ -56,7 +56,7 @@ export class File implements FileInfo {
   }
 
   flush() {
-    return pipeline(this.stream, nullStream());
+    return pipeline(this.stream, stream2null());
   }
 }
 

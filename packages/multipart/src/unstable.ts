@@ -11,11 +11,7 @@ import { createReadStream } from "node:fs";
 
 export class UploadedFile extends File {
   #streams = new Set<Readable>();
-  constructor(
-    info: FileInfo,
-    public readonly tmpFile: string,
-    private readonly signal: AbortSignal
-  ) {
+  constructor(info: FileInfo, public readonly tmpFile: string, private readonly signal: AbortSignal) {
     super(info.field, info.filename, info.encoding, info.mimeType);
   }
 
@@ -38,12 +34,9 @@ export class UploadedFile extends File {
 
 type UploadedBody = Record<string, string | UploadedFile>;
 
-const [getMultipartMeta, setMultipartMeta] =
-  createContext<UploadedBody | null>();
+const [getMultipartMeta, setMultipartMeta] = createContext<UploadedBody | null>();
 
-export async function getUploadedBody<
-  T extends UploadedBody = UploadedBody
->(): Promise<T> {
+export async function getUploadedBody<T extends UploadedBody = UploadedBody>(): Promise<T> {
   const body = getMultipartMeta() as T;
   if (body) {
     return body;
