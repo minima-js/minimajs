@@ -1,13 +1,13 @@
-import { defer } from "@minimajs/server";
-import { createContext, getSignal } from "@minimajs/server/context";
+import { createReadStream } from "node:fs";
+import { unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import type { Readable } from "node:stream";
 import { v4 as uuid } from "uuid";
+import { defer } from "@minimajs/server";
+import { createContext, getSignal } from "@minimajs/server/context";
 import { isFile, File, type FileInfo } from "./file.js";
 import { getBody } from "./multipart.js";
-import type { Readable } from "node:stream";
-import { unlink } from "node:fs/promises";
-import { createReadStream } from "node:fs";
 
 export class UploadedFile extends File {
   #streams = new Set<Readable>();

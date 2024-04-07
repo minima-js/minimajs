@@ -1,12 +1,11 @@
+import assert from "node:assert";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
+import { extname, join } from "node:path";
 import { createWriteStream } from "node:fs";
 
-import { stream2buffer } from "./helpers.js";
 import { v4 as uuid } from "uuid";
-import { extname, join } from "path";
-import { stream2null } from "./stream.js";
-import assert from "node:assert";
+import { stream2void, stream2buffer } from "./stream.js";
 
 export interface FileInfo {
   readonly field: string;
@@ -56,7 +55,7 @@ export class File implements FileInfo {
   }
 
   flush() {
-    return pipeline(this.stream, stream2null());
+    return pipeline(this.stream, stream2void());
   }
 }
 

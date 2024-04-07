@@ -4,7 +4,6 @@
   "type": "module",
   "exports": {
     ".": "./lib/index.js",
-    "./helpers": "./lib/helpers.js",
     "./unstable": "./lib/unstable.js"
   },
   "scripts": {

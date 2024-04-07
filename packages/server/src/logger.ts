@@ -1,8 +1,8 @@
 import { pino, type LoggerOptions } from "pino";
+import merge from "deepmerge";
 import { getContextOrNull as getContext } from "./context.js";
 import type { App, Dict } from "./types.js";
 import { kPluginNameChain, kRequestContext } from "./internal/symbol.js";
-import merge from "deepmerge";
 
 export const loggerOptions: LoggerOptions = {
   transport: {

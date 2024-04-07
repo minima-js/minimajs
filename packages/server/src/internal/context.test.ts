@@ -1,6 +1,6 @@
 // import { EventEmitter } from "stream";
+import { IncomingMessage, ServerResponse } from "node:http";
 import { getContext, safeWrap, wrap } from "./context.js";
-import { IncomingMessage, ServerResponse } from "http";
 import { type Dict, type Request, type Response } from "../types.js";
 
 // Mock request data

@@ -4,7 +4,7 @@ import { Busboy, type BusboyConfig, type BusboyHeaders } from "@fastify/busboy";
 import { File } from "./file.js";
 import { getRequest, type Request } from "@minimajs/server";
 import { asyncIterator } from "./async-iterator.js";
-import { stream2null } from "./stream.js";
+import { stream2void } from "./stream.js";
 
 function ensureContentType(headers: IncomingHttpHeaders): asserts headers is BusboyHeaders {
   assert("content-type" in headers, "Invalid content type or not exists in header");
@@ -27,7 +27,7 @@ export async function getFile(name: string) {
     const bb = busboy(req, { limits: { fields: 0 } });
     bb.on("file", (uploadedName, file, filename, encoding, mimeType) => {
       if (uploadedName !== name) {
-        file.pipe(stream2null());
+        file.pipe(stream2void());
         return;
       }
       resolve(new File(uploadedName, filename, encoding, mimeType, file));

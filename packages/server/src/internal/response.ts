@@ -1,9 +1,9 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 import type { App, Next, Request, Response } from "../types.js";
 import { isAsyncIterator } from "../utils/iterable.js";
 import { kResponseDecorator } from "./symbol.js";
-import { pipeline } from "node:stream/promises";
 
 const SkipResponseDecorator = Symbol("response-no-decorate");
 const ResponseAbort = Symbol("response");

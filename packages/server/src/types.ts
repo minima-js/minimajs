@@ -1,3 +1,4 @@
+import type { IncomingHttpHeaders, Server } from "node:http";
 import type {
   FastifyBaseLogger,
   FastifyHttpOptions,
@@ -8,7 +9,6 @@ import type {
   FastifyRequest,
 } from "fastify";
 import { kResponseDecorator, kErrorDecorator, kPluginNameChain } from "./internal/symbol.js";
-import type { IncomingHttpHeaders, Server } from "node:http";
 import type { ErrorDecorator } from "./error.js";
 import type { ResponseDecorator } from "./response.js";
 import type { OmitIndexSignature } from "fastify/types/utils.js";

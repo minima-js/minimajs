@@ -1,5 +1,5 @@
-import { getBody, getHeaders, getSearchParams } from "@minimajs/server";
 import type { ObjectShape, ValidateOptions } from "yup";
+import { getBody, getHeaders, getSearchParams } from "@minimajs/server";
 import { validator, validatorAsync } from "./validation.js";
 
 export function createBody<T extends ObjectShape>(obj: T, option: ValidateOptions = {}) {
