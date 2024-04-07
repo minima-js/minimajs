@@ -11,7 +11,7 @@ export async function stream2buffer(stream: Readable): Promise<Buffer> {
 
 export function stream2void() {
   return new Writable({
-    write(_, __, callback) {
+    write(_, _1, callback) {
       setImmediate(callback);
     },
   });

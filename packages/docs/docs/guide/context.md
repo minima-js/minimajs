@@ -35,7 +35,11 @@ function helloHandler() {
 app.get("/hello", helloHandler);
 ```
 
-Context is particularly useful for passing data from a middleware to a request callback:
+## Example
+
+Context is particularly useful for passing data from a middleware to a request callback
+
+Let's implement an auth middleware using context api.
 
 **Creating a Context**
 
@@ -70,12 +74,12 @@ function userInterceptor() {
 
 ```ts title="src/hello/index.ts"
 import { type App } from "@minimajs/server";
+import { getUser } from "./context.js";
 
 // Request handler for the '/' endpoint
 function helloHandler() {
-  const message = getSearchParam("message");
-  setMessage(`Hello ${message}`); // Set the message for the request scope
-  somethingForHello(); // Use the message
+  const user = getUser();
+  return `Hello ${user.name}`;
 }
 
 // Export the helloModule function
