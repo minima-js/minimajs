@@ -6,7 +6,7 @@ import { isAsyncIterator } from "../utils/iterable.js";
 import { kResponseDecorator } from "./symbol.js";
 
 const SkipResponseDecorator = Symbol("response-no-decorate");
-const ResponseAbort = Symbol("response");
+export const ResponseAbort = Symbol("RequestCancelled");
 
 function isDecoratorSkipped(response: Response) {
   return (response as any)[SkipResponseDecorator];

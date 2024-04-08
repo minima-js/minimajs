@@ -14,8 +14,14 @@ import type { Dict, HttpHeader, HttpHeaderIncoming, Request, Response } from "./
 import { createAttribute } from "./utils/attribute.js";
 import { toLastValue } from "./utils/iterable.js";
 
+import { ResponseAbort } from "./internal/response.js";
 /**
  * Retrieves the HTTP request object.
+ * @example ```ts
+ * const req = getRequest();
+ * console.log(req.url);
+ * ```
+ * @since v0.1.0
  */
 export function getRequest(): Request {
   const { req } = getContext();
@@ -107,6 +113,9 @@ abort.assertNot = function assertNotAborted(error: unknown): asserts error is Er
     throw error;
   }
   if (error instanceof Error) {
+    if (error.cause === ResponseAbort) {
+      throw error;
+    }
     return;
   }
   throw error;

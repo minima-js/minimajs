@@ -1,11 +1,11 @@
 import type { Server } from "node:http";
 import fastify from "fastify";
 import merge from "deepmerge";
-import chalk from "chalk";
 import { appPlugin } from "./internal/plugins.js";
 import type { App, AppOptions } from "./types.js";
 import { loggerOptions } from "./logger.js";
 import { shutdownListener } from "./shutdown.js";
+import { logRoutes } from "./router.js";
 
 export * from "./http.js";
 export * from "./hooks.js";
@@ -35,17 +35,8 @@ export function createApp({ killSignal = ["SIGTERM"], routes = { log: true }, ..
   const app = fastify<Server>(getDefaultConfig(opts));
   shutdownListener(app, killSignal);
   app.register(appPlugin);
-  function logRoutes() {
-    console.log(
-      chalk.magenta(
-        app.printRoutes({
-          commonPrefix: false,
-        })
-      )
-    );
-  }
   if (routes.log) {
-    app.addHook("onReady", logRoutes);
+    app.addHook("onReady", () => logRoutes(app));
   }
   return app;
 }

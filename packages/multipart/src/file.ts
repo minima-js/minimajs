@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { Readable } from "node:stream";
+import { type Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { extname, join } from "node:path";
 import { createWriteStream } from "node:fs";

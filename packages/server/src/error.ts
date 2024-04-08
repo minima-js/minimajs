@@ -104,7 +104,7 @@ export class ValidationError extends HttpError {
   };
 
   declare ["constructor"]: typeof ValidationError;
-  constructor(response: ErrorResponse) {
+  constructor(response: ErrorResponse = "Validation failed") {
     super(response, 400);
     this.statusCode = this.constructor.getStatusCode(this);
   }
