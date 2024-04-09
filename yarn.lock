@@ -3012,6 +3012,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@minimajs/session@workspace:packages/session":
+  version: 0.0.0-use.local
+  resolution: "@minimajs/session@workspace:packages/session"
+  dependencies:
+    "@minimajs/server": "npm:*"
+  peerDependencies:
+    "@minimajs/server": "*"
+  languageName: unknown
+  linkType: soft
+
 "@minimajs/utility@workspace:packages/utility":
   version: 0.0.0-use.local
   resolution: "@minimajs/utility@workspace:packages/utility"

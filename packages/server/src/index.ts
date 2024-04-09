@@ -6,6 +6,7 @@ import type { App, AppOptions } from "./types.js";
 import { loggerOptions } from "./logger.js";
 import { shutdownListener } from "./shutdown.js";
 import { logRoutes } from "./router.js";
+import { triggerOnCreateApp } from "./hooks.js";
 
 export * from "./http.js";
 export * from "./hooks.js";
@@ -38,5 +39,6 @@ export function createApp({ killSignal = ["SIGTERM"], routes = { log: true }, ..
   if (routes.log) {
     app.addHook("onReady", () => logRoutes(app));
   }
+  app.addHook("onReady", () => triggerOnCreateApp(app));
   return app;
 }

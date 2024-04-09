@@ -1,0 +1,14 @@
+{
+  "name": "@minimajs/session",
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "tsc -w"
+  },
+  "peerDependencies": {
+    "@minimajs/server": "*"
+  },
+  "devDependencies": {
+    "@minimajs/server": "*"
+  }
+}
