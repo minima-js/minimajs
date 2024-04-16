@@ -21,7 +21,7 @@ export function getSignal() {
 }
 
 /**
- * The concept of Context is fundamental to backend development, and it's a core feature of the minimajs framework. Context enables sharing data within the request scope without the need to explicitly pass it around.
+ * Context enables sharing data within the request scope without the need to explicitly pass it around.
  * @example ```ts
  * import { createContext } from "@minimajs/server";
   export interface User {

@@ -3,14 +3,15 @@ import assert from "node:assert";
 import { Busboy, type BusboyConfig, type BusboyHeaders } from "@fastify/busboy";
 import { File } from "./file.js";
 import { getRequest, type Request } from "@minimajs/server";
-import { asyncIterator } from "./async-iterator.js";
-import { stream2void } from "./stream.js";
+import { createIteratorAsync, stream2void } from "./stream.js";
+
+type Config = Omit<BusboyConfig, "headers">;
 
 function ensureContentType(headers: IncomingHttpHeaders): asserts headers is BusboyHeaders {
   assert("content-type" in headers, "Invalid content type or not exists in header");
 }
 
-function busboy(req: Request, opt: Omit<BusboyConfig, "headers">) {
+function busboy(req: Request, opt: Config) {
   const { headers } = req;
   ensureContentType(headers);
   const bb = new Busboy({
@@ -21,12 +22,16 @@ function busboy(req: Request, opt: Omit<BusboyConfig, "headers">) {
   return bb;
 }
 
-export async function getFile(name: string) {
+export async function getFile(name?: string) {
+  const limits: BusboyConfig["limits"] = { fields: 0 };
+  if (!name) {
+    limits.files = 1;
+  }
   const req = getRequest();
   return new Promise<File>((resolve, reject) => {
-    const bb = busboy(req, { limits: { fields: 0 } });
+    const bb = busboy(req, { limits });
     bb.on("file", (uploadedName, file, filename, encoding, mimeType) => {
-      if (uploadedName !== name) {
+      if (name && uploadedName !== name) {
         file.pipe(stream2void());
         return;
       }
@@ -38,7 +43,7 @@ export async function getFile(name: string) {
 
 export function getFiles() {
   const req = getRequest();
-  const [stream, iterator] = asyncIterator<File>();
+  const [stream, iterator] = createIteratorAsync<File>();
   const bb = busboy(req, {
     limits: { fields: 0 },
   });
@@ -66,7 +71,7 @@ export function getFields<T extends Record<string, string>>() {
 
 export function getBody() {
   const req = getRequest();
-  const [stream, iterator] = asyncIterator<[string, string | File]>();
+  const [stream, iterator] = createIteratorAsync<[string, string | File]>();
   const bb = busboy(req, {});
   bb.on("field", (name, value) => {
     stream.push([name, value]);

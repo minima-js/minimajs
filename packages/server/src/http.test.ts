@@ -22,6 +22,8 @@ describe("Http", () => {
     test("with value as string", () => {
       wrap(fakeRequest({ query: { name: "John Doe", page: "2" } }), fakeResponse(), () => {
         expect<string | undefined>(getSearchParam("name")).toBe("John Doe");
+        // @ts-expect-error
+        expect(getSearchParam("name").length).toBe(8);
         expect<string | undefined>(getSearchParam("page")).toBe("2");
         expect<number | undefined>(getSearchParam("page", Number)).toBe(2);
         expect<number>(getSearchParam("page", Number, true)).toBe(2);
@@ -67,6 +69,8 @@ describe("Http", () => {
     test("with default header", async () => {
       await wrap(fakeRequest({}, { headersDistinct: { "x-user": ["1234"] } }), fakeResponse(), async () => {
         expect<string | undefined>(getHeader("x-user")).toBe("1234");
+        // @ts-expect-error
+        expect(getHeader("x-user").length).toBe(4);
         expect<number | undefined>(getHeader("x-user", Number)).toBe(1234);
         expect<number[] | undefined>(getHeader("x-user", [Number])).toStrictEqual([1234]);
         expect<string>(getHeader("x-user", true)).toBe("1234");

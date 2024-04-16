@@ -25,6 +25,18 @@ export interface InterceptorOption {
 }
 /**
  * Attach middleware(s) to the module.
+ * @example ```ts
+ * // hello/index.ts
+ * import { interceptor, getRequest, type App } from '@minimajs/server'
+ * function logRequest() {
+ *  console.log(getRequest().url)
+ * }
+ * async function hello(app: App) {
+ *  app.get('/', () => 'hello');
+ * }
+ * export helloModule = interceptor([logRequest], hello)
+ * ```
+ * @since v0.1.0
  */
 export function interceptor<T extends PluginOptions = {}>(
   handlers: Interceptor[],

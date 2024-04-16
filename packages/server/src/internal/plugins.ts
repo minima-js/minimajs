@@ -32,7 +32,7 @@ export async function triggerOnSent() {
 export const appPlugin = function minimajs(fastify: App, _: {}, next: CF) {
   fastify.setErrorHandler(errorHandler);
   fastify.setNotFoundHandler((req, res) => errorHandler(new NotFoundError(), req, res));
-  fastify.addContentTypeParser("multipart/form-data", (_, __, next) => {
+  fastify.addContentTypeParser("multipart/form-data", (_, _1, next) => {
     next(null);
   });
   fastify.addHook("onRequest", wrap);
