@@ -5,11 +5,9 @@
   },
   "typescript.tsdk": ".yarn/sdks/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
-  "cSpell.words": [
-    "deepmerge",
-    "fastify",
-    "minimajs",
-    "pino"
-  ],
-  "editor.defaultFormatter": "esbenp.prettier-vscode"
+  "cSpell.words": ["deepmerge", "fastify", "minimajs", "pino", "unsign"],
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[shellscript]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  }
 }
