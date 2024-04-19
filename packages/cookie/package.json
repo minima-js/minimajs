@@ -1,6 +1,6 @@
 {
   "name": "@minimajs/cookie",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "type": "module",
   "exports": "./lib/index.js",
   "scripts": {
