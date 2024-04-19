@@ -2921,11 +2921,16 @@ __metadata:
   resolution: "@minimajs/cookie@workspace:packages/cookie"
   dependencies:
     "@fastify/cookie": "npm:^9.3.1"
+    "@minimajs/schema": "npm:*"
     "@minimajs/server": "npm:*"
     "@types/node": "npm:^20.12.2"
     fastify: "npm:^4.26.2"
   peerDependencies:
+    "@minimajs/schema": "*"
     "@minimajs/server": "*"
+  peerDependenciesMeta:
+    "@minimajs/schema":
+      optional: true
   languageName: unknown
   linkType: soft
 

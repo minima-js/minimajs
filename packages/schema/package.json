@@ -1,9 +1,10 @@
 {
   "name": "@minimajs/schema",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "exports": {
-    ".": "./lib/index.js"
+    ".": "./lib/index.js",
+    "./validation": "./lib/validation.js"
   },
   "scripts": {
     "dev": "tsc -w",

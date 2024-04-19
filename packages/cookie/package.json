@@ -9,12 +9,19 @@
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "devDependencies": {
+    "@minimajs/schema": "*",
     "@minimajs/server": "*",
     "@types/node": "^20.12.2",
     "fastify": "^4.26.2"
   },
   "peerDependencies": {
+    "@minimajs/schema": "*",
     "@minimajs/server": "*"
+  },
+  "peerDependenciesMeta": {
+    "@minimajs/schema": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@fastify/cookie": "^9.3.1"
