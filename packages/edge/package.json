@@ -1,0 +1,21 @@
+{
+  "name": "@minimajs/edge.js",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": "./lib/index.js",
+  "dependencies": {
+    "edge.js": "^6.0.2"
+  },
+  "peerDependencies": {
+    "@minimajs/server": "*"
+  },
+  "scripts": {
+    "dev": "tsc -w",
+    "build": "yarn clean && tsc",
+    "clean": "rimraf -g '*.tsbuildinfo' lib"
+  },
+  "devDependencies": {
+    "@minimajs/server": "*",
+    "@types/node": "^20.12.12"
+  }
+}

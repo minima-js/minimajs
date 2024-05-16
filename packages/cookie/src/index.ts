@@ -1,28 +1,42 @@
 import type { CookieSerializeOptions } from "@fastify/cookie";
-import fastifyCookie from "@fastify/cookie";
-import { getRequest, getResponse } from "./context.js";
-import { createAttribute } from "@minimajs/server/utils";
+import fastifyCookie, { type FastifyCookieOptions } from "@fastify/cookie";
 import { ValidationError } from "@minimajs/server/error";
+import { getRequest, getResponse } from "./context.js";
+const { assign } = Object;
 
-export { type CookieSerializeOptions };
-
-export { fastifyCookie as cookiesPlugin };
-function throwAttributeError(accessor: string, name: string, message: string): never {
-  throw new ValidationError(accessor + "`" + name + "` " + message);
+export interface GetCookieOption {
+  required?: boolean;
+  signed?: boolean;
 }
 
-export const getCookie = createAttribute(getCookies, throwAttributeError.bind(this, "Cookie "), false);
-
-export function getSignedCookie(name: string) {
-  const req = getRequest();
-  const cookie = req.cookies[name];
-  if (!cookie) return null;
-  return req.unsignCookie(cookie);
+export { getCookie };
+function getCookie<T extends GetCookieOption>(
+  name: string,
+  options?: T
+): T extends { required: true } ? string : string | undefined;
+function getCookie(name: string, { required, signed }: GetCookieOption = {}) {
+  const { cookies, unsignCookie } = getRequest();
+  if (!(name in cookies)) {
+    if (!required) return;
+    throw assign(new ValidationError(`Cookie \`${name}\` is required`), {
+      code: "COOKIE_NOT_FOUND",
+    });
+  }
+  const cookie = cookies[name]!;
+  if (!signed) return cookie;
+  const unsigned = unsignCookie(cookie);
+  if (!unsigned.valid) {
+    if (!required) return;
+    throw assign(new ValidationError(`Cookie \`${name}\` is not valid`), {
+      code: "COOKIE_NOT_VALID",
+    });
+  }
+  return unsigned.value!;
 }
 
-export function getCookies(): Record<string, string | undefined> {
+export function getCookies() {
   const req = getRequest();
-  return req.cookies;
+  return req.cookies as unknown as Record<string, string>;
 }
 
 export function setCookie(name: string, value: string, options?: CookieSerializeOptions) {
@@ -30,6 +44,10 @@ export function setCookie(name: string, value: string, options?: CookieSerialize
   return reply.setCookie(name, value, options);
 }
 
-export function deleteCookie(name: string) {
-  return getResponse().clearCookie(name);
+export function deleteCookie(name: string, options?: CookieSerializeOptions) {
+  return getResponse().clearCookie(name, options);
 }
+
+export { type CookieSerializeOptions };
+export { fastifyCookie as plugin };
+export { type FastifyCookieOptions as CookieOptions };

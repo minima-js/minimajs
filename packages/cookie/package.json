@@ -2,7 +2,10 @@
   "name": "@minimajs/cookie",
   "version": "0.1.0",
   "type": "module",
-  "exports": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./schema": "./lib/schema.js"
+  },
   "scripts": {
     "dev": "tsc -w",
     "build": "yarn clean && tsc --build",

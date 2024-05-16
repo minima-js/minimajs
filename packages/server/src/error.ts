@@ -21,6 +21,7 @@ export type ErrorDecorator = (
 
 export abstract class BaseHttpError extends Error {
   abstract statusCode: number;
+  declare code?: string;
   static is(value: unknown): value is BaseHttpError {
     return value instanceof this;
   }
@@ -106,7 +107,7 @@ export class ValidationError extends HttpError {
   declare ["constructor"]: typeof ValidationError;
   constructor(response: ErrorResponse = "Validation failed") {
     super(response, 400);
-    this.statusCode = this.constructor.getStatusCode(this);
+    this.statusCode ??= this.constructor.getStatusCode(this);
   }
 }
 

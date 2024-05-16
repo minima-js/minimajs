@@ -31,7 +31,9 @@ tag() {
 }
 
 test() {
-    echo testing
+    (
+        cd "$(package_path "$1")" && yarn test
+    )
 }
 
 install() {
@@ -49,7 +51,16 @@ case $1 in
 publish)
     publish "$2"
     ;;
+tag)
+    validate "$2"
+    tag "$2"
+    ;;
+test)
+    validate "$2"
+    test "$2"
+    ;;
 *)
+
     echo nothing to do.
     exit 1
     ;;
