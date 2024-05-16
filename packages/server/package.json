@@ -27,14 +27,14 @@
   "dependencies": {
     "chalk": "^5.3.0",
     "deepmerge": "^4.3.1",
-    "fastify": "^4.26.2",
+    "fastify": "^4.27.0",
     "http-status-codes": "^2.3.0",
-    "pino": "^8.19.0",
+    "pino": "^9.1.0",
     "pino-pretty": "^11.0.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
-    "@types/node": "^20.12.2",
+    "@types/node": "^20.12.12",
     "jest": "^29.7.0"
   },
   "files": [

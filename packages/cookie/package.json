@@ -12,10 +12,10 @@
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "devDependencies": {
-    "@minimajs/schema": "*",
-    "@minimajs/server": "*",
-    "@types/node": "^20.12.2",
-    "fastify": "^4.26.2"
+    "@minimajs/schema": "workspace:^",
+    "@minimajs/server": "workspace:^",
+    "@types/node": "^20.12.12",
+    "fastify": "^4.27.0"
   },
   "peerDependencies": {
     "@minimajs/schema": "*",
