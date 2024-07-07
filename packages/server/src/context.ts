@@ -48,3 +48,36 @@ export function createContext<T>(value?: T | (() => T)) {
 
   return [getValue, setValue] as const;
 }
+
+/**
+ * called only once per request
+ */
+export function once<T>(callback: () => T): () => T {
+  const empty = Symbol("empty");
+  const [getValue, setValue] = createContext<T | typeof empty>(empty);
+  return function handleRequest() {
+    let value = getValue();
+    if (value === empty) {
+      value = callback();
+      setValue(value);
+    }
+    return value;
+  };
+}
+
+/**
+ * memoize
+ */
+export function memo<T, A extends unknown[]>(callback: (...params: A) => T): (...params: A) => T {
+  const [getStore] = createContext(new Map<string, T>());
+  return function handleRequest(...params: A) {
+    const key = JSON.stringify(params);
+    const cached = getStore();
+    if (cached.has(key)) {
+      return cached.get(key)!;
+    }
+    const value = callback(...params);
+    cached.set(key, value);
+    return value;
+  };
+}
