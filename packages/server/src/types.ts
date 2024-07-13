@@ -8,9 +8,7 @@ import type {
   FastifyReply,
   FastifyRequest,
 } from "fastify";
-import { kResponseDecorator, kErrorDecorator, kPluginNameChain } from "./internal/symbol.js";
-import type { ErrorDecorator } from "./error.js";
-import type { ResponseDecorator } from "./response.js";
+import { kPluginNameChain } from "./internal/symbol.js";
 import type { OmitIndexSignature } from "fastify/types/utils.js";
 
 export type { FastifyRegister } from "fastify";
@@ -26,8 +24,6 @@ export interface PluginOptions extends FastifyPluginOptions {
  */
 export interface App extends FastifyInstance {
   [kPluginNameChain]?: string[];
-  [kErrorDecorator]?: ErrorDecorator;
-  [kResponseDecorator]?: ResponseDecorator;
 }
 export interface Request extends FastifyRequest {}
 export interface Response extends FastifyReply {}

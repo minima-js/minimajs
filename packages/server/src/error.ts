@@ -1,23 +1,13 @@
 import { StatusCodes } from "http-status-codes";
 import type { App, Dict, Request, Response } from "./types.js";
-import { kErrorDecorator } from "./internal/symbol.js";
 import { isRequestAbortedError, skipDecorator } from "./internal/response.js";
+import { setPluginOption } from "./internal/plugins.js";
+import { createDecoratorHandler } from "./internal/decorator.js";
 
 export type ErrorResponse = string | Dict;
 export type StatusCode = keyof typeof StatusCodes | number;
 
-function getDecorator(app: App): ErrorDecorator {
-  return (
-    app[kErrorDecorator] ??
-    function render(err) {
-      return [err.statusCode, err.toJSON()];
-    }
-  );
-}
-
-export type ErrorDecorator = (
-  error: HttpError
-) => [statusCode: number, payload: unknown] | Promise<[statusCode: number, payload: unknown]>;
+export type ErrorDecorator = (error: unknown) => BaseHttpError | Promise<BaseHttpError>;
 
 export abstract class BaseHttpError extends Error {
   abstract statusCode: number;
@@ -69,10 +59,8 @@ export class HttpError extends BaseHttpError {
     return this.constructor.toJSON(this);
   }
 
-  async render(req: Request, res: Response) {
-    const decorator = getDecorator(req.server);
-    const [status, payload] = await decorator(this);
-    res.status(status).send(payload);
+  async render(_: Request, res: Response) {
+    res.status(this.statusCode).send(this.toJSON());
   }
 }
 
@@ -117,15 +105,23 @@ export class ForbiddenError extends HttpError {
   }
 }
 
-export function decorateError(app: App, render: ErrorDecorator) {
-  app.decorate(kErrorDecorator, render);
-}
+const [addErrorDecorator, getDecoratedError] = createDecoratorHandler<ErrorDecorator>();
 
-export function errorHandler(error: unknown, req: Request, reply: Response) {
+export async function errorHandler(error: unknown, req: Request, reply: Response) {
   if (isRequestAbortedError(error)) {
     return;
   }
   skipDecorator(reply);
+  error = await getDecoratedError(req.server, error);
   const handler = BaseHttpError.is(error) ? error : (req.server.log.error(error), HttpError.create(error));
   handler.render(req, reply);
+}
+
+export function createErrorDecorator(render: ErrorDecorator) {
+  function decorator(app: App, _: {}, done: CallableFunction) {
+    addErrorDecorator(app, render);
+    done();
+  }
+  setPluginOption(decorator, { override: true, name: "error-decorator" });
+  return decorator;
 }

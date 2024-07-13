@@ -1,9 +1,10 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
-import type { App, Next, Request, Response } from "../types.js";
+import type { Next, Request, Response } from "../types.js";
 import { isAsyncIterator } from "../utils/iterable.js";
-import { kResponseDecorator } from "./symbol.js";
+import { createDecoratorHandler } from "./decorator.js";
+export type ResponseDecorator = (body: unknown) => Promise<unknown> | unknown;
 
 const SkipResponseDecorator = Symbol("response-no-decorate");
 export const ResponseAbort = Symbol("RequestCancelled");
@@ -11,6 +12,9 @@ export const ResponseAbort = Symbol("RequestCancelled");
 function isDecoratorSkipped(response: Response) {
   return (response as any)[SkipResponseDecorator];
 }
+
+const [addResponseDecorator, getDecoratedResponse] = createDecoratorHandler<ResponseDecorator>();
+export { addResponseDecorator };
 
 export function skipDecorator(response: Response) {
   (response as any)[SkipResponseDecorator] = true;
@@ -47,15 +51,7 @@ export function handleResponse(request: Request, res: Response, body: unknown, n
     });
     return;
   }
-  decorateResponse(request.server, body)
+  getDecoratedResponse(request.server, body)
     .then((res) => next(null, res))
     .catch(next);
-}
-
-async function decorateResponse(app: App, body: unknown) {
-  const decorator = app[kResponseDecorator];
-  if (!decorator) {
-    return body;
-  }
-  return decorator(body);
 }
