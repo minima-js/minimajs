@@ -1,5 +1,4 @@
 import type { App } from "../types.js";
-
 function getCallbacks<T>(app: any, name: symbol): Set<T> {
   if (!app[name]) {
     app.decorate(name, new Set<T>());

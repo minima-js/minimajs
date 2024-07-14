@@ -2,12 +2,12 @@ import { StatusCodes } from "http-status-codes";
 import type { App, Dict, Request, Response } from "./types.js";
 import { isRequestAbortedError, skipDecorator } from "./internal/response.js";
 import { setPluginOption } from "./internal/plugins.js";
-import { createDecoratorHandler } from "./internal/decorator.js";
+import { createDecoratorHandler } from "./utils/decorator.js";
 
 export type ErrorResponse = string | Dict;
 export type StatusCode = keyof typeof StatusCodes | number;
 
-export type ErrorDecorator = (error: unknown) => BaseHttpError | Promise<BaseHttpError>;
+export type ErrorDecorator = (error: unknown) => unknown;
 
 export abstract class BaseHttpError extends Error {
   abstract statusCode: number;
@@ -29,7 +29,9 @@ export class HttpError extends BaseHttpError {
   public static toJSON = function toJSON<T extends HttpError = HttpError>(err: T): unknown {
     return typeof err.response === "string" ? { message: err.response } : err.response;
   };
-
+  static is(value: unknown): value is HttpError {
+    return value instanceof this;
+  }
   public static create(err: unknown, statusCode = 500) {
     if (err instanceof Error) {
       return new HttpError("Unable to process request", statusCode, {

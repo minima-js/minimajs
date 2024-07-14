@@ -3,7 +3,7 @@ import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import type { Next, Request, Response } from "../types.js";
 import { isAsyncIterator } from "../utils/iterable.js";
-import { createDecoratorHandler } from "./decorator.js";
+import { createDecoratorHandler } from "../utils/decorator.js";
 export type ResponseDecorator = (body: unknown) => Promise<unknown> | unknown;
 
 const SkipResponseDecorator = Symbol("response-no-decorate");

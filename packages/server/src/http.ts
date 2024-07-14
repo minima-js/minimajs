@@ -1,6 +1,6 @@
 import type { ParsedUrlQuery } from "node:querystring";
 import { StatusCodes } from "http-status-codes";
-import { getContext } from "./context.js";
+import { getContext, once } from "./context.js";
 import {
   RedirectError,
   HttpError,
@@ -57,6 +57,12 @@ export function setStatusCode(statusCode: keyof typeof StatusCodes | number): Re
   return response.status(statusCode);
 }
 
+export const getRequestURL = once(() => {
+  const request = getRequest();
+  const host = `${request.protocol}://${request.hostname}`;
+  return new URL(request.originalUrl, host);
+});
+
 /**
  * Retrieves the request headers.
  */
@@ -66,16 +72,18 @@ export function getHeaders() {
 }
 
 /**
- * Retrieves the querystring
+ * Retrieves the search params
  */
-export function getSearchParams<T = ParsedUrlQuery>() {
-  return getRequest().query as T;
-}
+export const getSearchParams = () => {
+  return getRequestURL().searchParams;
+};
 
 /**
- * @deprecated please use getSearchParams instead
+ * Retrieves the querystring
  */
-export const getQueries = getSearchParams;
+export function getQueries<T = ParsedUrlQuery>() {
+  return getRequest().query as T;
+}
 
 /**
  * Set Request header
@@ -94,7 +102,7 @@ export function redirect(path: string, isPermanent?: boolean): never {
 /**
  * Abort the request with the given response and statusCode
  */
-export function abort(response: ErrorResponse, statusCode: StatusCode = 400): never {
+export function abort(response: ErrorResponse = "Bad Request", statusCode: StatusCode = 400): never {
   throw new HttpError(response, statusCode);
 }
 
@@ -166,7 +174,7 @@ export const getField = createAttribute(getBody, throwAttributeError.bind(this, 
  * Retrieves and validates search params from the current request context. It optionally casts the values to a specified type and enforces that the search param is required.
  */
 export const getSearchParam = createAttribute(
-  getSearchParams as () => Record<string, string | string[]>,
+  getQueries as () => Record<string, string | string[]>,
   throwAttributeError.bind(this, "Param "),
   false,
   toLastValue

@@ -22,7 +22,6 @@ function getDefaultConfig({ logger: loggerOverride, ...override }: AppOptions): 
   }
 
   return {
-    trustProxy: true,
     disableRequestLogging: true,
     logger: loggerOverride === false ? false : logger,
     ...override,

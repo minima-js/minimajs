@@ -21,34 +21,42 @@ HttpError.toJSON = function (err: HttpError) {
 };
 ```
 
-### decorateError
+### createErrorDecorator
 
-The `decorateError` function allows you to customize error responses at the root level or module level of your application. Here's how you can use it:
+The `createErrorDecorator` function allows you to customize error responses at the root level or module level of your application. Here's how you can use it:
 
 ```typescript
 import { createApp, abort, type App } from "@minimajs/server";
-import { decorateError } from "@minimajs/server/error";
+import { HttpError, createErrorDecorator } from "@minimajs/server/error";
+
+// highlight-start
+export const errorDecorator = createErrorDecorator((err) => {
+  if (!HttpError.is(err)) {
+    return err; // do not handle if this is not HttpError error
+  }
+  return new HttpError({ err: err.response, statusCode: err.statusCode }, err.statusCode);
+});
+// highlight-end
+
 
 const app = createApp();
 
 app.get("/", () => {
   abort("something is not right", 500);
 });
-// highlight-next-line
-decorateError(app, (err) => {
-  return [err.statusCode, { error: err.message }];
-});
+
 
 // Module-level error handling
 app.register(function(app2: App) => {
   // highlight-next-line
-  decorateError(app, (err) => {
-    return [err.statusCode, { error2: err.message }];
-  });
+  app.register(errorDecorator)
   app.get('/something', () => {
     return 'some route'
   })
 })
+
+
+// create or register as many decorators you want,
 
 await app.listen({ port: 1234 });
 ```
