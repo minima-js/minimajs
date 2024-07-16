@@ -13,7 +13,7 @@ function isDecoratorSkipped(response: Response) {
   return (response as any)[SkipResponseDecorator];
 }
 
-const [addResponseDecorator, getDecoratedResponse] = createDecoratorHandler<ResponseDecorator>();
+const [addResponseDecorator, getDecoratedResponse] = createDecoratorHandler<ResponseDecorator>("response-decorator");
 export { addResponseDecorator };
 
 export function skipDecorator(response: Response) {

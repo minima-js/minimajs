@@ -107,7 +107,7 @@ export class ForbiddenError extends HttpError {
   }
 }
 
-const [addErrorDecorator, getDecoratedError] = createDecoratorHandler<ErrorDecorator>();
+const [addErrorDecorator, getDecoratedError] = createDecoratorHandler<ErrorDecorator>("error-decorator");
 
 export async function errorHandler(error: unknown, req: Request, reply: Response) {
   if (isRequestAbortedError(error)) {
