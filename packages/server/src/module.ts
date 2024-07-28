@@ -1,10 +1,10 @@
-import type { RegisterOptions, preHandlerHookHandler } from "fastify";
+import type { RegisterOptions, preHandlerAsyncHookHandler, preHandlerHookHandler } from "fastify";
 import type { App, Plugin, PluginOptions } from "./types.js";
 import { setPluginOption } from "./internal/plugins.js";
 
 export type PluginCallback<T extends PluginOptions> = Plugin<T> | Promise<{ default: Plugin<T> }>;
 
-export type Interceptor = preHandlerHookHandler;
+export type Interceptor = preHandlerHookHandler | preHandlerAsyncHookHandler;
 
 export interface ModuleOptions extends RegisterOptions, PluginOptions {}
 

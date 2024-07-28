@@ -13,8 +13,8 @@ function isDecoratorSkipped(response: Response) {
   return (response as any)[SkipResponseDecorator];
 }
 
-const [addResponseDecorator, getDecoratedResponse] = createDecoratorHandler<ResponseDecorator>("response-decorator");
-export { addResponseDecorator };
+const [createResponseDecorator, getDecoratedResponse] = createDecoratorHandler<ResponseDecorator>("response-decorator");
+export { createResponseDecorator };
 
 export function skipDecorator(response: Response) {
   (response as any)[SkipResponseDecorator] = true;
@@ -51,7 +51,7 @@ export function handleResponse(request: Request, res: Response, body: unknown, n
     });
     return;
   }
-  getDecoratedResponse(request.server, body)
+  getDecoratedResponse(request.server, request, body)
     .then((res) => next(null, res))
     .catch(next);
 }

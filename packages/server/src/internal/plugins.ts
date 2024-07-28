@@ -10,15 +10,16 @@ export interface PluginOption {
   override?: boolean;
 }
 
-export function setPluginOption(cb: any, { name, override }: PluginOption = {}) {
-  if (name !== undefined) {
-    cb[Symbol.for("fastify.display-name")] = name;
-  }
+const pluginOptionMappings: Record<string, symbol> = {
+  name: Symbol.for("fastify.display-name"),
+  override: Symbol.for("skip-override"),
+};
 
-  if (override !== undefined) {
-    cb[Symbol.for("skip-override")] = override;
+export function setPluginOption(cb: any, options: PluginOption) {
+  for (const [name, value] of Object.entries(options)) {
+    const option = pluginOptionMappings[name]!;
+    cb[option] = value;
   }
-
   return cb;
 }
 

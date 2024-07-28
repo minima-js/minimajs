@@ -1,7 +1,6 @@
 import { StatusCodes } from "http-status-codes";
-import type { App, Dict, Request, Response } from "./types.js";
+import type { Dict, Request, Response } from "./types.js";
 import { isRequestAbortedError, skipDecorator } from "./internal/response.js";
-import { setPluginOption } from "./internal/plugins.js";
 import { createDecoratorHandler } from "./utils/decorator.js";
 
 export type ErrorResponse = string | Dict;
@@ -107,23 +106,16 @@ export class ForbiddenError extends HttpError {
   }
 }
 
-const [addErrorDecorator, getDecoratedError] = createDecoratorHandler<ErrorDecorator>("error-decorator");
+const [createErrorDecorator, getDecoratedError] = createDecoratorHandler<ErrorDecorator>("error-decorator");
 
 export async function errorHandler(error: unknown, req: Request, reply: Response) {
   if (isRequestAbortedError(error)) {
     return;
   }
   skipDecorator(reply);
-  error = await getDecoratedError(req.server, error);
+  error = await getDecoratedError(req.server, req, error);
   const handler = BaseHttpError.is(error) ? error : (req.server.log.error(error), HttpError.create(error));
   handler.render(req, reply);
 }
 
-export function createErrorDecorator(render: ErrorDecorator) {
-  function decorator(app: App, _: {}, done: CallableFunction) {
-    addErrorDecorator(app, render);
-    done();
-  }
-  setPluginOption(decorator, { override: true, name: "error-decorator" });
-  return decorator;
-}
+export { createErrorDecorator };

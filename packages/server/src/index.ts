@@ -11,6 +11,7 @@ export * from "./http.js";
 export * from "./hooks.js";
 export * from "./types.js";
 export * from "./module.js";
+export * from "./middleware.js";
 
 export { createContext } from "./context.js";
 export { logger } from "./logger.js";

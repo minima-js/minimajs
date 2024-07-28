@@ -24,8 +24,10 @@ function mixin(data: Dict<any>) {
   return data;
 }
 
-function getPluginNames(server: App): string[] {
-  return server[kPluginNameChain] ?? [];
+function getPluginNames(server: App): string {
+  const plugins = server[kPluginNameChain];
+  if (!plugins) return "";
+  return plugins[0]!;
 }
 function getHandler(req: any) {
   return req[kRequestContext]?.handler.name.replace("bound ", "");
@@ -40,7 +42,7 @@ function getModuleName() {
   }
   const { req, local } = ctx;
   if (!local.has(kModuleName)) {
-    let name = getPluginNames(req.server).join("/");
+    let name = getPluginNames(req.server);
     const handler = getHandler(req);
     if (handler) {
       name = name + ":" + handler;

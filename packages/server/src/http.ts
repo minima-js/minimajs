@@ -184,3 +184,7 @@ export const getSearchParam = createAttribute(
  * @deprecated please use getSearchParam instead
  */
 export const getQuery = getSearchParam;
+
+export function getRoute() {
+  return getRequest().routeOptions;
+}
