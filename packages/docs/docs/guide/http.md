@@ -246,6 +246,31 @@ setHeader(name: string, value: string): Response
 
 Sets a response header.
 
+### Decorator / Filter
+
+sometimes you need to decorator or modify response.
+
+that's easy. you just need to create a response decorator and register it.
+
+Creating a decorator
+
+```ts title="src/decorator.ts"
+import { createResponseDecorator } from "@minimajs/server/response";
+
+export const decorateResponse = createResponseDecorator((response) => {
+  return { decorated: true, data: response };
+});
+```
+
+register it
+
+```ts title="app.ts"
+import { decorateResponse } from "./decorator";
+const app = createApp();
+
+app.register(decorateResponse);
+```
+
 ## Hooks
 
 ### defer

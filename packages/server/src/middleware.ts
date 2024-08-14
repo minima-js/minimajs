@@ -1,5 +1,5 @@
 import { type Request, type Response, type App, type Plugin } from "./types.js";
-import { setPluginOption } from "./internal/plugins.js";
+import { createPlugin } from "./internal/plugins.js";
 import type { Interceptor } from "./module.js";
 import { isAsyncFunction } from "util/types";
 
@@ -8,7 +8,7 @@ interface RegisterMiddleware {
 }
 
 export function middleware(...interceptors: Interceptor[]): Plugin<RegisterMiddleware> {
-  async function middlewarePlugin(app: App, { filter }: RegisterMiddleware) {
+  return createPlugin<RegisterMiddleware>(async function middleware(app, { filter }) {
     for (const interceptor of interceptors) {
       async function handler(req: Request, res: Response) {
         if (filter && !(await filter(req))) return;
@@ -16,9 +16,7 @@ export function middleware(...interceptors: Interceptor[]): Plugin<RegisterMiddl
       }
       app.addHook("preHandler", handler);
     }
-  }
-  setPluginOption(middlewarePlugin, { override: true });
-  return middlewarePlugin;
+  });
 }
 
 function invokeHandler(handler: Function, app: App, req: Request, res: Response) {

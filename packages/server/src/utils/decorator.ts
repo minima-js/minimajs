@@ -1,4 +1,4 @@
-import { setPluginOption } from "../internal/plugins.js";
+import { createPluginSync } from "../internal/plugins.js";
 import type { App, Request } from "../types.js";
 
 type DecoratorHandler<T> = [option: DecoratorOptions, handler: T];
@@ -37,12 +37,10 @@ export function createDecoratorHandler<T extends (p: unknown) => unknown>(decora
     return result;
   }
   function createDecorator(cb: T) {
-    function decorator(app: App, opt: DecoratorOptions, next: CallableFunction) {
+    return createPluginSync<DecoratorOptions>(function decorator(app, opt, next) {
       add(app, opt, cb);
       next();
-    }
-    setPluginOption(decorator, { override: true, name: cb.name ?? decoratorType });
-    return decorator;
+    }, cb.name ?? decoratorType);
   }
   return [createDecorator, getDecorated] as const;
 }

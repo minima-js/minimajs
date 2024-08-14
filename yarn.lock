@@ -4030,6 +4030,7 @@ __metadata:
     fastify: "npm:^4.27.0"
     http-status-codes: "npm:^2.3.0"
     jest: "npm:^29.7.0"
+    jest-mock: "npm:^29.7.0"
     pino: "npm:^9.1.0"
     pino-pretty: "npm:^11.0.0"
   languageName: unknown

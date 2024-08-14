@@ -1,6 +1,6 @@
 import { getContext, getContextOrNull } from "./internal/context.js";
 import { isCallable } from "./utils/callable.js";
-export { safeWrap } from "./internal/context.js";
+export { safe } from "./internal/context.js";
 export { getContext, getContextOrNull };
 
 /**

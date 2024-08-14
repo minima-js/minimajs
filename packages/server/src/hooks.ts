@@ -1,7 +1,6 @@
 import type { ApplicationHook, LifecycleHook } from "fastify/types/hooks.js";
 import { getHooks, type HookCallback } from "./internal/context.js";
-import type { App } from "./types.js";
-import { setPluginOption } from "./internal/plugins.js";
+import { createPluginSync } from "./internal/plugins.js";
 import type { FastifyPluginCallback } from "fastify";
 
 export function defer(cb: HookCallback) {
@@ -21,16 +20,15 @@ const hooksMapping: Record<Hooks, ApplicationHook | LifecycleHook> = {
 };
 
 type Plugin = FastifyPluginCallback;
-type Done = (err?: Error) => void;
 
 export function createHook(name: Hooks, callback: HookCallback, ...prevHooks: Plugin[]): Plugin {
-  function hooksPlugin(app: App, _: {}, done: Done) {
+  const hooksPlugin = createPluginSync(function hooksPlugin(app, _, done) {
     app.addHook(hooksMapping[name], callback);
     prevHooks.forEach((prevHook) => {
       prevHook(app, {}, () => {});
     });
     done();
-  }
-  setPluginOption(hooksPlugin, { override: true });
+  });
+
   return hooksPlugin;
 }

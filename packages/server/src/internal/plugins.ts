@@ -1,9 +1,8 @@
-import type { App } from "../types.js";
+import type { Server } from "node:http";
 import { handleResponse } from "./response.js";
 import { wrap, getHooks } from "./context.js";
 import { NotFoundError, errorHandler } from "../error.js";
-
-type CF = CallableFunction;
+import type { FastifyPluginAsync, FastifyPluginCallback } from "fastify";
 
 export interface PluginOption {
   name?: string;
@@ -15,7 +14,7 @@ const pluginOptionMappings: Record<string, symbol> = {
   override: Symbol.for("skip-override"),
 };
 
-export function setPluginOption(cb: any, options: PluginOption) {
+function setPluginOption(cb: any, options: PluginOption) {
   for (const [name, value] of Object.entries(options)) {
     const option = pluginOptionMappings[name]!;
     cb[option] = value;
@@ -30,7 +29,29 @@ export async function triggerOnSent() {
   }
 }
 
-export const appPlugin = function minimajs(fastify: App, _: {}, next: CF) {
+export function createPluginSync<T extends Record<string | number | symbol, any>>(
+  fn: FastifyPluginCallback<T, Server>,
+  name?: string
+) {
+  setPluginOption(fn, { override: true });
+  if (name) {
+    setPluginOption(fn, { name });
+  }
+  return fn;
+}
+
+export function createPlugin<T extends Record<string | number | symbol, any>>(
+  fn: FastifyPluginAsync<T, Server>,
+  name?: string
+) {
+  setPluginOption(fn, { override: true });
+  if (name) {
+    setPluginOption(fn, { name });
+  }
+  return fn;
+}
+
+export const appPlugin = createPluginSync(function minimajs(fastify, _, next) {
   fastify.setErrorHandler(errorHandler);
   fastify.setNotFoundHandler((req, res) => errorHandler(new NotFoundError(), req, res));
   fastify.addContentTypeParser("multipart/form-data", (_, _1, next) => {
@@ -40,6 +61,4 @@ export const appPlugin = function minimajs(fastify: App, _: {}, next: CF) {
   fastify.addHook("preSerialization", handleResponse);
   fastify.addHook("onResponse", triggerOnSent);
   next();
-};
-
-setPluginOption(appPlugin, { override: true });
+});

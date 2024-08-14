@@ -57,7 +57,7 @@ export function setStatusCode(statusCode: keyof typeof StatusCodes | number): Re
   return response.status(statusCode);
 }
 
-export const getRequestURL = once(() => {
+export const getRequestURL = once(function getRequestURL() {
   const request = getRequest();
   const host = `${request.protocol}://${request.hostname}`;
   return new URL(request.originalUrl, host);
@@ -185,6 +185,10 @@ export const getSearchParam = createAttribute(
  */
 export const getQuery = getSearchParam;
 
+/**
+ * Get matched route
+ */
 export function getRoute() {
-  return getRequest().routeOptions;
+  const { routeOptions } = getRequest();
+  return routeOptions;
 }

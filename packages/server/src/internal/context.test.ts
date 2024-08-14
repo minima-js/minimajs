@@ -1,6 +1,6 @@
 // import { EventEmitter } from "stream";
 import { IncomingMessage, ServerResponse } from "node:http";
-import { getContext, safeWrap, wrap } from "./context.js";
+import { getContext, safe, wrap } from "./context.js";
 import { type Dict, type Request, type Response } from "../types.js";
 
 // Mock request data
@@ -36,6 +36,10 @@ export const fakeResponse = () => {
   return new FakeResponse() as any as Response;
 };
 
+export function mockContext(cb: () => void) {
+  return wrap(fakeRequest(), fakeResponse(), cb);
+}
+
 describe("Context", () => {
   describe("getContext", () => {
     test("should be same request", () => {
@@ -51,7 +55,7 @@ describe("Context", () => {
     test("getting", () => {
       wrap(fakeRequest(), fakeResponse(), () => {
         expect(getContext()).not.toBeNull();
-        safeWrap(() => {
+        safe(() => {
           expect(getContext).toThrow("Unable to access the context beyond the request scope.");
         });
       });

@@ -32,7 +32,7 @@ export function wrap(req: Request, reply: Response, cb: () => unknown) {
   return contextStorage.run(Object.freeze(createContextWrap(req, reply)), cb);
 }
 
-export function safeWrap<T, U extends unknown[]>(cb: (...args: U) => T) {
+export function safe<T, U extends unknown[]>(cb: (...args: U) => T) {
   return (...args: U) => contextStorage.run(null as any, cb, ...args) as T;
 }
 
