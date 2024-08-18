@@ -15,12 +15,13 @@
     "./error": "./lib/error.js",
     "./context": "./lib/context.js",
     "./utils": "./lib/utils/index.js",
-    "./logger": "./lib/logger.js"
+    "./logger": "./lib/logger.js",
+    "./mock": "./lib/mock/index.js"
   },
   "scripts": {
     "dev": "tsc -w",
     "build": "yarn clean && tsc -p ./tsconfig.build.json",
-    "test": "yarn node --experimental-vm-modules $(yarn bin jest) lib",
+    "test": "yarn node --experimental-vm-modules $(yarn bin jest) lib --detectOpenHandles",
     "coverage": "yarn node --experimental-vm-modules $(yarn bin jest) --coverage",
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
