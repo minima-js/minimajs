@@ -14,12 +14,12 @@
   "devDependencies": {
     "@minimajs/schema": "workspace:^",
     "@minimajs/server": "workspace:^",
-    "@types/node": "^20.12.12",
-    "@types/uuid": "^9.0.8"
+    "@types/node": "^22.5.0",
+    "@types/uuid": "^10.0.0"
   },
   "dependencies": {
-    "@fastify/busboy": "^2.1.1",
-    "uuid": "^9.0.1"
+    "@fastify/busboy": "^3.0.0",
+    "uuid": "^10.0.0"
   },
   "peerDependencies": {
     "@minimajs/server": "*"

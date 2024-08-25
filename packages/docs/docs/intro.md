@@ -15,7 +15,7 @@ MinimaJS is a cutting-edge Node.js framework meticulously designed to empower de
 - **Modern JavaScript Adoption:** MinimaJS mandates the use of ECMAScript Modules (ESM), unlocking the full potential of modern JavaScript features and optimized performance.
 - **Direct Request Access** MinimaJS offers intuitive functions (`getRequest()`, `getBody()`) for direct access to request data (request, headers, body, etc.) within the context, eliminating complex middleware configurations. This empowers developers with greater control and flexibility.
 - **Deferred Callbacks** The `defer` function allows for scheduling tasks to be executed after the response has been sent. [see usage](./Guide/http.md#defer)
-- **Simplified Third-Party Integration** MinimaJS removes the complexity often associated with integrating third-party services. Its unique approach frequently eliminates the need for complex middleware, making it easier to leverage external libraries and tools. [example](./minimajs-vs-crowd.md#streamlined-integration-with-third-party-services)
+- **Simplified Third-Party Integration** MinimaJS removes the complexity often associated with integrating third-party services. Its unique approach frequently eliminates the need for complex middleware, making it easier to leverage external libraries and tools.
 
 - **Minimalist Philosophy:** MinimaJS eliminates the need for excessive boilerplate code. Its minimalist approach streamlines development by removing unnecessary setup and configuration steps.
 - **Intuitive API:** MinimaJS boasts a remarkably easy-to-use API that makes it effortless to create routes, manage requests, and construct your application with ease.

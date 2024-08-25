@@ -12,10 +12,10 @@
     "deploy": "gh-pages --dist build --repo=git@github.com:minima-js/minima-js.github.io"
   },
   "dependencies": {
-    "@docusaurus/core": "^3.3.2",
-    "@docusaurus/preset-classic": "^3.3.2",
-    "@docusaurus/remark-plugin-npm2yarn": "^3.3.2",
-    "@docusaurus/theme-mermaid": "^3.3.2",
+    "@docusaurus/core": "^3.5.2",
+    "@docusaurus/preset-classic": "^3.5.2",
+    "@docusaurus/remark-plugin-npm2yarn": "^3.5.2",
+    "@docusaurus/theme-mermaid": "^3.5.2",
     "@mdx-js/react": "^3.0.1",
     "clsx": "^2.1.1",
     "docusaurus": "^1.14.7",
@@ -24,8 +24,8 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@docusaurus/types": "^3.3.2",
-    "@types/react": "^18.3.2",
+    "@docusaurus/types": "^3.5.2",
+    "@types/react": "^18.3.4",
     "gh-pages": "^6.1.1"
   }
 }

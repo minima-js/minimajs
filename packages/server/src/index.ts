@@ -1,5 +1,5 @@
 import type { Server } from "node:http";
-import fastify from "fastify";
+import fastify, { type FastifyBaseLogger } from "fastify";
 import merge from "deepmerge";
 import { appPlugin } from "./internal/plugins.js";
 import type { App, AppOptions } from "./types.js";
@@ -17,14 +17,14 @@ export { createContext } from "./context.js";
 export { logger } from "./logger.js";
 
 function getDefaultConfig({ logger: loggerOverride, ...override }: AppOptions): AppOptions {
-  let logger = loggerOptions;
+  let logger = loggerOptions as FastifyBaseLogger;
   if (loggerOverride && loggerOverride !== true) {
     logger = merge(logger, loggerOverride);
   }
 
   return {
     disableRequestLogging: true,
-    logger: loggerOverride === false ? false : logger,
+    logger: loggerOverride === false ? undefined : logger,
     ...override,
   };
 }

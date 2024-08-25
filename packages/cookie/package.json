@@ -14,8 +14,8 @@
   "devDependencies": {
     "@minimajs/schema": "workspace:^",
     "@minimajs/server": "workspace:^",
-    "@types/node": "^20.12.12",
-    "fastify": "^4.27.0"
+    "@types/node": "^22.5.0",
+    "fastify": "^4.28.1"
   },
   "peerDependencies": {
     "@minimajs/schema": "*",
@@ -27,7 +27,7 @@
     }
   },
   "dependencies": {
-    "@fastify/cookie": "^9.3.1"
+    "@fastify/cookie": "^9.4.0"
   },
   "files": [
     "lib"
