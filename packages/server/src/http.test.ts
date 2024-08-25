@@ -1,7 +1,8 @@
 import { ValidationError } from "./error.js";
-import { getBody, getHeader, getParam, getRequest, getRequestURL, getSearchParam } from "./http.js";
+import { getBody, getHeader, getParam, getRequest, getRequestURL, getSearchParam, setStatusCode } from "./http.js";
 import { setTimeout as sleep } from "node:timers/promises";
 import { mockContext } from "./mock/context.js";
+import { mockApp, mockRoute } from "./mock/index.js";
 
 describe("Http", () => {
   describe("getRequest", () => {
@@ -102,6 +103,17 @@ describe("Http", () => {
           headers: { "x-user": "1234" },
         }
       );
+    });
+  });
+
+  describe("setStatusCode", () => {
+    it("should set status code", async () => {
+      const route = mockRoute(() => {
+        setStatusCode(300);
+        return { message: "hello world" };
+      });
+      const [response] = await mockApp(route);
+      expect(response!.statusCode).toBe(300);
     });
   });
 });

@@ -92,6 +92,7 @@ export function setHeader(name: HttpHeader, value: string): Response {
   const { reply } = getContext();
   return reply.header(name, value);
 }
+
 /**
  * Redirect
  */

@@ -72,7 +72,7 @@ export class NotFoundError extends HttpError {
   }
 
   render(req: Request, res: Response): Promise<void> {
-    this.response ||= `Route ${req.method}:${req.url} not found`;
+    this.response ||= `Route ${req.method} ${req.url} not found`;
     return super.render(req, res);
   }
 }

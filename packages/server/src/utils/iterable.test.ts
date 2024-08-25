@@ -8,6 +8,8 @@ describe("iterable", () => {
         yield "world";
       }
       expect(isAsyncIterator(hello())).toBeTruthy();
+      expect(isAsyncIterator({})).toBeFalsy();
+      expect(isAsyncIterator(true)).toBeFalsy();
     });
     test("with normal function", () => {
       async function hello() {
@@ -19,6 +21,7 @@ describe("iterable", () => {
   describe("toArray", () => {
     test("with an array", () => {
       expect(toArray([])).toStrictEqual([]);
+      expect(toArray(null)).toStrictEqual([]);
     });
     test("with other than an array", () => {
       expect(toArray(1)).toStrictEqual([1]);

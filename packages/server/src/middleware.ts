@@ -1,7 +1,7 @@
+import { isAsyncFunction } from "node:util/types";
 import { type Request, type Response, type App, type Plugin } from "./types.js";
 import { createPlugin } from "./internal/plugins.js";
 import type { Interceptor } from "./module.js";
-import { isAsyncFunction } from "util/types";
 
 interface RegisterMiddleware {
   filter(req: Request): boolean | Promise<boolean>;

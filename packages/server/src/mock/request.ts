@@ -47,7 +47,7 @@ export function createRequest({
   url = "/test",
   body,
   headers = {},
-}: MockRequestOptions): FastifyRequest {
+}: MockRequestOptions = {}): FastifyRequest {
   const fakeURL = new URL(url, fakeDomain);
   headers["host"] = fakeURL.host;
   headers["hostname"] = fakeURL.hostname;

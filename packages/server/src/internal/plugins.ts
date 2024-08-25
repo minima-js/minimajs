@@ -29,10 +29,14 @@ export async function triggerOnSent() {
   }
 }
 
-export function createPluginSync<T extends Record<string | number | symbol, any>>(
-  fn: FastifyPluginCallback<T, Server>,
-  name?: string
-) {
+type BaseApp = Record<string | number | symbol, any>;
+type AppOptions<T extends BaseApp> = T & {
+  prefix?: string;
+};
+type PluginCallbackSync<T extends BaseApp> = FastifyPluginCallback<AppOptions<T>, Server>;
+type PluginCallback<T extends BaseApp> = FastifyPluginAsync<AppOptions<T>, Server>;
+
+export function createPluginSync<T extends BaseApp>(fn: PluginCallbackSync<T>, name?: string) {
   setPluginOption(fn, { override: true });
   if (name) {
     setPluginOption(fn, { name });
@@ -40,10 +44,7 @@ export function createPluginSync<T extends Record<string | number | symbol, any>
   return fn;
 }
 
-export function createPlugin<T extends Record<string | number | symbol, any>>(
-  fn: FastifyPluginAsync<T, Server>,
-  name?: string
-) {
+export function createPlugin<T extends BaseApp>(fn: PluginCallback<T>, name?: string) {
   setPluginOption(fn, { override: true });
   if (name) {
     setPluginOption(fn, { name });

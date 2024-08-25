@@ -49,10 +49,11 @@ export function createContext<T>(value?: T | (() => T)) {
   return [getValue, setValue] as const;
 }
 
+export type OnceCallback<T> = () => T;
 /**
  * called only once per request
  */
-export function once<T>(callback: () => T): () => T {
+export function once<T>(callback: OnceCallback<T>): OnceCallback<T> {
   const empty = Symbol("empty");
   const [getValue, setValue] = createContext<T | typeof empty>(empty);
   return function handleRequest() {
