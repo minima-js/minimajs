@@ -39,6 +39,7 @@ function createMockIncomingMessage({ headers, ...options }: MockIncomingMessageO
 export interface MockRequestOptions extends Partial<MockIncomingMessageOptions> {
   params?: Record<string, string>;
   body?: unknown;
+  server?: unknown;
 }
 
 export function createRequest({
@@ -47,6 +48,7 @@ export function createRequest({
   url = "/test",
   body,
   headers = {},
+  server,
 }: MockRequestOptions = {}): FastifyRequest {
   const fakeURL = new URL(url, fakeDomain);
   headers["host"] = fakeURL.host;
@@ -60,7 +62,9 @@ export function createRequest({
   });
   const id = `req-${randomInt(3)}`;
   const query = qs.parse(fakeURL.search.substring(1));
-  const request = new FastifyRequest(id, params, req, query, logger, {} as FastifyRequest["context"]);
+  const request = new FastifyRequest(id, params, req, query, logger, {
+    server,
+  } as unknown as FastifyRequest["context"]);
   Object.assign(request, { body });
   return request;
 }

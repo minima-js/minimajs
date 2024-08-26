@@ -4081,6 +4081,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@minimajs/server@workspace:packages/server"
   dependencies:
+    "@jest/globals": "npm:^29.7.0"
     "@types/jest": "npm:^29.5.12"
     "@types/node": "npm:^22.5.0"
     chalk: "npm:^5.3.0"
@@ -4088,7 +4089,6 @@ __metadata:
     fastify: "npm:^4.28.1"
     http-status-codes: "npm:^2.3.0"
     jest: "npm:^29.7.0"
-    jest-mock: "npm:^29.7.0"
     pino: "npm:^9.3.2"
     pino-pretty: "npm:^11.2.2"
     ts-jest: "npm:^29.2.5"

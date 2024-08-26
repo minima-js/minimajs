@@ -15,7 +15,7 @@ export const loggerOptions: LoggerOptions = {
   },
 };
 
-function mixin(data: Dict<any>) {
+export function mixin(data: Dict<any>) {
   const name = getModuleName();
   if (!name || data.name) {
     return data;

@@ -1,6 +1,6 @@
 import { createContext, getSignal, memo, once } from "./context.js";
 import { mockContext } from "./mock/context.js";
-import jest from "jest-mock";
+import { jest } from "@jest/globals";
 
 describe("Context", () => {
   describe("createContext", () => {
