@@ -15,9 +15,11 @@ describe("Context", () => {
     test("getting", () => {
       mockContext(() => {
         expect(getContext()).not.toBeNull();
-        safe(() => {
+        const data = safe((name: string) => {
           expect(getContext).toThrow("Unable to access the context beyond the request scope.");
+          return "i am clean, " + name;
         });
+        expect(data("Adil")).toBe("i am clean, Adil");
       });
     });
   });

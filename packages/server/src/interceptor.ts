@@ -52,8 +52,3 @@ export function interceptor<T extends PluginOptions = {}>(
     return callback(app, opt);
   }, getModuleName(callback, opt));
 }
-
-export async function dynamic<T>(mod: Promise<T>, prop: keyof T) {
-  const x = await mod;
-  return { default: x[prop], name: prop };
-}

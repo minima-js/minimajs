@@ -8,6 +8,7 @@ import type {
   FastifyReply,
   FastifyRequest,
 } from "fastify";
+
 import type { kPluginNameChain } from "./internal/fastify.js";
 import type { OmitIndexSignature } from "fastify/types/utils.js";
 

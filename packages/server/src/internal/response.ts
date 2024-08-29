@@ -37,14 +37,14 @@ export function createAbortController(message: IncomingMessage, response: Server
   return controller;
 }
 
-export function handleResponse(request: Request, res: Response, body: unknown, next: Next): void {
-  if (isDecoratorSkipped(res)) {
+export function handleResponse(request: Request, response: Response, body: unknown, next: Next): void {
+  if (isDecoratorSkipped(response)) {
     next(null, body);
     return;
   }
   if (isAsyncIterator(body)) {
-    res.hijack();
-    pipeline(Readable.from(body), res.raw).catch((err) => {
+    response.hijack();
+    pipeline(Readable.from(body), response.raw).catch((err) => {
       if (!request.raw.destroyed) {
         next(err);
       }
