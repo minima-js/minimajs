@@ -33,7 +33,7 @@ function getDefaultConfig({ logger: loggerOverride, ...override }: AppOptions): 
  */
 export function createApp({ killSignal = ["SIGTERM"], routes = { log: true }, ...opts }: AppOptions = {}): App {
   const app = fastify<Server>(getDefaultConfig(opts));
-  shutdownListener(app, killSignal);
+  shutdownListener(() => app.close(), killSignal, app.log, process);
   app.register(appPlugin);
   if (routes.log) {
     app.addHook("onReady", () => logRoutes(app));
