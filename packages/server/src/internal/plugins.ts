@@ -14,7 +14,7 @@ const pluginOptionMappings: Record<string, symbol> = {
   override: Symbol.for("skip-override"),
 };
 
-function setPluginOption(cb: any, options: PluginOption) {
+export function setPluginOption(cb: any, options: PluginOption) {
   for (const [name, value] of Object.entries(options)) {
     const option = pluginOptionMappings[name]!;
     cb[option] = value;

@@ -12,13 +12,17 @@ describe("middleware", () => {
     const hello = jest.fn().mockReturnValue(Promise.resolve());
     app.register(
       interceptor([async () => hello()], async (app) => {
-        app.get("/", () => {
+        app.get("/hello", () => {
           return "hello";
         });
       })
     );
-
-    await app.inject({ url: "/" });
+    app.get("/", () => "welcome home");
+    const response = await app.inject({ url: "/" });
+    expect(response.body).toBe("welcome home");
+    expect(hello).not.toHaveBeenCalled();
+    const response2 = await app.inject({ url: "/hello" });
+    expect(response2.body).toBe("hello");
     expect(hello).toHaveBeenCalled();
   });
 });
