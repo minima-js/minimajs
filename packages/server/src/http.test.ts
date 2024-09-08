@@ -1,5 +1,16 @@
-import { ValidationError } from "./error.js";
-import { getBody, getHeader, getParam, getRequest, getRequestURL, getSearchParam, setStatusCode } from "./http.js";
+import { HttpError, ValidationError } from "./error.js";
+import {
+  abort,
+  getBody,
+  getHeader,
+  getHeaders,
+  getParam,
+  getRequest,
+  getRequestURL,
+  getSearchParam,
+  getSearchParams,
+  setStatusCode,
+} from "./http.js";
 import { setTimeout as sleep } from "node:timers/promises";
 import { mockContext } from "./mock/context.js";
 import { mockApp, mockRoute } from "./mock/index.js";
@@ -11,6 +22,12 @@ describe("Http", () => {
     });
   });
 
+  describe("abort.is", () => {
+    test("is aborted", () => {
+      expect(abort.is(new HttpError("something is", 202)));
+    });
+  });
+
   describe("getRequestURL", () => {
     mockContext((req) => {
       const url = getRequestURL();
@@ -18,15 +35,40 @@ describe("Http", () => {
       expect(url.protocol).toBe("http:");
     });
   });
-
-  test("getBody", () => {
-    const option = { body: { message: "Hello, World!" } };
-    mockContext(() => {
-      expect(getBody()).toStrictEqual({ message: "Hello, World!" });
-    }, option);
+  describe("getBody", () => {
+    test("the body", () => {
+      const option = { body: { message: "Hello, World!" } };
+      mockContext(() => {
+        expect(getBody()).toStrictEqual({ message: "Hello, World!" });
+      }, option);
+    });
+  });
+  describe("getHeaders", () => {
+    test("get all headers", async () => {
+      mockContext(
+        () => {
+          expect(getHeaders().name).toBe("Adil");
+        },
+        {
+          headers: { name: "Adil" },
+        }
+      );
+    });
+  });
+  describe("getSearchParams", () => {
+    test("search param", () => {
+      mockContext(
+        () => {
+          expect(getSearchParams().get("name")).toBe("John Doe");
+        },
+        {
+          url: "/?name=John Doe&page=2",
+        }
+      );
+    });
   });
 
-  describe("getSearchParams", () => {
+  describe("getSearchParam", () => {
     test("with value as string", () => {
       mockContext(
         () => {

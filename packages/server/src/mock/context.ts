@@ -1,4 +1,4 @@
-import { wrap } from "../internal/context.js";
+import { wrap } from "../internal/index.js";
 import type { Request, Response } from "../types.js";
 import { createRequest, type MockRequestOptions } from "./request.js";
 import { createResponse } from "./response.js";

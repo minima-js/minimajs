@@ -49,6 +49,9 @@ export function getParams<T = Dict<string>>(): T {
   return getRequest().params as T;
 }
 
+/**
+ * Set response status code.
+ */
 export function setStatusCode(statusCode: keyof typeof StatusCodes | number): Response {
   if (typeof statusCode !== "number") {
     statusCode = StatusCodes[statusCode];
@@ -74,9 +77,7 @@ export function getHeaders() {
 /**
  * Retrieves the search params
  */
-export const getSearchParams = () => {
-  return getRequestURL().searchParams;
-};
+export const getSearchParams = () => getRequestURL().searchParams;
 
 /**
  * Retrieves the querystring
