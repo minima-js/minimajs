@@ -6,11 +6,11 @@ import type { App, AppOptions } from "./types.js";
 import { loggerOptions } from "./logger.js";
 import { shutdownListener } from "./shutdown.js";
 import { logRoutes } from "./router.js";
+export { interceptor, type Interceptor } from "./interceptor.js";
 
 export * from "./http.js";
 export * from "./hooks.js";
 export * from "./types.js";
-export * from "./interceptor.js";
 export * from "./middleware.js";
 
 export { createContext } from "./context.js";

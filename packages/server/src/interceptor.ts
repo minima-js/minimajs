@@ -1,12 +1,11 @@
-import type { RegisterOptions, preHandlerAsyncHookHandler, preHandlerHookHandler } from "fastify";
-import type { App, Plugin, PluginOptions } from "./types.js";
+import type { preHandlerAsyncHookHandler, preHandlerHookHandler } from "fastify";
+import type { App, Plugin, PluginOptions, Request, Response } from "./types.js";
 import { setPluginOption } from "./internal/plugins.js";
+import { isAsyncFunction } from "node:util/types";
 
 export type PluginCallback<T extends PluginOptions> = Plugin<T> | Promise<{ default: Plugin<T> }>;
 
 export type Interceptor = preHandlerHookHandler | preHandlerAsyncHookHandler;
-
-export interface ModuleOptions extends RegisterOptions, PluginOptions {}
 
 async function toCallback<T extends PluginOptions = {}>(callback: PluginCallback<T>): Promise<Plugin<T>> {
   if (callback instanceof Promise) {
@@ -55,4 +54,29 @@ export function interceptor<T extends PluginOptions = {}>(
     name: getModuleName(callback, opt),
   });
   return module;
+}
+
+export type InterceptorFilter = (req: Request) => boolean | Promise<boolean>;
+
+export function filter(handler: Interceptor, handlerFilter: InterceptorFilter) {
+  const pluginHandler: preHandlerAsyncHookHandler = async (req, res) => {
+    if (!(await handlerFilter(req))) {
+      return;
+    }
+    return invokeHandler(handler, req.server, req, res);
+  };
+  return pluginHandler;
+}
+
+function isAsyncHandler(handler: Interceptor): handler is preHandlerAsyncHookHandler {
+  return isAsyncFunction(handler);
+}
+
+export function invokeHandler(handler: Interceptor, app: App, req: Request, res: Response) {
+  if (isAsyncHandler(handler)) {
+    return handler.call(app, req, res);
+  }
+  return new Promise((resolve) => {
+    handler.call(app, req, res, resolve);
+  });
 }

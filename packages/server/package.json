@@ -11,6 +11,7 @@
   },
   "exports": {
     ".": "./lib/index.js",
+    "./interceptor": "./lib/interceptor.js",
     "./response": "./lib/response.js",
     "./error": "./lib/error.js",
     "./context": "./lib/context.js",

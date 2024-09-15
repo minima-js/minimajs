@@ -1,7 +1,6 @@
-import { isAsyncFunction } from "node:util/types";
-import { type Request, type Response, type App, type Plugin } from "./types.js";
+import { type Request, type Response, type Plugin } from "./types.js";
 import { createPlugin } from "./internal/plugins.js";
-import type { Interceptor } from "./interceptor.js";
+import { invokeHandler, type Interceptor } from "./interceptor.js";
 
 interface RegisterMiddleware {
   filter(req: Request): boolean | Promise<boolean>;
@@ -16,14 +15,5 @@ export function middleware(...interceptors: Interceptor[]): Plugin<RegisterMiddl
       }
       app.addHook("preHandler", handler);
     }
-  });
-}
-
-function invokeHandler(handler: Function, app: App, req: Request, res: Response) {
-  if (isAsyncFunction(handler)) {
-    return handler.call(app, req, res);
-  }
-  return new Promise((resolve) => {
-    handler.call(app, req, res, resolve);
   });
 }
