@@ -84,7 +84,7 @@ export class RedirectError extends BaseHttpError {
     this.statusCode = isPermanent ? 301 : 302;
   }
   render(_: unknown, res: Response) {
-    res.redirect(this.statusCode, this.url);
+    res.redirect(this.url, this.statusCode);
   }
 }
 

@@ -29,18 +29,18 @@
   "dependencies": {
     "chalk": "^5.3.0",
     "deepmerge": "^4.3.1",
-    "fastify": "^4.28.1",
+    "fastify": "^5.0.0",
     "http-status-codes": "^2.3.0",
-    "pino": "^9.3.2",
+    "pino": "^9.4.0",
     "pino-pretty": "^11.2.2"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
-    "@types/jest": "^29.5.12",
-    "@types/node": "^22.5.0",
+    "@types/jest": "^29.5.13",
+    "@types/node": "^22.5.5",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
-    "typescript": "^5.5.4"
+    "typescript": "^5.6.2"
   },
   "files": [
     "lib",

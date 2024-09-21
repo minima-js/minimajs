@@ -19,13 +19,13 @@
     "@mdx-js/react": "^3.0.1",
     "clsx": "^2.1.1",
     "docusaurus": "^1.14.7",
-    "prism-react-renderer": "^2.3.1",
+    "prism-react-renderer": "^2.4.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@docusaurus/types": "^3.5.2",
-    "@types/react": "^18.3.4",
+    "@types/react": "^18.3.8",
     "gh-pages": "^6.1.1"
   }
 }

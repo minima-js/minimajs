@@ -14,7 +14,7 @@
   "devDependencies": {
     "@minimajs/schema": "workspace:^",
     "@minimajs/server": "workspace:^",
-    "@types/node": "^22.5.0",
+    "@types/node": "^22.5.5",
     "@types/uuid": "^10.0.0"
   },
   "dependencies": {

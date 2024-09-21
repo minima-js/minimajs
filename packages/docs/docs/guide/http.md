@@ -47,6 +47,12 @@ app.get("/", () => {
 });
 ```
 
+### getRequestURL
+
+```ts
+getRequestURL(): URL
+```
+
 ### getHeaders
 
 ```typescript
@@ -77,10 +83,18 @@ Retrieves the request headers.
 ### getSearchParams
 
 ```typescript
-getSearchParams(): ParsedUrlQuery
+getSearchParams(): URLSearchParams
 ```
 
 Retrieves the request queries.
+
+### getQueries
+
+```ts
+getQueries(): ParsedUrlQuery
+```
+
+Retrieves the query string
 
 ### getSearchParam
 

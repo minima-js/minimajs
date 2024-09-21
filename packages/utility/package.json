@@ -7,6 +7,6 @@
     "dev": "tsc -w"
   },
   "devDependencies": {
-    "@types/node": "^22.5.0"
+    "@types/node": "^22.5.5"
   }
 }

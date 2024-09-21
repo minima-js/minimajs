@@ -9,6 +9,7 @@ import {
   getRequestURL,
   getSearchParam,
   getSearchParams,
+  setHeader,
   setStatusCode,
 } from "./http.js";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -156,6 +157,24 @@ describe("Http", () => {
       });
       const [response] = await mockApp(route);
       expect(response!.statusCode).toBe(300);
+    });
+    it("should set status code type", async () => {
+      const route = mockRoute(() => {
+        setStatusCode("BAD_GATEWAY");
+        return { message: "hello world" };
+      });
+      const [response] = await mockApp(route);
+      expect(response!.statusCode).toBe(502);
+    });
+  });
+  describe("set header", () => {
+    test("should set header", async () => {
+      const route = mockRoute(() => {
+        setHeader("x-name", "Adil");
+        return { message: "hello world" };
+      });
+      const [response] = await mockApp(route);
+      expect(response!.headers["x-name"]).toBe("Adil");
     });
   });
 });

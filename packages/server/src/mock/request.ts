@@ -64,7 +64,7 @@ export function createRequest({
   const query = qs.parse(fakeURL.search.substring(1));
   const request = new FastifyRequest(id, params, req, query, logger, {
     server,
-  } as unknown as FastifyRequest["context"]);
+  } as unknown);
   Object.assign(request, { body });
   return request;
 }
