@@ -1,5 +1,6 @@
 import { ValidationError as ValidationBaseError } from "yup";
 import { ValidationError as BaseError } from "@minimajs/server/error";
+import { ok } from "assert";
 
 interface Params {
   value: unknown;
@@ -47,7 +48,8 @@ export class ValidationError extends BaseError {
   }
 }
 
-ValidationError.toJSON<ValidationError> = function (err) {
+ValidationError.toJSON = function toJSON(err: unknown) {
+  ok(err instanceof ValidationError);
   if (err.params?.spec.abortEarly) {
     return { message: err.response };
   }

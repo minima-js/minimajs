@@ -1,5 +1,5 @@
 import { type Readable, Writable } from "node:stream";
-
+import { Transform, type TransformCallback } from "stream";
 import { PassThrough, type TransformOptions } from "node:stream";
 
 class IteratorStream<T> extends PassThrough {
@@ -35,4 +35,19 @@ export function stream2void() {
       setImmediate(callback);
     },
   });
+}
+
+export class StreamMeter extends Transform {
+  bytes: number = 0;
+  constructor(public maxBytes: number) {
+    super();
+  }
+
+  _transform(chunk: any, _: BufferEncoding, callback: TransformCallback): void {
+    this.bytes += chunk.length;
+    this.push(chunk);
+    if (this.bytes > this.maxBytes) {
+      return callback(new RangeError("Stream exceeded specified max of " + this.maxBytes + " bytes."));
+    }
+  }
 }

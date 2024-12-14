@@ -11,7 +11,12 @@ import { getBody } from "./multipart.js";
 
 export class UploadedFile extends File {
   #streams = new Set<Readable>();
-  constructor(info: FileInfo, public readonly tmpFile: string, private readonly signal: AbortSignal) {
+  constructor(
+    info: FileInfo,
+    public readonly tmpFile: string,
+    public readonly size: number,
+    private readonly signal: AbortSignal
+  ) {
     super(info.field, info.filename, info.encoding, info.mimeType);
   }
 
@@ -24,7 +29,7 @@ export class UploadedFile extends File {
     return stream;
   }
 
-  async flush() {
+  async destroy() {
     for (const stream of this.#streams) {
       stream.destroy();
     }
@@ -46,7 +51,7 @@ export async function getUploadedBody<T extends UploadedBody = UploadedBody>(): 
   for await (const [name, value] of getBody()) {
     if (isFile(value)) {
       const filename = await value.move(tmpdir(), uuid());
-      newBody[name] = new UploadedFile(value, join(tmpdir(), filename), signal);
+      newBody[name] = new UploadedFile(value, join(tmpdir(), filename), 0, signal);
       continue;
     }
     newBody[name] = value;

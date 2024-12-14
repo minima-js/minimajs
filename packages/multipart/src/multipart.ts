@@ -4,6 +4,7 @@ import { Busboy, type BusboyConfig, type BusboyHeaders } from "@fastify/busboy";
 import { File } from "./file.js";
 import { getRequest, type Request } from "@minimajs/server";
 import { createIteratorAsync, stream2void } from "./stream.js";
+import { UploadError } from "./errors.js";
 
 type Config = Omit<BusboyConfig, "headers">;
 
@@ -38,6 +39,7 @@ export async function getFile(name?: string) {
       resolve(new File(uploadedName, filename, encoding, mimeType, file));
     });
     bb.on("error", (er) => reject(er));
+    bb.on("finish", () => reject(new UploadError("Uploaded file is invalid or not matched")));
   });
 }
 
