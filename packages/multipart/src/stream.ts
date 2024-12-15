@@ -49,5 +49,6 @@ export class StreamMeter extends Transform {
     if (this.bytes > this.maxBytes) {
       return callback(new RangeError("Stream exceeded specified max of " + this.maxBytes + " bytes."));
     }
+    callback();
   }
 }

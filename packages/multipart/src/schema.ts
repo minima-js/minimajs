@@ -1,52 +1,57 @@
 import { Schema, type AnyObject, type Flags, type Maybe, type Message } from "yup";
-import {} from "yup";
-import type { UploadedFile } from "./unstable.js";
+import { UploadedFile } from "./unstable.js";
 
+type Rule = {
+  minSize?: number;
+  maxSize?: number;
+  mimetype?: string;
+};
 export class FileSchema<
   TType extends Maybe<UploadedFile> = UploadedFile | undefined,
   TContext = AnyObject,
   TDefault = undefined,
   TFlags extends Flags = ""
 > extends Schema<TType, TContext, TDefault, TFlags> {
-  #size?: number;
-  #mimeType?: string;
+  private $_rules: Rule = {};
+
   constructor() {
     super({
-      type: "string",
+      type: UploadedFile.name,
       check(value): value is NonNullable<TType> {
-        if (value instanceof String) value = value.valueOf();
-        return typeof value === "string";
+        return value instanceof UploadedFile;
       },
     });
   }
 
-  fileSize(size: number) {
-    this.#size = size;
+  minSize(size: number) {
+    this.$_rules.minSize = size;
+    return this;
+  }
+
+  maxSize(size: number) {
+    this.$_rules.maxSize = size;
     return this;
   }
 
   mimeType(type: string) {
-    this.#mimeType = type;
+    this.$_rules.mimetype = type;
     return this;
   }
 
-  getMimeType() {
-    return this.#mimeType;
-  }
-
-  getSize() {
-    return this.#size;
+  getAllRules() {
+    return this.$_rules;
   }
 
   required(message?: Message<any>) {
-    return super.required(message).withMutation((schema: this) =>
-      schema.test({
+    return super.required(message).withMutation((schema: this) => {
+      schema.$_rules = this.$_rules;
+      return schema.test({
         message: message || "${path} is a required field",
         name: "required",
         skipAbsent: true,
         test: (value) => !!value,
-      })
-    );
+      });
+    });
   }
 }
 
@@ -58,10 +63,6 @@ export interface FileSchema<
 > extends Schema<TType, TContext, TDefault, TFlags> {
   required(msg?: Message): FileSchema<NonNullable<TType>, TContext, TDefault, TFlags>;
 }
-
-// export function file() {
-//   return new FileSchema();
-// }
 
 function file(): FileSchema;
 function file<T extends UploadedFile, TContext extends Maybe<AnyObject> = AnyObject>(): FileSchema<

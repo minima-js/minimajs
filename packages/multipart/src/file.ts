@@ -31,7 +31,7 @@ export class File implements FileInfo {
   }
 
   get randomName() {
-    this.#randomName ??= `${uuid()}.${this.ext}`;
+    this.#randomName ??= `${uuid()}${this.ext}`;
     return this.#randomName;
   }
 
