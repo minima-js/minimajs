@@ -18,6 +18,7 @@ export interface FileInfo {
 export class File implements FileInfo {
   #randomName?: string;
   #buffer?: Buffer;
+  #ext?: string;
   constructor(
     public readonly field: string,
     public readonly filename: string,
@@ -27,7 +28,8 @@ export class File implements FileInfo {
   ) {}
 
   get ext() {
-    return extname(this.filename);
+    this.#ext ??= extname(this.filename);
+    return this.#ext;
   }
 
   get randomName() {

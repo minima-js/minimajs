@@ -6,7 +6,7 @@
     ".": "./lib/index.js",
     "./unstable": "./lib/unstable.js",
     "./helpers": "./lib/helpers.js",
-    "./schema": "./lib/schema.js"
+    "./schema": "./lib/schema/index.js"
   },
   "scripts": {
     "dev": "tsc -w",
@@ -25,7 +25,8 @@
     "yup": "^1.4.0"
   },
   "peerDependencies": {
-    "@minimajs/server": "*"
+    "@minimajs/server": "^0.1.4",
+    "@minimajs/schema": "^0.1.3"
   },
   "files": [
     "lib"

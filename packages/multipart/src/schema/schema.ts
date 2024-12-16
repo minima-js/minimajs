@@ -1,18 +1,21 @@
-import { Schema, type AnyObject, type Flags, type Maybe, type Message } from "yup";
-import { UploadedFile } from "./unstable.js";
+import { Schema, type AnyObject, type Flags, type Maybe, type Message } from "@minimajs/schema";
+import { UploadedFile } from "./uploaded-file.js";
 
 type Rule = {
   minSize?: number;
   maxSize?: number;
-  mimetype?: string;
+  mimeTypes: string[];
 };
+
 export class FileSchema<
   TType extends Maybe<UploadedFile> = UploadedFile | undefined,
   TContext = AnyObject,
   TDefault = undefined,
   TFlags extends Flags = ""
 > extends Schema<TType, TContext, TDefault, TFlags> {
-  private $_rules: Rule = {};
+  private $_rules: Rule = {
+    mimeTypes: [],
+  };
 
   constructor() {
     super({
@@ -33,12 +36,18 @@ export class FileSchema<
     return this;
   }
 
-  mimeType(type: string) {
-    this.$_rules.mimetype = type;
+  size(min: number, max: number) {
+    this.$_rules.maxSize = max;
+    this.$_rules.minSize = min;
     return this;
   }
 
-  getAllRules() {
+  accept(...type: string[]) {
+    this.$_rules.mimeTypes = [...this.$_rules.mimeTypes, ...type];
+    return this;
+  }
+
+  getRules() {
     return this.$_rules;
   }
 
