@@ -11,7 +11,7 @@ export async function validateField(
     return await (schema as ISchema<any>).validate(value);
   } catch (err) {
     assertError(err, ValidationBaseError);
-    throw new ValidationError(`${err.message.replace("this", name)}`, err, { path: name, value, type: "string" });
+    throw new ValidationError(`${err.message.replace("this", name)}`, { base: err, path: name, value, type: "string" });
   }
 }
 
@@ -22,7 +22,6 @@ export function validateContentSize(contentSize: number, maxSize: number = 0) {
       `Request content length exceeds the limit of ${humanFileSize(maxSize)} bytes. Actual size: ${humanFileSize(
         contentSize
       )} bytes.`,
-      undefined,
       { code: "MAX_LENGTH_EXCEEDED" }
     );
   }
@@ -55,13 +54,9 @@ export function validateFileType(file: File, accept: string[]): void {
       // If type is a file extension (e.g. ".pdf")
       if (type.startsWith(".")) {
         if (fileExtension !== type.toLowerCase()) {
-          throw new ValidationError(
-            `Invalid file extension: ${file.filename}. Expected file extension: ${type}`,
-            undefined,
-            {
-              path: file.field,
-            }
-          );
+          throw new ValidationError(`Invalid file extension: ${file.filename}. Expected file extension: ${type}`, {
+            path: file.field,
+          });
         }
         return; // Valid match for extension
       }
@@ -74,11 +69,7 @@ export function validateFileType(file: File, accept: string[]): void {
   }
 
   // If no valid match found, throw a generic error
-  throw new ValidationError(
-    `Invalid file type: ${file.filename}. Allowed types are: ${accept.join(", ")}.`,
-    undefined,
-    {
-      path: file.field,
-    }
-  );
+  throw new ValidationError(`Invalid file type: ${file.filename}. Allowed types are: ${accept.join(", ")}.`, {
+    path: file.field,
+  });
 }

@@ -40,7 +40,7 @@ async function validateObjectAsync(schema: ObjectSchema<any>, data: unknown, opt
 }
 function dealWithException(err: unknown): never {
   if (err instanceof ValidationBaseError) {
-    throw ValidationError.create(err);
+    throw ValidationError.createFromBase(err);
   }
   throw err;
 }

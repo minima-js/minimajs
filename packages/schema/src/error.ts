@@ -1,5 +1,5 @@
 import { ValidationError as ValidationBaseError } from "yup";
-import { ValidationError as BaseError } from "@minimajs/server/error";
+import { ValidationError as BaseError, type HttpErrorOptions } from "@minimajs/server/error";
 import { ok } from "assert";
 
 interface Params {
@@ -22,13 +22,12 @@ interface Spec {
   coerce: boolean;
 }
 
-export interface ValidatorErrorOptions extends ErrorOptions {
+export interface ValidatorErrorOptions extends HttpErrorOptions {
   params?: Params;
   value?: unknown;
   path?: string;
   type?: string;
   errors?: string[];
-  code?: string;
   inner?: ValidationError[];
 }
 
@@ -36,7 +35,7 @@ export interface ValidationError extends ValidatorErrorOptions {}
 
 export class ValidationError extends BaseError {
   static createFromBase(base: ValidationBaseError) {
-    const error = new ValidationError(base.message, base);
+    const error = new ValidationError(base.message, { base });
     error.params = base.params as unknown as Params;
     error.value = base.value;
     error.path = base.path;
@@ -48,11 +47,14 @@ export class ValidationError extends BaseError {
 
   inner: ValidationError[] = [];
   errors: string[] = [];
+  name = ValidationError.name;
 
-  constructor(public message: string, public base?: ValidationBaseError, extend?: ValidatorErrorOptions) {
+  constructor(public message: string, extend: ValidatorErrorOptions = {}) {
     super(message);
-    if (extend) {
-      Object.assign(this, extend);
+    Object.assign(this, extend);
+    const { base } = extend;
+    if (base && base instanceof Error) {
+      this.cause = base.message;
     }
   }
 }

@@ -1,4 +1,4 @@
-import { object, type InferType, type ObjectShape, type ValidateOptions } from "@minimajs/schema";
+import { object, type InferType, type ObjectShape, type ValidateOptions, ValidationError } from "@minimajs/schema";
 
 import { FileSchema } from "./schema.js";
 import { getBody } from "../multipart.js";
@@ -6,7 +6,6 @@ import { isFile, type File } from "../file.js";
 import { UploadedFile } from "../unstable.js";
 import { createContext, getSignal } from "@minimajs/server/context";
 import { defer, getHeader } from "@minimajs/server";
-import { UploadError } from "../errors.js";
 import { v4 as uuid } from "uuid";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -66,7 +65,8 @@ export function createMultipartUpload<T extends ObjectShape>(obj: T, option: Upl
     }
     for (const [name, sch] of Object.entries(obj)) {
       if (!(name in data) && isRequired(sch)) {
-        throw new UploadError(`The field ${name} is required. Please ensure it is provided.`, {
+        throw new ValidationError(`The field ${name} is required. Please ensure it is provided.`, {
+          path: name,
           code: "FIELD_REQUIRED",
         });
       }
@@ -85,13 +85,17 @@ async function uploadTmpFile(file: File, signal: AbortSignal, schema: FileSchema
     await pipeline(file.stream.pipe(meter), createWriteStream(filename));
   } catch (err) {
     assertError(err, RangeError);
-    throw new UploadError(`The file ${file.field} is too large. Maximum size: ${humanFileSize(meter.maxBytes)} bytes`, {
-      code: "FILE_TOO_LARGE",
-      cause: err.message,
-    });
+    throw new ValidationError(
+      `The file ${file.field} is too large. Maximum size: ${humanFileSize(meter.maxBytes)} bytes`,
+      {
+        base: err,
+        code: "FILE_TOO_LARGE",
+        cause: err.message,
+      }
+    );
   }
   if (rules.minSize && meter.bytes < rules.minSize) {
-    throw new UploadError(
+    throw new ValidationError(
       `The file ${file.field} is too small. Minimum size: ${humanFileSize(
         rules.minSize
       )} bytes, actual size: ${humanFileSize(meter.bytes)} bytes`,
