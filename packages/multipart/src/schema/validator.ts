@@ -11,7 +11,13 @@ export async function validateField(
     return await (schema as ISchema<any>).validate(value);
   } catch (err) {
     assertError(err, ValidationBaseError);
-    throw new ValidationError(`${err.message.replace("this", name)}`, { base: err, path: name, value, type: "string" });
+    throw new ValidationError(`${err.message.replace("this", name)}`, {
+      base: err,
+      params: err.params as any,
+      path: name,
+      value,
+      type: "string",
+    });
   }
 }
 
@@ -34,7 +40,7 @@ export function isRequired(schema: ISchema<any> | Reference): boolean {
 export function validateFileType(file: File, accept: string[]): void {
   if (!accept.length) return;
 
-  const fileExtension = file.ext;
+  const fileExtension = String(file.ext).toLowerCase();
   for (const type of accept) {
     if (type === "*/*") {
       return; // Allow all types
