@@ -1,6 +1,7 @@
 import { type ISchema, type Reference, ValidationError, ValidationBaseError } from "@minimajs/schema";
-import { assertError, humanFileSize } from "../helpers.js";
+import { humanFileSize } from "../helpers.js";
 import type { File } from "../file.js";
+import { assertError } from "../errors.js";
 
 export async function validateField(
   name: string,
@@ -33,17 +34,13 @@ export function validateContentSize(contentSize: number, maxSize: number = 0) {
   }
 }
 
-export function isRequired(schema: ISchema<any> | Reference): boolean {
-  return (schema.describe() as any).tests.some((test: any) => test.name === "required");
-}
-
-export function validateFileType(file: File, accept: string[]): void {
-  if (!accept.length) return;
+export function validateFileType(file: File, accept: string[]) {
+  if (!accept.length) return true;
 
   const fileExtension = String(file.ext).toLowerCase();
   for (const type of accept) {
     if (type === "*/*") {
-      return; // Allow all types
+      return true;
     }
 
     // Handle wildcard, e.g. image/*, video/*
@@ -53,29 +50,24 @@ export function validateFileType(file: File, accept: string[]): void {
 
       if (mimeType === "*" || mimeType === fileType) {
         if (mimeSubtype === "*" || mimeSubtype === fileSubtype) {
-          return; // Valid match
+          return true; // Valid match
         }
       }
     } else {
       // If type is a file extension (e.g. ".pdf")
       if (type.startsWith(".")) {
         if (fileExtension !== type.toLowerCase()) {
-          throw new ValidationError(`Invalid file extension: ${file.filename}. Expected file extension: ${type}`, {
-            path: file.field,
-          });
+          return false;
         }
-        return; // Valid match for extension
+        return true; // Valid match for extension
       }
-
       // If no wildcard or extension, check exact MIME type match
       if (file.mimeType === type) {
-        return; // Valid match for MIME type
+        return true; // Valid match for MIME type
       }
     }
   }
 
   // If no valid match found, throw a generic error
-  throw new ValidationError(`Invalid file type: ${file.filename}. Allowed types are: ${accept.join(", ")}.`, {
-    path: file.field,
-  });
+  return false;
 }

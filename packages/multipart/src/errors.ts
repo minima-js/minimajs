@@ -5,3 +5,10 @@ export class UploadError extends HttpError {
     super(response, 422, option);
   }
 }
+
+export function assertError<T>(err: unknown, Type: new (...args: any[]) => T): asserts err is T {
+  if (err instanceof Type) {
+    return;
+  }
+  throw err;
+}

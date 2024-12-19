@@ -1,4 +1,4 @@
-import { isRequired, validateContentSize, validateField, validateFileType } from "./validator.js"; // Adjust the import based on your setup
+import { validateContentSize, validateField, validateFileType } from "./validator.js"; // Adjust the import based on your setup
 import { File } from "../file.js";
 import { number, string } from "@minimajs/schema";
 
@@ -84,16 +84,6 @@ describe("validator", () => {
       expect(() => validateFileType(file, accept)).toThrow(
         "Invalid file extension: audio.wav. Expected file extension: .mp3"
       );
-    });
-  });
-
-  describe("isRequired", () => {
-    it("should not required to be false", () => {
-      expect(isRequired(string())).toBeFalsy();
-    });
-
-    it("should required to be true", () => {
-      expect(isRequired(string().required())).toBeTruthy();
     });
   });
 

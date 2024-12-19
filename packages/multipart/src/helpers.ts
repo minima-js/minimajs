@@ -27,10 +27,3 @@ export function humanFileSize(bytes: number, dp = 1) {
 
   return bytes.toFixed(dp) + " " + units[u];
 }
-
-export function assertError<T>(err: unknown, Type: new (...args: any[]) => T): asserts err is T {
-  if (err instanceof Type) {
-    return;
-  }
-  throw err;
-}
