@@ -7,7 +7,7 @@ function getDecorator<T>(app: any, name: symbol) {
   return app[name] as Set<DecoratorHandler<T>>;
 }
 export interface DecoratorOptions {
-  filter(req: Request): boolean | Promise<boolean>;
+  filter?(req: Request): boolean | Promise<boolean>;
 }
 export function createDecoratorHandler<T extends (p: unknown) => unknown>(decoratorType: string) {
   type Result = Awaited<ReturnType<T>>;

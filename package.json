@@ -20,16 +20,11 @@
     "docs": "yarn --cwd=packages/docs start",
     "docs:deploy": "yarn --cwd=packages/docs deploy"
   },
-  "packageManager": "yarn@4.4.1",
+  "packageManager": "yarn@4.5.3",
   "devDependencies": {
     "jest": "^29.7.0",
     "rimraf": "^6.0.1",
-    "turbo": "^2.1.2",
-    "typescript": "^5.6.2"
-  },
-  "dependenciesMeta": {
-    "yup@1.4.0": {
-      "unplugged": true
-    }
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
   }
 }

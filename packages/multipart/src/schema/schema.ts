@@ -36,6 +36,7 @@ export class FileSchema<
     };
 
     return this.test({
+      name: "min",
       params: { min: size },
       message: message ?? defaultMessage,
       skipAbsent: true,
@@ -52,6 +53,7 @@ export class FileSchema<
       )} bytes, actual size: ${humanFileSize(params.value.size)} bytes`;
     };
     return this.test({
+      name: "max",
       params: { max: size },
       message: message ?? defaultMessage,
       skipAbsent: true,
@@ -67,6 +69,7 @@ export class FileSchema<
     };
 
     return this.test({
+      name: "accept",
       params: { mimeType: type },
       message: message ?? defaultMessage,
       skipAbsent: true,
@@ -109,14 +112,14 @@ function file() {
 
 export { file };
 
-export function isRequired(schema: Schema) {
-  return schema.describe().tests.find((test) => test.name === "required");
-}
-
-export function getMaxSize(schema: Schema): number {
+export function getMaxSize(schema: FileSchema): number {
   const test = schema.describe().tests.find((test) => test.name === "max");
   if (test) {
     return test.params!.max as number;
   }
   return Infinity;
+}
+
+export function getAcceptanceTest(schema: FileSchema) {
+  return schema.tests.find((x) => x.OPTIONS?.name === "accept");
 }

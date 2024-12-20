@@ -13,7 +13,7 @@
   },
   "devDependencies": {
     "@minimajs/server": "workspace:^",
-    "@types/node": "^22.5.5"
+    "@types/node": "^22.10.2"
   },
   "files": [
     "lib"

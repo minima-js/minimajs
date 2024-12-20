@@ -46,7 +46,6 @@ export class ValidationError extends BaseError {
   }
 
   inner: ValidationError[] = [];
-  errors: string[] = [];
   name = ValidationError.name;
 
   constructor(public message: string, extend: ValidatorErrorOptions = {}) {

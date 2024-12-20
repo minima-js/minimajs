@@ -8,20 +8,21 @@ import {
   type Schema,
 } from "@minimajs/schema";
 
-import { FileSchema, getMaxSize } from "./schema.js";
+import { FileSchema, getAcceptanceTest, getMaxSize } from "./schema.js";
 import { getBody } from "../multipart.js";
 import { isFile, type File } from "../file.js";
 import { createContext, getSignal } from "@minimajs/server/context";
 import { defer, getHeader } from "@minimajs/server";
 import { v4 as uuid } from "uuid";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { createWriteStream } from "node:fs";
 import { StreamMeter } from "../stream.js";
 import { pipeline } from "node:stream/promises";
-import { humanFileSize } from "../helpers.js";
+import { ensurePath, humanFileSize, set } from "../helpers.js";
 import { validateContentSize } from "./validator.js";
 import { isUploadedFile, UploadedFile } from "./uploaded-file.js";
+import { pkg } from "../pkg.js";
+import { join } from "node:path";
 
 interface UploadOption extends ValidateOptions {
   tmpDir?: string;
@@ -63,14 +64,14 @@ export function createMultipartUpload<T extends ObjectShape>(obj: T, option: Upl
             await body.flush();
             continue;
           }
-          (data as any)[name] = await uploadTmpFile(body, signal, singleSchema, option);
+          set(data, name, await uploadTmpFile(body, signal, singleSchema, option));
           await schema.validateAt(name, data);
           continue;
         }
         if (!singleSchema) {
           continue;
         }
-        (data as any)[name] = await schema.validateAt(name, { [name]: body });
+        set(data, name, await schema.validateAt(name, { [name]: body }));
       }
       // testing for required.
       for (const [name] of Object.entries(obj)) {
@@ -82,19 +83,24 @@ export function createMultipartUpload<T extends ObjectShape>(obj: T, option: Upl
       setMultipartMeta(data);
       return data;
     } catch (err) {
-      console.log("validation failed");
+      if (err instanceof ValidationError) {
+        throw err;
+      }
+
       if (err instanceof ValidationBaseError) {
         throw ValidationError.createFromBase(err);
       }
+
       throw err;
     }
   };
 }
 
 async function uploadTmpFile(file: File, signal: AbortSignal, schema: FileSchema, { tmpDir = tmpdir() }: UploadOption) {
+  await testMimeType(file, schema);
   const maxSize = getMaxSize(schema);
   const meter = new StreamMeter(maxSize);
-  const filename = join(tmpDir, uuid());
+  const filename = join(await ensurePath(tmpDir, pkg.name), uuid());
   try {
     await pipeline(file.stream.pipe(meter), createWriteStream(filename));
   } catch (err) {
@@ -104,4 +110,22 @@ async function uploadTmpFile(file: File, signal: AbortSignal, schema: FileSchema
     throw err;
   }
   return new UploadedFile(file, filename, meter.bytes, signal);
+}
+
+function testMimeType(file: File, schema: FileSchema) {
+  const acceptanceTest = getAcceptanceTest(schema);
+  if (!acceptanceTest) return;
+  return new Promise((resolve, reject) => {
+    acceptanceTest(
+      {
+        path: file.field,
+        value: file,
+        originalValue: file,
+        options: {},
+        schema,
+      },
+      reject,
+      resolve
+    );
+  });
 }
