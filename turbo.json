@@ -4,7 +4,10 @@
     "build": {
       "cache": true,
       "dependsOn": ["^build"],
-      "outputs": ["lib/**"]
+      "outputs": ["lib/**", "build/**"]
+    },
+    "@minimajs/docs#build": {
+      "outputs": ["build/**"]
     },
     "clean": {
       "cache": false

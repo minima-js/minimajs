@@ -4,11 +4,7 @@ import pluginNPM from "@docusaurus/remark-plugin-npm2yarn";
 import { themes as prismThemes } from "prism-react-renderer";
 
 const config: Config = {
-  themes: ["@docusaurus/theme-mermaid"],
   projectName: "Minimajs",
-  markdown: {
-    mermaid: true,
-  },
   title: "Minimajs",
   favicon: "img/favicon.ico",
   baseUrl: "/",

@@ -3,7 +3,7 @@ import { createPlugin } from "./internal/plugins.js";
 import { invokeHandler, type Interceptor } from "./interceptor.js";
 
 interface RegisterMiddleware {
-  filter(req: Request): boolean | Promise<boolean>;
+  filter?(req: Request): boolean | Promise<boolean>;
 }
 
 export function middleware(...interceptors: Interceptor[]): Plugin<RegisterMiddleware> {
