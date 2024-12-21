@@ -9,81 +9,73 @@ describe("validator", () => {
     it("should validate a valid file with MIME type match", () => {
       const file = createFile("image.jpg", "image/jpeg");
       const accept = ["image/*"];
-      expect(() => validateFileType(file, accept)).not.toThrow();
+      expect(validateFileType(file, accept)).toBeTruthy();
     });
 
     it("should validate a valid file with exact MIME type", () => {
       const file = createFile("video.mp4", "video/mp4");
       const accept = ["video/mp4"];
-      expect(() => validateFileType(file, accept)).not.toThrow();
+      expect(validateFileType(file, accept)).toBeTruthy();
     });
 
     it("should validate a valid file with file extension", () => {
       const file = createFile("document.pdf", "application/pdf");
       const accept = [".pdf"];
-      expect(() => validateFileType(file, accept)).not.toThrow();
+      expect(validateFileType(file, accept)).toBeTruthy();
     });
 
     it("should validate a file with wildcard accept type '*/*'", () => {
       const file = createFile("random.xyz", "application/octet-stream");
       const accept = ["*/*"];
-      expect(() => validateFileType(file, accept)).not.toThrow();
+      expect(validateFileType(file, accept)).toBeTruthy();
     });
 
     it("should throw an error for an invalid file extension", () => {
       const file = createFile("document.txt", "text/plain");
       const accept = [".pdf"];
-      expect(() => validateFileType(file, accept)).toThrow(
-        "Invalid file extension: document.txt. Expected file extension: .pdf"
-      );
+      expect(validateFileType(file, accept)).toBeFalsy();
     });
 
     it("should throw an error for an invalid MIME type", () => {
       const file = createFile("audio.mp3", "audio/mpeg");
       const accept = ["video/*"];
-      expect(() => validateFileType(file, accept)).toThrow("Invalid file type: audio.mp3. Allowed types are: video/*.");
+      expect(validateFileType(file, accept)).toBeFalsy();
     });
 
     it("should throw an error if no types match", () => {
       const file = createFile("image.jpg", "image/jpeg");
       const accept = [".pdf", "text/plain"];
-      expect(() => validateFileType(file, accept)).toThrow(
-        "Invalid file extension: image.jpg. Expected file extension: .pdf"
-      );
+      expect(validateFileType(file, accept)).toBeFalsy();
     });
 
     it("should throw an error for missing file extension in name", () => {
       const file = createFile("unknown", "application/octet-stream");
       const accept = [".pdf"];
-      expect(() => validateFileType(file, accept)).toThrow(
-        "Invalid file extension: unknown. Expected file extension: .pdf"
-      );
+      expect(validateFileType(file, accept)).toBeFalsy();
     });
 
     it("should validate a file with case-insensitive extension", () => {
       const file = createFile("DOCUMENT.PDF", "application/pdf");
       const accept = [".pdf"];
-      expect(() => validateFileType(file, accept)).not.toThrow();
+      expect(validateFileType(file, accept)).toBeTruthy();
     });
 
     it("should validate a file with case-insensitive MIME type", () => {
       const file = createFile("image.JPG", "image/jpeg");
       const accept = ["image/*"];
-      expect(() => validateFileType(file, accept)).not.toThrow();
+      expect(validateFileType(file, accept)).toBeTruthy();
     });
 
     it("should validate multiple accept types", () => {
       const file = createFile("image.jpg", "image/jpeg");
       const accept = ["video/*", ".jpg", "text/plain"];
-      expect(() => validateFileType(file, accept)).not.toThrow();
+      expect(validateFileType(file, accept)).toBeTruthy;
     });
 
     it("should throw an error if both MIME type and extension do not match", () => {
       const file = createFile("audio.wav", "audio/wav");
       const accept = ["image/*", ".mp3"];
-      expect(() => validateFileType(file, accept)).toThrow(
-        "Invalid file extension: audio.wav. Expected file extension: .mp3"
-      );
+      expect(validateFileType(file, accept)).toBeFalsy();
     });
   });
 

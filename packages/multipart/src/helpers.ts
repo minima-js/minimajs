@@ -38,9 +38,12 @@ export function set(obj: Record<PropertyKey, unknown>, key: PropertyKey, value: 
   return obj;
 }
 
-export function get<T>(obj: Record<PropertyKey, unknown>, key: PropertyKey, def?: T): T | undefined {
-  if (key in obj) return obj[key] as T;
-  return def!;
+export function append(obj: Record<PropertyKey, unknown>, key: PropertyKey, ...value: unknown[]) {
+  if (!obj[key]) {
+    obj[key] = [];
+  }
+  (obj[key] as unknown[]).push(...value);
+  return value;
 }
 
 export async function ensurePath(...paths: string[]) {
