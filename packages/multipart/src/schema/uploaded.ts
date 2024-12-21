@@ -6,6 +6,7 @@ import {
   ValidationError,
   ValidationBaseError,
   type Schema,
+  ArraySchema,
 } from "@minimajs/schema";
 
 import { FileSchema, getAcceptanceTest, getMaxSize } from "./schema.js";
@@ -18,7 +19,7 @@ import { tmpdir } from "node:os";
 import { createWriteStream } from "node:fs";
 import { StreamMeter } from "../stream.js";
 import { pipeline } from "node:stream/promises";
-import { ensurePath, humanFileSize, set } from "../helpers.js";
+import { ensurePath, get, humanFileSize, set } from "../helpers.js";
 import { validateContentSize } from "./validator.js";
 import { isUploadedFile, UploadedFile } from "./uploaded-file.js";
 import { pkg } from "../pkg.js";
@@ -60,15 +61,35 @@ export function createMultipartUpload<T extends ObjectShape>(obj: T, option: Upl
       for await (const [name, body] of getBody()) {
         const singleSchema = obj[name] as Schema;
         if (isFile(body)) {
-          if (!singleSchema || !(singleSchema instanceof FileSchema)) {
+          if (!singleSchema) {
             await body.flush();
             continue;
           }
-          set(data, name, await uploadTmpFile(body, signal, singleSchema, option));
-          await schema.validateAt(name, data);
+          if (singleSchema instanceof ArraySchema && singleSchema.innerType instanceof FileSchema) {
+            const files = get<unknown[]>(data, name, [])!;
+            const file = await uploadTmpFile(body, signal, singleSchema.innerType, option);
+            files.push(file);
+            set(data, name, files);
+            await schema.validateAt(name, { [name]: [file] });
+            continue;
+          }
+          if (singleSchema instanceof FileSchema) {
+            set(data, name, await uploadTmpFile(body, signal, singleSchema, option));
+            await schema.validateAt(name, data);
+            continue;
+          }
+
+          await body.flush();
           continue;
         }
         if (!singleSchema) {
+          continue;
+        }
+        if (singleSchema instanceof ArraySchema) {
+          const fields = get<unknown[]>(data, name, [])!;
+          const field = (await schema.validateAt(name, { [name]: [body] })) as unknown[];
+          set(data, name, fields);
+          fields.push(...field);
           continue;
         }
         set(data, name, await schema.validateAt(name, { [name]: body }));

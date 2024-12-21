@@ -32,9 +32,15 @@ export function humanFileSize(bytes: number, dp = 1) {
 
   return bytes.toFixed(dp) + " " + units[u];
 }
+
 export function set(obj: Record<PropertyKey, unknown>, key: PropertyKey, value: unknown) {
   obj[key] = value;
   return obj;
+}
+
+export function get<T>(obj: Record<PropertyKey, unknown>, key: PropertyKey, def?: T): T | undefined {
+  if (key in obj) return obj[key] as T;
+  return def!;
 }
 
 export async function ensurePath(...paths: string[]) {
