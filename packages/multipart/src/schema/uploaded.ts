@@ -41,6 +41,14 @@ export function createMultipartUpload<T extends ObjectShape>(obj: T, option: Upl
       return;
     }
     for (const [, file] of Object.entries(body)) {
+      if (Array.isArray(file)) {
+        for (const f2 of file) {
+          if (!isUploadedFile(f2)) {
+            continue;
+          }
+          await f2.destroy();
+        }
+      }
       if (!isUploadedFile(file)) {
         continue;
       }
