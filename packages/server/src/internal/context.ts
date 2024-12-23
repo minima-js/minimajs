@@ -4,9 +4,11 @@ import { createAbortController } from "./response.js";
 import type { Request, Response } from "../types.js";
 
 export type HookCallback = () => void | Promise<void>;
+export type ErrorHookCallback = (err: unknown) => any | Promise<any>;
 
 export interface Hooks {
   onSent: Set<HookCallback>;
+  onError: Set<ErrorHookCallback>;
 }
 
 interface Context {
@@ -25,7 +27,7 @@ function createContextWrap(req: Request, reply: Response): Context {
     reply,
     local: new Map(),
     abortController: createAbortController(req.raw, reply.raw),
-    hooks: { onSent: new Set() },
+    hooks: { onSent: new Set(), onError: new Set() },
   };
 }
 export function wrap(req: Request, reply: Response, cb: () => unknown) {

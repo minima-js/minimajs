@@ -22,10 +22,17 @@ export function setPluginOption(cb: any, options: PluginOption) {
   return cb;
 }
 
-export async function triggerOnSent() {
+async function triggerOnSent() {
   const hooks = getHooks();
   for (const hook of hooks.onSent) {
     await hook();
+  }
+}
+
+async function triggerOnError(_: unknown, _1: unknown, error: unknown) {
+  const hooks = getHooks();
+  for (const hook of hooks.onError) {
+    await hook(error);
   }
 }
 
@@ -60,6 +67,7 @@ export const appPlugin = createPluginSync(function minimajs(fastify, _, next) {
   });
   fastify.addHook("onRequest", wrap);
   fastify.addHook("preSerialization", handleResponse);
-  fastify.addHook("onResponse", triggerOnSent);
+  fastify.addHook("onError", triggerOnError);
+  fastify.addHook("onSend", triggerOnSent);
   next();
 });

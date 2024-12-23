@@ -112,12 +112,12 @@ function file() {
 
 export { file };
 
-export function getMaxSize(schema: FileSchema): number {
-  const test = schema.describe().tests.find((test) => test.name === "max");
-  if (test) {
-    return test.params!.max as number;
+export function getMaxTest(schema: FileSchema) {
+  const test = schema.tests.find((x) => x.OPTIONS?.name === "max");
+  if (!test) {
+    return [null, Infinity] as const;
   }
-  return Infinity;
+  return [test, test.OPTIONS!.params!.max as number] as const;
 }
 
 export function getAcceptanceTest(schema: FileSchema) {

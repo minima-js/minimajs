@@ -19,6 +19,9 @@ export function getBytes(size: number, multiplier: Unit) {
 }
 
 export function humanFileSize(bytes: number, dp = 1) {
+  if (bytes === Infinity) {
+    return "Infinity";
+  }
   if (Math.abs(bytes) < thresh) {
     return bytes + " B";
   }

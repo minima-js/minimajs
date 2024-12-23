@@ -9,7 +9,7 @@ import {
   ArraySchema,
 } from "@minimajs/schema";
 
-import { FileSchema, getAcceptanceTest, getMaxSize } from "./schema.js";
+import { FileSchema, getAcceptanceTest, getMaxTest } from "./schema.js";
 import { getBody } from "../multipart.js";
 import { isFile, type File } from "../file.js";
 import { createContext, getSignal } from "@minimajs/server/context";
@@ -19,7 +19,7 @@ import { tmpdir } from "node:os";
 import { createWriteStream } from "node:fs";
 import { StreamMeter } from "../stream.js";
 import { pipeline } from "node:stream/promises";
-import { append, ensurePath, humanFileSize, set } from "../helpers.js";
+import { append, ensurePath, set } from "../helpers.js";
 import { validateContentSize } from "./validator.js";
 import { isUploadedFile, UploadedFile } from "./uploaded-file.js";
 import { pkg } from "../pkg.js";
@@ -117,14 +117,30 @@ export function createMultipartUpload<T extends ObjectShape>(obj: T, option: Upl
 
 async function uploadTmpFile(file: File, signal: AbortSignal, schema: FileSchema, { tmpDir = tmpdir() }: UploadOption) {
   await testMimeType(file, schema);
-  const maxSize = getMaxSize(schema);
+  const [maxTest, maxSize] = getMaxTest(schema);
+
   const meter = new StreamMeter(maxSize);
   const filename = join(await ensurePath(tmpDir, pkg.name), uuid());
   try {
     await pipeline(file.stream.pipe(meter), createWriteStream(filename));
   } catch (err) {
     if (err instanceof RangeError) {
-      throw new ValidationError(`${file.field} is exceeding max allowed size ${humanFileSize(maxSize)}`);
+      if (maxTest) {
+        const tmpFile = new UploadedFile(file, filename, meter.bytes, signal);
+        await new Promise((resolve, reject) => {
+          maxTest(
+            {
+              path: file.field,
+              value: tmpFile,
+              originalValue: tmpFile,
+              options: {},
+              schema,
+            },
+            reject,
+            resolve
+          );
+        });
+      }
     }
     throw err;
   }

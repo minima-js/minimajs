@@ -1,11 +1,16 @@
 import type { ApplicationHook, LifecycleHook } from "fastify/types/hooks.js";
-import { getHooks, type HookCallback } from "./internal/context.js";
+import { getHooks, type ErrorHookCallback, type HookCallback } from "./internal/context.js";
 import { createPluginSync } from "./internal/plugins.js";
 import type { FastifyPluginCallback } from "fastify";
 
 export function defer(cb: HookCallback) {
   const hooks = getHooks();
   hooks.onSent.add(cb);
+}
+
+export function onError(cb: ErrorHookCallback) {
+  const hooks = getHooks();
+  hooks.onError.add(cb);
 }
 
 type Hooks = "close" | "send" | "serialize" | "listen" | "ready" | "register";
