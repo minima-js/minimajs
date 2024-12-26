@@ -34,14 +34,14 @@ export interface ValidatorErrorOptions extends HttpErrorOptions {
 export interface ValidationError extends ValidatorErrorOptions {}
 
 export class ValidationError extends BaseError {
-  static createFromBase(base: ValidationBaseError) {
+  static createFromYup(base: ValidationBaseError) {
     const error = new ValidationError(base.message, { base });
     error.params = base.params as unknown as Params;
     error.value = base.value;
     error.path = base.path;
     error.type = base.type;
     error.errors = base.errors;
-    error.inner = base.inner.map((x) => ValidationError.createFromBase(x));
+    error.inner = base.inner.map((x) => ValidationError.createFromYup(x));
     return error;
   }
 

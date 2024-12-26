@@ -1,13 +1,14 @@
+import { ValidationError } from "./error.js";
+
 import {
   object,
-  ValidationError,
-  ValidationBaseError,
-  ArraySchema,
   type InferType,
   type ObjectShape,
+  ArraySchema,
   type ValidateOptions,
+  ValidationError as ValidationBaseError,
   type Schema,
-} from "@minimajs/schema";
+} from "yup";
 
 import { extractTests, FileSchema, getTestMaxSize, type ExtractTest } from "./schema.js";
 import { getBody } from "../multipart.js";
@@ -32,8 +33,7 @@ export interface UploadOption extends ValidateOptions {
 export function createMultipartUpload<T extends ObjectShape>(obj: T, option: UploadOption = {}) {
   const tests = extractTests(obj);
   const schema = object(obj);
-  type ReturnBody = InferType<typeof schema>;
-  const [getMultipartMeta, setMultipartMeta] = createContext<ReturnBody | null>();
+  const [getMultipartMeta, setMultipartMeta] = createContext<any | null>();
 
   async function cleanup() {
     const body = getMultipartMeta();
@@ -60,7 +60,7 @@ export function createMultipartUpload<T extends ObjectShape>(obj: T, option: Upl
     }
   }
 
-  return async function getData(): Promise<ReturnBody> {
+  return async function getData(): Promise<InferType<typeof schema>> {
     if (option.maxSize) {
       const contentLength = getHeader("content-length", Number, true);
       validateContentSize(contentLength, option.maxSize);
@@ -70,9 +70,9 @@ export function createMultipartUpload<T extends ObjectShape>(obj: T, option: Upl
       const signal = getSignal();
       const existingBody = getMultipartMeta();
       if (existingBody) {
-        return existingBody as ReturnBody;
+        return existingBody;
       }
-      const data: ReturnBody = {} as ReturnBody;
+      const data: any = {};
       for await (const [name, body] of getBody()) {
         const singleSchema = obj[name] as Schema;
         if (isFile(body)) {
@@ -115,7 +115,7 @@ export function createMultipartUpload<T extends ObjectShape>(obj: T, option: Upl
       }
 
       if (err instanceof ValidationBaseError) {
-        throw ValidationError.createFromBase(err);
+        throw ValidationError.createFromYup(err);
       }
 
       throw err;

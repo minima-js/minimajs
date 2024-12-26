@@ -1,5 +1,5 @@
 import { validator, validatorAsync } from "@minimajs/schema/validation";
-import type { ObjectShape, ValidateOptions } from "@minimajs/schema";
+import type { ObjectShape, ValidateOptions } from "yup";
 import { getCookies } from "./index.js";
 
 export function createCookies<T extends ObjectShape>(obj: T, option: ValidateOptions = {}) {

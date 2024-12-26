@@ -1,12 +1,4 @@
-import {
-  Schema,
-  ArraySchema,
-  type ObjectShape,
-  type AnyObject,
-  type Flags,
-  type Maybe,
-  type Message,
-} from "@minimajs/schema";
+import { Schema, ArraySchema, type ObjectShape, type AnyObject, type Flags, type Maybe, type Message } from "yup";
 import { UploadedFile } from "./uploaded-file.js";
 import { humanFileSize } from "../helpers.js";
 import { validateFileType } from "./validator.js";

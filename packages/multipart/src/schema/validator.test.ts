@@ -1,6 +1,6 @@
 import { validateContentSize, validateField, validateFileType } from "./validator.js"; // Adjust the import based on your setup
 import { File } from "../file.js";
-import { number, string } from "@minimajs/schema";
+import { number, string } from "yup";
 
 describe("validator", () => {
   describe("validateFileType", () => {

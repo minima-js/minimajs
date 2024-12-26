@@ -1,4 +1,5 @@
-import { type ISchema, type Reference, ValidationError, ValidationBaseError } from "@minimajs/schema";
+import { type ISchema, type Reference, ValidationError as ValidationBaseError } from "yup";
+import { ValidationError } from "./error.js";
 import { humanFileSize } from "../helpers.js";
 import type { File } from "../file.js";
 import { assertError } from "../errors.js";

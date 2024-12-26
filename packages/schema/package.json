@@ -1,6 +1,6 @@
 {
   "name": "@minimajs/schema",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "type": "module",
   "exports": {
     ".": "./lib/index.js",
@@ -15,7 +15,8 @@
     "yup": "^1.6.1"
   },
   "peerDependencies": {
-    "@minimajs/server": "*"
+    "@minimajs/server": ">=0.2.0",
+    "yup": ">=1.6.1"
   },
   "devDependencies": {
     "@minimajs/server": "workspace:^",
