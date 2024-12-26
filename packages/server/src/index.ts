@@ -9,7 +9,7 @@ import { logRoutes } from "./router.js";
 export { interceptor, type Interceptor } from "./interceptor.js";
 
 export * from "./http.js";
-export * from "./hooks.js";
+export * from "./hooks/index.js";
 export * from "./types.js";
 export * from "./middleware.js";
 

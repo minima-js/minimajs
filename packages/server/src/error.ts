@@ -14,7 +14,7 @@ export abstract class BaseHttpError extends Error {
   static is(value: unknown): value is BaseHttpError {
     return value instanceof this;
   }
-  abstract render(req: Request, res: Response): void;
+  abstract render(req: Request, res: Response): void | Promise<void>;
 }
 
 export interface HttpErrorOptions extends ErrorOptions {
@@ -115,7 +115,8 @@ export async function errorHandler(error: unknown, req: Request, reply: Response
   skipDecorator(reply);
   error = await getDecoratedError(req.server, req, error);
   const handler = BaseHttpError.is(error) ? error : (req.server.log.error(error), HttpError.create(error));
-  handler.render(req, reply);
+  await handler.render(req, reply);
+  reply.hijack(); // block further response
 }
 
 export { createErrorDecorator };

@@ -1,6 +1,6 @@
 import type { ApplicationHook, LifecycleHook } from "fastify/types/hooks.js";
-import { getHooks, type ErrorHookCallback, type HookCallback } from "./internal/context.js";
-import { createPluginSync } from "./internal/plugins.js";
+import { getHooks, type ErrorHookCallback, type HookCallback } from "../internal/context.js";
+import { createPluginSync } from "../internal/plugins.js";
 import type { FastifyPluginCallback } from "fastify";
 
 export function defer(cb: HookCallback) {

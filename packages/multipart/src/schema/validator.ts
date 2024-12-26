@@ -2,6 +2,8 @@ import { type ISchema, type Reference, ValidationError, ValidationBaseError } fr
 import { humanFileSize } from "../helpers.js";
 import type { File } from "../file.js";
 import { assertError } from "../errors.js";
+import { FileSchema, type Test } from "./schema.js";
+import { UploadedFile } from "./uploaded-file.js";
 
 export async function validateField(
   name: string,
@@ -22,8 +24,7 @@ export async function validateField(
   }
 }
 
-export function validateContentSize(contentSize: number, maxSize: number = 0) {
-  if (!maxSize) return;
+export function validateContentSize(contentSize: number, maxSize: number) {
   if (contentSize > maxSize) {
     throw new ValidationError(
       `Request content length exceeds the limit of ${humanFileSize(maxSize)} bytes. Actual size: ${humanFileSize(
@@ -70,4 +71,39 @@ export function validateFileType(file: File, accept: string[]) {
 
   // If no valid match found, throw a generic error
   return false;
+}
+
+export function testMimeType(file: File, test: Test | undefined, schema: FileSchema) {
+  if (!test) return;
+  return new Promise((resolve, reject) => {
+    test(
+      {
+        path: file.field,
+        value: file,
+        originalValue: file,
+        options: {},
+        schema,
+      },
+      reject,
+      resolve
+    );
+  });
+}
+
+export async function testMaxSize(test: Test | undefined, file: File, size: number, schema: FileSchema) {
+  if (!test) return;
+  const tmpFile = new UploadedFile(file, "", size);
+  return new Promise<any>((resolve, reject) => {
+    test(
+      {
+        path: file.field,
+        value: tmpFile,
+        originalValue: tmpFile,
+        options: {},
+        schema,
+      },
+      reject,
+      resolve
+    );
+  });
 }

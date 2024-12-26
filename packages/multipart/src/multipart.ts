@@ -3,13 +3,14 @@ import assert from "node:assert";
 import { Busboy, type BusboyConfig, type BusboyHeaders } from "@fastify/busboy";
 import { File } from "./file.js";
 import { getRequest, type Request } from "@minimajs/server";
+import { ValidationError } from "@minimajs/server/error";
 import { createIteratorAsync, stream2void } from "./stream.js";
 import { UploadError } from "./errors.js";
 
 type Config = Omit<BusboyConfig, "headers">;
 
 function ensureContentType(headers: IncomingHttpHeaders): asserts headers is BusboyHeaders {
-  assert("content-type" in headers, "Invalid content type or not exists in header");
+  assert("content-type" in headers, new ValidationError("Invalid content type or not exists in header"));
 }
 
 function busboy(req: Request, opt: Config) {

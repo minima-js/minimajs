@@ -9,7 +9,7 @@ export class UploadedFile extends File {
     info: FileInfo,
     public readonly tmpFile: string,
     public readonly size: number,
-    private readonly signal: AbortSignal
+    private readonly signal?: AbortSignal
   ) {
     super(info.field, info.filename, info.encoding, info.mimeType);
   }

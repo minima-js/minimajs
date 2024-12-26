@@ -1,13 +1,17 @@
-import { Schema, type AnyObject, type Flags, type Maybe, type Message } from "@minimajs/schema";
+import {
+  Schema,
+  ArraySchema,
+  type ObjectShape,
+  type AnyObject,
+  type Flags,
+  type Maybe,
+  type Message,
+} from "@minimajs/schema";
 import { UploadedFile } from "./uploaded-file.js";
 import { humanFileSize } from "../helpers.js";
 import { validateFileType } from "./validator.js";
 
-type Rule = {
-  minSize?: number;
-  maxSize?: number;
-  mimeTypes: string[];
-};
+export type Test = Schema["tests"][0];
 
 export class FileSchema<
   TType extends Maybe<UploadedFile> = UploadedFile | undefined,
@@ -15,10 +19,6 @@ export class FileSchema<
   TDefault = undefined,
   TFlags extends Flags = ""
 > extends Schema<TType, TContext, TDefault, TFlags> {
-  private $_rules: Rule = {
-    mimeTypes: [],
-  };
-
   constructor() {
     super({
       type: UploadedFile.name,
@@ -74,6 +74,7 @@ export class FileSchema<
       message: message ?? defaultMessage,
       skipAbsent: true,
       test(value) {
+        console.log("validating: accept");
         return validateFileType(value!, type);
       },
     });
@@ -81,7 +82,6 @@ export class FileSchema<
 
   required(message?: Message<any>) {
     return super.required(message).withMutation((schema: this) => {
-      schema.$_rules = this.$_rules;
       return schema.test({
         message: message || "${path} is a required field",
         name: "required",
@@ -112,14 +112,40 @@ function file() {
 
 export { file };
 
-export function getMaxTest(schema: FileSchema) {
-  const test = schema.tests.find((x) => x.OPTIONS?.name === "max");
-  if (!test) {
-    return [null, Infinity] as const;
+export interface ExtractTest {
+  max?: Test;
+  accept?: Test;
+}
+export type ExtractTests = Record<string, ExtractTest>;
+
+export function extractTests<T extends ObjectShape>(obj: T) {
+  const tests: ExtractTests = {};
+
+  function filterTest(test: Test, key: string) {
+    if (test.OPTIONS?.name === "max") {
+      tests[key]!.max = test;
+      return false;
+    }
+    if (test.OPTIONS?.name === "accept") {
+      tests[key]!.accept = test;
+      return false;
+    }
+    return true;
   }
-  return [test, test.OPTIONS!.params!.max as number] as const;
+
+  for (const [key, value] of Object.entries(obj)) {
+    tests[key] = {};
+    if (value instanceof ArraySchema && value.innerType instanceof FileSchema) {
+      value.innerType.tests = value.innerType.tests.filter((x) => filterTest(x, key));
+    }
+    if (value instanceof FileSchema) {
+      value.tests = value.tests.filter((x) => filterTest(x, key));
+    }
+  }
+  return tests;
 }
 
-export function getAcceptanceTest(schema: FileSchema) {
-  return schema.tests.find((x) => x.OPTIONS?.name === "accept");
+export function getTestMaxSize(test: Test | undefined): number {
+  if (!test) return Infinity;
+  return (test.OPTIONS?.params?.max as number) ?? (Infinity as number);
 }

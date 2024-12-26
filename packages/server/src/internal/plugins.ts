@@ -1,8 +1,9 @@
 import type { Server } from "node:http";
 import { handleResponse } from "./response.js";
-import { wrap, getHooks } from "./context.js";
+import { wrap } from "./context.js";
 import { NotFoundError, errorHandler } from "../error.js";
 import type { FastifyPluginAsync, FastifyPluginCallback } from "fastify";
+import { dispatchError, dispatchSent } from "../hooks/dispatch.js";
 
 export interface PluginOption {
   name?: string;
@@ -20,20 +21,6 @@ export function setPluginOption(cb: any, options: PluginOption) {
     cb[option] = value;
   }
   return cb;
-}
-
-async function triggerOnSent() {
-  const hooks = getHooks();
-  for (const hook of hooks.onSent) {
-    await hook();
-  }
-}
-
-async function triggerOnError(_: unknown, _1: unknown, error: unknown) {
-  const hooks = getHooks();
-  for (const hook of hooks.onError) {
-    await hook(error);
-  }
 }
 
 type BaseApp = Record<string | number | symbol, any>;
@@ -67,7 +54,7 @@ export const appPlugin = createPluginSync(function minimajs(fastify, _, next) {
   });
   fastify.addHook("onRequest", wrap);
   fastify.addHook("preSerialization", handleResponse);
-  fastify.addHook("onError", triggerOnError);
-  fastify.addHook("onSend", triggerOnSent);
+  fastify.addHook("onError", dispatchError);
+  fastify.addHook("onSend", dispatchSent);
   next();
 });
