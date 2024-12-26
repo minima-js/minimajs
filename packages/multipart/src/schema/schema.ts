@@ -74,7 +74,6 @@ export class FileSchema<
       message: message ?? defaultMessage,
       skipAbsent: true,
       test(value) {
-        console.log("validating: accept");
         return validateFileType(value!, type);
       },
     });
