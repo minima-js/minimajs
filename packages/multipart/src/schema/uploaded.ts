@@ -25,6 +25,21 @@ import { testMaxSize, testMimeType, validateContentSize } from "./validator.js";
 import { isUploadedFile, UploadedFile } from "./uploaded-file.js";
 import { pkg } from "../pkg.js";
 import { join } from "node:path";
+import assert from "node:assert";
+
+type GenericValue = string | string[] | UploadedFile | UploadedFile[];
+
+async function deleteUploadedFiles(files: GenericValue[]) {
+  for (const file of files) {
+    if (Array.isArray(file)) {
+      await deleteUploadedFiles(file);
+    }
+    if (!isUploadedFile(file)) {
+      continue;
+    }
+    await file.destroy();
+  }
+}
 
 export interface UploadOption extends ValidateOptions {
   tmpDir?: string;
@@ -33,30 +48,17 @@ export interface UploadOption extends ValidateOptions {
 export function createMultipartUpload<T extends ObjectShape>(obj: T, option: UploadOption = {}) {
   const tests = extractTests(obj);
   const schema = object(obj);
-  const [getMultipartMeta, setMultipartMeta] = createContext<any | null>();
-
+  const [getMultipartMeta, setMultipartMeta] = createContext<Record<string, GenericValue>>();
   async function cleanup() {
     const body = getMultipartMeta();
     if (!body) {
       return;
     }
     try {
-      for (const [, file] of Object.entries(body)) {
-        if (Array.isArray(file)) {
-          for (const f2 of file) {
-            if (!isUploadedFile(f2)) {
-              continue;
-            }
-            await f2.destroy();
-          }
-        }
-        if (!isUploadedFile(file)) {
-          continue;
-        }
-        await file.destroy();
-      }
+      await deleteUploadedFiles(Object.values(body));
     } catch (err) {
-      console.error("unable to delete file temp files!");
+      assert(err instanceof Error);
+      console.error(err.message);
     }
   }
 
@@ -65,14 +67,15 @@ export function createMultipartUpload<T extends ObjectShape>(obj: T, option: Upl
       const contentLength = getHeader("content-length", Number, true);
       validateContentSize(contentLength, option.maxSize);
     }
+    defer(cleanup);
     try {
-      defer(cleanup);
       const signal = getSignal();
       const existingBody = getMultipartMeta();
       if (existingBody) {
-        return existingBody;
+        return existingBody as any;
       }
       const data: any = {};
+      setMultipartMeta(data);
       for await (const [name, body] of getBody()) {
         const singleSchema = obj[name] as Schema;
         if (isFile(body)) {
@@ -107,7 +110,6 @@ export function createMultipartUpload<T extends ObjectShape>(obj: T, option: Upl
         }
         await schema.validateAt(name, {});
       }
-      setMultipartMeta(data);
       return data;
     } catch (err) {
       if (err instanceof ValidationError) {
