@@ -1,7 +1,7 @@
-import type { Readable } from "stream";
+import type { Readable } from "node:stream";
 import { File, type FileInfo } from "../file.js";
-import { unlink } from "fs/promises";
-import { createReadStream } from "fs";
+import { unlink } from "node:fs/promises";
+import { createReadStream } from "node:fs";
 
 export class UploadedFile extends File {
   #streams = new Set<Readable>();

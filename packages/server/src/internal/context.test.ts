@@ -1,4 +1,3 @@
-// import { EventEmitter } from "stream";
 import { mockContext } from "../mock/context.js";
 import { getContext, safe } from "./context.js";
 
