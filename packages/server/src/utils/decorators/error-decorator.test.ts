@@ -1,15 +1,14 @@
 import { jest } from "@jest/globals";
 
-jest.unstable_mockModule("../internal/plugins", () => ({
+jest.unstable_mockModule("../../internal/plugins.js", () => ({
   createPluginSync: jest.fn((fn) => fn),
 }));
 
-const { createDecoratorHandler } = await import("./decorator.js");
-import type { App, Request } from "../types.js";
+const { createErrorDecoratorHandler } = await import("./error-decorator.js");
+import type { App, Request } from "../../types.js";
 
 describe("createDecoratorHandler", () => {
   let app: App;
-
   beforeEach(() => {
     app = {
       decorate: jest.fn(),
@@ -22,7 +21,7 @@ describe("createDecoratorHandler", () => {
   });
 
   it("should add a decorator to the app", () => {
-    const [createDecorator, _getDecorated] = createDecoratorHandler("testDecorator");
+    const [createDecorator, _getDecorated] = createErrorDecoratorHandler();
     const mockCallback = jest.fn();
     const mockOptions = { filter: jest.fn(() => true) };
     createDecorator(mockCallback)(app, mockOptions, jest.fn());
@@ -30,14 +29,10 @@ describe("createDecoratorHandler", () => {
     expect(app.decorate).toHaveBeenCalledWith(expect.any(Symbol), expect.any(Set));
   });
 
-  it("should return the original parameter if no decorators are present", async () => {
-    const [_, getDecorated] = createDecoratorHandler("testDecorator");
-
+  it("should throw the original error if no decorators are present", async () => {
+    const [_, getDecorated] = createErrorDecoratorHandler();
     const mockRequest = {} as Request;
-    const initialParam = "initial";
-
-    const result = await getDecorated(app, mockRequest, initialParam);
-
-    expect(result).toBe(initialParam);
+    const initialError = new Error("something went wrong");
+    expect(getDecorated(app, mockRequest, initialError)).rejects.toThrow(initialError);
   });
 });

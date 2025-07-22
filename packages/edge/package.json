@@ -4,7 +4,7 @@
   "type": "module",
   "exports": "./lib/index.js",
   "dependencies": {
-    "edge.js": "^6.2.0"
+    "edge.js": "^6.3.0"
   },
   "peerDependencies": {
     "@minimajs/server": "*"
@@ -16,6 +16,6 @@
   },
   "devDependencies": {
     "@minimajs/server": "workspace:^",
-    "@types/node": "^22.10.2"
+    "@types/node": "^24.1.0"
   }
 }

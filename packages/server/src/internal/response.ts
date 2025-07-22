@@ -3,22 +3,13 @@ import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import type { Next, Request, Response } from "../types.js";
 import { isAsyncIterator } from "../utils/iterable.js";
-import { createDecoratorHandler } from "../utils/decorator.js";
-export type ResponseDecorator = (body: unknown) => Promise<unknown> | unknown;
+import { createResponseDecoratorHandler, isResponseDecoratorSkipped } from "../utils/decorators/index.js";
+export type { ResponseDecorator } from "../utils/decorators/index.js";
 
-const SkipResponseDecorator = Symbol("response-no-decorate");
 export const ResponseAbort = Symbol("RequestCancelled");
 
-function isDecoratorSkipped(response: Response) {
-  return (response as any)[SkipResponseDecorator];
-}
-
-const [createResponseDecorator, getDecoratedResponse] = createDecoratorHandler<ResponseDecorator>("response-decorator");
+const [createResponseDecorator, getDecoratedResponse] = createResponseDecoratorHandler();
 export { createResponseDecorator };
-
-export function skipDecorator(response: Response) {
-  (response as any)[SkipResponseDecorator] = true;
-}
 
 export function isRequestAbortedError(err: unknown) {
   if (err instanceof Error && err.cause === ResponseAbort) {
@@ -38,7 +29,7 @@ export function createAbortController(message: IncomingMessage, response: Server
 }
 
 export function handleResponse(request: Request, response: Response, body: unknown, next: Next): void {
-  if (isDecoratorSkipped(response)) {
+  if (isResponseDecoratorSkipped(response)) {
     next(null, body);
     return;
   }
