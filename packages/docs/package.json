@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "docusaurus start",
-    "build": "docusaurus build",
+    "build:docs": "docusaurus build",
     "deploy": "gh-pages --dist build --repo=git@github.com:minima-js/minima-js.github.io"
   },
   "dependencies": {

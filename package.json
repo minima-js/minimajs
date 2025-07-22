@@ -18,10 +18,12 @@
     "coverage": "turbo run coverage",
     "clean": "turbo run clean",
     "docs": "yarn --cwd=packages/docs start",
-    "docs:deploy": "yarn --cwd=packages/docs deploy"
+    "docs:deploy": "yarn --cwd=packages/docs deploy",
+    "release": "yarn build && changeset publish"
   },
   "packageManager": "yarn@4.9.2",
   "devDependencies": {
+    "@changesets/cli": "^2.29.5",
     "jest": "^30.0.5",
     "rimraf": "^6.0.1",
     "turbo": "^2.5.5",
