@@ -6,11 +6,11 @@
     "dev": "tsc -w"
   },
   "devDependencies": {
-    "@types/node": "^22.10.2",
+    "@types/node": "^24.1.0",
     "@types/uuid": "^10.0.0"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.24.0",
-    "uuid": "^11.0.3"
+    "uuid": "^11.1.0"
   }
 }

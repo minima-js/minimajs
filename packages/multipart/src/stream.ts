@@ -8,9 +8,12 @@ import {
 } from "node:stream";
 
 class IteratorStream<T> extends PassThrough {
+  constructor(opt: TransformOptions = {}) {
+    super({ objectMode: true, ...opt });
+  }
   writeAsync(val: T) {
     return new Promise<void>((resolve, reject) => {
-      this.write(val, undefined, (err) => {
+      this.write(val, (err) => {
         err ? reject(err) : resolve();
       });
     });
@@ -18,10 +21,7 @@ class IteratorStream<T> extends PassThrough {
 }
 
 export function createIteratorAsync<T>(opt?: TransformOptions) {
-  const stream = new IteratorStream<T>({
-    ...opt,
-    objectMode: true,
-  });
+  const stream = new IteratorStream<T>(opt);
   return [stream, () => stream as unknown as AsyncGenerator<T>] as const;
 }
 

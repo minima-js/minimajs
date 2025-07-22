@@ -1,12 +1,13 @@
 import { StatusCodes } from "http-status-codes";
 import type { Dict, Request, Response } from "./types.js";
-import { isRequestAbortedError, skipDecorator } from "./internal/response.js";
-import { createDecoratorHandler } from "./utils/decorator.js";
+import { isRequestAbortedError } from "./internal/response.js";
+import { createErrorDecoratorHandler } from "./utils/decorators/index.js";
+import { skipResponseDecorator } from "./utils/decorators/index.js";
+
+export type { ErrorDecorator } from "./utils/decorators/index.js";
 
 export type ErrorResponse = string | Dict;
 export type StatusCode = keyof typeof StatusCodes | number;
-
-export type ErrorDecorator = (error: unknown) => unknown;
 
 export abstract class BaseHttpError extends Error {
   abstract statusCode: number;
@@ -106,14 +107,21 @@ export class ForbiddenError extends HttpError {
   }
 }
 
-const [createErrorDecorator, getDecoratedError] = createDecoratorHandler<ErrorDecorator>("error-decorator");
+const [createErrorDecorator, getDecoratedError] = createErrorDecoratorHandler();
 
 export async function errorHandler(error: unknown, req: Request, reply: Response) {
   if (isRequestAbortedError(error)) {
     return;
   }
-  skipDecorator(reply);
-  error = await getDecoratedError(req.server, req, error);
+  skipResponseDecorator(reply); // tell response decorator not to re-decorate this response
+  try {
+    const response = await getDecoratedError(req.server, req, error);
+    reply.send(response);
+    reply.hijack(); // block further response
+    return; // terminate here and send body!
+  } catch (err) {
+    error = err;
+  }
   const handler = BaseHttpError.is(error) ? error : (req.server.log.error(error), HttpError.create(error));
   await handler.render(req, reply);
   reply.hijack(); // block further response

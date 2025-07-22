@@ -65,10 +65,9 @@ describe("error module", () => {
     it("should modify error response which is aborted by us", async () => {
       const decorator = createErrorDecorator((error) => {
         if (!HttpError.is(error)) {
-          // do not engage if this is not our error
-          return error;
+          throw error;
         }
-        return new HttpError(
+        throw new HttpError(
           {
             success: false,
             error: error.response,
@@ -98,9 +97,9 @@ describe("error module", () => {
     it("should filter some decorator", async () => {
       const decorator = createErrorDecorator((error) => {
         if (!HttpError.is(error)) {
-          return error;
+          throw error;
         }
-        return new HttpError(
+        throw new HttpError(
           {
             decorated: error.response ?? "no res",
           },
@@ -138,9 +137,9 @@ describe("error module", () => {
       const decorator = createErrorDecorator((error) => {
         if (BaseHttpError.is(error)) {
           // do not engage if this is already handled
-          return error;
+          throw error;
         }
-        return error instanceof Error
+        throw error instanceof Error
           ? new HttpError(
               {
                 message: error.message,

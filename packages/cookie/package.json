@@ -1,6 +1,6 @@
 {
   "name": "@minimajs/cookie",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "type": "module",
   "exports": {
     ".": "./lib/index.js",
@@ -14,13 +14,13 @@
   "devDependencies": {
     "@minimajs/schema": "workspace:^",
     "@minimajs/server": "workspace:^",
-    "@types/node": "^22.10.2",
-    "fastify": "^5.2.0",
+    "@types/node": "^24.1.0",
+    "fastify": "^5.4.0",
     "yup": "^1.6.1"
   },
   "peerDependencies": {
-    "@minimajs/schema": ">=0.2.0",
-    "@minimajs/server": ">=0.2.0",
+    "@minimajs/schema": ">=1.0.0",
+    "@minimajs/server": ">=0.3.0",
     "yup": ">=1.6.1"
   },
   "peerDependenciesMeta": {
@@ -29,7 +29,7 @@
     }
   },
   "dependencies": {
-    "@fastify/cookie": "^11.0.1"
+    "@fastify/cookie": "^11.0.2"
   },
   "files": [
     "lib"
