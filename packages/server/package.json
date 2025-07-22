@@ -1,6 +1,6 @@
 {
   "name": "@minimajs/server",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "license": "MIT",
   "homepage": "https://minima-js.github.io/",
@@ -40,7 +40,8 @@
     "@types/node": "^24.1.0",
     "jest": "^30.0.5",
     "jest-util": "^30.0.5",
-    "ts-jest": "^29.4.0"
+    "ts-jest": "^29.4.0",
+    "typescript": "^5.8.3"
   },
   "files": [
     "lib",

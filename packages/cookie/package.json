@@ -1,6 +1,6 @@
 {
   "name": "@minimajs/cookie",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "type": "module",
   "exports": {
     ".": "./lib/index.js",
@@ -19,8 +19,8 @@
     "yup": "^1.6.1"
   },
   "peerDependencies": {
-    "@minimajs/schema": ">=0.2.0",
-    "@minimajs/server": ">=0.2.0",
+    "@minimajs/schema": ">=1.0.0",
+    "@minimajs/server": ">=0.3.0",
     "yup": ">=1.6.1"
   },
   "peerDependenciesMeta": {

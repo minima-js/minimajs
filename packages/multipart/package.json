@@ -1,6 +1,6 @@
 {
   "name": "@minimajs/multipart",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "type": "module",
   "exports": {
     ".": "./lib/index.js",
@@ -20,7 +20,9 @@
     "@types/node": "^24.1.0",
     "@types/uuid": "^10.0.0",
     "jest": "^30.0.5",
+    "jest-util": "^30.0.5",
     "ts-jest": "^29.4.0",
+    "typescript": "^5.8.3",
     "yup": "^1.6.1"
   },
   "dependencies": {
@@ -28,7 +30,7 @@
     "uuid": "^11.1.0"
   },
   "peerDependencies": {
-    "@minimajs/server": ">=0.2.0",
+    "@minimajs/server": ">=0.3.0",
     "yup": ">=1.6.1"
   },
   "peerDependenciesMeta": {
