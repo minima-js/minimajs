@@ -1,16 +1,81 @@
-Introducing the groundbreaking HTTP framework for Node.js - an innovation tailored for the modern developer seeking efficiency, elegance, and speed. This framework is designed with a forward-looking mindset, embracing the latest advancements in JavaScript while prioritizing ease of use and performance.
+# MinimaJS
 
-### Highlights
+**The high-performance Node.js framework that's faster than Express, simpler than NestJS**
 
-- **Functional Approach**: Embracing the functional programming paradigm, this framework empowers developers to write clean, concise, and composable code, promoting modular design and scalability.
+MinimaJS is a cutting-edge TypeScript-first web framework built on Fastify, designed for modern developers who demand speed, simplicity, and exceptional developer experience.
 
-- **100% TypeScript**: Built entirely in TypeScript, ensures type safety throughout the development process, reducing errors and enhancing code quality.
+## 🚀 Why MinimaJS?
 
-- **Mandatory ESM Adoption**: mandates the adoption of ECMAScript Modules (ESM) over CommonJS, ensuring developers unlock the full potential of modern JavaScript features like root-level await, code splitting and more...
+### **Performance First**
+- Built on **Fastify** - 2-3x faster than Express
+- Optimized bundle size and runtime efficiency
+- Stream-based file handling for large payloads
 
-- **Instant Context Access**: seamless access to request data like headers or body with functions like `getRequest()` and `getBody()` anywhere within the same request context. Say goodbye to tedious `req`/`res` drilling.
+### **Developer Experience**
+- **Zero Boilerplate** - Start building immediately
+- **Context-Aware APIs** - No more prop drilling with `getRequest()`, `getBody()`, `getParam()`
+- **100% TypeScript** - End-to-end type safety
+- **Modern Standards** - ESM-first, latest JavaScript features
 
-- **No Boilerplate Needed**: Bid farewell to boilerplate code. With its minimalist approach, eliminates unnecessary setup and configuration.
+### **Rich Ecosystem**
+- 🔐 **Authentication** - Session & token-based auth
+- 📁 **File Uploads** - Advanced multipart handling with validation
+- ☁️ **Cloud Storage** - Azure Blob, local disk drivers
+- ✅ **Validation** - Yup-based schema validation
+- 🍪 **Cookies** - Type-safe cookie management
+- 🎨 **Templating** - Edge.js template engine
+- 🔧 **Utilities** - Common helpers and tools
+
+## 📦 Complete Package List
+
+| Package | Description | Status |
+|---------|-------------|--------|
+| **[@minimajs/server](./packages/server)** | Core HTTP framework with context-aware APIs | ✅ Stable |
+| **[@minimajs/auth](./packages/auth)** | Authentication system | ✅ Stable |
+| **[@minimajs/multipart](./packages/multipart)** | File upload & multipart handling | ✅ Stable |
+| **[@minimajs/schema](./packages/schema)** | Yup-based validation | ✅ Stable |
+| **[@minimajs/cookie](./packages/cookie)** | Type-safe cookie management | ✅ Stable |
+| **[@minimajs/edge](./packages/edge)** | Edge.js template engine | ✅ Stable |
+| **[@minimajs/utility](./packages/utility)** | Common utilities | ✅ Stable |
+| **[@minimajs/azure-blob](./packages/azure-blob)** | Azure Blob Storage driver | ✅ Stable |
+| **[@minimajs/disk](./packages/disk)** | Local file system driver | ✅ Stable |
+| **[@minimajs/kafka](./packages/kafka)** | Apache Kafka integration | 🚧 Coming Soon |
+| **[@minimajs/isc](./packages/isc)** | Inter-service communication | 🚧 Coming Soon |
+
+## ⚡ Quick Comparison
+
+### Express.js (Traditional)
+```javascript
+const express = require('express');
+const multer = require('multer');
+const app = express();
+
+app.use(express.json());
+app.use(multer().single('file'));
+
+app.post('/users/:id', (req, res) => {
+  const userId = req.params.id;        // Manual extraction
+  const userData = req.body;           // No type safety
+  const file = req.file;              // Separate middleware
+  // ... handle request
+});
+```
+
+### MinimaJS (Modern)
+```typescript
+import { createApp, getParam, getBody, multipart } from "@minimajs/server";
+
+const app = createApp();
+
+app.post('/users/:id', multipart(), () => {
+  const userId = getParam("id");       // Context-aware, type-safe
+  const userData = getBody<User>();    // Automatic typing
+  const file = getField("file");      // Built-in multipart
+  // Zero boilerplate, maximum productivity
+});
+```
+
+## 🎯 Key Features
 
 ### Getting started
 

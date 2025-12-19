@@ -12,7 +12,7 @@
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "dependencies": {
-    "yup": "^1.6.1"
+    "yup": "^1.7.1"
   },
   "peerDependencies": {
     "@minimajs/server": ">=0.3.0",
@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@minimajs/server": "workspace:^",
-    "@types/node": "^24.1.0"
+    "@types/node": "^25.0.3"
   },
   "files": [
     "lib"

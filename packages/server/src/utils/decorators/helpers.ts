@@ -16,8 +16,8 @@ function addDecorator<T extends GenericCallback>(id: symbol, app: App, option: D
   existing.add([option, cb]);
 }
 
-export function getDecorator<T extends GenericCallback>(app: any, name: symbol) {
-  return app[name] as Set<DecoratorHandler<T>> | undefined;
+export function getDecorator<T extends GenericCallback>(app: App, name: symbol) {
+  return (app as any)[name] as Set<DecoratorHandler<T>> | undefined;
 }
 
 export function createDecoratorPlugin(id: symbol, decoratorType: string, cb: GenericCallback) {

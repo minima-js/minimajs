@@ -15,8 +15,8 @@ async function toCallback<T extends PluginOptions = {}>(callback: PluginCallback
   return callback;
 }
 
-function getModuleName(callback: any, opt: InterceptorOption) {
-  return opt.name ?? callback.name;
+function getModuleName(callback: PluginCallback<any>, opt: InterceptorOption) {
+  return opt.name ?? (callback as any).name;
 }
 
 export interface InterceptorOption {

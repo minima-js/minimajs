@@ -24,7 +24,8 @@ export function createResponseDecoratorHandler() {
 }
 
 const SkipResponseDecorator = Symbol("response-no-decorate");
-export function isResponseDecoratorSkipped(response: Response) {
+
+export function isResponseDecoratorSkipped(response: Response): boolean {
   return (response as any)[SkipResponseDecorator];
 }
 export function skipResponseDecorator(response: Response) {

@@ -11,22 +11,41 @@ import {
   type StatusCode,
 } from "./error.js";
 import type { Dict, HttpHeader, HttpHeaderIncoming, Request, Response } from "./types.js";
-import { createAttribute } from "./utils/attribute.js";
-import { toLastValue } from "./utils/iterable.js";
 
 import { ResponseAbort } from "./internal/response.js";
+import { toFirstValue } from "./utils/iterable.js";
+
+function throwAttributeError(accessor: string, name: string, message: string): never {
+  throw new ValidationError(accessor + "`" + name + "` " + message);
+}
+
+// ============================================================================
+// Request / Response
+// ============================================================================
+
+/**
+ * Retrieves the HTTP request object.
+ * @example ```ts
+ * const req = request();
+ * console.log(req.url);
+ * ```
+ * @since v0.1.0
+ */
+export function request(): Request {
+  const { req } = getContext();
+  return req;
+}
+
 /**
  * Retrieves the HTTP request object.
  * @example ```ts
  * const req = getRequest();
  * console.log(req.url);
  * ```
+ * @alias of {@link request}
  * @since v0.1.0
  */
-export function getRequest(): Request {
-  const { req } = getContext();
-  return req;
-}
+export const getRequest = request;
 
 /**
  * Retrieves the HTTP response object.
@@ -35,36 +54,121 @@ export function getResponse(): Response {
   return getContext().reply;
 }
 
-/**
- * Retrieves the request body.
- */
-export function getBody<T = unknown>() {
-  return getRequest().body as T;
-}
-
-/**
- * Retrieves the request params.
- */
-export function getParams<T = Dict<string>>(): T {
-  return getRequest().params as T;
-}
-
-/**
- * Set response status code.
- */
-export function setStatusCode(statusCode: keyof typeof StatusCodes | number): Response {
-  if (typeof statusCode !== "number") {
-    statusCode = StatusCodes[statusCode];
-  }
-  const response = getResponse();
-  return response.status(statusCode);
-}
-
-export const getRequestURL = once(function getRequestURL() {
+export const requestURL = once(function getRequestURL() {
   const request = getRequest();
   const host = `${request.protocol}://${request.hostname}`;
   return new URL(request.originalUrl, host);
 });
+
+/**
+ * @alias of {@link requestURL}
+ */
+export const getRequestURL = requestURL;
+
+/**
+ * Get matched route
+ */
+export function route() {
+  const { routeOptions } = request();
+  return routeOptions;
+}
+
+/**
+ * @alias of {@link route}
+ */
+export const getRoute = route;
+
+// ============================================================================
+// Body
+// ============================================================================
+
+/**
+ * Retrieves the request body.
+ */
+export function body<T = unknown>() {
+  return getRequest().body as T;
+}
+
+/**
+ * @alias {@link body}
+ */
+export const getBody = body;
+
+// ============================================================================
+// Params
+// ============================================================================
+
+/**
+ * Retrieves the request params.
+ */
+export function params<T = Dict<string>>(): T {
+  return getRequest().params as T;
+}
+
+params.get = function getParam(name: string) {
+  const p = getRequest().params as Dict<string>;
+  return p[name];
+};
+
+/**
+ * Alias of {@link params}.
+ *
+ * @alias params
+ * @see params
+ */
+export const getParams = params;
+
+/**
+ * Retrieves parameters from the current request context.
+ *
+ * @deprecated Use {@link params.get} instead
+ * @example
+ * ```ts
+ * const id = getParam('id')                              // string | undefined
+ * const page = getParam('page', (val) => parseInt(val))  // number | undefined
+ * const age = getParam('age', (val) => {
+ *   const num = parseInt(val);
+ *   if (num < 0) throw new Error('must be positive');
+ *   return num;
+ * });                                                     // number | undefined
+ * ```
+ */
+export function getParam(name: string): string | undefined;
+export function getParam(name: string, transform?: (value: string) => unknown): unknown {
+  const params = getParams();
+  const value = params[name];
+
+  if (value === undefined) return undefined;
+  if (!transform) return value;
+
+  try {
+    return transform(value);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "transformation failed";
+    throw new NotFoundError(message);
+  }
+}
+
+// ============================================================================
+// Headers
+// ============================================================================
+
+export function headers() {
+  return getRequest().headers;
+}
+
+headers.get = function getHeader(name: HttpHeaderIncoming) {
+  return getRequest().headers[name];
+};
+
+headers.getAll = function getAllHeaders(name: HttpHeaderIncoming) {
+  return getRequest().raw.headersDistinct[name];
+};
+
+headers.set = function setHeader(name: HttpHeader, value: string): Response {
+  const { reply } = getContext();
+  return reply.header(name, value);
+};
 
 /**
  * Retrieves the request headers.
@@ -75,9 +179,56 @@ export function getHeaders() {
 }
 
 /**
+ * Set Request header
+ */
+export function setHeader(name: HttpHeader, value: string): Response {
+  const { reply } = getContext();
+  return reply.header(name, value);
+}
+
+/**
+ * Retrieves a header from the current request context.
+ *
+ * @deprecated Use {@link headers.get} or {@link headers.getAll} instead
+ * @example
+ * ```ts
+ * const auth = getHeader('authorization')              // string | undefined
+ * const token = getHeader('authorization', (arr) => arr[0])  // string | undefined
+ * ```
+ */
+export function getHeader(name: HttpHeaderIncoming): string | undefined;
+export function getHeader(name: HttpHeaderIncoming, transform?: (value: string[]) => unknown): unknown {
+  const { raw: request } = getRequest();
+  const headers = request.headersDistinct as Record<HttpHeaderIncoming, string[]>;
+  const value = headers[name];
+
+  if (value === undefined) return undefined;
+
+  try {
+    return (transform ?? toFirstValue)(value);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "transformation failed";
+    throwAttributeError("Header ", name, message);
+  }
+}
+
+// ============================================================================
+// Search Params / Queries
+// ============================================================================
+
+/**
  * Retrieves the search params
  */
-export const getSearchParams = () => getRequestURL().searchParams;
+export function searchParams<T>() {
+  return getRequest().query as T;
+}
+
+searchParams.get = function getSearchParam(name: string) {
+  const queries = getRequest().query as Record<string, string | string[]>;
+  return toFirstValue(queries[name]);
+};
+
+export const getSearchParams = searchParams;
 
 /**
  * Retrieves the querystring
@@ -87,12 +238,58 @@ export function getQueries<T = ParsedUrlQuery>() {
 }
 
 /**
- * Set Request header
+ * Retrieves a search param from the current request context.
+ *
+ * @deprecated Use {@link searchParams.get} instead
+ * @example
+ * ```ts
+ * const page = getSearchParam('page')                    // string | undefined
+ * const pageNum = getSearchParam('page', (val) => {
+ *   const num = parseInt(Array.isArray(val) ? val[0] : val);
+ *   if (num < 1) throw new Error('must be >= 1');
+ *   return num;
+ * });                                                     // number | undefined
+ * ```
  */
-export function setHeader(name: HttpHeader, value: string): Response {
-  const { reply } = getContext();
-  return reply.header(name, value);
+export function getSearchParam(name: string): string | undefined;
+export function getSearchParam(name: string, transform?: (value: string | string[]) => unknown): unknown {
+  const queries = getRequest().query as Record<string, string | string[]>;
+  const value = queries[name];
+
+  if (value === undefined) return undefined;
+
+  try {
+    return (transform ?? toFirstValue)(value);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "transformation failed";
+    throwAttributeError("Param ", name, message);
+  }
 }
+
+/**
+ * @deprecated please use getSearchParam instead
+ */
+export const getQuery = getSearchParam;
+
+// ============================================================================
+// Status / Redirect / Abort
+// ============================================================================
+
+/**
+ * Set response status code.
+ */
+export function status(statusCode: keyof typeof StatusCodes | number): Response {
+  if (typeof statusCode !== "number") {
+    statusCode = StatusCodes[statusCode];
+  }
+  const response = getResponse();
+  return response.status(statusCode);
+}
+
+/**
+ * @alias of {@link status}
+ */
+export const setStatusCode = status;
 
 /**
  * Redirect
@@ -146,51 +343,3 @@ abort.assert = function assertAbort(error: unknown): asserts error is Error {
 abort.is = function isAbortError(error: unknown): error is BaseHttpError {
   return BaseHttpError.is(error);
 };
-
-function throwAttributeError(accessor: string, name: string, message: string): never {
-  throw new ValidationError(accessor + "`" + name + "` " + message);
-}
-/**
- * Retrieves and validates parameters from the current request context. It optionally casts the values to a specified type and enforces that the parameter is required.
- */
-export const getParam = createAttribute<string, string, true>(getParams, abort.notFound, true);
-
-function getHeadersDistinct() {
-  const { raw: request } = getRequest();
-  return request.headersDistinct as Record<HttpHeaderIncoming, string[]>;
-}
-
-/**
- * Retrieves and validates header from the current request context. It optionally casts the values to a specified type and enforces that the header is required.
- */
-export const getHeader = createAttribute<string[], string, false, HttpHeaderIncoming>(
-  getHeadersDistinct,
-  throwAttributeError.bind(this, "Header "),
-  false,
-  String
-);
-
-export const getField = createAttribute(getBody, throwAttributeError.bind(this, "Field "), false);
-
-/**
- * Retrieves and validates search params from the current request context. It optionally casts the values to a specified type and enforces that the search param is required.
- */
-export const getSearchParam = createAttribute(
-  getQueries as () => Record<string, string | string[]>,
-  throwAttributeError.bind(this, "Param "),
-  false,
-  toLastValue
-);
-
-/**
- * @deprecated please use getSearchParam instead
- */
-export const getQuery = getSearchParam;
-
-/**
- * Get matched route
- */
-export function getRoute() {
-  const { routeOptions } = getRequest();
-  return routeOptions;
-}

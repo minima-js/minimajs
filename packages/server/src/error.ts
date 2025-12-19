@@ -122,7 +122,13 @@ export async function errorHandler(error: unknown, req: Request, reply: Response
   } catch (err) {
     error = err;
   }
-  const handler = BaseHttpError.is(error) ? error : (req.server.log.error(error), HttpError.create(error));
+  let handler: BaseHttpError;
+  if (BaseHttpError.is(error)) {
+    handler = error;
+  } else {
+    req.server.log.error(error);
+    handler = HttpError.create(error);
+  }
   await handler.render(req, reply);
   reply.hijack(); // block further response
 }

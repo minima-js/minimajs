@@ -26,3 +26,5 @@ export function toLastValue<T>(value: T | T[]): T {
   if (Array.isArray(value)) return value[value.length - 1]!;
   return value;
 }
+
+export const toFirstValue = <T>(v: T | T[]): T => (Array.isArray(v) ? v[0]! : v);

@@ -10,20 +10,20 @@ export interface PluginOption {
   override?: boolean;
 }
 
-const pluginOptionMappings: Record<string, symbol> = {
+const pluginOptionMappings: { [K in keyof PluginOption]-?: symbol } = {
   name: Symbol.for("fastify.display-name"),
   override: Symbol.for("skip-override"),
 };
 
-export function setPluginOption(cb: any, options: PluginOption) {
+export function setPluginOption(cb: PluginCallbackSync<any>, options: PluginOption) {
   for (const [name, value] of Object.entries(options)) {
-    const option = pluginOptionMappings[name]!;
-    cb[option] = value;
+    const option = pluginOptionMappings[name as keyof PluginOption];
+    (cb as any)[option] = value;
   }
   return cb;
 }
 
-type BaseApp = Record<string | number | symbol, any>;
+type BaseApp = Record<string | number | symbol, unknown>;
 type AppOptions<T extends BaseApp> = T & {
   prefix?: string;
 };
