@@ -3,6 +3,11 @@ import { createDecoratorPlugin, getDecorator } from "./helpers.js";
 
 export type ResponseDecorator = (body: unknown) => Promise<unknown> | unknown;
 
+/**
+ * Creates a response decorator handler system for transforming response bodies.
+ * Returns a tuple of [createDecorator, getDecorated] functions for registering and executing response decorators.
+ * Response decorators are executed in sequence and can transform responses before sending.
+ */
 export function createResponseDecoratorHandler() {
   const symbol = Symbol("response-decorator");
   async function getDecorated(app: App, req: Request, body: unknown) {
@@ -25,9 +30,18 @@ export function createResponseDecoratorHandler() {
 
 const SkipResponseDecorator = Symbol("response-no-decorate");
 
+/**
+ * Checks if response decorator has been skipped for a given response.
+ * Used internally to prevent double-decoration of error responses.
+ */
 export function isResponseDecoratorSkipped(response: Response): boolean {
   return (response as any)[SkipResponseDecorator];
 }
+
+/**
+ * Marks a response to skip decorator processing.
+ * Used to prevent response decorators from running on error responses.
+ */
 export function skipResponseDecorator(response: Response) {
   (response as any)[SkipResponseDecorator] = true;
 }

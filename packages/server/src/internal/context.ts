@@ -39,7 +39,7 @@ export function safe<T, U extends unknown[]>(cb: (...args: U) => T) {
 }
 
 export function hooks() {
-  return getContext().hooks;
+  return context().hooks;
 }
 
 export const getHooks = hooks;

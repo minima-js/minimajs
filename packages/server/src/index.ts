@@ -16,6 +16,10 @@ export * from "./middleware.js";
 export { createContext } from "./context.js";
 export { logger } from "./logger.js";
 
+/**
+ * Merges user-provided app options with default configuration values.
+ * Handles logger configuration override and merging with default logger options.
+ */
 function getDefaultConfig({ logger: loggerOverride, ...override }: AppOptions): AppOptions {
   let logger = loggerOptions as FastifyBaseLogger;
   if (loggerOverride && loggerOverride !== true) {

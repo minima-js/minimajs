@@ -3,6 +3,11 @@ import { createDecoratorPlugin, getDecorator } from "./helpers.js";
 
 export type ErrorDecorator = (error: unknown, body: unknown) => Promise<unknown> | unknown;
 
+/**
+ * Creates an error decorator handler system for transforming error responses.
+ * Returns a tuple of [createDecorator, getDecorated] functions for registering and executing error decorators.
+ * Error decorators are executed in sequence and can transform errors into custom response formats.
+ */
 export function createErrorDecoratorHandler() {
   const symbol = Symbol("error-decorator");
   async function getDecorated(app: App, req: Request, error: unknown) {

@@ -58,6 +58,10 @@ export function interceptor<T extends PluginOptions = {}>(
 
 export type InterceptorFilter = (req: Request) => boolean | Promise<boolean>;
 
+/**
+ * Creates a filtered interceptor that only executes when the filter function returns true.
+ * Wraps an interceptor with conditional execution based on request properties.
+ */
 export function filter(handler: Interceptor, handlerFilter: InterceptorFilter) {
   const pluginHandler: preHandlerAsyncHookHandler = async (req, res) => {
     if (!(await handlerFilter(req))) {
@@ -72,6 +76,10 @@ function isAsyncHandler(handler: Interceptor): handler is preHandlerAsyncHookHan
   return isAsyncFunction(handler);
 }
 
+/**
+ * Invokes an interceptor handler, normalizing both sync and async handlers.
+ * Handles both callback-based and promise-based interceptors uniformly.
+ */
 export function invokeHandler(handler: Interceptor, app: App, req: Request, res: Response) {
   if (isAsyncHandler(handler)) {
     return handler.call(app, req, res);

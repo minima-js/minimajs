@@ -6,6 +6,10 @@ interface RegisterMiddleware {
   filter?(req: Request): boolean | Promise<boolean>;
 }
 
+/**
+ * Creates a plugin that registers one or more interceptors as global middleware.
+ * Interceptors are executed before route handlers as preHandler hooks.
+ */
 export function middleware(...interceptors: Interceptor[]): Plugin<RegisterMiddleware> {
   return createPlugin<RegisterMiddleware>(async function middleware(app, { filter }) {
     for (const interceptor of interceptors) {

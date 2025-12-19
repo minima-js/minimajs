@@ -2,6 +2,11 @@ import type { FastifyBaseLogger } from "fastify";
 import type { Signals } from "./types.js";
 
 export type QuitHandler = () => Promise<void>;
+
+/**
+ * Registers shutdown signal handlers for graceful server termination.
+ * Listens for specified kill signals and executes cleanup before process exit.
+ */
 export function shutdownListener(
   quitHandler: QuitHandler,
   killSignal: Signals[],
