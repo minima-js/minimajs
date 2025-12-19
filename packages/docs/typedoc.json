@@ -1,0 +1,23 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": [
+    "../server/src/index.ts",
+    "../auth/src/index.ts",
+    "../schema/src/index.ts",
+    "../multipart/src/index.ts",
+    "../cookie/src/index.ts"
+  ],
+  "entryPointStrategy": "expand",
+  "tsconfig": "../server/tsconfig.json",
+  "out": "docs/api",
+  "plugin": ["typedoc-plugin-markdown"],
+  "excludePrivate": true,
+  "excludeProtected": false,
+  "excludeInternal": true,
+  "readme": "none",
+  "categorizeByGroup": true,
+  "sort": ["source-order"],
+  "hideGenerator": true,
+  "githubPages": false,
+  "cleanOutputDir": true
+}

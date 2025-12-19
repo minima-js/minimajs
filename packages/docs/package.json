@@ -1,6 +1,7 @@
 {
   "name": "@minimajs/docs",
   "version": "0.0.1",
+  "type": "module",
   "private": true,
   "homepage": "https://minima-js.github.io",
   "repository": {
@@ -8,24 +9,17 @@
     "url": "git@github.com:minima-js/minima-js.github.io"
   },
   "scripts": {
-    "start": "docusaurus start",
-    "build:docs": "docusaurus build",
-    "deploy": "gh-pages --dist build --repo=git@github.com:minima-js/minima-js.github.io"
-  },
-  "dependencies": {
-    "@docusaurus/core": "^3.9.2",
-    "@docusaurus/preset-classic": "^3.9.2",
-    "@docusaurus/remark-plugin-npm2yarn": "^3.9.2",
-    "@mdx-js/react": "^3.1.1",
-    "clsx": "^2.1.1",
-    "docusaurus": "^1.14.7",
-    "prism-react-renderer": "^2.4.1",
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3"
+    "dev": "vitepress dev",
+    "build:docs": "yarn generate:api && vitepress build",
+    "generate:api": "typedoc",
+    "preview": "vitepress preview",
+    "deploy": "gh-pages --dist .vitepress/dist --repo=git@github.com:minima-js/minima-js.github.io"
   },
   "devDependencies": {
-    "@docusaurus/types": "^3.9.2",
-    "@types/react": "^19.2.7",
-    "gh-pages": "^6.3.0"
+    "gh-pages": "^6.3.0",
+    "typedoc": "^0.28.15",
+    "typedoc-plugin-markdown": "^4.9.0",
+    "typescript": "^5.9.3",
+    "vitepress": "^1.6.4"
   }
 }

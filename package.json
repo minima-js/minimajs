@@ -17,7 +17,7 @@
     "test": "turbo run test",
     "coverage": "turbo run coverage",
     "clean": "turbo run clean",
-    "docs": "yarn --cwd=packages/docs start",
+    "docs": "yarn --cwd=packages/docs dev",
     "docs:deploy": "yarn --cwd=packages/docs deploy",
     "release": "yarn build && changeset publish"
   },
