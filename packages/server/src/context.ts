@@ -16,7 +16,7 @@ export { getContext, getContextOrNull };
  * if the user cancels the request, requesting to github users will be cancelled as well.
  * @since v0.1.0
  */
-export function getSignal() {
+export function getSignal(): AbortSignal {
   return getContext().abortController.signal;
 }
 

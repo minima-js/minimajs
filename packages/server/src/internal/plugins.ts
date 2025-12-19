@@ -23,14 +23,13 @@ export function setPluginOption(cb: PluginCallbackSync<any>, options: PluginOpti
   return cb;
 }
 
-type BaseApp = Record<string | number | symbol, unknown>;
-type AppOptions<T extends BaseApp> = T & {
+type AppOptions<T> = T & {
   prefix?: string;
 };
-type PluginCallbackSync<T extends BaseApp> = FastifyPluginCallback<AppOptions<T>, Server>;
-type PluginCallback<T extends BaseApp> = FastifyPluginAsync<AppOptions<T>, Server>;
+type PluginCallbackSync<T> = FastifyPluginCallback<AppOptions<T>, Server>;
+type PluginCallback<T> = FastifyPluginAsync<AppOptions<T>, Server>;
 
-export function createPluginSync<T extends BaseApp>(fn: PluginCallbackSync<T>, name?: string) {
+export function createPluginSync<T>(fn: PluginCallbackSync<T>, name?: string) {
   setPluginOption(fn, { override: true });
   if (name) {
     setPluginOption(fn, { name });
@@ -38,7 +37,7 @@ export function createPluginSync<T extends BaseApp>(fn: PluginCallbackSync<T>, n
   return fn;
 }
 
-export function createPlugin<T extends BaseApp>(fn: PluginCallback<T>, name?: string) {
+export function createPlugin<T>(fn: PluginCallback<T>, name?: string) {
   setPluginOption(fn, { override: true });
   if (name) {
     setPluginOption(fn, { name });

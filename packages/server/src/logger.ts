@@ -26,8 +26,8 @@ export function mixin(data: Dict<unknown>) {
 
 function getPluginNames(server: App): string {
   const plugins = server[kPluginNameChain];
-  if (!plugins || plugins.length === 0) return "";
-  return plugins[0];
+  if (!plugins) return "";
+  return plugins[0] ?? "";
 }
 function getHandler(req: Request) {
   return (req as any)[kRequestContext]?.handler.name.replace("bound ", "");

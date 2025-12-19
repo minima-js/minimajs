@@ -1,4 +1,5 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} **/
+
 export const jestConfig = {
   testEnvironment: "node",
   rootDir: "src",

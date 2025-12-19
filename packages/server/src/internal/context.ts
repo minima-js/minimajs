@@ -38,16 +38,22 @@ export function safe<T, U extends unknown[]>(cb: (...args: U) => T) {
   return (...args: U) => contextStorage.run(null as any, cb, ...args) as T;
 }
 
-export function getHooks() {
+export function hooks() {
   return getContext().hooks;
 }
 
-export function getContext() {
+export const getHooks = hooks;
+
+export function context() {
   const context = contextStorage.getStore();
   assert(context, "Unable to access the context beyond the request scope.");
   return context;
 }
 
-export function getContextOrNull() {
+export const getContext = context;
+
+export function maybeContext() {
   return contextStorage.getStore() || null;
 }
+
+export const getContextOrNull = maybeContext;
