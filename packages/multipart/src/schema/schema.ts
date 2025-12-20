@@ -5,6 +5,20 @@ import { validateFileType } from "./validator.js";
 
 export type Test = Schema["tests"][0];
 
+/**
+ * Yup schema for validating uploaded files.
+ * Provides validation methods for file size and MIME type.
+ *
+ * @example
+ * ```ts
+ * import { file } from '@minimajs/multipart/schema';
+ *
+ * const schema = file()
+ *   .required()
+ *   .max(5 * 1024 * 1024) // 5MB
+ *   .accept(['image/png', 'image/jpeg']);
+ * ```
+ */
 export class FileSchema<
   TType extends Maybe<UploadedFile> = UploadedFile | undefined,
   TContext = AnyObject,
@@ -20,6 +34,14 @@ export class FileSchema<
     });
   }
 
+  /**
+   * Validates that the file size is at least the specified minimum in bytes.
+   *
+   * @example
+   * ```ts
+   * file().min(1024) // At least 1KB
+   * ```
+   */
   min(size: number, message?: Message<{ min: number }>) {
     const defaultMessage: Message<{ min: number }> = (params) => {
       return `The file ${params.path} is too small. Minimum size: ${humanFileSize(
@@ -38,6 +60,14 @@ export class FileSchema<
     });
   }
 
+  /**
+   * Validates that the file size does not exceed the specified maximum in bytes.
+   *
+   * @example
+   * ```ts
+   * file().max(5 * 1024 * 1024) // Max 5MB
+   * ```
+   */
   max(size: number, message?: Message<{ max: number }>) {
     const defaultMessage: Message<{ min: number }> = (params) => {
       return `The file ${params.path} is too large. Maximum size: ${humanFileSize(
@@ -55,6 +85,15 @@ export class FileSchema<
     });
   }
 
+  /**
+   * Validates that the file MIME type matches one of the allowed types.
+   *
+   * @example
+   * ```ts
+   * file().accept(['image/png', 'image/jpeg'])
+   * file().accept(['application/pdf'])
+   * ```
+   */
   accept(type: string[], message?: Message<{ mimeType: string[] }>) {
     const defaultMessage: Message<{ mimeType: string[] }> = (params) => {
       return `Invalid file type: ${params.value.filename}. Allowed types are: ${params.mimeType.join(", ")}.`;
@@ -71,6 +110,14 @@ export class FileSchema<
     });
   }
 
+  /**
+   * Marks the file field as required.
+   *
+   * @example
+   * ```ts
+   * file().required('Avatar is required')
+   * ```
+   */
   required(message?: Message<any>) {
     return super.required(message).withMutation((schema: this) => {
       return schema.test({
@@ -92,6 +139,25 @@ export interface FileSchema<
   required(msg?: Message): FileSchema<NonNullable<TType>, TContext, TDefault, TFlags>;
 }
 
+/**
+ * Creates a new FileSchema instance for validating uploaded files.
+ *
+ * @example
+ * ```ts
+ * import { file, createMultipartUpload } from '@minimajs/multipart/schema';
+ * import { string } from 'yup';
+ *
+ * const upload = createMultipartUpload({
+ *   name: string().required(),
+ *   avatar: file()
+ *     .required()
+ *     .max(5 * 1024 * 1024)
+ *     .accept(['image/png', 'image/jpeg'])
+ * });
+ *
+ * const data = await upload();
+ * ```
+ */
 function file(): FileSchema;
 function file<T extends UploadedFile, TContext extends Maybe<AnyObject> = AnyObject>(): FileSchema<
   T | undefined,

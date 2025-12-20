@@ -24,6 +24,24 @@ function busboy(req: Request, opt: Config) {
   return bb;
 }
 
+/**
+ * Retrieves a single file from a multipart form request.
+ * If a field name is provided, only files from that field are accepted.
+ *
+ * @param name - Optional field name to match. If provided, only files from this field are returned.
+ *                If omitted, the first file from any field is returned.
+ * @returns A promise that resolves to the uploaded File
+ * @throws {UploadError} If no file is found or the file doesn't match the specified field name
+ * @example
+ * ```ts
+ * // Get any file
+ * const file = await getFile();
+ *
+ * // Get file from specific field
+ * const avatar = await getFile('avatar');
+ * await avatar.move('/uploads');
+ * ```
+ */
 export async function getFile(name?: string) {
   const limits: BusboyConfig["limits"] = { fields: 0 };
   if (!name) {
@@ -44,6 +62,19 @@ export async function getFile(name?: string) {
   });
 }
 
+/**
+ * Retrieves all files from a multipart form request as an async iterable.
+ * Field data is ignored - only files are processed.
+ *
+ * @returns An async iterable that yields File instances
+ * @example
+ * ```ts
+ * for await (const file of getFiles()) {
+ *   console.log(file.filename);
+ *   await file.move('/uploads');
+ * }
+ * ```
+ */
 export function getFiles() {
   const req = getRequest();
   const [stream, iterator] = createIteratorAsync<File>();
@@ -57,6 +88,18 @@ export function getFiles() {
   return iterator();
 }
 
+/**
+ * Retrieves all text fields from a multipart form request.
+ * Files are ignored - only text field data is processed.
+ *
+ * @template T - The expected shape of the fields object
+ * @returns A promise that resolves to an object containing field names and their values
+ * @example
+ * ```ts
+ * const fields = await getFields<{ name: string; email: string }>();
+ * console.log(fields.name, fields.email);
+ * ```
+ */
 export function getFields<T extends Record<string, string>>() {
   const req = getRequest();
   const values: any = {};
@@ -72,6 +115,23 @@ export function getFields<T extends Record<string, string>>() {
   });
 }
 
+/**
+ * Retrieves both text fields and files from a multipart form request as an async iterable.
+ * Each iteration yields a tuple of [fieldName, value] where value can be a string or File.
+ *
+ * @returns An async iterable that yields tuples of field name and value (string or File)
+ * @example
+ * ```ts
+ * for await (const [name, value] of getBody()) {
+ *   if (isFile(value)) {
+ *     console.log(`File: ${name} = ${value.filename}`);
+ *     await value.move('/uploads');
+ *   } else {
+ *     console.log(`Field: ${name} = ${value}`);
+ *   }
+ * }
+ * ```
+ */
 export function getBody() {
   const req = getRequest();
   const [stream, iterator] = createIteratorAsync<[string, string | File]>();
