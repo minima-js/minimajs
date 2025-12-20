@@ -1,11 +1,9 @@
 import { jestConfig } from "../config/jest.config.mjs";
 
+/** @type {import('jest').Config} */
 export default {
   ...jestConfig,
-  testPathIgnorePatterns: [
-    "/node_modules/",
-    "/__tests__/helpers/",
-  ],
+  coverageReporters: ["html"],
   testTimeout: 10000,
   forceExit: true,
 };

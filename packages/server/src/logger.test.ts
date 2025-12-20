@@ -55,15 +55,28 @@ describe("Logger", () => {
       await app.inject({ url: "/props" });
     });
 
-    it("should handle routes without plugin chain", async () => {
-      (app as any)[Symbol.for("fastify.plugin.nameChain")] = null;
-      app.get("/no-plugin", function noPluginRoute() {
+    it("should handle routes without plugin chain (null/undefined)", async () => {
+      const currentApp = createApp({ logger: false, routes: { log: false } });
+      (currentApp as any)[Symbol.for("fastify.plugin.nameChain")] = null;
+      currentApp.get("/no-plugin-null", function noPluginRouteNull() {
         const result = mixin({});
-        // Should still work even if plugin chain is empty
-        expect(result).toHaveProperty("name");
+        expect(result.name).toBe("");
         return "done";
       });
-      await app.inject({ url: "/no-plugin" });
+      await currentApp.inject({ url: "/no-plugin-null" });
+      await currentApp.close();
+    });
+
+    it("should handle routes without plugin chain (empty array)", async () => {
+      const currentApp = createApp({ logger: false, routes: { log: false } });
+      (currentApp as any)[Symbol.for("fastify.plugin.nameChain")] = [];
+      currentApp.get("/no-plugin-empty", function noPluginRouteEmpty() {
+        const result = mixin({});
+        expect(result.name).toBe("");
+        return "done";
+      });
+      await currentApp.inject({ url: "/no-plugin-empty" });
+      await currentApp.close();
     });
 
     it("should handle routes without handler name", async () => {
