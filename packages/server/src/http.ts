@@ -594,12 +594,12 @@ export namespace abort {
    * try {
    *   // some code
    * } catch (err) {
-   *   abort.assertNot(err);
+   *   abort.rethrow(err);
    *   // handle non-abort errors
    * }
    * ```
    */
-  export function assertNot(error: unknown): asserts error is Error {
+  export function rethrow(error: unknown): asserts error is Error {
     if (BaseHttpError.is(error)) {
       throw error;
     }
@@ -611,6 +611,12 @@ export namespace abort {
     }
     throw error;
   }
+
+  /**
+   * @alias of {@link rethrow}
+   * @internal
+   */
+  export const assertNot = rethrow;
 
   /**
    * Ensures an error is an aborted error.
