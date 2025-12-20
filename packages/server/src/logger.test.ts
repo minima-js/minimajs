@@ -1,28 +1,31 @@
-import { createApp } from "./index.js";
+import { createApp, type App } from "./index.js";
 import { mixin, createLogger } from "./logger.js";
 
 describe("Logger", () => {
+  let app: App;
+  beforeEach(() => {
+    app = createApp({ logger: false, routes: { log: false } });
+  });
+
+  afterEach(() => app.close());
+
   describe("mixin function", () => {
     it("should return data with module name if present", async () => {
-      const app = createApp({ routes: { log: false } });
       app.get("/", function homePage() {
         const result = mixin({});
         expect(result).toEqual({ name: "fastify:homePage" });
         return "done";
       });
       await app.inject({ url: "/" });
-      await app.close();
     });
 
     it("should not override existing name property", async () => {
-      const app = createApp({ routes: { log: false } });
       app.get("/test", function testRoute() {
         const result = mixin({ name: "custom-name" });
         expect(result).toEqual({ name: "custom-name" });
         return "done";
       });
       await app.inject({ url: "/test" });
-      await app.close();
     });
 
     it("should return data as-is when no context available", () => {
@@ -32,18 +35,15 @@ describe("Logger", () => {
     });
 
     it("should handle empty data object", async () => {
-      const app = createApp({ routes: { log: false } });
       app.get("/empty", function emptyRoute() {
         const result = mixin({});
         expect(result).toHaveProperty("name");
         return "done";
       });
       await app.inject({ url: "/empty" });
-      await app.close();
     });
 
     it("should preserve other properties in data", async () => {
-      const app = createApp({ routes: { log: false } });
       app.get("/props", function propsRoute() {
         const result = mixin({ level: 30, msg: "test message", timestamp: Date.now() });
         expect(result).toHaveProperty("name");
@@ -53,11 +53,10 @@ describe("Logger", () => {
         return "done";
       });
       await app.inject({ url: "/props" });
-      await app.close();
     });
 
     it("should handle routes without plugin chain", async () => {
-      const app = createApp({ routes: { log: false } });
+      (app as any)[Symbol.for("fastify.plugin.nameChain")] = null;
       app.get("/no-plugin", function noPluginRoute() {
         const result = mixin({});
         // Should still work even if plugin chain is empty
@@ -65,11 +64,18 @@ describe("Logger", () => {
         return "done";
       });
       await app.inject({ url: "/no-plugin" });
-      await app.close();
+    });
+
+    it("should handle routes without handler name", async () => {
+      app.get("/no-handler", () => {
+        const result = mixin({});
+        expect(result).toHaveProperty("name");
+        return "done";
+      });
+      await app.inject({ url: "/no-handler" });
     });
 
     it("should handle nested route handlers", async () => {
-      const app = createApp({ routes: { log: false } });
       app.register(async (instance) => {
         instance.get("/nested", function nestedRoute() {
           const result = mixin({});
@@ -78,11 +84,9 @@ describe("Logger", () => {
         });
       });
       await app.inject({ url: "/nested" });
-      await app.close();
     });
 
     it("should cache module name in local context", async () => {
-      const app = createApp({ routes: { log: false } });
       app.get("/cached", function cachedRoute() {
         // First call should set the cache
         const result1 = mixin({});
@@ -92,7 +96,6 @@ describe("Logger", () => {
         return "done";
       });
       await app.inject({ url: "/cached" });
-      await app.close();
     });
   });
 

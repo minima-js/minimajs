@@ -2,6 +2,7 @@ import type { ApplicationHook, LifecycleHook } from "fastify/types/hooks.js";
 import { hooks, type ErrorHookCallback, type HookCallback } from "../internal/context.js";
 import { createPluginSync } from "../internal/plugins.js";
 import type { FastifyPluginCallback } from "fastify";
+export type { HookCallback };
 
 /**
  * Registers a callback to execute after the response has been sent.

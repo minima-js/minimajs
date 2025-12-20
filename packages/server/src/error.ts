@@ -124,6 +124,11 @@ const [createErrorDecorator, getDecoratedError] = createErrorDecoratorHandler();
  * Handles request aborted errors silently and converts unknown errors to HTTP errors.
  */
 export async function errorHandler(error: unknown, req: Request, reply: Response) {
+  if (error instanceof RedirectError) {
+    error.render(req, reply);
+    reply.hijack(); // block further response
+    return;
+  }
   if (isRequestAbortedError(error)) {
     return;
   }

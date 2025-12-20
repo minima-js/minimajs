@@ -41,7 +41,7 @@ describe("Http", () => {
     });
   });
 
-  describe("requestURL / getRequestURL", () => {
+  describe("request.url", () => {
     test("should retrieve request URL", () => {
       mockContext((req) => {
         const url1 = request.url();
