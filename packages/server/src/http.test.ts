@@ -1,4 +1,4 @@
-import { HttpError, NotFoundError, RedirectError, ValidationError } from "./error.js";
+import { HttpError, NotFoundError, RedirectError } from "./error.js";
 import {
   abort,
   body,
@@ -26,7 +26,6 @@ import {
   setStatusCode,
   status,
 } from "./http.js";
-import { setTimeout as sleep } from "node:timers/promises";
 import { mockContext } from "./mock/context.js";
 import { mockApp, mockRoute } from "./mock/index.js";
 
@@ -139,6 +138,19 @@ describe("Http", () => {
       );
     });
 
+    test("headers.get with transform should transform value", () => {
+      mockContext(
+        () => {
+          const token = headers.get("authorization", (val) => val.split(" ")[1]);
+          expect(token).toBe("token123");
+
+          const length = headers.get("x-custom", (val) => val.length);
+          expect(length).toBe(5);
+        },
+        { headers: { authorization: "Bearer token123", "x-custom": "value" } }
+      );
+    });
+
     test("headers.getAll should retrieve all header values", () => {
       mockContext(
         (_req) => {
@@ -147,6 +159,27 @@ describe("Http", () => {
           expect(Array.isArray(cookies)).toBe(true);
         },
         { headers: { cookie: "session=123" } }
+      );
+    });
+
+    test("headers.getAll should return empty array for missing header", () => {
+      mockContext(() => {
+        const result = headers.getAll("x-missing");
+        expect(result).toEqual([]);
+        expect(Array.isArray(result)).toBe(true);
+      });
+    });
+
+    test("headers.getAll with transform should transform each value", () => {
+      mockContext(
+        (_req) => {
+          const parsed = headers.getAll("set-cookie", (val) => val.split("="));
+          expect(parsed).toEqual([["session", "123"], ["token", "abc"]]);
+
+          const lengths = headers.getAll("set-cookie", (val) => val.length);
+          expect(lengths).toEqual([11, 9]);
+        },
+        { headers: { "set-cookie": ["session=123", "token=abc"] } }
       );
     });
 
@@ -185,12 +218,56 @@ describe("Http", () => {
       );
     });
 
+    test("searchParams.get with transform should transform value", () => {
+      mockContext(
+        () => {
+          const pageNum = searchParams.get("page", (val) => parseInt(val));
+          expect(pageNum).toBe(2);
+
+          const nameUpper = searchParams.get("name", (val) => val.toUpperCase());
+          expect(nameUpper).toBe("JOHN DOE");
+        },
+        { url: "/?name=John Doe&page=2" }
+      );
+    });
+
     test("should handle array values", () => {
       mockContext(
         () => {
           expect(searchParams.get("page")).toBe("1"); // gets first value
         },
         { url: "/?page=1&page=2" }
+      );
+    });
+
+    test("searchParams.getAll should retrieve all param values", () => {
+      mockContext(
+        () => {
+          const tags = searchParams.getAll("tag");
+          expect(tags).toEqual(["javascript", "typescript", "node"]);
+        },
+        { url: "/?tag=javascript&tag=typescript&tag=node" }
+      );
+    });
+
+    test("searchParams.getAll should return empty array for missing param", () => {
+      mockContext(() => {
+        const result = searchParams.getAll("missing");
+        expect(result).toEqual([]);
+        expect(Array.isArray(result)).toBe(true);
+      });
+    });
+
+    test("searchParams.getAll with transform should transform each value", () => {
+      mockContext(
+        () => {
+          const ids = searchParams.getAll("id", (val) => parseInt(val));
+          expect(ids).toEqual([1, 2, 3]);
+
+          const uppercased = searchParams.getAll("tag", (val) => val.toUpperCase());
+          expect(uppercased).toEqual(["JS", "TS"]);
+        },
+        { url: "/?id=1&id=2&id=3&tag=js&tag=ts" }
       );
     });
   });
@@ -208,59 +285,13 @@ describe("Http", () => {
     });
   });
 
-  describe("getSearchParam (deprecated)", () => {
-    test("with value as string", () => {
+  describe("getSearchParam / getQuery (deprecated aliases)", () => {
+    test("should be aliases of searchParams.get", () => {
       mockContext(
         () => {
-          expect<string | undefined>(getSearchParam("name")).toBe("John Doe");
-          // @ts-expect-error
-          expect(getSearchParam("name").length).toBe(8);
-          expect<string | undefined>(getSearchParam("page")).toBe("2");
-          expect<number | undefined>(getSearchParam("page", Number)).toBe(2);
-          expect<number>(getSearchParam("page", Number)).toBe(2);
-          expect<{ name: string | string[] } | undefined>(getSearchParam("name", getSearch)).toStrictEqual(
-            getSearch("John Doe")
-          );
-        },
-        { url: "/?name=John Doe&page=2" }
-      );
-    });
-
-    test("with array as value", () => {
-      mockContext(
-        () => {
-          expect<string | undefined>(getSearchParam("page")).toBe("1"); // gets first value
-        },
-        { url: "?page=1&page=2" }
-      );
-    });
-
-    test("should throw ValidationError on transform error", () => {
-      mockContext(
-        () => {
-          expect(() =>
-            getSearchParam("page", (_val) => {
-              throw new Error("invalid value");
-            })
-          ).toThrow(ValidationError);
-        },
-        { url: "/?page=1" }
-      );
-    });
-
-    test("should return undefined for missing param", () => {
-      mockContext(() => {
-        expect(getSearchParam("missing")).toBeUndefined();
-      });
-    });
-  });
-
-  describe("getQuery (deprecated)", () => {
-    test("should be alias of getSearchParam", () => {
-      mockContext(
-        () => {
-          expect(getQuery("name")).toBe("John");
+          expect(getSearchParam).toBe(searchParams.get);
           expect(getQuery).toBe(getSearchParam);
+          expect(getSearchParam("name")).toBe("John");
         },
         { url: "/?name=John" }
       );
@@ -287,84 +318,97 @@ describe("Http", () => {
         () => {
           expect(params.get("id")).toBe("123");
           expect(params.get("name")).toBe("john");
-          expect(params.get("unknown")).toBeUndefined();
         },
         { params: { id: "123", name: "john" } }
       );
     });
-  });
 
-  describe("getParam (deprecated)", () => {
-    test("with value as string", () => {
+    test("params.get should throw NotFoundError for missing param", () => {
       mockContext(
         () => {
-          expect<string | undefined>(getParam("user")).toBe("hello");
-          expect<string | undefined>(getParam("unknown")).toBeUndefined();
+          expect(() => params.get("unknown")).toThrow(NotFoundError);
+        },
+        { params: { id: "123" } }
+      );
+    });
+
+    test("params.get with transform should transform value", () => {
+      mockContext(
+        () => {
+          const idNum = params.get("id", (val) => parseInt(val));
+          expect(idNum).toBe(123);
+
+          const nameUpper = params.get("name", (val) => val.toUpperCase());
+          expect(nameUpper).toBe("JOHN");
+        },
+        { params: { id: "123", name: "john" } }
+      );
+    });
+
+    test("params.get with transform should throw NotFoundError on NaN", () => {
+      mockContext(
+        () => {
+          expect(() => params.get("name", (val) => parseInt(val))).toThrow(NotFoundError);
+        },
+        { params: { name: "john" } }
+      );
+    });
+
+    test("params.optional should retrieve single param", () => {
+      mockContext(
+        () => {
+          expect(params.optional("id")).toBe("123");
+          expect(params.optional("name")).toBe("john");
+          expect(params.optional("unknown")).toBeUndefined();
+        },
+        { params: { id: "123", name: "john" } }
+      );
+    });
+
+    test("params.optional with transform should transform value", () => {
+      mockContext(
+        () => {
+          const idNum = params.optional("id", (val) => parseInt(val));
+          expect(idNum).toBe(123);
+
+          const missing = params.optional("unknown", (val) => parseInt(val));
+          expect(missing).toBeUndefined();
+        },
+        { params: { id: "123" } }
+      );
+    });
+
+    test("params.optional with transform should throw NotFoundError on NaN", () => {
+      mockContext(
+        () => {
+          expect(() => params.optional("name", (val) => parseInt(val))).toThrow(NotFoundError);
+        },
+        { params: { name: "john" } }
+      );
+    });
+  });
+
+  describe("getParam (deprecated alias)", () => {
+    test("should be alias of params.get", () => {
+      mockContext(
+        () => {
+          expect(getParam).toBe(params.get);
+          expect(getParam("user")).toBe("hello");
         },
         { params: { user: "hello" } }
       );
     });
-
-    test("with value as number", () => {
-      return mockContext(
-        async () => {
-          expect<string | undefined>(getParam("user")).toBe("1234");
-          expect<number | undefined>(getParam("user", Number)).toBe(1234);
-          expect<{ id: string }>(await getParam("user", getUser)).toStrictEqual(await getUser("1234"));
-        },
-        { params: { user: "1234" } }
-      );
-    });
-
-    test("should throw NotFoundError on transform error", () => {
-      mockContext(
-        () => {
-          expect(() =>
-            getParam("user", (val) => {
-              const num = parseInt(val);
-              if (isNaN(num)) throw new Error("must be a number");
-              return num;
-            })
-          ).toThrow(NotFoundError);
-        },
-        { params: { user: "hello" } }
-      );
-    });
   });
 
-  describe("getHeader (deprecated)", () => {
-    test("with default header", () => {
-      return mockContext(
-        async () => {
-          expect<string | undefined>(getHeader("x-user")).toBe("1234");
-          // @ts-expect-error
-          expect(getHeader("x-user").length).toBe(4);
-          expect<number | undefined>(getHeader("x-user", Number)).toBe(1234);
-          expect<number[] | undefined>(getHeader("x-user", (x) => x.map(Number))).toStrictEqual([1234]);
-          expect<string | undefined>(getHeader("x-user")).toBe("1234");
-          expect<{ user: string }>(getHeader("x-user", getHeaderResult)).toStrictEqual(getHeaderResult(["1234"]));
-        },
-        { headers: { "x-user": "1234" } }
-      );
-    });
-
-    test("should throw ValidationError on transform error", () => {
+  describe("getHeader (deprecated alias)", () => {
+    test("should be alias of headers.get", () => {
       mockContext(
         () => {
-          expect(() =>
-            getHeader("x-user", (_val) => {
-              throw new Error("invalid header");
-            })
-          ).toThrow(ValidationError);
+          expect(getHeader).toBe(headers.get);
+          expect(getHeader("x-user")).toBe("1234");
         },
         { headers: { "x-user": "1234" } }
       );
-    });
-
-    test("should return undefined for missing header", () => {
-      mockContext(() => {
-        expect(getHeader("x-missing")).toBeUndefined();
-      });
     });
   });
 
@@ -506,16 +550,3 @@ describe("Http", () => {
     });
   });
 });
-
-function getHeaderResult(user: string[]) {
-  return { user: String(user) };
-}
-
-function getSearch(name: string | string[]) {
-  return { name };
-}
-
-async function getUser(id: string) {
-  await sleep(1);
-  return { id: String(id) };
-}

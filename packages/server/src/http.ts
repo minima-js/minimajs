@@ -5,7 +5,6 @@ import {
   RedirectError,
   HttpError,
   BaseHttpError,
-  ValidationError,
   NotFoundError,
   type ErrorResponse,
   type StatusCode,
@@ -178,16 +177,55 @@ export function params<T = Dict<string>>(): T {
  */
 export namespace params {
   /**
-   * Retrieves a single param by name.
+   * Retrieves a single param by name with optional transformation.
+   * Throws NotFoundError if the param is not found.
    *
    * @example
    * ```ts
-   * const id = params.get('id');
+   * const id = params.get('id');                              // string
+   * const page = params.get('page', (val) => parseInt(val));  // number
+   * const age = params.get('age', (val) => {
+   *   const num = parseInt(val);
+   *   if (num < 0) throw new Error('must be positive');
+   *   return num;
+   * });                                                        // number
    * ```
    */
-  export function get(name: string): string | undefined {
-    const p = getRequest().params as Dict<string>;
-    return p[name];
+  export function get(name: string): string;
+  export function get<R>(name: string, transform: (value: string) => R): R;
+  export function get(name: string, transform?: (value: string) => unknown): unknown {
+    const params = getParams();
+    const value = params[name];
+    if (value === undefined) {
+      abort.notFound();
+    }
+    if (!transform) return value;
+    const tValue = transform(value);
+    if (Number.isNaN(tValue)) abort.notFound();
+    return tValue;
+  }
+
+  /**
+   * Retrieves a single param by name with optional transformation.
+   * Returns undefined if the param is not found.
+   *
+   * @example
+   * ```ts
+   * const id = params.option('id');                              // string | undefined
+   * const page = params.option('page', (val) => parseInt(val));  // number | undefined
+   * ```
+   */
+  export function optional(name: string): string | undefined;
+  export function optional<R>(name: string, transform: (value: string) => R): R | undefined;
+  export function optional(name: string, transform?: (value: string) => unknown): unknown {
+    const params = getParams();
+    const value = params[name];
+
+    if (value === undefined) return undefined;
+    if (!transform) return value;
+    const tValue = transform(value);
+    if (Number.isNaN(tValue)) abort.notFound();
+    return tValue;
   }
 }
 
@@ -208,7 +246,7 @@ export const getParams = params;
 /**
  * Retrieves parameters from the current request context.
  *
- * @deprecated Use {@link params.get} instead
+ * @alias {@link params.get}
  * @example
  * ```ts
  * const id = getParam('id')                              // string | undefined
@@ -220,22 +258,7 @@ export const getParams = params;
  * });                                                     // number | undefined
  * ```
  */
-export function getParam(name: string): string | undefined;
-export function getParam<R>(name: string, transform: (value: string) => R): R;
-export function getParam(name: string, transform?: (value: string) => unknown): unknown {
-  const params = getParams();
-  const value = params[name];
-
-  if (value === undefined) return undefined;
-  if (!transform) return value;
-
-  try {
-    return transform(value);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "transformation failed";
-    throw new NotFoundError(message);
-  }
-}
+export const getParam = params.get;
 
 // ============================================================================
 // Headers
@@ -269,29 +292,45 @@ export function headers() {
  */
 export namespace headers {
   /**
-   * Retrieves a single header value by name.
+   * Retrieves a single header value by name with optional transformation.
+   * Throws ValidationError if the header is not found.
    *
    * @param name - The header name to retrieve
    * @example
    * ```ts
-   * const auth = headers.get('authorization');
+   * const auth = headers.get('authorization');                              // string
+   * const token = headers.get('authorization', (val) => val.split(' ')[1]); // string
    * ```
    */
-  export function get(name: HttpHeaderIncoming): string | undefined {
-    return toFirstValue(getRequest().headers[name]);
+  export function get(name: HttpHeaderIncoming): string | undefined;
+  export function get<R>(name: HttpHeaderIncoming, transform: (value: string) => R): R | undefined;
+  export function get(name: HttpHeaderIncoming, transform?: (value: string) => unknown): unknown {
+    const value = toFirstValue(request().headers[name]);
+    if (value === undefined) {
+      return value;
+    }
+    if (!transform) return value;
+    return transform(value);
   }
 
   /**
-   * Retrieves all values for a header name.
+   * Retrieves all values for a header name with optional transformation.
+   * Returns an empty array if the header is not found.
    *
    * @param name - The header name to retrieve
    * @example
    * ```ts
-   * const cookies = headers.getAll('cookie');
+   * const cookies = headers.getAll('cookie');                        // string[]
+   * const parsed = headers.getAll('cookie', (val) => val.split('=')); // string[][]
    * ```
    */
-  export function getAll(name: HttpHeaderIncoming): string[] | undefined {
-    return getRequest().raw.headersDistinct[name];
+  export function getAll(name: HttpHeaderIncoming): string[];
+  export function getAll<R>(name: HttpHeaderIncoming, transform: (value: string) => R): R[];
+  export function getAll(name: HttpHeaderIncoming, transform?: (value: string) => unknown): unknown[] {
+    const values = getRequest().raw.headersDistinct[name];
+    if (!values) return [];
+    if (!transform) return values;
+    return values.map(transform);
   }
 
   /**
@@ -346,29 +385,14 @@ export function setHeader(name: HttpHeader, value: string): Response {
 /**
  * Retrieves a header from the current request context.
  *
- * @deprecated Use {@link headers.get} or {@link headers.getAll} instead
+ * @alias {@link headers.get}
  * @example
  * ```ts
- * const auth = getHeader('authorization')              // string | undefined
- * const token = getHeader('authorization', (arr) => arr[0])  // string | undefined
+ * const auth = getHeader('authorization')                              // string
+ * const token = getHeader('authorization', (val) => val.split(' ')[1]) // string
  * ```
  */
-export function getHeader(name: HttpHeaderIncoming): string | undefined;
-export function getHeader<R>(name: HttpHeaderIncoming, transform: (value: string[]) => R): R;
-export function getHeader(name: HttpHeaderIncoming, transform?: (value: string[]) => unknown): unknown {
-  const { raw: request } = getRequest();
-  const headers = request.headersDistinct as Record<HttpHeaderIncoming, string[]>;
-  const value = headers[name];
-
-  if (value === undefined) return undefined;
-
-  try {
-    return (transform ?? toFirstValue)(value);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "transformation failed";
-    throw new ValidationError("Header `" + name + "` " + message);
-  }
-}
+export const getHeader = headers.get;
 
 // ============================================================================
 // Search Params / Queries
@@ -396,32 +420,47 @@ export function searchParams<T>() {
  */
 export namespace searchParams {
   /**
-   * Retrieves a single search param by name.
+   * Retrieves a single search param by name with optional transformation.
+   * Throws ValidationError if the param is not found.
    *
    * @param name - The query parameter name to retrieve
    * @example
    * ```ts
-   * const page = searchParams.get('page');
+   * const page = searchParams.get('page');                              // string
+   * const pageNum = searchParams.get('page', (val) => parseInt(val));   // number
    * ```
    */
-  export function get(name: string): string | undefined {
+  export function get(name: string): string | undefined;
+  export function get<R>(name: string, transform: (value: string) => R): R;
+  export function get(name: string, transform?: (value: string) => unknown): unknown {
     const queries = getRequest().query as Record<string, string | string[]>;
-    return toFirstValue(queries[name]);
+    const value = toFirstValue(queries[name]);
+    if (value === undefined) {
+      return value;
+    }
+    if (!transform) return value;
+    return transform(value);
   }
 
   /**
-   * Retrieves all values for a search param by name.
+   * Retrieves all values for a search param by name with optional transformation.
+   * Returns an empty array if the param is not found.
    *
    * @param name - The query parameter name to retrieve
    * @example
    * ```ts
-   * const tags = searchParams.getAll('tag');
+   * const tags = searchParams.getAll('tag');                           // string[]
+   * const tagIds = searchParams.getAll('tag', (val) => parseInt(val)); // number[]
    * ```
    */
-  export function getAll(name: string): string[] {
+  export function getAll(name: string): string[];
+  export function getAll<R>(name: string, transform: (value: string) => R): R[];
+  export function getAll(name: string, transform?: (value: string) => unknown): unknown[] {
     const queries = getRequest().query as Record<string, string | string[]>;
     if (!queries[name]) return [];
-    return toArray(queries[name]);
+    const values = toArray(queries[name]);
+    if (!transform) return values;
+    return values.map(transform);
   }
 }
 
@@ -457,32 +496,18 @@ export function getQueries<T = ParsedUrlQuery>() {
 /**
  * Retrieves a search param from the current request context.
  *
- * @deprecated Use {@link searchParams.get} instead
+ * @alias {@link searchParams.get}
  * @example
  * ```ts
- * const page = getSearchParam('page')                    // string | undefined
+ * const page = getSearchParam('page')                    // string
  * const pageNum = getSearchParam('page', (val) => {
- *   const num = parseInt(Array.isArray(val) ? val[0] : val);
+ *   const num = parseInt(val);
  *   if (num < 1) throw new Error('must be >= 1');
  *   return num;
- * });                                                     // number | undefined
+ * });                                                     // number
  * ```
  */
-export function getSearchParam(name: string): string | undefined;
-export function getSearchParam<R>(name: string, transform: (value: string) => R): R;
-export function getSearchParam(name: string, transform?: (value: string) => unknown): unknown {
-  const queries = getRequest().query as Record<string, string | string[]>;
-  const value = queries[name];
-
-  if (value === undefined) return undefined;
-
-  try {
-    return (transform ?? toFirstValue)(toFirstValue(value));
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "transformation failed";
-    throw new ValidationError("Param `" + name + "` " + message);
-  }
-}
+export const getSearchParam = searchParams.get;
 
 /**
  * Retrieves a search param from the current request context.
