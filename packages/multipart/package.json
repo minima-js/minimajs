@@ -1,6 +1,7 @@
 {
   "name": "@minimajs/multipart",
   "version": "1.0.0",
+  "description": "Multipart/form-data handling with file upload support, validation, and schema integration",
   "type": "module",
   "exports": {
     ".": "./lib/index.js",

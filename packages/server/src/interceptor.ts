@@ -24,7 +24,8 @@ export interface InterceptorOption {
 }
 /**
  * Attach middleware(s) to the module.
- * @example ```ts
+ * @example
+ * ```ts
  * // hello/index.ts
  * import { interceptor, getRequest, type App } from '@minimajs/server'
  * function logRequest() {

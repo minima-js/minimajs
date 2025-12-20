@@ -13,7 +13,7 @@ import {
 import type { Dict, HttpHeader, HttpHeaderIncoming, Request, Response } from "./types.js";
 
 import { ResponseAbort } from "./internal/response.js";
-import { toFirstValue } from "./utils/iterable.js";
+import { toArray, toFirstValue } from "./utils/iterable.js";
 
 // ============================================================================
 // Request / Response
@@ -21,7 +21,8 @@ import { toFirstValue } from "./utils/iterable.js";
 
 /**
  * Retrieves the HTTP request object.
- * @example ```ts
+ * @example
+ * ```ts
  * const req = request();
  * console.log(req.url);
  * ```
@@ -35,19 +36,22 @@ export function request(): Request {
 /**
  * Retrieves the HTTP request object.
  *
- * @example ```ts
+ * @example
+ * ```ts
  * const req = getRequest();
  * console.log(req.url);
  * ```
  * @see {@link request}
  * @since v0.1.0
+ * @internal
  */
 export const getRequest = request;
 
 /**
  * Retrieves the HTTP response object.
  *
- * @example ```ts
+ * @example
+ * ```ts
  * const res = response();
  * res.status(200);
  * ```
@@ -60,13 +64,14 @@ export function response(): Response {
 /**
  * Retrieves the full request URL.
  *
- * @example ```ts
+ * @example
+ * ```ts
  * const url = requestURL();
  * console.log(url.pathname);
  * ```
  * @since v0.2.0
  */
-export const requestURL = once(function getRequestURL() {
+export const requestURL: () => URL = once(function getRequestURL() {
   const request = getRequest();
   const host = `${request.protocol}://${request.hostname}`;
   return new URL(request.originalUrl, host);
@@ -75,19 +80,22 @@ export const requestURL = once(function getRequestURL() {
 /**
  * Retrieves the full request URL.
  *
- * @example ```ts
+ * @example
+ * ```ts
  * const url = getRequestURL();
  * console.log(url.pathname);
  * ```
  * @see {@link requestURL}
  * @since v0.1.0
+ * @internal
  */
 export const getRequestURL = requestURL;
 
 /**
  * Retrieves the matched route options.
  *
- * @example ```ts
+ * @example
+ * ```ts
  * const routeOpts = route();
  * console.log(routeOpts.url);
  * ```
@@ -101,12 +109,14 @@ export function route() {
 /**
  * Retrieves the matched route options.
  *
- * @example ```ts
+ * @example
+ * ```ts
  * const routeOpts = getRoute();
  * console.log(routeOpts.url);
  * ```
  * @see {@link route}
  * @since v0.1.0
+ * @internal
  */
 export const getRoute = route;
 
@@ -117,7 +127,8 @@ export const getRoute = route;
 /**
  * Retrieves the request body.
  *
- * @example ```ts
+ * @example
+ * ```ts
  * const data = body<{ name: string }>();
  * console.log(data.name);
  * ```
@@ -130,12 +141,14 @@ export function body<T = unknown>() {
 /**
  * Retrieves the request body.
  *
- * @example ```ts
+ * @example
+ * ```ts
  * const data = getBody<{ name: string }>();
  * console.log(data.name);
  * ```
  * @see {@link body}
  * @since v0.1.0
+ * @internal
  */
 export const getBody = body;
 
@@ -146,7 +159,8 @@ export const getBody = body;
 /**
  * Retrieves the request params.
  *
- * @example ```ts
+ * @example
+ * ```ts
  * const p = params<{ id: string }>();
  * console.log(p.id);
  *
@@ -160,27 +174,34 @@ export function params<T = Dict<string>>(): T {
 }
 
 /**
- * Retrieves a single param by name.
- *
- * @param name - The param name to retrieve
- * @example ```ts
- * const id = params.get('id');
- * ```
+ * Utility functions for working with route parameters
  */
-params.get = function getParam(name: string) {
-  const p = getRequest().params as Dict<string>;
-  return p[name];
-};
+export namespace params {
+  /**
+   * Retrieves a single param by name.
+   *
+   * @example
+   * ```ts
+   * const id = params.get('id');
+   * ```
+   */
+  export function get(name: string): string | undefined {
+    const p = getRequest().params as Dict<string>;
+    return p[name];
+  }
+}
 
 /**
  * Retrieves the request params.
  *
- * @example ```ts
+ * @example
+ * ```ts
  * const p = getParams<{ id: string }>();
  * console.log(p.id);
  * ```
  * @see {@link params}
  * @since v0.1.0
+ * @internal
  */
 export const getParams = params;
 
@@ -223,7 +244,8 @@ export function getParam(name: string, transform?: (value: string) => unknown): 
 /**
  * Retrieves the request headers.
  *
- * @example ```ts
+ * @example
+ * ```ts
  * const h = headers();
  * console.log(h['content-type']);
  *
@@ -243,47 +265,56 @@ export function headers() {
 }
 
 /**
- * Retrieves a single header value by name.
- *
- * @param name - The header name to retrieve
- * @example ```ts
- * const auth = headers.get('authorization');
- * ```
+ * Utility functions for working with HTTP headers
  */
-headers.get = function getHeader(name: HttpHeaderIncoming) {
-  return getRequest().headers[name];
-};
+export namespace headers {
+  /**
+   * Retrieves a single header value by name.
+   *
+   * @param name - The header name to retrieve
+   * @example
+   * ```ts
+   * const auth = headers.get('authorization');
+   * ```
+   */
+  export function get(name: HttpHeaderIncoming): string | undefined {
+    return toFirstValue(getRequest().headers[name]);
+  }
 
-/**
- * Retrieves all values for a header name.
- *
- * @param name - The header name to retrieve
- * @example ```ts
- * const cookies = headers.getAll('cookie');
- * ```
- */
-headers.getAll = function getAllHeaders(name: HttpHeaderIncoming) {
-  return getRequest().raw.headersDistinct[name];
-};
+  /**
+   * Retrieves all values for a header name.
+   *
+   * @param name - The header name to retrieve
+   * @example
+   * ```ts
+   * const cookies = headers.getAll('cookie');
+   * ```
+   */
+  export function getAll(name: HttpHeaderIncoming): string[] | undefined {
+    return getRequest().raw.headersDistinct[name];
+  }
 
-/**
- * Sets a response header.
- *
- * @param name - The header name to set
- * @param value - The header value
- * @example ```ts
- * headers.set('x-custom-header', 'value');
- * ```
- */
-headers.set = function setHeader(name: HttpHeader, value: string): Response {
-  const { reply } = getContext();
-  return reply.header(name, value);
-};
+  /**
+   * Sets a response header.
+   *
+   * @param name - The header name to set
+   * @param value - The header value
+   * @example
+   * ```ts
+   * headers.set('x-custom-header', 'value');
+   * ```
+   */
+  export function set(name: HttpHeader, value: string): Response {
+    const { reply } = getContext();
+    return reply.header(name, value);
+  }
+}
 
 /**
  * Retrieves the request headers.
  *
- * @example ```ts
+ * @example
+ * ```ts
  * const h = getHeaders();
  * console.log(h['content-type']);
  * ```
@@ -300,7 +331,8 @@ export function getHeaders() {
  *
  * @param name - The header name to set
  * @param value - The header value
- * @example ```ts
+ * @example
+ * ```ts
  * setHeader('x-custom-header', 'value');
  * ```
  * @see {@link headers.set}
@@ -345,7 +377,8 @@ export function getHeader(name: HttpHeaderIncoming, transform?: (value: string[]
 /**
  * Retrieves the search params (query string).
  *
- * @example ```ts
+ * @example
+ * ```ts
  * const query = searchParams<{ page: string }>();
  * console.log(query.page);
  *
@@ -359,34 +392,58 @@ export function searchParams<T>() {
 }
 
 /**
- * Retrieves a single search param by name.
- *
- * @param name - The query parameter name to retrieve
- * @example ```ts
- * const page = searchParams.get('page');
- * ```
+ * Utility functions for working with URL search parameters (query string)
  */
-searchParams.get = function getSearchParam(name: string) {
-  const queries = getRequest().query as Record<string, string | string[]>;
-  return toFirstValue(queries[name]);
-};
+export namespace searchParams {
+  /**
+   * Retrieves a single search param by name.
+   *
+   * @param name - The query parameter name to retrieve
+   * @example
+   * ```ts
+   * const page = searchParams.get('page');
+   * ```
+   */
+  export function get(name: string): string | undefined {
+    const queries = getRequest().query as Record<string, string | string[]>;
+    return toFirstValue(queries[name]);
+  }
+
+  /**
+   * Retrieves all values for a search param by name.
+   *
+   * @param name - The query parameter name to retrieve
+   * @example
+   * ```ts
+   * const tags = searchParams.getAll('tag');
+   * ```
+   */
+  export function getAll(name: string): string[] {
+    const queries = getRequest().query as Record<string, string | string[]>;
+    if (!queries[name]) return [];
+    return toArray(queries[name]);
+  }
+}
 
 /**
  * Retrieves the search params (query string).
  *
- * @example ```ts
+ * @example
+ * ```ts
  * const query = getSearchParams<{ page: string }>();
  * console.log(query.page);
  * ```
  * @see {@link searchParams}
  * @since v0.1.0
+ * @internal
  */
 export const getSearchParams = searchParams;
 
 /**
  * Retrieves the query string parameters.
  *
- * @example ```ts
+ * @example
+ * ```ts
  * const query = getQueries<{ page: string }>();
  * console.log(query.page);
  * ```
@@ -432,6 +489,7 @@ export function getSearchParam(name: string, transform?: (value: string) => unkn
  *
  * @deprecated Use {@link searchParams.get} instead
  * @see {@link getSearchParam}
+ * @internal
  */
 export const getQuery = getSearchParam;
 
@@ -443,7 +501,8 @@ export const getQuery = getSearchParam;
  * Sets the response status code.
  *
  * @param statusCode - The HTTP status code (number or StatusCodes key)
- * @example ```ts
+ * @example
+ * ```ts
  * status(200);
  * status('CREATED');
  * ```
@@ -460,12 +519,14 @@ export function status(statusCode: keyof typeof StatusCodes | number): Response 
  * Sets the response status code.
  *
  * @param statusCode - The HTTP status code (number or StatusCodes key)
- * @example ```ts
+ * @example
+ * ```ts
  * setStatusCode(200);
  * setStatusCode('CREATED');
  * ```
  * @see {@link status}
  * @since v0.1.0
+ * @internal
  */
 export const setStatusCode = status;
 
@@ -475,7 +536,8 @@ export const setStatusCode = status;
  * @param path - The URL path to redirect to
  * @param isPermanent - Whether the redirect is permanent (301) or temporary (302)
  * @throws {RedirectError}
- * @example ```ts
+ * @example
+ * ```ts
  * redirect('/login');
  * redirect('/new-url', true); // permanent redirect
  * ```
@@ -491,7 +553,8 @@ export function redirect(path: string, isPermanent?: boolean): never {
  * @param response - The error response message
  * @param statusCode - The HTTP status code (default: 400)
  * @throws {HttpError}
- * @example ```ts
+ * @example
+ * ```ts
  * abort('Unauthorized', 401);
  * abort('Bad Request');
  *
@@ -505,75 +568,84 @@ export function abort(response: ErrorResponse = "Bad Request", statusCode: Statu
 }
 
 /**
- * Aborts the request with a 404 Not Found error.
- *
- * @throws {NotFoundError}
- * @example ```ts
- * abort.notFound();
- * ```
+ * Utility functions for working with request aborts and errors
  */
-abort.notFound = function abortNotFound(): never {
-  throw new NotFoundError();
-};
-
-/**
- * Ensures an error is not an aborted error.
- * If it is an aborted error, re-throws it.
- *
- * @param error - The error to check
- * @example ```ts
- * try {
- *   // some code
- * } catch (err) {
- *   abort.assertNot(err);
- *   // handle non-abort errors
- * }
- * ```
- */
-abort.assertNot = function assertNotAborted(error: unknown): asserts error is Error {
-  if (BaseHttpError.is(error)) {
-    throw error;
+export namespace abort {
+  /**
+   * Aborts the request with a 404 Not Found error.
+   *
+   * @throws {NotFoundError}
+   * @example
+   * ```ts
+   * abort.notFound();
+   * ```
+   */
+  export function notFound(): never {
+    throw new NotFoundError();
   }
-  if (error instanceof Error) {
-    if (error.cause === ResponseAbort) {
+
+  /**
+   * Ensures an error is not an aborted error.
+   * If it is an aborted error, re-throws it.
+   *
+   * @param error - The error to check
+   * @example
+   * ```ts
+   * try {
+   *   // some code
+   * } catch (err) {
+   *   abort.assertNot(err);
+   *   // handle non-abort errors
+   * }
+   * ```
+   */
+  export function assertNot(error: unknown): asserts error is Error {
+    if (BaseHttpError.is(error)) {
       throw error;
     }
-    return;
-  }
-  throw error;
-};
-
-/**
- * Ensures an error is an aborted error.
- * If not, re-throws it.
- *
- * @param error - The error to check
- * @example ```ts
- * try {
- *   // some code
- * } catch (err) {
- *   abort.assert(err);
- *   // handle abort errors only
- * }
- * ```
- */
-abort.assert = function assertAbort(error: unknown): asserts error is Error {
-  if (!BaseHttpError.is(error)) {
+    if (error instanceof Error) {
+      if (error.cause === ResponseAbort) {
+        throw error;
+      }
+      return;
+    }
     throw error;
   }
-};
 
-/**
- * Checks if a given error is an aborted error.
- *
- * @param error - The error to check
- * @returns True if the error is a BaseHttpError
- * @example ```ts
- * if (abort.is(error)) {
- *   console.log('Request was aborted');
- * }
- * ```
- */
-abort.is = function isAbortError(error: unknown): error is BaseHttpError {
-  return BaseHttpError.is(error);
-};
+  /**
+   * Ensures an error is an aborted error.
+   * If not, re-throws it.
+   *
+   * @param error - The error to check
+   * @example
+   * ```ts
+   * try {
+   *   // some code
+   * } catch (err) {
+   *   abort.assert(err);
+   *   // handle abort errors only
+   * }
+   * ```
+   */
+  export function assert(error: unknown): asserts error is Error {
+    if (!BaseHttpError.is(error)) {
+      throw error;
+    }
+  }
+
+  /**
+   * Checks if a given error is an aborted error.
+   *
+   * @param error - The error to check
+   * @returns True if the error is a BaseHttpError
+   * @example
+   * ```ts
+   * if (abort.is(error)) {
+   *   console.log('Request was aborted');
+   * }
+   * ```
+   */
+  export function is(error: unknown): error is BaseHttpError {
+    return BaseHttpError.is(error);
+  }
+}

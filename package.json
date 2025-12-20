@@ -18,7 +18,7 @@
     "coverage": "turbo run coverage",
     "clean": "turbo run clean",
     "docs": "yarn --cwd=packages/docs dev",
-    "docs:deploy": "yarn --cwd=packages/docs deploy",
+    "docs:genapi": "yarn --cwd=packages/docs generate:api",
     "release": "yarn build && changeset publish"
   },
   "packageManager": "yarn@4.12.0",

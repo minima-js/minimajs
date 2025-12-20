@@ -22,7 +22,8 @@ export function getSignal(): AbortSignal {
 
 /**
  * Context enables sharing data within the request scope without the need to explicitly pass it around.
- * @example ```ts
+ * @example
+ * ```ts
  * import { createContext } from "@minimajs/server";
   export interface User {
     name: string;

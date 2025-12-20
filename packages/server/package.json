@@ -1,6 +1,7 @@
 {
   "name": "@minimajs/server",
   "version": "0.3.0",
+  "description": "High-performance HTTP framework built on Fastify with context-aware request handling and zero boilerplate",
   "type": "module",
   "license": "MIT",
   "homepage": "https://minima-js.github.io/",

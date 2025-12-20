@@ -12,8 +12,7 @@
     "dev": "vitepress dev",
     "build:docs": "yarn generate:api && vitepress build",
     "generate:api": "typedoc",
-    "preview": "vitepress preview",
-    "deploy": "gh-pages --dist .vitepress/dist --repo=git@github.com:minima-js/minima-js.github.io"
+    "preview": "vitepress preview"
   },
   "devDependencies": {
     "gh-pages": "^6.3.0",

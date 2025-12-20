@@ -1,23 +1,25 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "entryPoints": [
-    "../server/src/index.ts",
-    "../auth/src/index.ts",
-    "../schema/src/index.ts",
-    "../multipart/src/index.ts",
-    "../cookie/src/index.ts"
-  ],
-  "entryPointStrategy": "expand",
-  "tsconfig": "../server/tsconfig.json",
+  "name": "Minima.js API",
+  "entryPoints": ["../server", "../auth", "../schema", "../multipart", "../cookie"],
+  "entryPointStrategy": "packages",
   "out": "docs/api",
+  "basePath": "..",
   "plugin": ["typedoc-plugin-markdown"],
   "excludePrivate": true,
-  "excludeProtected": false,
   "excludeInternal": true,
   "readme": "none",
-  "categorizeByGroup": true,
   "sort": ["source-order"],
   "hideGenerator": true,
   "githubPages": false,
-  "cleanOutputDir": true
+  "cleanOutputDir": true,
+  "expandObjects": true,
+  "useCodeBlocks": true,
+  "indexFormat": "table",
+  "packageOptions": {
+    "excludeInternal": true,
+    "basePath": ".",
+    "readme": "none",
+    "entryPoints": ["./src/index.ts"]
+  }
 }

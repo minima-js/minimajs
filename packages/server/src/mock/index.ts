@@ -18,7 +18,8 @@ export type InjectResponse = Awaited<ReturnType<App["inject"]>>;
  * Creates a test Fastify app with routes and returns responses.
  * Uses Fastify's built-in inject method for proper request/response lifecycle.
  *
- * @example ```ts
+ * @example
+ * ```ts
  * const [response] = await mockApp(
  *   mockRoute(() => ({ message: 'hello' }))
  * );
@@ -79,7 +80,8 @@ export async function mockApp<T extends Route[]>(...routes: T): Promise<InjectRe
 /**
  * Helper to define a route for testing.
  *
- * @example ```ts
+ * @example
+ * ```ts
  * mockRoute(
  *   () => ({ message: 'hello' }),
  *   { method: 'POST', url: '/users' },

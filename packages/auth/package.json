@@ -1,6 +1,7 @@
 {
   "name": "@minimajs/auth",
   "version": "1.0.0",
+  "description": "Authentication and authorization utilities with session management and guard support",
   "type": "module",
   "exports": "./lib/index.js",
   "scripts": {

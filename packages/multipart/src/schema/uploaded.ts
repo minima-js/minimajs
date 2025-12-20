@@ -64,7 +64,7 @@ export function createMultipartUpload<T extends ObjectShape>(obj: T, option: Upl
 
   return async function getData(): Promise<InferType<typeof schema>> {
     if (option.maxSize) {
-      const contentLength = getHeader("content-length", Number, true);
+      const contentLength = getHeader("content-length", (val) => Number(val[0]));
       validateContentSize(contentLength, option.maxSize);
     }
     defer(cleanup);

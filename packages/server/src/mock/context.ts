@@ -12,7 +12,8 @@ export type MockContextCallback<T> = (request: Request, response: Response) => T
  * For integration tests that need full Fastify lifecycle (hooks, decorators, etc.),
  * use mockApp/mockRoute or Fastify's inject method directly instead.
  *
- * @example ```ts
+ * @example
+ * ```ts
  * mockContext(() => {
  *   const user = body();
  *   expect(user.name).toBe("John");

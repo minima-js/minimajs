@@ -1,6 +1,7 @@
 {
   "name": "@minimajs/schema",
   "version": "1.0.0",
+  "description": "Schema validation powered by Yup for request/response validation with type safety",
   "type": "module",
   "exports": {
     ".": "./lib/index.js",
