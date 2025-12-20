@@ -1,4 +1,4 @@
-import { createContext, getSignal, memo, once } from "./context.js";
+import { context, createContext } from "./context.js";
 import { mockContext } from "./mock/context.js";
 import { jest } from "@jest/globals";
 
@@ -37,7 +37,7 @@ describe("Context", () => {
   describe("getSignal", () => {
     test("setter / getting", () => {
       mockContext(() => {
-        expect(getSignal()).toBeInstanceOf(AbortSignal);
+        expect(context.signal()).toBeInstanceOf(AbortSignal);
       });
     });
   });
@@ -47,7 +47,7 @@ describe("Context", () => {
     it("should only call the callback once per request", () => {
       mockContext(() => {
         const mockCallback = jest.fn(() => "result");
-        const handleRequest = once(mockCallback);
+        const handleRequest = context.once(mockCallback);
 
         // First call: callback should be called
         const firstCallResult = handleRequest();
@@ -66,8 +66,8 @@ describe("Context", () => {
         const mockCallback1 = jest.fn(() => "result1");
         const mockCallback2 = jest.fn(() => "result2");
 
-        const handleRequest1 = once(mockCallback1);
-        const handleRequest2 = once(mockCallback2);
+        const handleRequest1 = context.once(mockCallback1);
+        const handleRequest2 = context.once(mockCallback2);
 
         // Call the first function
         const result1 = handleRequest1();
@@ -92,7 +92,7 @@ describe("Context", () => {
     it("should only call the callback once per request", () => {
       mockContext(() => {
         const mockCallback = jest.fn(() => "result");
-        const handleRequest = memo(mockCallback);
+        const handleRequest = context.memo(mockCallback);
 
         // First call: callback should be called
         const firstCallResult = handleRequest();
@@ -111,8 +111,8 @@ describe("Context", () => {
         const mockCallback1 = jest.fn(() => "result1");
         const mockCallback2 = jest.fn(() => "result2");
 
-        const handleRequest1 = memo(mockCallback1);
-        const handleRequest2 = memo(mockCallback2);
+        const handleRequest1 = context.memo(mockCallback1);
+        const handleRequest2 = context.memo(mockCallback2);
 
         // Call the first function
         const result1 = handleRequest1();

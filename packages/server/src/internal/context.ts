@@ -11,7 +11,7 @@ export interface Hooks {
   onError: Set<ErrorHookCallback>;
 }
 
-interface Context {
+export interface Context {
   readonly req: Request;
   readonly reply: Response;
   readonly local: Map<symbol, unknown>;
@@ -50,10 +50,6 @@ export function context() {
   return context;
 }
 
-export const getContext = context;
-
 export function maybeContext() {
   return contextStorage.getStore() || null;
 }
-
-export const getContextOrNull = maybeContext;

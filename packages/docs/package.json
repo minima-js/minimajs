@@ -10,9 +10,8 @@
   },
   "scripts": {
     "dev": "vitepress dev",
-    "build:docs": "yarn generate:api && vitepress build",
-    "generate:api": "typedoc",
-    "preview": "vitepress preview"
+    "build": "vitepress build",
+    "generate:api": "typedoc"
   },
   "devDependencies": {
     "gh-pages": "^6.3.0",

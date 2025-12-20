@@ -7,24 +7,17 @@ import {
   getHeaders,
   getParam,
   getParams,
-  getQueries,
-  getQuery,
   getRequest,
-  getRequestURL,
-  getRoute,
   getSearchParam,
   getSearchParams,
   headers,
   params,
   redirect,
   request,
-  requestURL,
   response,
-  route,
   searchParams,
   setHeader,
   setStatusCode,
-  status,
 } from "./http.js";
 import { mockContext } from "./mock/context.js";
 import { mockApp, mockRoute } from "./mock/index.js";
@@ -51,8 +44,8 @@ describe("Http", () => {
   describe("requestURL / getRequestURL", () => {
     test("should retrieve request URL", () => {
       mockContext((req) => {
-        const url1 = requestURL();
-        const url2 = getRequestURL();
+        const url1 = request.url();
+        const url2 = request.url();
         expect(url1.host).toBe(req.hostname);
         expect(url1.protocol).toBe("http:");
         expect(url2.host).toBe(req.hostname);
@@ -64,7 +57,7 @@ describe("Http", () => {
     test("should handle custom URL paths", () => {
       mockContext(
         () => {
-          const url = requestURL();
+          const url = request.url();
           expect(url.pathname).toBe("/users/123");
           expect(url.search).toBe("?page=1");
         },
@@ -76,8 +69,8 @@ describe("Http", () => {
   describe("route / getRoute", () => {
     test("should retrieve route options", async () => {
       const testRoute = mockRoute(() => {
-        const route1 = route();
-        const route2 = getRoute();
+        const route1 = request.route();
+        const route2 = request.route();
         expect(route1).toBeDefined();
         expect(route2).toBeDefined();
         expect(route1).toBe(route2);
@@ -174,7 +167,10 @@ describe("Http", () => {
       mockContext(
         (_req) => {
           const parsed = headers.getAll("set-cookie", (val) => val.split("="));
-          expect(parsed).toEqual([["session", "123"], ["token", "abc"]]);
+          expect(parsed).toEqual([
+            ["session", "123"],
+            ["token", "abc"],
+          ]);
 
           const lengths = headers.getAll("set-cookie", (val) => val.length);
           expect(lengths).toEqual([11, 9]);
@@ -272,26 +268,28 @@ describe("Http", () => {
     });
   });
 
-  describe("getQueries", () => {
+  describe("searchParams / getSearchParams", () => {
     test("should retrieve query string parameters", () => {
       mockContext(
         () => {
-          const queries = getQueries<{ name: string; page: string }>();
+          const queries = searchParams<{ name: string; page: string }>();
+          const queriesOld = getSearchParams<{ name: string; page: string }>();
           expect(queries.name).toBe("John");
           expect(queries.page).toBe("1");
+          expect(queries).toEqual(queriesOld);
         },
         { url: "/?name=John&page=1" }
       );
     });
   });
 
-  describe("getSearchParam / getQuery (deprecated aliases)", () => {
-    test("should be aliases of searchParams.get", () => {
+  describe("searchParams.get / getSearchParam (deprecated alias)", () => {
+    test("getSearchParam should be alias of searchParams.get", () => {
       mockContext(
         () => {
           expect(getSearchParam).toBe(searchParams.get);
-          expect(getQuery).toBe(getSearchParam);
           expect(getSearchParam("name")).toBe("John");
+          expect(searchParams.get("name")).toBe("John");
         },
         { url: "/?name=John" }
       );
@@ -415,20 +413,20 @@ describe("Http", () => {
   describe("status / setStatusCode", () => {
     test("should set status code with number", async () => {
       const route = mockRoute(() => {
-        status(201);
+        response.status(201);
         return { message: "created" };
       });
-      const [response] = await mockApp(route);
-      expect(response!.statusCode).toBe(201);
+      const [res] = await mockApp(route);
+      expect(res!.statusCode).toBe(201);
     });
 
     test("should set status code with StatusCodes key", async () => {
       const route = mockRoute(() => {
-        status("CREATED");
+        response.status("CREATED");
         return { message: "created" };
       });
-      const [response] = await mockApp(route);
-      expect(response!.statusCode).toBe(201);
+      const [res] = await mockApp(route);
+      expect(res!.statusCode).toBe(201);
     });
 
     test("setStatusCode should work with number", async () => {

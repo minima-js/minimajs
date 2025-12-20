@@ -14,10 +14,10 @@ The following functions are exposed from `@minimajs/server` for handling HTTP re
 
 ## Request
 
-### getRequest
+### request
 
 ```typescript
-getRequest(): Request
+request(): Request
 ```
 
 Retrieves the HTTP request object.
@@ -25,13 +25,13 @@ Retrieves the HTTP request object.
 Examples:
 
 ```ts
-import { getBody, getRequest } from "@minimajs/server";
+import { body, request } from "@minimajs/server";
 app.get("/", () => {
   // highlight-next-line
-  const request = getRequest();
-  return request.url;
+  const req = request();
+  return req.url;
 });
-app.post("/", () => createUser(getBody()));
+app.post("/", () => createUser(body()));
 ```
 
 And even you can use request in nested function calls
@@ -39,7 +39,7 @@ And even you can use request in nested function calls
 ```ts
 function getURL() {
   // highlight-next-line
-  return getRequest().url;
+  return request().url;
 }
 app.get("/", () => {
   const url = getURL();
@@ -47,144 +47,209 @@ app.get("/", () => {
 });
 ```
 
-### getRequestURL
+**Namespace utilities:**
+
+#### request.url
 
 ```ts
-getRequestURL(): URL
+request.url(): URL
 ```
 
-### getHeaders
+Retrieves the full request URL.
+
+**Examples:**
 
 ```typescript
-getHeaders(): Record<string, string | string[]>
+const url = request.url();
+console.log(url.pathname);
+console.log(url.searchParams.get('page'));
+```
+
+#### request.route
+
+```ts
+request.route(): RouteOptions
+```
+
+Retrieves the matched route options.
+
+**Examples:**
+
+```typescript
+const routeOpts = request.route();
+console.log(routeOpts.url);
+console.log(routeOpts.method);
+```
+
+### headers
+
+```typescript
+headers(): Record<string, string | string[]>
 ```
 
 Retrieves the request headers.
 
-### getHeader
+**Namespace utilities:**
 
-**Function:** `getHeader(name: string, type?: Type<T> | [Type<T>] | boolean, required?: boolean): T | undefined`
-
-**Parameters:**
-
-- `name` (string): The name of the header to retrieve.
-- `type` (Type&gt;T> | [Type&gt;T>], optional): The desired type for the retrieved value.
-  - If provided, the function attempts to parse the value to the specified type.
-  - Can be a single type constructor (e.g., `String`, `Number`) or an array of type constructors (e.g., `[Number]`).
-- `required` (boolean, optional): Flag indicating if the parameter is mandatory. Defaults to `false`.
-  - If `true` and the parameter is missing, a `ValidationError` is thrown.
-
-**Throws:**
-
-- `ValidationError`: Thrown in the following cases:
-  - The required parameter is missing (`required` is set to `true`).
-  - Parsing the value to the specified type fails (e.g., converting a string "abc" to a number throws `ValidationError`).
-
-### getSearchParams
+#### headers.get
 
 ```typescript
-getSearchParams(): URLSearchParams
+headers.get(name: string): string | undefined
+headers.get<R>(name: string, transform: (value: string) => R): R | undefined
 ```
 
-Retrieves the request queries.
-
-### getQueries
-
-```ts
-getQueries(): ParsedUrlQuery
-```
-
-Retrieves the query string
-
-### getSearchParam
-
-**Function:** `getSearchParam(name: string, type?: Type<T> | [Type<T>] | boolean, required?: boolean): T | undefined`
-
-**Parameters:**
-
-- `name` (string): The name of the search parameter to retrieve.
-- `type` (Type&gt;T> | [Type&gt;T>], optional): The desired type for the retrieved value.
-  - If provided, the function attempts to parse the value to the specified type.
-  - Can be a single type constructor (e.g., `String`, `Number`) or an array of type constructors (e.g., `[Number]`).
-- `required` (boolean, optional): Flag indicating if the parameter is mandatory. Defaults to `false`.
-  - If `true` and the parameter is missing, a `ValidationError` is thrown.
-
-**Return Type:**
-
-- `T | undefined`: The retrieved and parsed value (if successful) or `undefined` if the parameter is missing and not required.
-
-**Throws:**
-
-- `ValidationError`: Thrown in the following cases:
-  - The required parameter is missing (`required` is set to `true`).
-  - Parsing the value to the specified type fails (e.g., converting a string "abc" to a number throws `ValidationError`).
+Retrieves a single header value by name with optional transformation.
 
 **Examples:**
 
-**Retrieving a string value:**
-
 ```typescript
-const name = getSearchParam("name"); // Returns "John Doe" if the parameter exists
+const auth = headers.get('authorization');                              // string | undefined
+const token = headers.get('authorization', (val) => val.split(' ')[1]); // string | undefined
 ```
 
-**Retrieving a number value with type conversion:**
+#### headers.getAll
 
 ```typescript
-const pageNumber = getSearchParam("page", Number); // Returns 2 if the parameter exists and has a valid number
-
-// Throws ValidationError if "page" is not a valid number
-expect(() => getSearchParam("page", Number)).toThrow(new ValidationError("Param `page` expects a number"));
+headers.getAll(name: string): string[]
+headers.getAll<R>(name: string, transform: (value: string) => R): R[]
 ```
 
-**Retrieving an array of numbers with type conversion:**
+Retrieves all values for a header name with optional transformation.
+
+**Examples:**
 
 ```typescript
-const pageNumbers = getSearchParam("tags", [String]); // Returns tags array of strings
+const cookies = headers.getAll('cookie');                        // string[]
+const parsed = headers.getAll('cookie', (val) => val.split('=')); // string[][]
 ```
 
-**Handling missing required parameters:**
+#### headers.set
 
 ```typescript
-// Throws ValidationError because "page" is missing and required
-expect(() => getSearchParam("page", true)).toThrow(new ValidationError("pages is required"));
+headers.set(name: string, value: string): Response
 ```
 
-### getParam
+Sets a response header.
+
+**Examples:**
 
 ```typescript
-export function getParam<T>(name: string, cast?: CastTo<T> | boolean, required?: boolean): T;
+headers.set('x-custom-header', 'value');
 ```
 
-Retrieves and validates parameters from the current request context. It optionally casts the values to a specified type and enforces that the parameter is required.
-
-Examples
+### searchParams
 
 ```typescript
-// Basic usage
-const paramName: string = getParam("name");
-
-// Casting to a specific type
-const paramValue: number = getParam("age", Number);
-
-// Casting to an optional type with a specific cast function
-const optionalParamValue: number | undefined = getParam("optional", Number, false);
-
-// Casting to an optional type with custom validation
-const customValidationParam: string | undefined = getParam("custom", (value) => {
-  if (typeof value === "string" && value.length < 10) {
-    return value;
-  }
-  throw new Error("Invalid value");
-});
-
-// Optional param
-const requiredParam: string | undefined = getParam("token", false);
+searchParams<T>(): T
 ```
 
-### getBody
+Retrieves the search params (query string).
+
+**Examples:**
 
 ```typescript
-getBody<T = unknown>(): T
+const query = searchParams<{ page: string }>();
+console.log(query.page);
+
+// Or use searchParams.get
+const page = searchParams.get('page');
+```
+
+**Namespace utilities:**
+
+#### searchParams.get
+
+```typescript
+searchParams.get(name: string): string | undefined
+searchParams.get<R>(name: string, transform: (value: string) => R): R
+```
+
+Retrieves a single search param by name with optional transformation.
+
+**Examples:**
+
+```typescript
+const page = searchParams.get('page');                              // string | undefined
+const pageNum = searchParams.get('page', (val) => parseInt(val));   // number
+```
+
+#### searchParams.getAll
+
+```typescript
+searchParams.getAll(name: string): string[]
+searchParams.getAll<R>(name: string, transform: (value: string) => R): R[]
+```
+
+Retrieves all values for a search param by name with optional transformation.
+
+**Examples:**
+
+```typescript
+const tags = searchParams.getAll('tag');                           // string[]
+const tagIds = searchParams.getAll('tag', (val) => parseInt(val)); // number[]
+```
+
+### params
+
+```typescript
+params<T>(): T
+```
+
+Retrieves the request params (route parameters).
+
+**Examples:**
+
+```typescript
+const p = params<{ id: string }>();
+console.log(p.id);
+
+// Or use params.get
+const id = params.get('id');
+```
+
+**Namespace utilities:**
+
+#### params.get
+
+```typescript
+params.get(name: string): string
+params.get<R>(name: string, transform: (value: string) => R): R
+```
+
+Retrieves a single param by name with optional transformation. Throws `NotFoundError` if the param is not found.
+
+**Examples:**
+
+```typescript
+const id = params.get('id');                              // string
+const page = params.get('page', (val) => parseInt(val));  // number
+const age = params.get('age', (val) => {
+  const num = parseInt(val);
+  if (num < 0) throw new Error('must be positive');
+  return num;
+});                                                        // number
+```
+
+#### params.optional
+
+```typescript
+params.optional(name: string): string | undefined
+params.optional<R>(name: string, transform: (value: string) => R): R | undefined
+```
+
+Retrieves a single param by name with optional transformation. Returns `undefined` if the param is not found.
+
+**Examples:**
+
+```typescript
+const id = params.optional('id');                              // string | undefined
+const page = params.optional('page', (val) => parseInt(val));  // number | undefined
+```
+
+### body
+
+```typescript
+body<T = unknown>(): T
 ```
 
 Retrieves the request body.
@@ -236,29 +301,30 @@ async function* getDates() {
 app.get("/", getDates);
 ```
 
-### getResponse
+### response
 
 ```typescript
-getResponse(): Response
+response(): Response
 ```
 
 Retrieves the HTTP response object.
 
-### setStatusCode
+**Namespace utilities:**
+
+#### response.status
 
 ```typescript
-setStatusCode(statusCode: keyof typeof StatusCodes | number): Response
+response.status(statusCode: keyof typeof StatusCodes | number): Response
 ```
 
 Sets the HTTP status code for the response.
 
-### setHeader
+**Examples:**
 
 ```typescript
-setHeader(name: string, value: string): Response
+response.status(200);
+response.status('CREATED');
 ```
-
-Sets a response header.
 
 ### Decorator / Filter
 
@@ -355,11 +421,11 @@ Parameters:
 Examples:
 
 ```ts
-import { abort, getParam } from "@minimajs/server";
+import { abort, params } from "@minimajs/server";
 
 async function findUser() {
-  const param = getParam("user");
-  const user = await User.findOne({ _id: param });
+  const userId = params.get("user");
+  const user = await User.findOne({ _id: userId });
   if (!user) {
     // example 1: status code as number
     // highlight-next-line
@@ -375,6 +441,22 @@ async function findUser() {
 }
 
 app.get("/users/:user", findUser);
+```
+
+You can also use the namespace utility `abort.notFound()`:
+
+```ts
+import { abort, params } from "@minimajs/server";
+
+async function findUser() {
+  const userId = params.get("user");
+  const user = await User.findOne({ _id: userId });
+  if (!user) {
+    // highlight-next-line
+    abort.notFound();
+  }
+  return user;
+}
 ```
 
 These functions provide essential utilities for handling HTTP requests and responses within request context built-in `@minimajs/server`.

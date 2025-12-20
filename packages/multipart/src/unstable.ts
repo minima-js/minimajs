@@ -5,9 +5,9 @@ import { tmpdir } from "node:os";
 import type { Readable } from "node:stream";
 import { v4 as uuid } from "uuid";
 import { defer } from "@minimajs/server";
-import { createContext, getSignal } from "@minimajs/server/context";
+import { createContext, context } from "@minimajs/server/context";
 import { isFile, File, type FileInfo } from "./file.js";
-import { getBody } from "./multipart.js";
+import { multipart } from "./multipart.js";
 
 /**
  * Represents a file that has been uploaded and saved to a temporary location.
@@ -77,9 +77,9 @@ export async function getUploadedBody<T extends UploadedBody = UploadedBody>(): 
   if (body) {
     return body;
   }
-  const signal = getSignal();
+  const signal = context.signal();
   const newBody = {} as any;
-  for await (const [name, value] of getBody()) {
+  for await (const [name, value] of multipart.body()) {
     if (isFile(value)) {
       const filename = await value.move(tmpdir(), uuid());
       newBody[name] = new UploadedFile(value, join(tmpdir(), filename), 0, signal);

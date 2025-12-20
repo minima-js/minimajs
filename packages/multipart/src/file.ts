@@ -30,7 +30,7 @@ export interface FileInfo {
  *
  * @example
  * ```ts
- * const file = await getFile('avatar');
+ * const file = await multipart.file('avatar');
  * // Save to disk
  * await file.move('/uploads', 'avatar.png');
  * // Or read as buffer
@@ -94,7 +94,7 @@ export class File implements FileInfo {
    * @returns A promise that resolves to the file content as a Buffer
    * @example
    * ```ts
-   * const file = await getFile('document');
+   * const file = await multipart.file('document');
    * const buffer = await file.buffer();
    * console.log(buffer.length);
    * ```
@@ -113,7 +113,7 @@ export class File implements FileInfo {
    * @returns A promise that resolves to the filename used
    * @example
    * ```ts
-   * const file = await getFile('upload');
+   * const file = await multipart.file('upload');
    * // Save with random name
    * await file.move('/uploads');
    * // Save with custom name

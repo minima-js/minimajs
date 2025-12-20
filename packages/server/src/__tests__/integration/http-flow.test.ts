@@ -1,14 +1,14 @@
 /**
  * Integration tests demonstrating complete HTTP request/response flows
  */
-import { body, headers, searchParams, status, setHeader } from "../../http.js";
+import { body, headers, response, searchParams, setHeader } from "../../http.js";
 import { testRoute, expectStatus, expectHeader, expectBodyToMatch } from "../helpers/test-helpers.js";
 import { testFixtures, createTestUser } from "../helpers/fixtures.js";
 
 describe("HTTP Integration Tests", () => {
   describe("Complete request lifecycle", () => {
     test("should handle POST request with body and headers", async () => {
-      const response = await testRoute(
+      const res = await testRoute(
         () => {
           const user = body<{ name: string; email: string }>();
           const authToken = headers.get("authorization");
@@ -16,7 +16,7 @@ describe("HTTP Integration Tests", () => {
           expect(authToken).toBe("Bearer token123");
           expect(user?.name).toBe("John Doe");
 
-          status(201);
+          response.status(201);
           setHeader("x-user-created", "true");
 
           return { user };
@@ -28,9 +28,9 @@ describe("HTTP Integration Tests", () => {
         }
       );
 
-      expectStatus(response, 201);
-      expectHeader(response, "x-user-created", "true");
-      expectBodyToMatch(response, {
+      expectStatus(res, 201);
+      expectHeader(res, "x-user-created", "true");
+      expectBodyToMatch(res, {
         user: {
           name: "John Doe",
           email: "john@example.com",
@@ -83,12 +83,12 @@ describe("HTTP Integration Tests", () => {
 
   describe("Error handling flows", () => {
     test("should handle validation errors with proper status", async () => {
-      const response = await testRoute(
+      const res = await testRoute(
         () => {
           const userData = body<{ email?: string }>();
 
           if (!userData?.email) {
-            status(400);
+            response.status(400);
             return {
               error: "Validation failed",
               message: "Email is required",
@@ -103,16 +103,16 @@ describe("HTTP Integration Tests", () => {
         }
       );
 
-      expectStatus(response, 400);
-      expect((response.body as any).error).toBe("Validation failed");
+      expectStatus(res, 400);
+      expect((res.body as any).error).toBe("Validation failed");
     });
 
     test("should handle unauthorized access", async () => {
-      const response = await testRoute(() => {
+      const res = await testRoute(() => {
         const authToken = headers.get("authorization");
 
         if (!authToken) {
-          status(401);
+          response.status(401);
           setHeader("www-authenticate", "Bearer");
           return { error: "Unauthorized" };
         }
@@ -120,8 +120,8 @@ describe("HTTP Integration Tests", () => {
         return { success: true };
       });
 
-      expectStatus(response, 401);
-      expectHeader(response, "www-authenticate", "Bearer");
+      expectStatus(res, 401);
+      expectHeader(res, "www-authenticate", "Bearer");
     });
   });
 
@@ -152,11 +152,11 @@ describe("HTTP Integration Tests", () => {
     });
 
     test("should handle POST request creating resource", async () => {
-      const response = await testRoute(
+      const res = await testRoute(
         () => {
           const data = body<{ title: string; content: string }>();
 
-          status(201);
+          response.status(201);
           setHeader("location", "/api/posts/123");
 
           return {
@@ -174,9 +174,9 @@ describe("HTTP Integration Tests", () => {
         }
       );
 
-      expectStatus(response, 201);
-      expectHeader(response, "location", "/api/posts/123");
-      const payload = response.body as any;
+      expectStatus(res, 201);
+      expectHeader(res, "location", "/api/posts/123");
+      const payload = res.body as any;
       expect(payload.id).toBe("123");
       expect(payload.title).toBe("New Post");
     });

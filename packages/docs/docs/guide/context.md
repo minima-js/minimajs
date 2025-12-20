@@ -14,7 +14,7 @@ The concept of Context is fundamental to backend development, and it's a core fe
 Let's delve into this concept with examples:
 
 ```typescript
-import { getSearchParam, createContext } from "@minimajs/server";
+import { searchParams, createContext } from "@minimajs/server";
 
 // Create a context for storing and retrieving a message
 const [getMessage, setMessage] = createContext<string>("");
@@ -27,7 +27,7 @@ function somethingForHello() {
 
 // Request handler for the '/hello' endpoint
 function helloHandler() {
-  const message = getSearchParam("message");
+  const message = searchParams.get("message");
   setMessage(`Hello ${message}`); // Set the message for the request scope
   somethingForHello(); // Use the message
 }
@@ -58,14 +58,14 @@ export const [getUser, setUser] = createContext<User>({ name: "" });
 **Creating a Middleware**
 
 ```ts title="src/hello/middleware.ts"
-import { getHeaders } from "@minimajs/server";
+import { headers } from "@minimajs/server";
 import { setUser } from "./context";
 
 // Middleware to intercept and set user data from headers
 function userInterceptor() {
-  const headers = getHeaders();
-  if (headers["x-user"]) {
-    setUser(JSON.parse(headers["x-user"]));
+  const xUser = headers.get("x-user");
+  if (xUser) {
+    setUser(JSON.parse(xUser));
   }
 }
 ```

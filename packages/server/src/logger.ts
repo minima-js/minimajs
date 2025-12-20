@@ -1,6 +1,6 @@
 import { pino, type LoggerOptions } from "pino";
 import merge from "deepmerge";
-import { getContextOrNull as getContext } from "./context.js";
+import { maybeContext } from "./context.js";
 import type { App, Dict, Request } from "./types.js";
 import { kPluginNameChain, kRequestContext } from "./internal/fastify.js";
 
@@ -40,7 +40,7 @@ function getHandler(req: Request) {
 const kModuleName = Symbol("module name");
 
 function getModuleName() {
-  const ctx = getContext();
+  const ctx = maybeContext();
   if (!ctx) {
     return null;
   }

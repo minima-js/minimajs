@@ -11,9 +11,9 @@ import {
 } from "yup";
 
 import { extractTests, FileSchema, getTestMaxSize, type ExtractTest } from "./schema.js";
-import { getBody } from "../multipart.js";
+import { multipart } from "../multipart.js";
 import { isFile, type File } from "../file.js";
-import { createContext, getSignal } from "@minimajs/server/context";
+import { context, createContext } from "@minimajs/server/context";
 import { defer, getHeader } from "@minimajs/server";
 import { v4 as uuid } from "uuid";
 import { tmpdir } from "node:os";
@@ -107,14 +107,14 @@ export function createMultipartUpload<T extends ObjectShape>(obj: T, option: Upl
     }
     defer(cleanup);
     try {
-      const signal = getSignal();
+      const signal = context.signal();
       const existingBody = getMultipartMeta();
       if (existingBody) {
         return existingBody as any;
       }
       const data: any = {};
       setMultipartMeta(data);
-      for await (const [name, body] of getBody()) {
+      for await (const [name, body] of multipart.body()) {
         const singleSchema = obj[name] as Schema;
         if (isFile(body)) {
           if (singleSchema instanceof ArraySchema && singleSchema.innerType instanceof FileSchema) {

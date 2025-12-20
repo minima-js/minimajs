@@ -17,11 +17,11 @@ Here's how to integrate it into your code:
 **Example:**
 
 ```typescript title="src/services/index.ts"
-import { logger, type App, getSearchParams } from "@minimajs/server";
+import { logger, type App, searchParams } from "@minimajs/server";
 
 async function serviceHandler() {
   // Log request details with search parameters
-  logger.info("received service request with %o", getSearchParams());
+  logger.info("received service request with %o", searchParams());
   return "service request";
 }
 

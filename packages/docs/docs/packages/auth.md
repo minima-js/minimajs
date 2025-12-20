@@ -19,9 +19,10 @@ Interceptors are middleware functions that intercept incoming requests before th
 
 ```typescript title="src/auth/interceptor.ts"
 import { createAuth, UnauthorizedError } from "@minimajs/auth";
+import { headers } from "@minimajs/server";
 
 export const [authMiddleware, guard, getUser] = createAuth(async () => {
-  const token = getHeader("x-user-token");
+  const token = headers.get("x-user-token");
   const user = await User.findByToken(token);
   if (!user) {
     throw new UnauthorizedError("Invalid credentials");
