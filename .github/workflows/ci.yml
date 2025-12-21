@@ -21,9 +21,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Enable Corepack
-        run: corepack enable
-
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
@@ -41,8 +38,8 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      - name: Run tests
-        run: yarn test
-
       - name: Build packages
         run: yarn build
+
+      - name: Run tests
+        run: yarn test
