@@ -57,6 +57,6 @@ jobs:
       - name: Deploy to minima-js.github.io
         uses: peaceiris/actions-gh-pages@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          personal_token: ${{ secrets.TOKEN_DOCS }}
           external_repository: minima-js/minima-js.github.io
           publish_dir: packages/docs/.vitepress/dist
