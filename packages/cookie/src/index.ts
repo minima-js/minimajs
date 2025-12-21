@@ -9,43 +9,65 @@ export interface GetCookieOption {
   signed?: boolean;
 }
 
-export { getCookie };
-function getCookie<T extends GetCookieOption>(
-  name: string,
-  options?: T
-): T extends { required: true } ? string : string | undefined;
-function getCookie(name: string, { required, signed }: GetCookieOption = {}) {
-  const { cookies, unsignCookie } = getRequest();
-  if (!(name in cookies)) {
-    if (!required) return;
-    throw assign(new ValidationError(`Cookie \`${name}\` is required`), {
-      code: "COOKIE_NOT_FOUND",
-    });
-  }
-  const cookie = cookies[name]!;
-  if (!signed) return cookie;
-  const unsigned = unsignCookie(cookie);
-  if (!unsigned.valid) {
-    if (!required) return;
-    throw assign(new ValidationError(`Cookie \`${name}\` is not valid`), {
-      code: "COOKIE_NOT_VALID",
-    });
-  }
-  return unsigned.value!;
-}
-
-export function getCookies() {
+/**
+ * Get all cookies as a record with optional type parameter
+ * @returns Record of all cookies
+ */
+export function cookies<T = Record<string, string>>(): T {
   const req = getRequest();
-  return req.cookies as unknown as Record<string, string>;
+  return req.cookies as unknown as T;
 }
 
-export function setCookie(name: string, value: string, options?: CookieSerializeOptions) {
-  const reply = getResponse();
-  return reply.setCookie(name, value, options);
-}
+export namespace cookies {
+  /**
+   * Get a specific cookie by name
+   * @param name - The cookie name
+   * @param options - Optional configuration for required and signed cookies
+   * @returns The cookie value, or undefined if not found (unless required is true)
+   */
+  export function get<T extends GetCookieOption>(
+    name: string,
+    options?: T
+  ): T extends { required: true } ? string : string | undefined;
+  export function get(name: string, { required, signed }: GetCookieOption = {}) {
+    const { cookies: cookieMap, unsignCookie } = getRequest();
+    if (!(name in cookieMap)) {
+      if (!required) return;
+      throw assign(new ValidationError(`Cookie \`${name}\` is required`), {
+        code: "COOKIE_NOT_FOUND",
+      });
+    }
+    const cookie = cookieMap[name]!;
+    if (!signed) return cookie;
+    const unsigned = unsignCookie(cookie);
+    if (!unsigned.valid) {
+      if (!required) return;
+      throw assign(new ValidationError(`Cookie \`${name}\` is not valid`), {
+        code: "COOKIE_NOT_VALID",
+      });
+    }
+    return unsigned.value!;
+  }
 
-export function deleteCookie(name: string, options?: CookieSerializeOptions) {
-  return getResponse().clearCookie(name, options);
+  /**
+   * Set a cookie
+   * @param name - The cookie name
+   * @param value - The cookie value
+   * @param options - Optional cookie serialization options
+   */
+  export function set(name: string, value: string, options?: CookieSerializeOptions) {
+    const reply = getResponse();
+    reply.setCookie(name, value, options);
+  }
+
+  /**
+   * Delete a cookie
+   * @param name - The cookie name
+   * @param options - Optional cookie serialization options
+   */
+  export function remove(name: string, options?: CookieSerializeOptions) {
+    getResponse().clearCookie(name, options);
+  }
 }
 
 export { type CookieSerializeOptions };
