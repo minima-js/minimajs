@@ -28,22 +28,18 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version-file: ".node-version"
-          cache: 'yarn'
+          cache: "yarn"
 
       - name: Cache Turbo
-        uses: actions/cache@v6
+        uses: actions/cache@v5
         with:
           path: .turbo
-          key: ${{ runner.os }}-turbo-${{ hashFiles('**/package.json', '**/yarn.lock', 'turbo.json') }}
+          key: ${{ runner.os }}-turbo-${{ hashFiles('**/yarn.lock', 'turbo.json') }}
           restore-keys: |
             ${{ runner.os }}-turbo-
 
       - name: Install dependencies
         run: yarn install --immutable
-
-      - name: Lint (if configured)
-        run: yarn turbo run lint
-        continue-on-error: true
 
       - name: Run tests
         run: yarn test
