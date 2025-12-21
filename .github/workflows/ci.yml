@@ -26,6 +26,7 @@ jobs:
         with:
           node-version-file: ".node-version"
           cache: "yarn"
+          enable-corepack: true
 
       - name: Cache Turbo
         uses: actions/cache@v5
