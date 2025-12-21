@@ -2,6 +2,7 @@
   "name": "@minimajs/disk",
   "version": "0.0.1",
   "type": "module",
+  "private": true,
   "devDependencies": {
     "@types/node": "^25.0.3"
   }

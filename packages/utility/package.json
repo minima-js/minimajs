@@ -2,10 +2,9 @@
   "name": "@minimajs/utility",
   "version": "0.0.1",
   "type": "module",
+  "private": true,
   "exports": "./lib/index.js",
-  "scripts": {
-    "dev": "tsc -w"
-  },
+  "scripts": {},
   "devDependencies": {
     "@types/node": "^25.0.3"
   }
