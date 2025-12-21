@@ -3,7 +3,7 @@ title: Multipart
 sidebar_position: 3
 ---
 
-## Efficient Multipart Data Handling in MinimaJS
+## Efficient Multipart Data Handling in Minima\.js
 
 **Installation:**
 

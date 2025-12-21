@@ -335,9 +335,9 @@ that's easy. you just need to create a response decorator and register it.
 Creating a decorator
 
 ```ts title="src/decorator.ts"
-import { createResponseDecorator } from "@minimajs/server/response";
+import { interceptor } from "@minimajs/server";
 
-export const decorateResponse = createResponseDecorator((response) => {
+export const decorateResponse = interceptor.response((response) => {
   return { decorated: true, data: response };
 });
 ```
@@ -371,6 +371,57 @@ function saveUser() {
   // highlight-end
 }
 ```
+
+### hook
+
+The `hook` function creates lifecycle hook plugins that execute at specific points in the application lifecycle.
+
+**Available lifecycle events:**
+- `ready` - Executes when the application is ready
+- `close` - Executes when the application is closing
+- `listen` - Executes when the server starts listening
+- `send` - Executes before sending the response
+- `serialize` - Executes during response serialization
+- `register` - Executes when a plugin is registered
+
+**Basic Usage:**
+
+```ts
+import { createApp, hook } from "@minimajs/server";
+
+const app = createApp();
+
+// Register a hook that runs when the app is ready
+app.register(hook("ready", async () => {
+  console.log("Application is ready!");
+}));
+
+// Register a hook that runs when the app is closing
+app.register(hook("close", async () => {
+  console.log("Application shutting down");
+}));
+```
+
+**Composing Multiple Hooks:**
+
+Use `plugin.compose` to register multiple hooks together:
+
+```ts
+import { createApp, hook, plugin } from "@minimajs/server";
+
+const closeDB = hook("close", async () => {
+  await connection.close();
+});
+
+const connectDB = hook("ready", async () => {
+  await connection.connect();
+});
+
+// Compose and register both hooks together
+app.register(plugin.compose(connectDB, closeDB));
+```
+
+For more information about composing plugins, see the [Plugin guide](/guide/plugin).
 
 ## Exceptions
 

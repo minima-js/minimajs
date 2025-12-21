@@ -4,7 +4,7 @@ sidebar_position: 1
 title: "Introduction"
 ---
 
-# Minima.js: Where Efficiency Meets Elegance
+# Minima\.js: Where Efficiency Meets Elegance
 
 Minima.js is a cutting-edge Node.js framework meticulously designed to empower developers to construct contemporary web applications with exceptional efficiency and elegance.
 

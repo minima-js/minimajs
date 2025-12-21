@@ -5,6 +5,10 @@ export default defineConfig({
   description: "A cutting-edge Node.js framework for modern web applications",
   base: "/",
   srcDir: "docs",
+  cleanUrls: true,
+  rewrites: {
+    "api/README.md": "api/index.md",
+  },
 
   themeConfig: {
     logo: "/logo.svg",
@@ -13,13 +17,16 @@ export default defineConfig({
       { text: "Home", link: "/" },
       { text: "Guide", link: "/guide/getting-started" },
       { text: "Packages", link: "/packages/auth" },
-      { text: "API Reference", link: "/api/readme" },
+      { text: "API Reference", link: "/api/" },
     ],
 
     sidebar: [
       {
         text: "Introduction",
-        items: [{ text: "Getting Started", link: "/guide/getting-started" }],
+        items: [
+          { text: "Getting Started", link: "/guide/getting-started" },
+          { text: "MinimaJS vs Others", link: "/minimajs-vs-crowd" },
+        ],
       },
       {
         text: "Guide",
@@ -31,6 +38,7 @@ export default defineConfig({
           { text: "Module", link: "/guide/module" },
           { text: "Error Handling", link: "/guide/error" },
           { text: "Logger", link: "/guide/logger" },
+          { text: "Plugin", link: "/guide/plugin" },
           { text: "Graceful Shutdown", link: "/guide/graceful-shutdown" },
         ],
       },

@@ -1,11 +1,12 @@
-import { hooks } from "../internal/context.js";
+import { context } from "../internal/context.js";
 
 /**
  * Dispatches all registered onSent hooks for the current request.
  * Called after a response has been sent to execute cleanup or post-response tasks.
  */
 export async function dispatchSent() {
-  for (const hook of hooks().onSent) {
+  const { hooks } = context();
+  for (const hook of hooks.onSent) {
     await hook();
   }
 }
@@ -15,7 +16,8 @@ export async function dispatchSent() {
  * Called when an error occurs to execute error handling callbacks.
  */
 export async function dispatchError(_: {}, _1: {}, error: unknown) {
-  for (const hook of hooks().onError) {
+  const { hooks } = context();
+  for (const hook of hooks.onError) {
     await hook(error);
   }
 }

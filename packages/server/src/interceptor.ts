@@ -1,7 +1,9 @@
 import type { preHandlerAsyncHookHandler, preHandlerHookHandler } from "fastify";
 import type { App, Plugin, PluginOptions, Request, Response } from "./types.js";
-import { setPluginOption } from "./internal/plugins.js";
+import { setOption } from "./internal/plugins.js";
 import { isAsyncFunction } from "node:util/types";
+import { createResponseDecorator } from "./response.js";
+import { createErrorDecorator } from "./error.js";
 
 export type PluginCallback<T extends PluginOptions> = Plugin<T> | Promise<{ default: Plugin<T> }>;
 
@@ -51,10 +53,39 @@ export function interceptor<T extends PluginOptions = {}>(
     callback = await toCallback(callback);
     return callback(app, appOpt);
   }
-  setPluginOption(module, {
+  setOption(module, {
     name: getModuleName(callback, opt),
   });
   return module;
+}
+
+export namespace interceptor {
+  /**
+   * Creates a response decorator plugin that transforms response bodies before sending.
+   * Decorators are executed in sequence and can be registered at both app and module levels.
+   * Module-level decorators only apply to routes within that module.
+   *
+   * @param decorator - A function that transforms the response body
+   * @returns A plugin that can be registered with `app.register()`
+   *
+   * @example
+   * ```ts
+   * import { response } from '@minimajs/server';
+   * app.register(
+   *   response.decorate((body) => ({
+   *     success: true,
+   *     data: body
+   *   }))
+   * );
+   *
+   * app.get('/', () => 'hello');
+   * // Returns: { success: true, data: 'hello' }
+   * ```
+   * @since v0.2.0
+   */
+  export const response = createResponseDecorator;
+
+  export const error = createErrorDecorator;
 }
 
 export type InterceptorFilter = (req: Request) => boolean | Promise<boolean>;
