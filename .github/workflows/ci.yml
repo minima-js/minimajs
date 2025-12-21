@@ -21,12 +21,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version-file: ".node-version"
           cache: "yarn"
-          enable-corepack: true
 
       - name: Cache Turbo
         uses: actions/cache@v5
