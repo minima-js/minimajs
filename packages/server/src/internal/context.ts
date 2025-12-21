@@ -11,7 +11,7 @@ export interface Hooks {
   onError: Set<ErrorHookCallback>;
 }
 
-interface Context {
+export interface Context {
   readonly req: Request;
   readonly reply: Response;
   readonly local: Map<symbol, unknown>;
@@ -38,16 +38,12 @@ export function safe<T, U extends unknown[]>(cb: (...args: U) => T) {
   return (...args: U) => contextStorage.run(null as any, cb, ...args) as T;
 }
 
-export function getHooks() {
-  return getContext().hooks;
-}
-
-export function getContext() {
+export function context() {
   const context = contextStorage.getStore();
   assert(context, "Unable to access the context beyond the request scope.");
   return context;
 }
 
-export function getContextOrNull() {
+export function maybeContext() {
   return contextStorage.getStore() || null;
 }

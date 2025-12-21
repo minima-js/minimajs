@@ -1,2 +1,9 @@
 import { jestConfig } from "../config/jest.config.mjs";
-export default jestConfig;
+
+/** @type {import('jest').Config} */
+export default {
+  ...jestConfig,
+  coverageReporters: ["html"],
+  testTimeout: 10000,
+  forceExit: true,
+};

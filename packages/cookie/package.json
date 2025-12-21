@@ -1,6 +1,7 @@
 {
   "name": "@minimajs/cookie",
   "version": "1.0.0",
+  "description": "Type-safe cookie management with validation and schema support",
   "type": "module",
   "exports": {
     ".": "./lib/index.js",
@@ -14,9 +15,9 @@
   "devDependencies": {
     "@minimajs/schema": "workspace:^",
     "@minimajs/server": "workspace:^",
-    "@types/node": "^24.1.0",
-    "fastify": "^5.4.0",
-    "yup": "^1.6.1"
+    "@types/node": "^25.0.3",
+    "fastify": "^5.6.2",
+    "yup": "^1.7.1"
   },
   "peerDependencies": {
     "@minimajs/schema": ">=1.0.0",

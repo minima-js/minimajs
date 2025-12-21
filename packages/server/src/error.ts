@@ -6,7 +6,16 @@ import { skipResponseDecorator } from "./utils/decorators/index.js";
 
 export type { ErrorDecorator } from "./utils/decorators/index.js";
 
+/**
+ * Represents the response body of an HTTP error.
+ * Can be either a simple string message or a dictionary object with custom error data.
+ */
 export type ErrorResponse = string | Dict;
+
+/**
+ * Represents an HTTP status code.
+ * Can be either a named status code from the StatusCodes enum or a numeric status code.
+ */
 export type StatusCode = keyof typeof StatusCodes | number;
 
 export abstract class BaseHttpError extends Error {
@@ -109,7 +118,17 @@ export class ForbiddenError extends HttpError {
 
 const [createErrorDecorator, getDecoratedError] = createErrorDecoratorHandler();
 
+/**
+ * Global error handler for HTTP requests.
+ * Processes errors, applies error decorators, and renders appropriate error responses.
+ * Handles request aborted errors silently and converts unknown errors to HTTP errors.
+ */
 export async function errorHandler(error: unknown, req: Request, reply: Response) {
+  if (error instanceof RedirectError) {
+    error.render(req, reply);
+    reply.hijack(); // block further response
+    return;
+  }
   if (isRequestAbortedError(error)) {
     return;
   }
@@ -122,7 +141,13 @@ export async function errorHandler(error: unknown, req: Request, reply: Response
   } catch (err) {
     error = err;
   }
-  const handler = BaseHttpError.is(error) ? error : (req.server.log.error(error), HttpError.create(error));
+  let handler: BaseHttpError;
+  if (BaseHttpError.is(error)) {
+    handler = error;
+  } else {
+    req.server.log.error(error);
+    handler = HttpError.create(error);
+  }
   await handler.render(req, reply);
   reply.hijack(); // block further response
 }

@@ -1,6 +1,7 @@
 {
   "name": "@minimajs/schema",
   "version": "1.0.0",
+  "description": "Schema validation powered by Yup for request/response validation with type safety",
   "type": "module",
   "exports": {
     ".": "./lib/index.js",
@@ -12,7 +13,7 @@
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "dependencies": {
-    "yup": "^1.6.1"
+    "yup": "^1.7.1"
   },
   "peerDependencies": {
     "@minimajs/server": ">=0.3.0",
@@ -20,7 +21,7 @@
   },
   "devDependencies": {
     "@minimajs/server": "workspace:^",
-    "@types/node": "^24.1.0"
+    "@types/node": "^25.0.3"
   },
   "files": [
     "lib"

@@ -1,4 +1,4 @@
-import { createApp, getRoute, middleware } from "./index.js";
+import { createApp, middleware, request } from "./index.js";
 import type { App } from "./types.js";
 import { jest } from "@jest/globals";
 
@@ -22,7 +22,7 @@ describe("middleware", () => {
     const hello = jest.fn().mockReturnValue(Promise.resolve());
     app.register(
       middleware(async () => hello()),
-      { filter: () => getRoute().url === "/hello" }
+      { filter: () => request.route().url === "/hello" }
     );
     app.get("/", () => {
       return "home";

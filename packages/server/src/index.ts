@@ -1,7 +1,7 @@
 import type { Server } from "node:http";
 import fastify, { type FastifyBaseLogger } from "fastify";
 import merge from "deepmerge";
-import { appPlugin } from "./internal/plugins.js";
+import { minimajs } from "./internal/plugins.js";
 import type { App, AppOptions } from "./types.js";
 import { loggerOptions } from "./logger.js";
 import { shutdownListener } from "./shutdown.js";
@@ -15,7 +15,12 @@ export * from "./middleware.js";
 
 export { createContext } from "./context.js";
 export { logger } from "./logger.js";
+export { plugin } from "./internal/plugins.js";
 
+/**
+ * Merges user-provided app options with default configuration values.
+ * Handles logger configuration override and merging with default logger options.
+ */
 function getDefaultConfig({ logger: loggerOverride, ...override }: AppOptions): AppOptions {
   let logger = loggerOptions as FastifyBaseLogger;
   if (loggerOverride && loggerOverride !== true) {
@@ -34,7 +39,7 @@ function getDefaultConfig({ logger: loggerOverride, ...override }: AppOptions): 
 export function createApp({ killSignal = ["SIGTERM"], routes = { log: true }, ...opts }: AppOptions = {}): App {
   const app = fastify<Server>(getDefaultConfig(opts));
   shutdownListener(() => app.close(), killSignal, app.log, process);
-  app.register(appPlugin);
+  app.register(minimajs);
   if (routes.log) {
     app.addHook("onReady", () => logRoutes(app));
   }

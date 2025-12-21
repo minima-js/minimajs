@@ -7,7 +7,7 @@ tags:
 
 ## Customizing Error Responses
 
-When it comes to handling errors in your application, customization is key. Here are three ways you can customize error responses in Minimajs
+When it comes to handling errors in your application, customization is key. Here are three ways you can customize error responses in Minima.js
 
 ### HttpError.toJSON
 
@@ -21,16 +21,16 @@ HttpError.toJSON = function (err: HttpError) {
 };
 ```
 
-### createErrorDecorator
+### interceptor.error
 
-The `createErrorDecorator` function allows you to customize error responses at the root level or module level of your application. Here's how you can use it:
+The `interceptor.error` function allows you to customize error responses at the root level or module level of your application. Here's how you can use it:
 
 ```typescript
-import { createApp, abort, type App } from "@minimajs/server";
-import { HttpError, createErrorDecorator } from "@minimajs/server/error";
+import { createApp, abort, type App, interceptor } from "@minimajs/server";
+import { HttpError } from "@minimajs/server/error";
 
 // highlight-start
-export const errorDecorator = createErrorDecorator((err) => {
+export const errorDecorator = interceptor.error((err) => {
   if (!HttpError.is(err)) {
     return err; // do not handle if this is not HttpError error
   }

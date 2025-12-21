@@ -21,7 +21,7 @@ export interface PluginOptions extends FastifyPluginOptions {
 }
 
 /**
- * The App interface in Minimajs represents a customized server instance equipped for handling requests.
+ * The App interface in Minima.js represents a customized server instance equipped for handling requests.
  */
 export interface App extends FastifyInstance {
   [kPluginNameChain]?: string[];

@@ -41,14 +41,16 @@ tags:
 
 ### Request
 
-- getRequest()
-- getHeader()
-- getQuery()
+- request() / request.url() / request.route()
+- headers() / headers.get() / headers.getAll()
+- searchParams() / searchParams.get() / searchParams.getAll()
+- params() / params.get() / params.optional()
+- body()
 
 ### Response
 
-- setHeader()
-- setStatusCode()
+- response() / response.status()
+- headers.set()
 - redirect()
 - stream and iterable
 

@@ -8,7 +8,7 @@ Introducing the groundbreaking HTTP framework for Node.js - an innovation tailor
 
 - **Mandatory ESM Adoption**: mandates the adoption of ECMAScript Modules (ESM) over CommonJS, ensuring developers unlock the full potential of modern JavaScript features like root-level await, code splitting and more...
 
-- **Instant Context Access**: seamless access to request data like headers or body with functions like `getRequest()` and `getBody()` anywhere within the same request context. Say goodbye to tedious `req`/`res` drilling.
+- **Instant Context Access**: seamless access to request data like headers or body with functions like `request()` and `body()` anywhere within the same request context. Say goodbye to tedious `req`/`res` drilling.
 
 - **No Boilerplate Needed**: Bid farewell to boilerplate code. With its minimalist approach, eliminates unnecessary setup and configuration.
 

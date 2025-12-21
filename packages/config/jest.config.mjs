@@ -1,4 +1,5 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} **/
+
 export const jestConfig = {
   testEnvironment: "node",
   rootDir: "src",
@@ -10,4 +11,7 @@ export const jestConfig = {
   transform: {
     "^.+.tsx?$": ["ts-jest", { useESM: true }],
   },
+  // Additions to ignore __tests__ directory
+  testPathIgnorePatterns: ["<rootDir>/__tests__/", "/node_modules/"],
+  coveragePathIgnorePatterns: ["<rootDir>/__tests__/", "/node_modules/"],
 };

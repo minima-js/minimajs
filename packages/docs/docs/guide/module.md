@@ -7,7 +7,7 @@ tags:
   - interceptor
 ---
 
-# In Minimajs, everything is a module.
+# In Minima\.js, everything is a module.
 
 **And a module is essentially an asynchronous function.**
 

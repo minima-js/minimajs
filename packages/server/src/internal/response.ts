@@ -42,7 +42,9 @@ export function handleResponse(request: Request, response: Response, body: unkno
     });
     return;
   }
-  getDecoratedResponse(request.server, request, body)
-    .then((res) => next(null, res))
-    .catch(next);
+
+  function onResponse(body: unknown) {
+    next(null, body);
+  }
+  getDecoratedResponse(request.server, request, body).then(onResponse).catch(next);
 }

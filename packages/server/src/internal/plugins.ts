@@ -2,51 +2,89 @@ import type { Server } from "node:http";
 import { handleResponse } from "./response.js";
 import { wrap } from "./context.js";
 import { NotFoundError, errorHandler } from "../error.js";
-import type { FastifyPluginAsync, FastifyPluginCallback } from "fastify";
+import type { FastifyPluginAsync, FastifyPluginCallback, FastifyPluginOptions } from "fastify";
 import { dispatchError, dispatchSent } from "../hooks/dispatch.js";
+import { isAsyncFunction } from "node:util/types";
 
 export interface PluginOption {
   name?: string;
   override?: boolean;
 }
 
-const pluginOptionMappings: Record<string, symbol> = {
+const pluginOptionMappings: { [K in keyof PluginOption]-?: symbol } = {
   name: Symbol.for("fastify.display-name"),
   override: Symbol.for("skip-override"),
 };
-
-export function setPluginOption(cb: any, options: PluginOption) {
+export function setOption(cb: PluginCallbackSync<any>, options: PluginOption) {
   for (const [name, value] of Object.entries(options)) {
-    const option = pluginOptionMappings[name]!;
-    cb[option] = value;
+    const option = pluginOptionMappings[name as keyof PluginOption];
+    (cb as any)[option] = value;
   }
   return cb;
 }
-
-type BaseApp = Record<string | number | symbol, any>;
-type AppOptions<T extends BaseApp> = T & {
+type AppOptions<T> = T & {
   prefix?: string;
 };
-type PluginCallbackSync<T extends BaseApp> = FastifyPluginCallback<AppOptions<T>, Server>;
-type PluginCallback<T extends BaseApp> = FastifyPluginAsync<AppOptions<T>, Server>;
+type PluginCallbackSync<T> = FastifyPluginCallback<AppOptions<T>, Server>;
+type PluginCallback<T> = FastifyPluginAsync<AppOptions<T>, Server>;
 
-export function createPluginSync<T extends BaseApp>(fn: PluginCallbackSync<T>, name?: string) {
-  setPluginOption(fn, { override: true });
+export function plugin<T>(fn: PluginCallback<T>, name?: string) {
+  setOption(fn, { override: true });
   if (name) {
-    setPluginOption(fn, { name });
+    setOption(fn, { name });
   }
   return fn;
 }
 
-export function createPlugin<T extends BaseApp>(fn: PluginCallback<T>, name?: string) {
-  setPluginOption(fn, { override: true });
-  if (name) {
-    setPluginOption(fn, { name });
+type Plugin<Opts extends FastifyPluginOptions> = FastifyPluginCallback<Opts> | FastifyPluginAsync<Opts>;
+
+/**
+ * Plugin utilities namespace providing helper functions for creating and composing Fastify plugins.
+ */
+export namespace plugin {
+  export function sync<T>(fn: PluginCallbackSync<T>, name?: string) {
+    setOption(fn, { override: true });
+    if (name) {
+      setOption(fn, { name });
+    }
+    return fn;
   }
-  return fn;
+
+  /**
+   * Type guard to check if a plugin is async or sync.
+   * Uses Node.js util.types.isAsyncFunction to determine if the plugin is an async function.
+   */
+  function isAsync<Opts extends FastifyPluginOptions>(plg: Plugin<Opts>): plg is FastifyPluginAsync {
+    return isAsyncFunction(plg);
+  }
+
+  /**
+   * Composes multiple plugins into a single plugin that registers all of them.
+   *
+   * @example
+   * ```typescript
+   * const closeDB = hook("close", async () => await connection.close());
+   * const connectDB = hook("ready", async () => await connection.connect());
+   *
+   * app.register(plugin.compose(connectDB, closeDB));
+   * ```
+   */
+  export function compose<Opts extends FastifyPluginOptions>(...plugins: Plugin<Opts>[]) {
+    return plugin<Opts>(async function composed(app, opts) {
+      for (const plg of plugins) {
+        if (isAsync(plg)) {
+          await plg(app, opts);
+          continue;
+        }
+        await new Promise<void>((resolve, reject) => {
+          plg(app, opts, (err) => (err ? reject(err) : resolve()));
+        });
+      }
+    }, `compose(${plugins.map((p) => p.name || "anonymous").join(",")})`);
+  }
 }
 
-export const appPlugin = createPluginSync(function minimajs(fastify, _, next) {
+export const minimajs = plugin.sync(function minimajs(fastify, _, next) {
   fastify.setErrorHandler(errorHandler);
   fastify.setNotFoundHandler((req, res) => errorHandler(new NotFoundError(), req, res));
   fastify.addContentTypeParser("multipart/form-data", (_, _1, next) => {

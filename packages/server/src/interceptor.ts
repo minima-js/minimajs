@@ -1,7 +1,9 @@
 import type { preHandlerAsyncHookHandler, preHandlerHookHandler } from "fastify";
 import type { App, Plugin, PluginOptions, Request, Response } from "./types.js";
-import { setPluginOption } from "./internal/plugins.js";
+import { setOption } from "./internal/plugins.js";
 import { isAsyncFunction } from "node:util/types";
+import { createResponseDecorator } from "./response.js";
+import { createErrorDecorator } from "./error.js";
 
 export type PluginCallback<T extends PluginOptions> = Plugin<T> | Promise<{ default: Plugin<T> }>;
 
@@ -15,8 +17,8 @@ async function toCallback<T extends PluginOptions = {}>(callback: PluginCallback
   return callback;
 }
 
-function getModuleName(callback: any, opt: InterceptorOption) {
-  return opt.name ?? callback.name;
+function getModuleName(callback: PluginCallback<any>, opt: InterceptorOption) {
+  return opt.name ?? (callback as any).name;
 }
 
 export interface InterceptorOption {
@@ -24,7 +26,8 @@ export interface InterceptorOption {
 }
 /**
  * Attach middleware(s) to the module.
- * @example ```ts
+ * @example
+ * ```ts
  * // hello/index.ts
  * import { interceptor, getRequest, type App } from '@minimajs/server'
  * function logRequest() {
@@ -50,14 +53,47 @@ export function interceptor<T extends PluginOptions = {}>(
     callback = await toCallback(callback);
     return callback(app, appOpt);
   }
-  setPluginOption(module, {
+  setOption(module, {
     name: getModuleName(callback, opt),
   });
   return module;
 }
 
+export namespace interceptor {
+  /**
+   * Creates a response decorator plugin that transforms response bodies before sending.
+   * Decorators are executed in sequence and can be registered at both app and module levels.
+   * Module-level decorators only apply to routes within that module.
+   *
+   * @param decorator - A function that transforms the response body
+   * @returns A plugin that can be registered with `app.register()`
+   *
+   * @example
+   * ```ts
+   * import { response } from '@minimajs/server';
+   * app.register(
+   *   response.decorate((body) => ({
+   *     success: true,
+   *     data: body
+   *   }))
+   * );
+   *
+   * app.get('/', () => 'hello');
+   * // Returns: { success: true, data: 'hello' }
+   * ```
+   * @since v0.2.0
+   */
+  export const response = createResponseDecorator;
+
+  export const error = createErrorDecorator;
+}
+
 export type InterceptorFilter = (req: Request) => boolean | Promise<boolean>;
 
+/**
+ * Creates a filtered interceptor that only executes when the filter function returns true.
+ * Wraps an interceptor with conditional execution based on request properties.
+ */
 export function filter(handler: Interceptor, handlerFilter: InterceptorFilter) {
   const pluginHandler: preHandlerAsyncHookHandler = async (req, res) => {
     if (!(await handlerFilter(req))) {
@@ -72,6 +108,10 @@ function isAsyncHandler(handler: Interceptor): handler is preHandlerAsyncHookHan
   return isAsyncFunction(handler);
 }
 
+/**
+ * Invokes an interceptor handler, normalizing both sync and async handlers.
+ * Handles both callback-based and promise-based interceptors uniformly.
+ */
 export function invokeHandler(handler: Interceptor, app: App, req: Request, res: Response) {
   if (isAsyncHandler(handler)) {
     return handler.call(app, req, res);

@@ -15,13 +15,14 @@ Interceptors and authorization play crucial roles in ensuring the security and i
 
 ## Creating Interceptors
 
-Interceptors are middleware functions that intercept incoming requests before they reach the route handler. They are useful for performing tasks such as authentication, logging, or data transformation. Here's how you can create an interceptor for authentication using MinimaJS:
+Interceptors are middleware functions that intercept incoming requests before they reach the route handler. They are useful for performing tasks such as authentication, logging, or data transformation. Here's how you can create an interceptor for authentication using Minima.js:
 
 ```typescript title="src/auth/interceptor.ts"
 import { createAuth, UnauthorizedError } from "@minimajs/auth";
+import { headers } from "@minimajs/server";
 
 export const [authMiddleware, guard, getUser] = createAuth(async () => {
-  const token = getHeader("x-user-token");
+  const token = headers.get("x-user-token");
   const user = await User.findByToken(token);
   if (!user) {
     throw new UnauthorizedError("Invalid credentials");
@@ -105,4 +106,4 @@ app.register(interceptor([authMiddleware, admin()], authenticatedModule));
 
 ## Conclusion
 
-Interceptors and authorization guards are powerful features provided by MinimaJS for ensuring the security and integrity of your application. By creating custom interceptors and guards, you can implement robust authentication and authorization mechanisms tailored to your application's requirements. With MinimaJS, protecting your routes and ensuring data security has never been easier.
+Interceptors and authorization guards are powerful features provided by Minima.js for ensuring the security and integrity of your application. By creating custom interceptors and guards, you can implement robust authentication and authorization mechanisms tailored to your application's requirements. With Minima.js, protecting your routes and ensuring data security has never been easier.

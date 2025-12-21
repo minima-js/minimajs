@@ -3,7 +3,7 @@ title: Multipart
 sidebar_position: 3
 ---
 
-## Efficient Multipart Data Handling in MinimaJS
+## Efficient Multipart Data Handling in Minima\.js
 
 **Installation:**
 
@@ -13,13 +13,13 @@ npm install @minimajs/multipart
 
 - **Targeted File Access:**
 
-  The `getFile(field: string)` function retrieves a specific file from the multipart request based on its field name.
+  The `multipart.file(field: string)` function retrieves a specific file from the multipart request based on its field name.
 
   ```typescript
-  import { getFile } from "@minimajs/multipart";
+  import { multipart } from "@minimajs/multipart";
 
   async function handleFile(fieldName: string) {
-    const uploadedFile = await getFile(fieldName);
+    const uploadedFile = await multipart.file(fieldName);
     const fileBuffer = await uploadedFile.buffer();
     // Process the file buffer as needed...
   }
@@ -27,13 +27,13 @@ npm install @minimajs/multipart
 
 - **Iterating Over Multiple Files:**
 
-  The `getFiles()` function provides an asynchronous iterator that allows you to efficiently process each uploaded file sequentially.
+  The `multipart.files()` function provides an asynchronous iterator that allows you to efficiently process each uploaded file sequentially.
 
   ```typescript
-  import { getFiles } from "@minimajs/multipart";
+  import { multipart } from "@minimajs/multipart";
 
   async function handleMultipleFiles() {
-    for await (const file of getFiles()) {
+    for await (const file of multipart.files()) {
       console.log(`Received file: ${file.name}`);
       // Process each uploaded file...
     }
@@ -42,11 +42,13 @@ npm install @minimajs/multipart
 
 - **Retrieving Form Field Values:**
 
-  The `getFields()` function returns a promise that resolves to a `Record<string, unknown>`, providing access to all submitted form fields and their corresponding values.
+  The `multipart.fields()` function returns a promise that resolves to a `Record<string, unknown>`, providing access to all submitted form fields and their corresponding values.
 
   ```typescript
+  import { multipart } from "@minimajs/multipart";
+
   async function handleFormFields() {
-    const formData = await getFields();
+    const formData = await multipart.fields();
     const username = formData.username as string; // Type casting for clarity
     const email = formData.email as string;
     // Process form data as required...
@@ -55,11 +57,13 @@ npm install @minimajs/multipart
 
 - **Direct Body Access:**
 
-  The `getBody()` function returns an asynchronous iterator that yields an array containing the field name and its corresponding value (which can be a string or a `File` object). This offers maximum flexibility for handling all parts of the request body.
+  The `multipart.body()` function returns an asynchronous iterator that yields an array containing the field name and its corresponding value (which can be a string or a `File` object). This offers maximum flexibility for handling all parts of the request body.
 
   ```typescript
+  import { multipart } from "@minimajs/multipart";
+
   async function handleRequestBody() {
-    for await (const [fieldName, fieldValue] of getBody()) {
+    for await (const [fieldName, fieldValue] of multipart.body()) {
       if (typeof fieldValue === "string") {
         console.log(`Field: ${fieldName}, Value: ${fieldValue}`);
       } else {
@@ -75,9 +79,10 @@ npm install @minimajs/multipart
 ```typescript
 import { createWriteStream } from "node:fs";
 import { pipeline } from "stream/promises";
+import { multipart } from "@minimajs/multipart";
 
 async function handleFileUpload() {
-  for await (const file of getFiles()) {
+  for await (const file of multipart.files()) {
     const writeStream = createWriteStream(file.name);
     await pipeline(file.stream, writeStream);
   }

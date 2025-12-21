@@ -1,7 +1,7 @@
 import { pino, type LoggerOptions } from "pino";
 import merge from "deepmerge";
-import { getContextOrNull as getContext } from "./context.js";
-import type { App, Dict } from "./types.js";
+import { maybeContext } from "./context.js";
+import type { App, Dict, Request } from "./types.js";
 import { kPluginNameChain, kRequestContext } from "./internal/fastify.js";
 
 export const loggerOptions: LoggerOptions = {
@@ -15,7 +15,11 @@ export const loggerOptions: LoggerOptions = {
   },
 };
 
-export function mixin(data: Dict<any>) {
+/**
+ * Mixin function for Pino logger that enriches log data with module name context.
+ * Automatically adds the current module name to log entries if not already present.
+ */
+export function mixin(data: Dict<unknown>) {
   const name = getModuleName();
   if (!name || data.name) {
     return data;
@@ -27,16 +31,16 @@ export function mixin(data: Dict<any>) {
 function getPluginNames(server: App): string {
   const plugins = server[kPluginNameChain];
   if (!plugins) return "";
-  return plugins[0]!;
+  return plugins[0] ?? "";
 }
-function getHandler(req: any) {
-  return req[kRequestContext]?.handler.name.replace("bound ", "");
+function getHandler(req: Request) {
+  return (req as any)[kRequestContext]?.handler.name.replace("bound ", "");
 }
 
 const kModuleName = Symbol("module name");
 
 function getModuleName() {
-  const ctx = getContext();
+  const ctx = maybeContext();
   if (!ctx) {
     return null;
   }
@@ -52,6 +56,10 @@ function getModuleName() {
   return local.get(kModuleName);
 }
 
+/**
+ * Creates a Pino logger instance with merged default options and mixin support.
+ * Combines default logger options with user-provided options and adds module name context.
+ */
 export function createLogger(option: LoggerOptions) {
   return pino(merge({ ...loggerOptions, mixin }, option));
 }

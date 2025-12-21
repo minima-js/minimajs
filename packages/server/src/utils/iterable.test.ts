@@ -1,4 +1,4 @@
-import { isAsyncIterator, isObject, toArray } from "./iterable.js";
+import { isAsyncIterator, isObject, toArray, toLastValue } from "./iterable.js";
 
 describe("iterable", () => {
   describe("isAsyncIterator", () => {
@@ -25,6 +25,15 @@ describe("iterable", () => {
     });
     test("with other than an array", () => {
       expect(toArray(1)).toStrictEqual([1]);
+    });
+  });
+
+  describe("toLastValue", () => {
+    test("with an array", () => {
+      expect(toLastValue([1, 2, 3])).toBe(3);
+    });
+    test("with other than an array", () => {
+      expect(toLastValue(1)).toBe(1);
     });
   });
 

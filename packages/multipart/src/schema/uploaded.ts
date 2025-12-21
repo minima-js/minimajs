@@ -11,9 +11,9 @@ import {
 } from "yup";
 
 import { extractTests, FileSchema, getTestMaxSize, type ExtractTest } from "./schema.js";
-import { getBody } from "../multipart.js";
+import { multipart } from "../multipart.js";
 import { isFile, type File } from "../file.js";
-import { createContext, getSignal } from "@minimajs/server/context";
+import { context, createContext } from "@minimajs/server/context";
 import { defer, getHeader } from "@minimajs/server";
 import { v4 as uuid } from "uuid";
 import { tmpdir } from "node:os";
@@ -41,10 +41,48 @@ async function deleteUploadedFiles(files: GenericValue[]) {
   }
 }
 
+/**
+ * Configuration options for multipart upload handling.
+ */
 export interface UploadOption extends ValidateOptions {
+  /** Directory for storing temporary files. Defaults to system temp directory. */
   tmpDir?: string;
+  /** Maximum total request size in bytes. Validated before processing. */
   maxSize?: number;
 }
+
+/**
+ * Creates a multipart upload handler with Yup schema validation.
+ * Files are validated against the schema and saved to temporary storage.
+ * Temporary files are automatically cleaned up when the request completes.
+ *
+ * @example
+ * ```ts
+ * import { createMultipartUpload, file } from '@minimajs/multipart/schema';
+ * import { string, array } from 'yup';
+ *
+ * const upload = createMultipartUpload({
+ *   name: string().required(),
+ *   email: string().email().required(),
+ *   avatar: file()
+ *     .required()
+ *     .max(5 * 1024 * 1024)
+ *     .accept(['image/png', 'image/jpeg']),
+ *   documents: array(
+ *     file()
+ *       .max(10 * 1024 * 1024)
+ *       .accept(['application/pdf'])
+ *   )
+ * }, {
+ *   tmpDir: '/uploads/temp',
+ *   maxSize: 50 * 1024 * 1024 // 50MB total
+ * });
+ *
+ * const data = await upload();
+ * console.log(data.name);
+ * await data.avatar.move('/uploads/avatars');
+ * ```
+ */
 export function createMultipartUpload<T extends ObjectShape>(obj: T, option: UploadOption = {}) {
   const tests = extractTests(obj);
   const schema = object(obj);
@@ -64,19 +102,19 @@ export function createMultipartUpload<T extends ObjectShape>(obj: T, option: Upl
 
   return async function getData(): Promise<InferType<typeof schema>> {
     if (option.maxSize) {
-      const contentLength = getHeader("content-length", Number, true);
+      const contentLength = getHeader("content-length", Number) ?? 0;
       validateContentSize(contentLength, option.maxSize);
     }
     defer(cleanup);
     try {
-      const signal = getSignal();
+      const signal = context.signal();
       const existingBody = getMultipartMeta();
       if (existingBody) {
         return existingBody as any;
       }
       const data: any = {};
       setMultipartMeta(data);
-      for await (const [name, body] of getBody()) {
+      for await (const [name, body] of multipart.body()) {
         const singleSchema = obj[name] as Schema;
         if (isFile(body)) {
           if (singleSchema instanceof ArraySchema && singleSchema.innerType instanceof FileSchema) {
