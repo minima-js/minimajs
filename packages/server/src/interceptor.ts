@@ -29,9 +29,9 @@ export interface InterceptorOption {
  * @example
  * ```ts
  * // hello/index.ts
- * import { interceptor, getRequest, type App } from '@minimajs/server'
+ * import { interceptor, request, type App } from '@minimajs/server'
  * function logRequest() {
- *  console.log(getRequest().url)
+ *  console.log(request().url)
  * }
  * async function hello(app: App) {
  *  app.get('/', () => 'hello');

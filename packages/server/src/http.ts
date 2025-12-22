@@ -347,8 +347,7 @@ export namespace params {
   export function get(name: string): string;
   export function get<R>(name: string, transform: (value: string) => R): R;
   export function get(name: string, transform?: (value: string) => unknown): unknown {
-    const params = getParams();
-    const value = params[name];
+    const value = params()[name];
     if (value === undefined) {
       abort.notFound();
     }
@@ -371,9 +370,7 @@ export namespace params {
   export function optional(name: string): string | undefined;
   export function optional<R>(name: string, transform: (value: string) => R): R | undefined;
   export function optional(name: string, transform?: (value: string) => unknown): unknown {
-    const params = getParams();
-    const value = params[name];
-
+    const value = params()[name];
     if (value === undefined) return undefined;
     if (!transform) return value;
     const tValue = transform(value);
@@ -513,11 +510,9 @@ export namespace headers {
  * ```
  * @see {@link headers}
  * @since v0.1.0
+ * @internal
  */
-export function getHeaders() {
-  const { req } = context();
-  return req.headers;
-}
+export const getHeaders = headers;
 
 /**
  * Sets a response header.
@@ -530,11 +525,9 @@ export function getHeaders() {
  * ```
  * @see {@link headers.set}
  * @since v0.1.0
+ * @internal
  */
-export function setHeader(name: HttpHeader, value: string): Response {
-  const { reply } = context();
-  return reply.header(name, value);
-}
+export const setHeader = headers.set;
 
 /**
  * Retrieves a header from the current request context.
@@ -545,6 +538,7 @@ export function setHeader(name: HttpHeader, value: string): Response {
  * const auth = getHeader('authorization')                              // string
  * const token = getHeader('authorization', (val) => val.split(' ')[1]) // string
  * ```
+ * @internal
  */
 export const getHeader = headers.get;
 

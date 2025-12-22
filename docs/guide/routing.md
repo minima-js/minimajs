@@ -61,8 +61,8 @@ app.all(path, [options], handler); // will add the same handler to all the suppo
 
 ```ts
 app.get("/users/:user", () => {
-  const params = getParams<{ user: string }>();
-  return { user: params.user };
+  const { user } = params<{ user: string }>();
+  return { user };
 });
 ```
 
@@ -71,8 +71,8 @@ You may define as many route parameters as required by your route:
 ```ts
 app.get("/posts/:post/comments/:comment", () => {
   // highlight-next-line
-  const params = getParams<{ post: string; comment: string }>();
-  return [params.post, params.comment];
+  const { post, comment } = params<{ post: string; comment: string }>();
+  return [post, comment];
 });
 ```
 
@@ -83,8 +83,8 @@ The last parameter can be made optional if you add a question mark ("?") to the 
 ```ts
 // highlight-next-line
 app.get("/posts/:post?", () => {
-  const params = getParams<{ post?: string }>();
-  return [params.post ?? "not defined"];
+  const { post = "no define" } = params<{ post?: string }>();
+  return [post];
 });
 ```
 
@@ -97,8 +97,8 @@ For wildcard, use the star. Remember that static routes are always checked befor
 ```ts
 // highlight-next-line
 app.get("/posts/*", () => {
-  const params = getParams<{ post?: string }>();
-  return [params.post ?? "not defined"];
+  const p = params<{ post?: string }>();
+  return [p.post ?? "not defined"];
 });
 ```
 
@@ -111,7 +111,7 @@ Regular expression routes are supported as well, but be aware that you have to e
 app.get("/example/:file(^\\d+).png", function () {
   // curl ${app-url}/example/12345.png
   // file === '12345'
-  const file = getParam("file");
+  const file = params.get("file");
   // your code here
 });
 ```
@@ -119,13 +119,13 @@ app.get("/example/:file(^\\d+).png", function () {
 It is possible to define more than one parameter within the same couple of slash ("/"). Such as:
 
 ```ts
-import { getParams } from "@minimajs/server";
+import { params } from "@minimajs/server";
 app.get("/example/near/:lat-:lng/radius/:r", function () {
   // curl ${app-url}/example/near/15°N-30°E/radius/20
   // lat === "15°N"
   // lng === "30°E"
   // r ==="20"
-  const { lat, lng, r } = getParams<{ lat: string; lng: string; r: string }>();
+  const { lat, lng, r } = params<{ lat: string; lng: string; r: string }>();
   // your code here
 });
 ```
@@ -139,7 +139,7 @@ app.get("/example/at/:hour(^\\d{2})h:minute(^\\d{2})m", () => {
   // curl ${app-url}/example/at/08h24m
   // hour === "08"
   // minute === "24"
-  const { hour, minute } = getParams<{ hour: string; minute: string }>();
+  const { hour, minute } = params<{ hour: string; minute: string }>();
   // your code here
 });
 ```

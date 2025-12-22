@@ -14,7 +14,7 @@ import { extractTests, FileSchema, getTestMaxSize, type ExtractTest } from "./sc
 import { multipart } from "../multipart.js";
 import { isFile, type File } from "../file.js";
 import { context, createContext } from "@minimajs/server/context";
-import { defer, getHeader } from "@minimajs/server";
+import { defer, headers } from "@minimajs/server";
 import { v4 as uuid } from "uuid";
 import { tmpdir } from "node:os";
 import { createWriteStream } from "node:fs";
@@ -102,7 +102,7 @@ export function createMultipartUpload<T extends ObjectShape>(obj: T, option: Upl
 
   return async function getData(): Promise<InferType<typeof schema>> {
     if (option.maxSize) {
-      const contentLength = getHeader("content-length", Number) ?? 0;
+      const contentLength = headers.get("content-length", Number) ?? 0;
       validateContentSize(contentLength, option.maxSize);
     }
     defer(cleanup);

@@ -16,10 +16,10 @@ There are two-ways to handle / intercept request
 **1. Let's start by creating a logger:**
 
 ```ts title="src/payments/middleware.ts"
-import { getRequest } from "@minimajs/server";
+import { request } from "@minimajs/server";
 
 export async function logger() {
-  const req = getRequest();
+  const req = request();
   console.log(req.url);
 }
 ```
@@ -78,10 +78,10 @@ app.register(interceptor([yourExpressMiddleware], paymentModule), {
 creating a middleware
 
 ```ts title="src/logger/middleware.ts"
-import { getRequestURL, middleware } from "@minimajs/server";
+import { request, middleware } from "@minimajs/server";
 
 export const logger = middleware(async function logger() {
-  console.log(getRequestURL());
+  console.log(request.url());
 });
 ```
 

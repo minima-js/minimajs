@@ -13,10 +13,11 @@ Authorization play crucial roles in ensuring the security and integrity of your 
 Interceptors are middleware functions that intercept incoming requests before they reach the route handler. They are useful for performing tasks such as authentication, logging, or data transformation. Here's how you can create an interceptor for authentication using MinimaJS:
 
 ```typescript title="src/auth/interceptor.ts"
+import { headers } from "@minimajs/server";
 import { createAuth, UnauthorizedError } from "@minimajs/auth";
 
 export const [authMiddleware, guard, getUser] = createAuth(async () => {
-  const token = getHeader("x-user-token");
+  const token = headers.get("x-user-token");
   const user = await User.findByToken(token);
   if (!user) {
     throw new UnauthorizedError("Invalid credentials");

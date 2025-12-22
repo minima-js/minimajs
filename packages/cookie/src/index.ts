@@ -1,7 +1,7 @@
 import type { CookieSerializeOptions } from "@fastify/cookie";
 import fastifyCookie, { type FastifyCookieOptions } from "@fastify/cookie";
 import { ValidationError } from "@minimajs/server/error";
-import { getRequest, getResponse } from "./context.js";
+import { $request, $response } from "./context.js";
 const { assign } = Object;
 
 export interface GetCookieOption {
@@ -14,7 +14,7 @@ export interface GetCookieOption {
  * @returns Record of all cookies
  */
 export function cookies<T = Record<string, string>>(): T {
-  const req = getRequest();
+  const req = $request();
   return req.cookies as unknown as T;
 }
 
@@ -30,7 +30,7 @@ export namespace cookies {
     options?: T
   ): T extends { required: true } ? string : string | undefined;
   export function get(name: string, { required, signed }: GetCookieOption = {}) {
-    const { cookies: cookieMap, unsignCookie } = getRequest();
+    const { cookies: cookieMap, unsignCookie } = $request();
     if (!(name in cookieMap)) {
       if (!required) return;
       throw assign(new ValidationError(`Cookie \`${name}\` is required`), {
@@ -56,7 +56,7 @@ export namespace cookies {
    * @param options - Optional cookie serialization options
    */
   export function set(name: string, value: string, options?: CookieSerializeOptions) {
-    const reply = getResponse();
+    const reply = $response();
     reply.setCookie(name, value, options);
   }
 
@@ -66,7 +66,7 @@ export namespace cookies {
    * @param options - Optional cookie serialization options
    */
   export function remove(name: string, options?: CookieSerializeOptions) {
-    getResponse().clearCookie(name, options);
+    $response().clearCookie(name, options);
   }
 }
 

@@ -1,34 +1,13 @@
 import { HttpError, NotFoundError, RedirectError } from "./error.js";
-import {
-  abort,
-  body,
-  getBody,
-  getHeader,
-  getHeaders,
-  getParam,
-  getParams,
-  getRequest,
-  getSearchParam,
-  getSearchParams,
-  headers,
-  params,
-  redirect,
-  request,
-  response,
-  searchParams,
-  setHeader,
-  setStatusCode,
-} from "./http.js";
+import { abort, body, headers, params, redirect, request, response, searchParams, setHeader } from "./http.js";
 import { mockContext } from "./mock/context.js";
 import { mockApp, mockRoute } from "./mock/index.js";
 
 describe("Http", () => {
-  describe("request / getRequest", () => {
+  describe("request", () => {
     test("should retrieve request object", () => {
       mockContext((req) => {
         expect(request().raw).toBe(req.raw);
-        expect(getRequest().raw).toBe(req.raw);
-        expect(request()).toBe(getRequest());
       });
     });
   });
@@ -79,13 +58,11 @@ describe("Http", () => {
       await mockApp(testRoute);
     });
   });
-  describe("body / getBody", () => {
+  describe("body", () => {
     test("should retrieve request body", () => {
       const option = { body: { message: "Hello, World!" } };
       mockContext(() => {
         expect(body()).toStrictEqual({ message: "Hello, World!" });
-        expect(getBody()).toStrictEqual({ message: "Hello, World!" });
-        expect(body()).toBe(getBody());
       }, option);
     });
 
@@ -106,14 +83,12 @@ describe("Http", () => {
       });
     });
   });
-  describe("headers / getHeaders", () => {
+  describe("headers", () => {
     test("should retrieve all headers", () => {
       mockContext(
         () => {
           const h1 = headers();
-          const h2 = getHeaders();
           expect(h1.name).toBe("Adil");
-          expect(h2.name).toBe("Adil");
           expect(h1["x-custom"]).toBe("value");
         },
         { headers: { name: "Adil", "x-custom": "value" } }
@@ -188,16 +163,13 @@ describe("Http", () => {
       expect(response!.headers["x-custom"]).toBe("test-value");
     });
   });
-  describe("searchParams / getSearchParams", () => {
+  describe("searchParams", () => {
     test("should retrieve all search params", () => {
       mockContext(
         () => {
           const sp1 = searchParams<{ name: string; page: string }>();
-          const sp2 = getSearchParams<{ name: string; page: string }>();
           expect(sp1.name).toBe("John Doe");
           expect(sp1.page).toBe("2");
-          expect(sp2.name).toBe("John Doe");
-          expect(sp2.page).toBe("2");
         },
         { url: "/?name=John Doe&page=2" }
       );
@@ -268,27 +240,23 @@ describe("Http", () => {
     });
   });
 
-  describe("searchParams / getSearchParams", () => {
+  describe("searchParams", () => {
     test("should retrieve query string parameters", () => {
       mockContext(
         () => {
           const queries = searchParams<{ name: string; page: string }>();
-          const queriesOld = getSearchParams<{ name: string; page: string }>();
           expect(queries.name).toBe("John");
           expect(queries.page).toBe("1");
-          expect(queries).toEqual(queriesOld);
         },
         { url: "/?name=John&page=1" }
       );
     });
   });
 
-  describe("searchParams.get / getSearchParam (deprecated alias)", () => {
+  describe("searchParams.get", () => {
     test("getSearchParam should be alias of searchParams.get", () => {
       mockContext(
         () => {
-          expect(getSearchParam).toBe(searchParams.get);
-          expect(getSearchParam("name")).toBe("John");
           expect(searchParams.get("name")).toBe("John");
         },
         { url: "/?name=John" }
@@ -296,12 +264,12 @@ describe("Http", () => {
     });
   });
 
-  describe("params / getParams", () => {
+  describe("params", () => {
     test("should retrieve all params", () => {
       mockContext(
         () => {
           const p1 = params<{ id: string; name: string }>();
-          const p2 = getParams<{ id: string; name: string }>();
+          const p2 = params<{ id: string; name: string }>();
           expect(p1.id).toBe("123");
           expect(p1.name).toBe("john");
           expect(p2.id).toBe("123");
@@ -386,31 +354,7 @@ describe("Http", () => {
     });
   });
 
-  describe("getParam (deprecated alias)", () => {
-    test("should be alias of params.get", () => {
-      mockContext(
-        () => {
-          expect(getParam).toBe(params.get);
-          expect(getParam("user")).toBe("hello");
-        },
-        { params: { user: "hello" } }
-      );
-    });
-  });
-
-  describe("getHeader (deprecated alias)", () => {
-    test("should be alias of headers.get", () => {
-      mockContext(
-        () => {
-          expect(getHeader).toBe(headers.get);
-          expect(getHeader("x-user")).toBe("1234");
-        },
-        { headers: { "x-user": "1234" } }
-      );
-    });
-  });
-
-  describe("status / setStatusCode", () => {
+  describe("status", () => {
     test("should set status code with number", async () => {
       const route = mockRoute(() => {
         response.status(201);
@@ -431,20 +375,20 @@ describe("Http", () => {
 
     test("setStatusCode should work with number", async () => {
       const route = mockRoute(() => {
-        setStatusCode(300);
+        response.status(300);
         return { message: "hello world" };
       });
-      const [response] = await mockApp(route);
-      expect(response!.statusCode).toBe(300);
+      const [res] = await mockApp(route);
+      expect(res!.statusCode).toBe(300);
     });
 
     test("setStatusCode should work with StatusCodes key", async () => {
       const route = mockRoute(() => {
-        setStatusCode("BAD_GATEWAY");
+        response.status("BAD_GATEWAY");
         return { message: "hello world" };
       });
-      const [response] = await mockApp(route);
-      expect(response!.statusCode).toBe(502);
+      const [res] = await mockApp(route);
+      expect(res!.statusCode).toBe(502);
     });
   });
 

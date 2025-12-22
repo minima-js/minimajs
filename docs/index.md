@@ -35,7 +35,7 @@ features:
 
   - icon: 🔌
     title: Direct Request Access
-    details: Intuitive functions (getRequest(), getBody()) for direct access to request data, eliminating complex middleware configurations.
+    details: Intuitive functions (request(), body()) for direct access to request data, eliminating complex middleware configurations.
 
   - icon: ⏰
     title: Deferred Callbacks

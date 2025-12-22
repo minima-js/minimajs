@@ -39,11 +39,11 @@ Ensure that your `package.json` file has the `"type": "module"` field to enable 
 #### Creating Your Application
 
 ```typescript title="src/index.ts"
-import { createApp, getParam } from "@minimajs/server";
+import { createApp, params } from "@minimajs/server";
 
 const app = createApp();
 
-app.get("/:name", () => `Hello ${getParam("name")}!`);
+app.get("/:name", () => `Hello ${params.get("name")}!`);
 
 await app.listen({ port: 1234 });
 ```

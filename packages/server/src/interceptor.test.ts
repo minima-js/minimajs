@@ -1,4 +1,4 @@
-import { abort, createApp, getSearchParam } from "./index.js";
+import { abort, createApp, searchParams } from "./index.js";
 import { filter, interceptor, type Interceptor } from "./interceptor.js";
 import type { App } from "./types.js";
 import { jest } from "@jest/globals";
@@ -55,7 +55,7 @@ describe("middleware", () => {
     const filteredHello = filter(
       async () => hello(),
       function doFilter() {
-        return getSearchParam("name") === "Adil";
+        return searchParams.get("name") === "Adil";
       }
     );
     app.register(
@@ -80,7 +80,7 @@ describe("middleware", () => {
   test("should filter middleware function with non-async handler", async () => {
     const hello = jest.fn<Interceptor>((_req, _res, done) => done());
     const filteredHello = filter(hello, function doFilter() {
-      return getSearchParam("name") === "Adil";
+      return searchParams.get("name") === "Adil";
     });
     app.register(
       interceptor([filteredHello], async (app) => {

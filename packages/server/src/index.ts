@@ -33,6 +33,7 @@ function getDefaultConfig({ logger: loggerOverride, ...override }: AppOptions): 
     ...override,
   };
 }
+
 /**
  * Create an app instance
  */
