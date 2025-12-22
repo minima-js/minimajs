@@ -15,7 +15,6 @@ import { type ErrorHookCallback, type HookCallback } from "../internal/context.j
 import { plugin } from "../internal/plugins.js";
 import type { FastifyPluginCallback } from "fastify";
 import { context } from "../context.js";
-import { last } from "../utils/iterable.js";
 export type { HookCallback };
 
 /**
@@ -82,7 +81,7 @@ export function hook(name: LifecycleHook, callback: (...args: any[]) => any): Pl
   });
 }
 
-type LifespanFinalize = () => void | Promise<void>;
+type LifespanFinalize = onCloseAsyncHookHandler | onCloseHookHandler;
 type Lifespan = () => LifespanFinalize | Promise<LifespanFinalize>;
 
 /**
@@ -90,23 +89,25 @@ type Lifespan = () => LifespanFinalize | Promise<LifespanFinalize>;
  */
 export namespace hook {
   /**
-   * Creates a lifespan hook that runs initialization on app ready and cleanup on app close.
-   * This pattern is useful for managing resources that need both setup and teardown.
+   * Creates a lifespan hook that runs an initialization handler when the application is ready
+   * and a cleanup handler when the application is closing. This is useful for managing resources
+   * that require both setup and teardown, like database connections or message queue consumers.
    *
-   * The handler function is called when the app becomes ready and should return a finalizer function.
-   * The finalizer is automatically called when the app closes.
+   * The `handler` function is executed during the `onReady` lifecycle event. It can optionally
+   * return a `finalizer` function, which will be automatically registered to run during the
+   * `onClose` event.
    *
-   * @param handler - A function that runs on app ready and returns a cleanup function
-   * @returns A plugin that manages the resource lifecycle
+   * @param handler - An async function that runs on app startup. It can return a `finalizer` function for cleanup.
+   * @returns A Fastify plugin that manages the resource's lifecycle.
    *
    * @example
    * ```typescript
-   * // Database connection with lifespan
+   * // Manages a database connection across the application lifecycle.
    * const dbLifespan = hook.lifespan(async () => {
    *   await db.connect();
    *   console.log('Database connected');
    *
-   *   // Return cleanup function
+   *   // The returned function will be called on application close.
    *   return async () => {
    *     await db.disconnect();
    *     console.log('Database disconnected');
@@ -115,15 +116,63 @@ export namespace hook {
    *
    * app.register(dbLifespan);
    * ```
+   *
+   * @example
+   * ```typescript
+   * // An example of a startup hook without a cleanup finalizer.
+   * const startupBanner = hook.lifespan(() => {
+   *   console.log('Application is ready!');
+   * });
+   *
+   * app.register(startupBanner);
+   * ```
    */
   export function lifespan(handler: Lifespan) {
     return plugin.sync(function lifespanHook(app) {
-      let finalizer: LifespanFinalize | null = null;
       app.addHook("onReady", async () => {
-        finalizer = await handler();
-      });
-      if (finalizer) {
+        const finalizer = await handler();
         app.addHook("onClose", finalizer);
+      });
+    });
+  }
+
+  type AnyHookHandler =
+    | onCloseAsyncHookHandler
+    | onCloseHookHandler
+    | onReadyAsyncHookHandler
+    | onReadyHookHandler
+    | onListenAsyncHookHandler
+    | onListenHookHandler
+    | onSendAsyncHookHandler
+    | onSendHookHandler
+    | onRegisterHookHandler;
+
+  /**
+   * Creates a plugin that registers multiple lifecycle hooks at once.
+   *
+   * @param hooks - An object where keys are lifecycle event names and values are the corresponding hook callbacks.
+   * @returns A Fastify plugin that registers the provided hooks.
+   *
+   * @example
+   * ```typescript
+   * const multiHook = hook.define({
+   *   ready: async () => {
+   *     console.log('Application is ready!');
+   *   },
+   *   close: async () => {
+   *     console.log('Application is closing.');
+   *   }
+   * });
+   *
+   * app.register(multiHook);
+   * ```
+   */
+  export function define(hooks: Partial<Record<LifecycleHook, AnyHookHandler>>) {
+    return plugin.sync(function defineHookPlugin(app) {
+      for (const [name, callback] of Object.entries(hooks)) {
+        if (callback) {
+          app.addHook(hooksMapping[name as LifecycleHook], callback as any);
+        }
       }
     });
   }

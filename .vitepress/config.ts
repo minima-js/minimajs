@@ -28,6 +28,7 @@ export default defineConfig({
           { text: "Context", link: "/guide/context" },
           { text: "HTTP", link: "/guide/http" },
           { text: "Middleware", link: "/guide/middleware" },
+          { text: "Hooks", link: "/guide/hooks" },
           { text: "Module", link: "/guide/module" },
           { text: "Error Handling", link: "/guide/error" },
           { text: "Logger", link: "/guide/logger" },

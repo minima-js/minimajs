@@ -4,7 +4,6 @@ import { jestConfig } from "../config/jest.config.mjs";
 export default {
   ...jestConfig,
   coveragePathIgnorePatterns: ["__tests__/", "/node_modules/", "src/mock/"],
-
   testTimeout: 2000,
   forceExit: true,
 };

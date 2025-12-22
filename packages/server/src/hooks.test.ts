@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import { createApp, hook, defer, onError, plugin, type App, type HookCallback } from "./index.js";
+import { createApp, hook, defer, onError, plugin, type App } from "./index.js";
 
 describe("hooks", () => {
   let app: App;
@@ -76,6 +76,55 @@ describe("hooks", () => {
     });
   });
 
+  describe("hook.lifespan", () => {
+    test("should run setup on ready and cleanup on close", async () => {
+      const onReady = jest.fn();
+      const onClose = jest.fn();
+
+      const lifespan = hook.lifespan(async () => {
+        onReady();
+        return async () => {
+          onClose();
+        };
+      });
+
+      app.register(lifespan);
+
+      expect(onReady).not.toHaveBeenCalled();
+      expect(onClose).not.toHaveBeenCalled();
+
+      await app.ready();
+      expect(onReady).toHaveBeenCalled();
+      expect(onClose).not.toHaveBeenCalled();
+
+      await app.close();
+      expect(onClose).toHaveBeenCalled();
+    });
+
+    test("should work with async setup and cleanup", async () => {
+      let ready = false;
+      let closed = false;
+
+      const lifespan = hook.lifespan(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        ready = true;
+        return async () => {
+          await new Promise((resolve) => setTimeout(resolve, 10));
+          closed = true;
+        };
+      });
+
+      app.register(lifespan);
+
+      await app.ready();
+      expect(ready).toBe(true);
+      expect(closed).toBe(false);
+
+      await app.close();
+      expect(closed).toBe(true);
+    });
+  });
+
   describe("hook with sync callbacks", () => {
     test("should auto-call done() for close hook with no parameters", async () => {
       let closed = false;
@@ -122,6 +171,65 @@ describe("hooks", () => {
       app.register(closeHook);
       await app.ready();
       await expect(app.close()).rejects.toThrow("Close error");
+    });
+  });
+
+  describe("hook.define", () => {
+    test("should register and trigger a single hook", async () => {
+      const readyHook = jest.fn();
+      const multiHook = hook.define({
+        ready: readyHook,
+      });
+
+      app.register(multiHook);
+      expect(readyHook).not.toHaveBeenCalled();
+
+      await app.ready();
+      expect(readyHook).toHaveBeenCalled();
+    });
+
+    test("should register and trigger multiple hooks", async () => {
+      const readyHook = jest.fn();
+      const closeHook = jest.fn();
+
+      const multiHook = hook.define({
+        ready: readyHook,
+        close: closeHook,
+      });
+
+      app.register(multiHook);
+      expect(readyHook).not.toHaveBeenCalled();
+      expect(closeHook).not.toHaveBeenCalled();
+
+      await app.ready();
+      expect(readyHook).toHaveBeenCalled();
+      expect(closeHook).not.toHaveBeenCalled();
+
+      await app.close();
+      expect(closeHook).toHaveBeenCalled();
+    });
+
+    test("should handle async hook callbacks", async () => {
+      let readyCalled = false;
+      const readyHook = async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        readyCalled = true;
+      };
+
+      const multiHook = hook.define({
+        ready: readyHook,
+      });
+
+      app.register(multiHook);
+      await app.ready();
+      expect(readyCalled).toBe(true);
+    });
+
+    test("should not fail if no hooks are provided", async () => {
+      const multiHook = hook.define({});
+      app.register(multiHook);
+      await app.ready();
+      // No assertions needed, just shouldn't throw
     });
   });
 });
