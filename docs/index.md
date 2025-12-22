@@ -3,65 +3,100 @@ layout: home
 
 hero:
   name: "Minima.js"
-  text: "Where Efficiency Meets Elegance"
-  tagline: A cutting-edge Node.js framework for building modern web applications with exceptional speed and developer experience.
+  text: "The Modern Node.js Framework"
+  tagline: Build fast, scalable, and maintainable web applications with a TypeScript-first, context-aware, and minimalist framework.
   image:
     src: /logo.svg
     alt: Minima.js
   actions:
     - theme: brand
       text: Get Started
-      link: /guide/getting-started
+      link: /getting-started
     - theme: alt
       text: View on GitHub
       link: https://github.com/minima-js/minimajs
 
 features:
-  - icon: ⚡
-    title: Blazing-Fast Builds
-    details: Bundled with Esbuild for exceptional build times, enabling rapid development iteration and deployment.
+  - icon: '🚀'
+    title: 'TypeScript First'
+    details: 'Built entirely in TypeScript, for TypeScript. Enjoy a top-tier developer experience with excellent type safety and autocompletion.'
+  - icon: '✨'
+    title: 'Context over req/res'
+    details: 'Say goodbye to prop drilling! Access request data from anywhere in your code using a modern, AsyncLocalStorage-based context.'
+  - icon: '⚡️'
+    title: 'Modern JavaScript, Today'
+    details: 'Built for the future. Minima.js exclusively uses modern ECMAScript Modules (ESM) and the latest JavaScript features.'
+  - icon: '🧩'
+    title: 'Effortless Integration'
+    details: 'Easily integrate third-party libraries without passing `req` and `res` objects around. The context system makes it a breeze.'
+  - icon: '🛡️'
+    title: 'Best-in-class Tooling'
+    details: 'Comes with robust, built-in support for multipart form data and data validation using `@minimajs/multipart` and `@minimajs/schema`.'
+  - icon: '🎨'
+    title: 'Minimalist and Opinionated'
+    details: 'A "one-rule of doing things" philosophy results in a consistent and predictable codebase with minimal boilerplate.'
 
-  - icon: 🎯
-    title: TypeScript Foundation
-    details: Built entirely on TypeScript with rigorous type safety throughout development, significantly reducing runtime errors.
-
-  - icon: 🚀
-    title: Modern JavaScript
-    details: Leverages ECMAScript Modules (ESM), unlocking the full potential of modern JavaScript features and optimized performance.
-
-  - icon: 🎨
-    title: Functional Programming
-    details: Champions functional paradigms for clean, modular code that excels in readability, maintainability, and scalability.
-
-  - icon: 🔌
-    title: Direct Request Access
-    details: Intuitive functions (request(), body()) for direct access to request data, eliminating complex middleware configurations.
-
-  - icon: ⏰
-    title: Deferred Callbacks
-    details: Schedule tasks to execute after response with the defer function for efficient background processing.
-
-  - icon: 🧩
-    title: Simplified Integration
-    details: Removes complexity in integrating third-party services, frequently eliminating the need for complex middleware.
-
-  - icon: ✨
-    title: Minimalist Philosophy
-    details: Eliminates excessive boilerplate code with a streamlined approach that removes unnecessary setup and configuration.
-
-  - icon: 🎓
-    title: Straightforward Learning
-    details: Intuitive API and comprehensive documentation make it easy for developers to get started quickly.
-
-  - icon: 🛡️
-    title: Robust Data Management
-    details: Built-in schema validation and multipart support for secure data handling and file uploads.
-
-  - icon: 🔄
-    title: Circular Dependency Management
-    details: Clever solution to circular dependencies, promoting cleaner code architecture and smoother workflows.
-
-  - icon: 📦
-    title: Intuitive API
-    details: Remarkably easy-to-use API that makes it effortless to create routes, manage requests, and build applications.
 ---
+<div style="height: 1rem;"></div>
+
+## As Easy As It Gets
+
+```typescript
+import { createApp, params } from '@minimajs/server';
+
+const app = createApp();
+
+app.get('/:name', () => `Hello, ${params.get('name')}!`);
+
+await app.listen({ port: 3000 });
+```
+
+<div style="height: 2rem;"></div>
+
+---
+
+<div style="height: 2rem;"></div>
+
+<div class="VPFeatures" style="--vp-features-gap: 2rem; --vp-features-max-items-per-row: 1;">
+  <div class="container">
+    <div class="items">
+      <div class="item grid-1">
+        <div class="VPLink no-arrow" href="#">
+          <article class="VPFeature">
+            <h2 class="title">Designed for the Modern Developer</h2>
+            <p class="details">
+              Minima.js is for developers who value performance, type safety, and a modern development experience. We believe that building web applications should be a joy, not a chore. That's why we've designed a framework that is both powerful and easy to use. With Minima.js, you can focus on writing your application's logic, not on boilerplate code.
+            </p>
+          </article>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="height: 2rem;"></div>
+
+---
+
+<div style="height: 2rem;"></div>
+
+<div class="VPFeatures" style="--vp-features-gap: 2rem; --vp-features-max-items-per-row: 1;">
+  <div class="container">
+    <div class="items">
+      <div class="item grid-1">
+        <div class="VPLink no-arrow" href="#">
+          <article class="VPFeature">
+            <h2 class="title">Join the Community</h2>
+            <p class="details">
+              Minima.js is an open-source project, and we welcome contributions from the community. Whether you want to report a bug, suggest a new feature, or contribute to the code, we would love to have you on board. Check out our GitHub repository to get started.
+            </p>
+            <div style="height: 1rem;"></div>
+            <a href="https://github.com/minima-js/minimajs" class="VPButton" role="button" style="background-color: var(--vp-c-brand-1); color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.25rem;">
+              Get Involved
+            </a>
+          </article>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

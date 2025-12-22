@@ -10,21 +10,24 @@ Minima.js is a cutting-edge Node.js framework meticulously designed to empower d
 
 **Key Features:**
 
-- **Functional Programming:** Minima.js champions functional paradigms, enabling you to craft clean, modular code that excels in readability, maintainability, and scalability.
-- **TypeScript Foundation:** Built entirely on TypeScript, Minima.js enforces rigorous type safety throughout development, significantly reducing runtime errors and elevating overall code quality.
-- **Modern JavaScript Adoption:** Minima.js mandates the use of ECMAScript Modules (ESM), unlocking the full potential of modern JavaScript features and optimized performance.
-- **Direct Request Access** Minima.js offers intuitive functions (`request()`, `body()`) for direct access to request data (request, headers, body, etc.) within the context, eliminating complex middleware configurations. This empowers developers with greater control and flexibility.
-- **Deferred Callbacks** The `defer` function allows for scheduling tasks to be executed after the response has been sent. [see usage](./guide/http.md#defer)
-- **Simplified Third-Party Integration** Minima.js removes the complexity often associated with integrating third-party services. Its unique approach frequently eliminates the need for complex middleware, making it easier to leverage external libraries and tools.
+- **TypeScript First:** Minima.js is built entirely in TypeScript, for TypeScript. This means you get a top-tier developer experience with excellent type safety, autocompletion, and a significant reduction in runtime errors.
 
-- **Minimalist Philosophy:** Minima.js eliminates the need for excessive boilerplate code. Its minimalist approach streamlines development by removing unnecessary setup and configuration steps.
-- **Intuitive API:** Minima.js boasts a remarkably easy-to-use API that makes it effortless to create routes, manage requests, and construct your application with ease.
+- **Context over `req`/`res`:** Say goodbye to prop drilling! Minima.js uses modern `AsyncLocalStorage` to provide a global context for each request. You can access request data, headers, and more from anywhere in your code without passing `req` and `res` objects around.
+
+- **Modern JavaScript, Today:** Minima.js is built for the future. It exclusively uses modern ECMAScript Modules (ESM) and the latest JavaScript features, without being held back by backward compatibility concerns.
+
+- **Effortless Third-Party Integration:** Integrating third-party libraries is a breeze. Since you can access the request context from anywhere, you can easily integrate libraries that don't have direct access to the `req`/`res` objects.
+
+- **Best-in-class Multipart and Schema Support:** Minima.js comes with robust, built-in support for multipart form data and data validation. The `@minimajs/multipart` and `@minimajs/schema` packages provide a seamless experience for handling file uploads and validating data.
+
+- **Minimalist and Opinionated:** Minima.js follows a "one-rule of doing things" philosophy, which results in a consistent and predictable codebase. The minimalist API and lack of boilerplate allow you to focus on writing your application's logic.
+
+- **Functional and Modular:** The framework encourages a functional and modular approach to building applications. This leads to cleaner, more maintainable, and scalable code.
 
 **Unparalleled Development Experience:**
 
 - **Blazing-Fast Builds:** Bundled with Esbuild, Minima.js ensures exceptional build times, enabling rapid development iteration and deployment.
 - **Straightforward Learning:** Designed with simplicity in mind, Minima.js offers an intuitive API and comprehensive documentation, making it easy for developers to get started quickly.
-- **Robust Data Management:** Built-in schema validation safeguards data integrity and security, while multipart support simplifies handling of file uploads and form data.
 - **Circular Dependency Management:** Minima.js provides a clever solution to circular dependencies, promoting cleaner code architecture and smoother development workflows.
 
 **Embrace the Future of Node.js Development**
