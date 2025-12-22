@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "dev": "turbo run dev --parallel --continue",
-    "build": "turbo run build --filter=!@minimajs/docs",
+    "build": "turbo run build",
     "test": "turbo run test",
     "coverage": "turbo run coverage",
     "clean": "turbo run clean",
