@@ -1,7 +1,13 @@
 {
   "$schema": "https://typedoc.org/schema.json",
   "name": "Minima.js API",
-  "entryPoints": ["../server", "../auth", "../schema", "../multipart", "../cookie"],
+  "entryPoints": [
+    "./packages/server",
+    "./packages/auth",
+    "./packages/schema",
+    "./packages/multipart",
+    "./packages/cookie"
+  ],
   "entryPointStrategy": "packages",
   "out": "docs/api",
   "basePath": "..",

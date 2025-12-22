@@ -4,7 +4,6 @@
   "type": "module",
   "private": true,
   "exports": "./lib/index.js",
-  "scripts": {},
   "devDependencies": {
     "@types/node": "^25.0.3"
   }

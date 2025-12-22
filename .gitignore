@@ -7,3 +7,11 @@ lib
 .turbo
 *.tsbuildinfo
 .DS_Store
+
+# docs
+# VitePress build output
+.vitepress/dist
+.vitepress/cache
+
+# TypeDoc generated API docs
+docs/api

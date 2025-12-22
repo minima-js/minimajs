@@ -3,7 +3,6 @@
   "version": "0.0.1",
   "type": "module",
   "private": true,
-  "scripts": {},
   "devDependencies": {
     "@types/node": "^25.0.3",
     "@types/uuid": "^11.0.0"

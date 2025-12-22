@@ -3,10 +3,11 @@
   "version": "0.0.1",
   "license": "MIT",
   "private": true,
-  "homepage": "https://minima-js.github.io/",
+  "type": "module",
+  "homepage": "https://minima-js.github.io",
   "repository": {
-    "type": "git",
-    "url": "https://github.com/minima-js/minimajs"
+    "type": "github",
+    "url": "git@github.com:minima-js/minima-js.github.io"
   },
   "workspaces": [
     "packages/*"
@@ -17,9 +18,10 @@
     "test": "turbo run test",
     "coverage": "turbo run coverage",
     "clean": "turbo run clean",
-    "docs": "yarn --cwd=packages/docs dev",
-    "docs:genapi": "yarn --cwd=packages/docs generate:api",
-    "release": "yarn build && changeset publish"
+    "release": "yarn build && changeset publish",
+    "docs": "vitepress dev",
+    "docs:build": "vitepress build",
+    "docs:api": "typedoc"
   },
   "packageManager": "yarn@4.12.0",
   "devDependencies": {
@@ -27,6 +29,10 @@
     "jest": "^30.2.0",
     "rimraf": "^6.1.2",
     "turbo": "^2.6.3",
-    "typescript": "^5.9.3"
+    "typedoc": "^0.28.15",
+    "typedoc-plugin-markdown": "^4.9.0",
+    "typescript": "^5.9.3",
+    "vitepress": "^1.6.4",
+    "vue": "^3.5.26"
   }
 }

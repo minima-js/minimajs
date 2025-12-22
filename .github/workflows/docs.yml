@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "packages/docs/**"
+      - "docs/**"
       - ".github/workflows/docs.yml"
   workflow_dispatch:
 
@@ -49,14 +49,14 @@ jobs:
         run: yarn build
 
       - name: Generate API References
-        run: yarn --cwd=packages/docs generate:api
+        run: yarn docs:api
 
       - name: Build documentation
-        run: yarn --cwd=packages/docs build
+        run: yarn docs:build
 
       - name: Deploy to minima-js.github.io
         uses: peaceiris/actions-gh-pages@v4
         with:
           personal_token: ${{ secrets.TOKEN_DOCS }}
           external_repository: minima-js/minima-js.github.io
-          publish_dir: packages/docs/.vitepress/dist
+          publish_dir: .vitepress/dist
