@@ -42,12 +42,24 @@ type Plugin<Opts extends FastifyPluginOptions> = FastifyPluginCallback<Opts> | F
  * Plugin utilities namespace providing helper functions for creating and composing Fastify plugins.
  */
 export namespace plugin {
-  export function sync<T>(fn: PluginCallbackSync<T>, name?: string) {
-    setOption(fn, { override: true });
-    if (name) {
-      setOption(fn, { name });
+  /**
+   * Wraps a sync plugin to automatically call done() if the function doesn't accept it.
+   * Prevents plugins from getting stuck if the user forgets to call done().
+   */
+  function ensureDone<T>(fn: PluginCallbackSync<T>): PluginCallbackSync<T> {
+    if (fn.length < 3) {
+      return function wraped(app, opts, done) {
+        fn(app, opts, done);
+        done();
+      };
     }
     return fn;
+  }
+
+  export function sync<T>(fn: PluginCallbackSync<T>, name = fn.name) {
+    const wrappedFn = ensureDone(fn);
+    setOption(wrappedFn, { name: name, override: true });
+    return wrappedFn;
   }
 
   /**
@@ -84,7 +96,7 @@ export namespace plugin {
   }
 }
 
-export const minimajs = plugin.sync(function minimajs(fastify, _, next) {
+export const minimajs = plugin.sync(function minimajs(fastify) {
   fastify.setErrorHandler(errorHandler);
   fastify.setNotFoundHandler((req, res) => errorHandler(new NotFoundError(), req, res));
   fastify.addContentTypeParser("multipart/form-data", (_, _1, next) => {
@@ -94,5 +106,4 @@ export const minimajs = plugin.sync(function minimajs(fastify, _, next) {
   fastify.addHook("preSerialization", handleResponse);
   fastify.addHook("onError", dispatchError);
   fastify.addHook("onSend", dispatchSent);
-  next();
 });

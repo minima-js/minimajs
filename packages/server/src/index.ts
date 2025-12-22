@@ -5,7 +5,7 @@ import { minimajs } from "./internal/plugins.js";
 import type { App, AppOptions } from "./types.js";
 import { loggerOptions } from "./logger.js";
 import { shutdownListener } from "./shutdown.js";
-import { logRoutes } from "./router.js";
+import { routeLogger } from "./router.js";
 export { interceptor, type Interceptor } from "./interceptor.js";
 
 export * from "./http.js";
@@ -42,7 +42,7 @@ export function createApp({ killSignal = ["SIGTERM"], routes = { log: true }, ..
   shutdownListener(() => app.close(), killSignal, app.log, process);
   app.register(minimajs);
   if (routes.log) {
-    app.addHook("onReady", () => logRoutes(app));
+    app.register(routeLogger);
   }
   return app;
 }

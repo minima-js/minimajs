@@ -28,8 +28,7 @@ export function getDecorator<T extends GenericCallback>(app: App, name: symbol):
  * The plugin can be registered with optional filter options to conditionally apply decorators.
  */
 export function createDecoratorPlugin(id: symbol, decoratorType: string, cb: GenericCallback) {
-  return plugin.sync<DecoratorOptions>(function decorator(app, opt, next) {
+  return plugin.sync<DecoratorOptions>(function decorator(app, opt) {
     addDecorator(id, app, opt, cb);
-    next();
   }, cb.name ?? decoratorType);
 }

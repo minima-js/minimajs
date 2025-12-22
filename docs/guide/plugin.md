@@ -97,23 +97,46 @@ plugin.sync<T>(fn: PluginCallbackSync<T>, name?: string): Plugin
 ```
 
 **Parameters:**
-- `fn`: A function that receives `app`, `opts`, and `done` callback
-- `name`: Optional name for debugging and logging
+- `fn`: A function that receives `app`, `opts`, and optionally `done` callback
+- `name`: Optional name for debugging and logging (defaults to function name)
 
-**Example:**
+**Auto-completion behavior:**
+- If your function has **fewer than 3 parameters**, `done()` is called automatically
+- If your function has **3 parameters**, you **must** call `done()` manually
+- This prevents plugins from getting stuck if you forget to call `done()`
+
+**Example with auto-completion (recommended for simple plugins):**
 
 ```typescript
 import { plugin } from "@minimajs/server";
 
-const corsPlugin = plugin.sync(function cors(app, opts, done) {
+// No done() needed - called automatically
+const corsPlugin = plugin.sync(function cors(app, opts) {
   app.addHook('onRequest', (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
   });
-
-  done(); // Must call done when finished
+  // done() is called automatically
 }, 'cors');
 
 app.register(corsPlugin);
+```
+
+**Example with manual done() (for async operations or error handling):**
+
+```typescript
+import { plugin } from "@minimajs/server";
+
+const configPlugin = plugin.sync(function config(app, opts, done) {
+  // Load config asynchronously
+  loadConfig((err, config) => {
+    if (err) return done(err); // Pass error to done
+
+    app.decorate('config', config);
+    done(); // Must call done when finished
+  });
+}, 'config');
+
+app.register(configPlugin);
 ```
 
 ### Plugin Options
@@ -174,9 +197,9 @@ plugin.compose<Opts>(...plugins: Plugin<Opts>[]): Plugin
 ```typescript
 import { createApp, plugin } from "@minimajs/server";
 
-const plugin1 = plugin.sync(function setup(app, opts, done) {
+const plugin1 = plugin.sync(function setup(app, opts) {
   console.log('Setting up...');
-  done();
+  // done() called automatically
 });
 
 const plugin2 = plugin(async function initialize(app, opts) {

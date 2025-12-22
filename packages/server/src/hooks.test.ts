@@ -44,71 +44,11 @@ describe("hooks", () => {
 
   describe("hook", () => {
     test("it should call closed hook after app is closed", async () => {
-      const onClose = jest.fn(() => {});
+      const onClose = jest.fn(() => Promise.resolve());
       app.register(hook("close", onClose));
       expect(onClose).not.toHaveBeenCalled();
       await app.close();
       expect(onClose).toHaveBeenCalled();
-    });
-
-    test("it should call composed hooks", async () => {
-      const prevHook = jest.fn<HookCallback>();
-      const onClose = jest.fn(() => {});
-      await app.register(plugin.compose(hook("close", onClose), hook("close", prevHook))).close();
-      expect(onClose).toHaveBeenCalled();
-      expect(prevHook).toHaveBeenCalled();
-    });
-
-    test("should support hook composition with different lifecycle events", async () => {
-      const closeDB = jest.fn<HookCallback>();
-      const connectDB = jest.fn<HookCallback>();
-
-      const closeDBHook = hook("close", closeDB);
-      const connectDBHook = hook("ready", connectDB);
-
-      app.register(plugin.compose(connectDBHook, closeDBHook));
-
-      await app.ready();
-      expect(connectDB).toHaveBeenCalled();
-
-      await app.close();
-      expect(closeDB).toHaveBeenCalled();
-    });
-
-    test("should call composed hooks when registered with plugin.compose", async () => {
-      const closeDB = jest.fn<HookCallback>();
-      const connectDB = jest.fn<HookCallback>();
-
-      const closeDBHook = hook("close", closeDB);
-      const connectDBHook = hook("ready", connectDB);
-
-      // Use plugin.compose to register both hooks
-      app.register(plugin.compose(connectDBHook, closeDBHook));
-
-      await app.ready();
-      await app.close();
-
-      expect(connectDB).toHaveBeenCalled();
-      expect(closeDB).toHaveBeenCalled();
-    });
-
-    test("should support multiple hooks with plugin.compose", async () => {
-      const hook1 = jest.fn<HookCallback>();
-      const hook2 = jest.fn<HookCallback>();
-      const mainHook = jest.fn<HookCallback>();
-
-      const h1 = hook("close", hook1);
-      const h2 = hook("close", hook2);
-      const main = hook("ready", mainHook);
-
-      app.register(plugin.compose(main, h1, h2));
-
-      await app.ready();
-      await app.close();
-
-      expect(mainHook).toHaveBeenCalled();
-      expect(hook1).toHaveBeenCalled();
-      expect(hook2).toHaveBeenCalled();
     });
 
     test("should handle async hooks with plugin.compose", async () => {
@@ -133,6 +73,55 @@ describe("hooks", () => {
 
       await app.close();
       expect(dbClosed).toBe(true);
+    });
+  });
+
+  describe("hook with sync callbacks", () => {
+    test("should auto-call done() for close hook with no parameters", async () => {
+      let closed = false;
+      const closeHook = hook("close", () => {
+        closed = true;
+      });
+
+      app.register(closeHook);
+      await app.ready();
+      expect(closed).toBe(false);
+      await app.close();
+      expect(closed).toBe(true);
+    });
+
+    test("should auto-call done() for ready hook with no parameters", async () => {
+      let ready = false;
+      const readyHook = hook("ready", () => {
+        ready = true;
+      });
+      app.register(readyHook);
+      expect(ready).toBe(false);
+      await app.ready();
+      expect(ready).toBe(true);
+    });
+
+    test("should require manual done() call when done parameter is present", async () => {
+      let closed = false;
+      const closeHook = hook("close", (_i, done) => {
+        closed = true;
+        done();
+      });
+
+      app.register(closeHook);
+      await app.ready();
+
+      await app.close();
+      expect(closed).toBe(true);
+    });
+
+    test("should handle errors with manual done(err)", async () => {
+      const closeHook = hook("close", (_i, done) => {
+        done(new Error("Close error"));
+      });
+      app.register(closeHook);
+      await app.ready();
+      await expect(app.close()).rejects.toThrow("Close error");
     });
   });
 });

@@ -18,6 +18,44 @@ describe("plugins", () => {
       expect(p[Symbol.for("skip-override")]).toBeTruthy();
       expect(p[Symbol.for("fastify.display-name")]).toBe("hello world");
     });
+
+    test("it should auto-call done() when function has less than 3 parameters", async () => {
+      let called = false;
+      const app = createApp({ logger: false, routes: { log: false } });
+
+      const p = plugin.sync((_app) => {
+        called = true;
+      });
+
+      await app.register(p);
+      await app.ready();
+
+      expect(called).toBe(true);
+      await app.close();
+    });
+
+    test("it should not auto-call done() when function has 3 parameters", async () => {
+      let called = false;
+      const app = createApp({ logger: false, routes: { log: false } });
+
+      const p = plugin.sync((_app, _opts, done) => {
+        called = true;
+        done();
+      });
+
+      await app.register(p);
+      await app.ready();
+
+      expect(called).toBe(true);
+      await app.close();
+    });
+
+    test("it should preserve function name when auto-wrapping", () => {
+      const namedFn = function myPlugin(_app: any) {};
+      const p: any = plugin.sync(namedFn);
+
+      expect(p[Symbol.for("fastify.display-name")]).toBe("myPlugin");
+    });
   });
 
   describe("createPlugin", () => {

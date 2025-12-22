@@ -1,18 +1,14 @@
 import { type App, createApp } from "./index.js";
+import { routeLogger } from "./router.js";
 import chalk from "chalk";
-import { logRoutes } from "./router.js";
 import { jest } from "@jest/globals";
 
-describe("logRoutes", () => {
+describe("routeLogger", () => {
   let app: App;
 
-  let spy: jest.SpiedFunction<any>;
-
   beforeEach(() => {
-    // Create a new Fastify instance before each test
     app = createApp({ routes: { log: false } });
 
-    // Add some routes to the app
     app.get("/route1", async (_, reply) => {
       reply.send("route1");
     });
@@ -20,27 +16,73 @@ describe("logRoutes", () => {
     app.post("/route2", async (_, reply) => {
       reply.send("route2");
     });
-
-    // Mock console.log
-    spy = jest.spyOn(console, "log").mockImplementation(() => {});
   });
 
   afterEach(async () => {
-    // Restore console.log after each test
     await app.close();
-    spy.mockClear();
   });
 
-  it("should log the routes using chalk", () => {
-    // Call the logRoutes function
-    logRoutes(app);
+  it("should log routes with default options using console.log and chalk", async () => {
+    const spy = jest.spyOn(console, "log").mockImplementation(() => {});
 
-    // Get the printed routes as a string
-    const printedRoutes = app.printRoutes({
-      commonPrefix: false,
+    await app.register(routeLogger);
+    await app.ready();
+
+    const printedRoutes = app.printRoutes({ commonPrefix: false });
+    expect(spy).toHaveBeenCalledWith(chalk.magenta(printedRoutes));
+
+    spy.mockRestore();
+  });
+
+  it("should use custom logger when provided", async () => {
+    const mockLogger = jest.fn();
+
+    await app.register(routeLogger, { logger: mockLogger });
+    await app.ready();
+
+    const printedRoutes = app.printRoutes({ commonPrefix: false });
+    expect(mockLogger).toHaveBeenCalledWith(chalk.magenta(printedRoutes));
+  });
+
+  it("should use custom formatter when provided", async () => {
+    const mockLogger = jest.fn();
+    const mockFormatter = jest.fn((routes) => `formatted: ${routes}`);
+
+    await app.register(routeLogger, {
+      logger: mockLogger,
+      formatter: mockFormatter,
     });
+    await app.ready();
 
-    // Check that console.log was called with the expected output
-    expect(console.log).toHaveBeenCalledWith(chalk.magenta(printedRoutes));
+    const printedRoutes = app.printRoutes({ commonPrefix: false });
+    expect(mockFormatter).toHaveBeenCalledWith(printedRoutes);
+    expect(mockLogger).toHaveBeenCalledWith(`formatted: ${printedRoutes}`);
+  });
+
+  it("should respect commonPrefix option", async () => {
+    const mockLogger = jest.fn();
+
+    await app.register(routeLogger, {
+      logger: mockLogger,
+      commonPrefix: true,
+    });
+    await app.ready();
+
+    const printedRoutes = app.printRoutes({ commonPrefix: true });
+    expect(mockLogger).toHaveBeenCalledWith(chalk.magenta(printedRoutes));
+  });
+
+  it("should log routes only when app is ready", async () => {
+    const mockLogger = jest.fn();
+
+    await app.register(routeLogger, { logger: mockLogger });
+
+    // Should not have been called yet
+    expect(mockLogger).not.toHaveBeenCalled();
+
+    await app.ready();
+
+    // Should be called after ready
+    expect(mockLogger).toHaveBeenCalledTimes(1);
   });
 });
