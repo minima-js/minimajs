@@ -1,12 +1,6 @@
 /**
- * @minimajs/server - High-performance HTTP framework built on Fastify
- *
+ * @minimajs/server - High-performance HTTP framework
  * @module @minimajs/server
- *
- * @description
- * Minima.js Server is a high-performance HTTP framework built on top of Fastify,
- * providing context-aware request handling with zero boilerplate.
- *
  * @example
  * ```typescript
  * import { createApp } from "@minimajs/server";
@@ -17,8 +11,6 @@
  *
  * app.listen({ port: 3000 });
  * ```
- *
- * @packageDocumentation
  */
 
 import type { Server } from "node:http";
@@ -27,14 +19,13 @@ import merge from "deepmerge";
 import { minimajs } from "./internal/plugins.js";
 import type { App, AppOptions } from "./types.js";
 import { loggerOptions } from "./logger.js";
-export { interceptor, type Interceptor } from "./interceptor.js";
 
+export * from "./interceptor.js";
 export * from "./http.js";
 export * from "./hooks/index.js";
 export * from "./types.js";
-export * from "./middleware.js";
 
-export { createContext } from "./context.js";
+export * from "./context.js";
 export { logger } from "./logger.js";
 export { plugin } from "./internal/plugins.js";
 

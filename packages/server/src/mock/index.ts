@@ -1,3 +1,25 @@
+/**
+ * @minimajs/server/mock - Testing utilities
+ *
+ * Provides testing utilities for mocking requests, responses, and context
+ * in Minima.js applications. Uses Fastify's built-in inject method for
+ * proper request/response lifecycle testing.
+ *
+ * @module @minimajs/server/mock
+ *
+ * @example
+ * ```typescript
+ * import { mockApp, mockRoute } from '@minimajs/server/mock';
+ *
+ * const [response] = await mockApp(
+ *   mockRoute(() => ({ message: 'hello' }))
+ * );
+ *
+ * expect(response.statusCode).toBe(200);
+ * expect(response.body).toEqual({ message: 'hello' });
+ * ```
+ */
+
 import type { InjectOptions, RouteHandlerMethod } from "fastify";
 import { createApp, type App } from "../index.js";
 
@@ -6,7 +28,12 @@ export * from "./request.js";
 export * from "./response.js";
 
 type Route = ReturnType<typeof mockRoute>;
-type Decorate = (app: App) => unknown;
+
+/**
+ * Decorator function type for modifying the app instance in tests.
+ * Used to register decorators, plugins, or other app-level configurations.
+ */
+export type Decorate = (app: App) => unknown;
 
 /**
  * Type representing the response from Fastify's inject method

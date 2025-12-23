@@ -1,10 +1,10 @@
-import type { Server } from "node:http";
 import { handleResponse } from "./response.js";
 import { wrap } from "./context.js";
 import { NotFoundError, errorHandler } from "../error.js";
-import type { FastifyPluginAsync, FastifyPluginCallback, FastifyPluginOptions } from "fastify";
+import type { FastifyPluginAsync, FastifyPluginOptions } from "fastify";
 import { dispatchError, dispatchSent } from "../hooks/dispatch.js";
 import { isAsyncFunction } from "node:util/types";
+import type { Plugin, PluginSync } from "../index.js";
 
 export interface PluginOption {
   name?: string;
@@ -15,28 +15,21 @@ const pluginOptionMappings: { [K in keyof PluginOption]-?: symbol } = {
   name: Symbol.for("fastify.display-name"),
   override: Symbol.for("skip-override"),
 };
-export function setOption(cb: PluginCallbackSync<any>, options: PluginOption) {
+export function setOption(cb: Plugin<any> | PluginSync<any>, options: PluginOption) {
   for (const [name, value] of Object.entries(options)) {
     const option = pluginOptionMappings[name as keyof PluginOption];
     (cb as any)[option] = value;
   }
   return cb;
 }
-type AppOptions<T> = T & {
-  prefix?: string;
-};
-type PluginCallbackSync<T> = FastifyPluginCallback<AppOptions<T>, Server>;
-type PluginCallback<T> = FastifyPluginAsync<AppOptions<T>, Server>;
 
-export function plugin<T>(fn: PluginCallback<T>, name?: string) {
+export function plugin<T extends FastifyPluginOptions>(fn: Plugin<T>, name?: string) {
   setOption(fn, { override: true });
   if (name) {
     setOption(fn, { name });
   }
   return fn;
 }
-
-type Plugin<Opts extends FastifyPluginOptions> = FastifyPluginCallback<Opts> | FastifyPluginAsync<Opts>;
 
 /**
  * Plugin utilities namespace providing helper functions for creating and composing Fastify plugins.
@@ -46,9 +39,9 @@ export namespace plugin {
    * Wraps a sync plugin to automatically call done() if the function doesn't accept it.
    * Prevents plugins from getting stuck if the user forgets to call done().
    */
-  function ensureDone<T>(fn: PluginCallbackSync<T>): PluginCallbackSync<T> {
+  function ensureDone<T extends FastifyPluginOptions>(fn: PluginSync<T>): PluginSync<T> {
     if (fn.length < 3) {
-      return function wraped(app, opts, done) {
+      return function wrapped(app, opts, done) {
         fn(app, opts, done);
         done();
       };
@@ -56,7 +49,7 @@ export namespace plugin {
     return fn;
   }
 
-  export function sync<T>(fn: PluginCallbackSync<T>, name = fn.name) {
+  export function sync<T extends FastifyPluginOptions>(fn: PluginSync<T>, name = fn.name) {
     const wrappedFn = ensureDone(fn);
     setOption(wrappedFn, { name: name, override: true });
     return wrappedFn;
@@ -66,7 +59,7 @@ export namespace plugin {
    * Type guard to check if a plugin is async or sync.
    * Uses Node.js util.types.isAsyncFunction to determine if the plugin is an async function.
    */
-  function isAsync<Opts extends FastifyPluginOptions>(plg: Plugin<Opts>): plg is FastifyPluginAsync {
+  function isAsync<Opts extends FastifyPluginOptions>(plg: Plugin<Opts> | PluginSync<Opts>): plg is FastifyPluginAsync {
     return isAsyncFunction(plg);
   }
 
@@ -81,7 +74,7 @@ export namespace plugin {
    * app.register(plugin.compose(connectDB, closeDB));
    * ```
    */
-  export function compose<Opts extends FastifyPluginOptions>(...plugins: Plugin<Opts>[]) {
+  export function compose<Opts extends FastifyPluginOptions>(...plugins: (Plugin<Opts> | PluginSync<Opts>)[]) {
     return plugin<Opts>(async function composed(app, opts) {
       for (const plg of plugins) {
         if (isAsync(plg)) {

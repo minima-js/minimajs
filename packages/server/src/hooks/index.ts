@@ -13,9 +13,9 @@ import type {
 } from "fastify/types/hooks.js";
 import { type ErrorHookCallback, type HookCallback } from "../internal/context.js";
 import { plugin } from "../internal/plugins.js";
-import type { FastifyPluginCallback } from "fastify";
 import { context } from "../context.js";
-export type { HookCallback };
+import type { PluginSync } from "../types.js";
+export type { HookCallback, ErrorHookCallback };
 
 /**
  * Registers a callback to execute after the response has been sent.
@@ -35,7 +35,11 @@ export function onError(cb: ErrorHookCallback) {
   hooks.onError.add(cb);
 }
 
-type LifecycleHook = "close" | "send" | "listen" | "ready" | "register";
+/**
+ * Lifecycle hook event names supported by Minima.js.
+ * These correspond to Fastify's lifecycle hook events.
+ */
+export type LifecycleHook = "close" | "send" | "listen" | "ready" | "register";
 
 const hooksMapping: Record<LifecycleHook, ApplicationHook | BaseLifecycleHook> = {
   close: "onClose",
@@ -44,8 +48,6 @@ const hooksMapping: Record<LifecycleHook, ApplicationHook | BaseLifecycleHook> =
   ready: "onReady",
   register: "onRegister",
 };
-
-type Plugin = FastifyPluginCallback;
 
 /**
  * Creates a lifecycle hook plugin.
@@ -70,19 +72,28 @@ type Plugin = FastifyPluginCallback;
  * app.register(plugin.compose(connectDB, closeDB));
  * ```
  */
-export function hook(name: "close", callback: onCloseAsyncHookHandler | onCloseHookHandler): Plugin;
-export function hook(name: "ready", callback: onReadyAsyncHookHandler | onReadyHookHandler): Plugin;
-export function hook(name: "listen", callback: onListenAsyncHookHandler | onListenHookHandler): Plugin;
-export function hook(name: "send", callback: onSendAsyncHookHandler | onSendHookHandler): Plugin;
-export function hook(name: "register", callback: onRegisterHookHandler): Plugin;
-export function hook(name: LifecycleHook, callback: (...args: any[]) => any): Plugin {
+export function hook(name: "close", callback: onCloseAsyncHookHandler | onCloseHookHandler): PluginSync;
+export function hook(name: "ready", callback: onReadyAsyncHookHandler | onReadyHookHandler): PluginSync;
+export function hook(name: "listen", callback: onListenAsyncHookHandler | onListenHookHandler): PluginSync;
+export function hook(name: "send", callback: onSendAsyncHookHandler | onSendHookHandler): PluginSync;
+export function hook(name: "register", callback: onRegisterHookHandler): PluginSync;
+export function hook(name: LifecycleHook, callback: (...args: any[]) => any): PluginSync {
   return plugin.sync(function hooksPlugin(app) {
     app.addHook(hooksMapping[name], callback);
   });
 }
 
-type LifespanFinalize = onCloseAsyncHookHandler | onCloseHookHandler;
-type Lifespan = () => LifespanFinalize | Promise<LifespanFinalize>;
+/**
+ * Cleanup function type for lifespan hooks.
+ * Can be either sync or async.
+ */
+export type LifespanFinalize = onCloseAsyncHookHandler | onCloseHookHandler;
+
+/**
+ * Lifespan handler function type.
+ * Returns a cleanup function to be executed when the application closes.
+ */
+export type Lifespan = () => LifespanFinalize | Promise<LifespanFinalize>;
 
 /**
  * Hook utilities namespace providing additional hook-related functionality.
@@ -136,7 +147,11 @@ export namespace hook {
     });
   }
 
-  type AnyHookHandler =
+  /**
+   * Union type of all possible lifecycle hook handler signatures.
+   * Includes both sync and async variants for each lifecycle event.
+   */
+  export type AnyHookHandler =
     | onCloseAsyncHookHandler
     | onCloseHookHandler
     | onReadyAsyncHookHandler
@@ -171,7 +186,7 @@ export namespace hook {
     return plugin.sync(function defineHookPlugin(app) {
       for (const [name, callback] of Object.entries(hooks)) {
         if (callback) {
-          app.addHook(hooksMapping[name as LifecycleHook], callback as any);
+          app.addHook(hooksMapping[name as LifecycleHook], callback);
         }
       }
     });

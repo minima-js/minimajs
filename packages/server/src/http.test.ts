@@ -1,3 +1,4 @@
+import { context } from "./context.js";
 import { HttpError, NotFoundError, RedirectError } from "./error.js";
 import { abort, body, headers, params, redirect, request, response, searchParams, setHeader } from "./http.js";
 import { mockContext } from "./mock/context.js";
@@ -8,6 +9,27 @@ describe("Http", () => {
     test("should retrieve request object", () => {
       mockContext((req) => {
         expect(request().raw).toBe(req.raw);
+      });
+    });
+  });
+
+  describe("request.signal", () => {
+    test("should return an AbortSignal instance", () => {
+      mockContext(() => {
+        expect(request.signal()).toBeInstanceOf(AbortSignal);
+      });
+    });
+
+    test("should return an aborted signal if the AbortController is aborted", () => {
+      mockContext(() => {
+        const abortController = context().abortController;
+
+        const signal = request.signal();
+        expect(signal.aborted).toBe(false);
+
+        abortController.abort();
+
+        expect(signal.aborted).toBe(true);
       });
     });
   });

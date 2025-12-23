@@ -1,6 +1,7 @@
 import type { App, Request, Response } from "../../types.js";
 import { createDecoratorPlugin, getDecorator } from "./helpers.js";
 
+export type { InterceptorRegisterOptions as DecoratorOptions } from "./helpers.js";
 export type ResponseDecorator = (body: unknown) => Promise<unknown> | unknown;
 
 /**
@@ -27,9 +28,9 @@ export function createResponseDecoratorHandler() {
   }
   return [createDecorator, getDecorated] as const;
 }
+export const [createResponseDecorator, getDecoratedResponse] = createResponseDecoratorHandler();
 
 const SkipResponseDecorator = Symbol("response-no-decorate");
-
 /**
  * Checks if response decorator has been skipped for a given response.
  * Used internally to prevent double-decoration of error responses.
@@ -48,12 +49,7 @@ export function skipResponseDecorator(response: Response) {
 
 export type ErrorDecorator = (error: unknown, body: unknown) => Promise<unknown> | unknown;
 
-/**
- * Creates an error decorator handler system for transforming error responses.
- * Returns a tuple of [createDecorator, getDecorated] functions for registering and executing error decorators.
- * Error decorators are executed in sequence and can transform errors into custom response formats.
- */
-export function createErrorDecoratorHandler() {
+function createErrorDecoratorHandler() {
   const symbol = Symbol("error-decorator");
   async function getDecorated(app: App, req: Request, error: unknown) {
     const callbacks = getDecorator<ErrorDecorator>(app, symbol);
@@ -81,3 +77,5 @@ export function createErrorDecoratorHandler() {
   }
   return [createDecorator, getDecorated] as const;
 }
+
+export const [createErrorDecorator, getDecoratedError] = createErrorDecoratorHandler();

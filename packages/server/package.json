@@ -12,11 +12,8 @@
   },
   "exports": {
     ".": "./lib/index.js",
-    "./interceptor": "./lib/interceptor.js",
     "./plugins": "./lib/plugins/index.js",
-    "./response": "./lib/response.js",
     "./error": "./lib/error.js",
-    "./context": "./lib/context.js",
     "./utils": "./lib/utils/index.js",
     "./logger": "./lib/logger.js",
     "./mock": "./lib/mock/index.js"
@@ -40,10 +37,10 @@
     "http-terminator": "^3.2.0"
   },
   "devDependencies": {
-    "http-terminator": "^3.2.0",
     "@jest/globals": "^30.2.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.0.3",
+    "http-terminator": "^3.2.0",
     "jest": "^30.2.0",
     "jest-util": "^30.2.0",
     "rimraf": "^6.1.2",

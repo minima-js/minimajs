@@ -1,11 +1,34 @@
+/**
+ * This module provides experimental features for handling multipart form data,
+ * including automatic file uploads to temporary storage with cleanup capabilities.
+ *
+ * @experimental This module is experimental and may change. Use with caution.
+ *
+ * @module @minimajs/multipart/unstable
+ *
+ *
+ * @example
+ * ```ts
+ * import { getUploadedBody, UploadedFile } from '@minimajs/multipart/unstable';
+ *
+ * const body = await getUploadedBody<{
+ *   name: string;
+ *   avatar: UploadedFile;
+ * }>();
+ *
+ * console.log(body.name);
+ * console.log(body.avatar.tmpFile);
+ * // Files are automatically cleaned up after request
+ * ```
+ */
 import { createReadStream } from "node:fs";
 import { unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import type { Readable } from "node:stream";
 import { v4 as uuid } from "uuid";
-import { defer } from "@minimajs/server";
-import { createContext, context } from "@minimajs/server/context";
+import { defer, request } from "@minimajs/server";
+import { createContext } from "@minimajs/server";
 import { isFile, File, type FileInfo } from "./file.js";
 import { multipart } from "./multipart.js";
 
@@ -13,7 +36,7 @@ import { multipart } from "./multipart.js";
  * Represents a file that has been uploaded and saved to a temporary location.
  * Extends File with automatic cleanup capabilities.
  *
- * @unstable This API is experimental and may change.
+ * @experimental This API is experimental and may change.
  */
 export class UploadedFile extends File {
   #streams = new Set<Readable>();
@@ -50,7 +73,11 @@ export class UploadedFile extends File {
   }
 }
 
-type UploadedBody = Record<string, string | UploadedFile>;
+/**
+ * Uploaded multipart body type.
+ * Maps field names to either string values or uploaded files.
+ */
+export type UploadedBody = Record<string, string | UploadedFile>;
 
 const [getMultipartMeta, setMultipartMeta] = createContext<UploadedBody | null>();
 
@@ -59,7 +86,7 @@ const [getMultipartMeta, setMultipartMeta] = createContext<UploadedBody | null>(
  * Files are moved to the system's temp directory and wrapped in UploadedFile instances.
  * Temporary files are automatically cleaned up when the request completes.
  *
- * @unstable This API is experimental and may change.
+ * @experimental This API is experimental and may change.
  * @example
  * ```ts
  * const body = await getUploadedBody<{
@@ -77,7 +104,7 @@ export async function getUploadedBody<T extends UploadedBody = UploadedBody>(): 
   if (body) {
     return body;
   }
-  const signal = context.signal();
+  const signal = request.signal();
   const newBody = {} as any;
   for await (const [name, value] of multipart.body()) {
     if (isFile(value)) {

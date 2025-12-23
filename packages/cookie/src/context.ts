@@ -1,4 +1,4 @@
-import { context } from "@minimajs/server/context";
+import { context } from "@minimajs/server";
 import type { Request, Response } from "./types.js";
 
 export function $request() {

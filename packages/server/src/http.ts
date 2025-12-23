@@ -1,5 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import { context } from "./context.js";
+
 import {
   RedirectError,
   HttpError,
@@ -254,6 +255,23 @@ export namespace request {
   export function route() {
     const { routeOptions } = request();
     return routeOptions;
+  }
+
+  /**
+   * Retrieves the abort signal for the current request.
+   * When a user cancels a request (e.g., closes a browser tab or navigates away from a page while a request is ongoing),
+   * an `AbortSignal` event is triggered.
+   * Can be attached to any async operation to prevent wasted resources on the server if a request is cancelled mid-flight.
+   * @example
+   * ```ts
+   * import { request } from '@minimajs/server';
+   * fetch('https://api.github.com/users', { signal: request.signal() })
+   * ```
+   * if the user cancels the request, requesting to github users will be cancelled as well.
+   * @since v0.2.0
+   */
+  export function signal(): AbortSignal {
+    return context().abortController.signal;
   }
 }
 

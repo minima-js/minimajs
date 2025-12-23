@@ -30,4 +30,4 @@ export function createSearchParamsAsync<T extends ObjectShape>(obj: T, option: V
   return validatorAsync(obj, getSearchParams, option);
 }
 
-export { ValidationError } from "./error.js";
+export { ValidationError, type ValidatorErrorOptions, type Params, type Spec } from "./error.js";

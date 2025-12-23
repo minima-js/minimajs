@@ -1,5 +1,5 @@
-import { abort, createApp, searchParams } from "./index.js";
-import { filter, interceptor, type Interceptor } from "./interceptor.js";
+import { abort, createApp, request, searchParams } from "./index.js";
+import { interceptor, type Interceptor } from "./interceptor.js";
 import type { App } from "./types.js";
 import { jest } from "@jest/globals";
 
@@ -52,7 +52,7 @@ describe("middleware", () => {
 
   test("should filter middleware function", async () => {
     const hello = jest.fn(() => Promise.resolve());
-    const filteredHello = filter(
+    const filteredHello = interceptor.filter(
       async () => hello(),
       function doFilter() {
         return searchParams.get("name") === "Adil";
@@ -79,7 +79,7 @@ describe("middleware", () => {
 
   test("should filter middleware function with non-async handler", async () => {
     const hello = jest.fn<Interceptor>((_req, _res, done) => done());
-    const filteredHello = filter(hello, function doFilter() {
+    const filteredHello = interceptor.filter(hello, function doFilter() {
       return searchParams.get("name") === "Adil";
     });
     app.register(
@@ -278,6 +278,41 @@ describe("interceptor.response", () => {
         })
       );
     });
+  });
+});
+
+describe("interceptor.use", () => {
+  let app: App;
+  beforeEach(() => {
+    app = createApp();
+  });
+  afterEach(() => app.close());
+  test("should call middleware function", async () => {
+    const hello = jest.fn().mockReturnValue(Promise.resolve());
+    app.register(interceptor.use(async () => hello()));
+    app.get("/", () => {
+      return "hello";
+    });
+    await app.inject({ url: "/" });
+    expect(hello).toHaveBeenCalled();
+  });
+
+  test("should call middleware function on specific route", async () => {
+    const hello = jest.fn().mockReturnValue(Promise.resolve());
+    app.register(
+      interceptor.use(async () => hello()),
+      { filter: () => request.route().url === "/hello" }
+    );
+    app.get("/", () => {
+      return "home";
+    });
+    app.get("/hello", () => {
+      return "hello";
+    });
+    await app.inject({ url: "/" });
+    expect(hello).not.toHaveBeenCalled();
+    await app.inject({ url: "/hello" });
+    expect(hello).toHaveBeenCalled();
   });
 });
 

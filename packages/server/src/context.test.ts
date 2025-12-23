@@ -34,29 +34,6 @@ describe("Context", () => {
     });
   });
 
-
-  describe("getSignal", () => {
-    test("should return an AbortSignal instance", () => {
-      mockContext(() => {
-        expect(context.signal()).toBeInstanceOf(AbortSignal);
-      });
-    });
-
-    test("should return an aborted signal if the AbortController is aborted", () => {
-      mockContext(() => {
-        const currentContext = context(); // Get the actual context
-        const abortController = currentContext.abortController;
-
-        const signal = context.signal();
-        expect(signal.aborted).toBe(false);
-
-        abortController.abort();
-
-        expect(signal.aborted).toBe(true);
-      });
-    });
-  });
-
   // once.test.ts
   describe("once", () => {
     it("should only call the callback once per request", () => {

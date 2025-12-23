@@ -2,6 +2,7 @@ import { context as $context } from "./internal/context.js";
 import { isCallable } from "./utils/callable.js";
 export { safe } from "./internal/context.js";
 export { maybeContext } from "./internal/context.js";
+export type { Context, Hooks } from "./internal/context.js";
 
 export type OnceCallback<T> = () => T;
 
@@ -14,23 +15,6 @@ export function context() {
  * @namespace
  */
 export namespace context {
-  /**
-   * Retrieves the abort signal for the current request.
-   * When a user cancels a request (e.g., closes a browser tab or navigates away from a page while a request is ongoing),
-   * an `AbortSignal` event is triggered.
-   * Can be attached to any async operation to prevent wasted resources on the server if a request is cancelled mid-flight.
-   * @example
-   * ```ts
-   * import { context } from '@minimajs/server/context';
-   * fetch('https://api.github.com/users', { signal: context.signal() })
-   * ```
-   * if the user cancels the request, requesting to github users will be cancelled as well.
-   * @since v0.2.0
-   */
-  export function signal(): AbortSignal {
-    return $context().abortController.signal;
-  }
-
   /**
    * Context enables sharing data within the request scope without the need to explicitly pass it around.
    * @example
