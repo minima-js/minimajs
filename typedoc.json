@@ -15,7 +15,6 @@
   "excludePrivate": true,
   "excludeInternal": true,
   "readme": "none",
-  "sort": ["source-order"],
   "hideGenerator": true,
   "githubPages": false,
   "cleanOutputDir": true,
@@ -24,8 +23,6 @@
   "indexFormat": "table",
   "packageOptions": {
     "excludeInternal": true,
-    "basePath": ".",
-    "readme": "none",
-    "entryPoints": ["./src/index.ts"]
+    "readme": "none"
   }
 }
