@@ -1,6 +1,6 @@
 {
   "name": "@minimajs/cookie",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Type-safe cookie management with validation and schema support",
   "type": "module",
   "exports": {
