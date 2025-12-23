@@ -8,7 +8,10 @@ import {
 } from "yup";
 import { ValidationError } from "./error.js";
 
-type DataCallback = () => unknown;
+/**
+ * Callback function that returns data to be validated.
+ */
+export type DataCallback = () => unknown;
 export function validator<T extends ObjectShape>(obj: T, data: DataCallback, option: ValidateOptions) {
   const schema = object(obj);
   return function getData(): InferType<typeof schema> {

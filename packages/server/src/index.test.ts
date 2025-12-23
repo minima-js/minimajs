@@ -20,7 +20,7 @@ describe("createApp", () => {
   });
 
   it("should create an app with routes log enabled", () => {
-    const app = createApp({ routes: { log: true } });
+    const app = createApp();
     expect(app).toBeDefined();
     app.close();
   });

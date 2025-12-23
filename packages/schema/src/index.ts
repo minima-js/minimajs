@@ -1,26 +1,25 @@
 import type { ObjectShape, ValidateOptions } from "yup";
-import { getBody, getHeaders, getRequest } from "@minimajs/server";
+import { body, headers, request } from "@minimajs/server";
 import { validator, validatorAsync } from "./validation.js";
 
 function getSearchParams() {
-  const request = getRequest();
-  return request.query;
+  return request().query;
 }
 
 export function createBody<T extends ObjectShape>(obj: T, option: ValidateOptions = {}) {
-  return validator(obj, getBody, option);
+  return validator(obj, body, option);
 }
 
 export function createBodyAsync<T extends ObjectShape>(obj: T, option: ValidateOptions = {}) {
-  return validatorAsync(obj, getBody, option);
+  return validatorAsync(obj, body, option);
 }
 
 export function createHeaders<T extends ObjectShape>(obj: T, option: ValidateOptions = {}) {
-  return validator(obj, getHeaders, option);
+  return validator(obj, headers, option);
 }
 
 export function createHeadersAsync<T extends ObjectShape>(obj: T, option: ValidateOptions = {}) {
-  return validatorAsync(obj, getHeaders, option);
+  return validatorAsync(obj, headers, option);
 }
 
 export function createSearchParams<T extends ObjectShape>(obj: T, option: ValidateOptions = {}) {
@@ -31,4 +30,4 @@ export function createSearchParamsAsync<T extends ObjectShape>(obj: T, option: V
   return validatorAsync(obj, getSearchParams, option);
 }
 
-export { ValidationError } from "./error.js";
+export { ValidationError, type ValidatorErrorOptions, type Params, type Spec } from "./error.js";

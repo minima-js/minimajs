@@ -6,7 +6,7 @@ import { IncomingMessage, ServerResponse } from "node:http";
 describe("internal/response", () => {
   let app: App;
   beforeEach(() => {
-    app = createApp({ logger: false, routes: { log: false } });
+    app = createApp({ logger: false });
   });
 
   afterEach(() => app.close());

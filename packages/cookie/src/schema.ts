@@ -1,11 +1,11 @@
 import { validator, validatorAsync } from "@minimajs/schema/validation";
 import type { ObjectShape, ValidateOptions } from "yup";
-import { getCookies } from "./index.js";
+import { cookies } from "./index.js";
 
 export function createCookies<T extends ObjectShape>(obj: T, option: ValidateOptions = {}) {
-  return validator(obj, getCookies, option);
+  return validator(obj, cookies, option);
 }
 
 export function createCookiesAsync<T extends ObjectShape>(obj: T, option: ValidateOptions = {}) {
-  return validatorAsync(obj, getCookies, option);
+  return validatorAsync(obj, cookies, option);
 }

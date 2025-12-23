@@ -1,7 +1,11 @@
 import { mkdir } from "fs/promises";
 import { resolve } from "path";
 
-const units = ["KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"] as const;
+/**
+ * Array of binary file size units.
+ * @internal
+ */
+export const units = ["KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"] as const;
 
 /**
  * File size unit type representing binary prefixes (base 1024).

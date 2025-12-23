@@ -7,14 +7,23 @@
   "scripts": {
     "dev": "tsc -w",
     "build": "tsc",
+    "test": "yarn node --no-warnings --experimental-vm-modules $(yarn bin jest)",
+    "coverage": "yarn test --coverage",
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "peerDependencies": {
     "@minimajs/server": ">=0.3.0"
   },
   "devDependencies": {
-    "@minimajs/server": "workspace:^",
-    "@types/node": "^25.0.3"
+    "@jest/globals": "^30.2.0",
+    "@minimajs/server": "workspace:*",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.0.3",
+    "jest": "^30.2.0",
+    "jest-util": "^30.2.0",
+    "rimraf": "^6.1.2",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.9.3"
   },
   "files": [
     "lib"

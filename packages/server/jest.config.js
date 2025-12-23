@@ -3,7 +3,7 @@ import { jestConfig } from "../config/jest.config.mjs";
 /** @type {import('jest').Config} */
 export default {
   ...jestConfig,
-  coverageReporters: ["html"],
-  testTimeout: 10000,
+  coveragePathIgnorePatterns: ["__tests__/", "/node_modules/", "src/mock/"],
+  testTimeout: 2000,
   forceExit: true,
 };

@@ -1,3 +1,21 @@
+/**
+ * Logging utilities
+ *
+ * Provides logging utilities built on Pino with pretty printing support.
+ * Includes context-aware logging with automatic module name enrichment.
+ *
+ * @module @minimajs/server/logger
+ *
+ * @example
+ * ```typescript
+ * import { logger } from '@minimajs/server/logger';
+ *
+ * const log = logger();
+ * log.info('Request received');
+ * log.error({ err }, 'Error occurred');
+ * ```
+ */
+
 import { pino, type LoggerOptions } from "pino";
 import merge from "deepmerge";
 import { maybeContext } from "./context.js";

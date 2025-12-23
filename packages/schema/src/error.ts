@@ -6,7 +6,7 @@ import { ok } from "assert";
  * Parameters associated with a validation error.
  * Contains detailed information about the validation context and configuration.
  */
-interface Params {
+export interface Params {
   /** The current value being validated */
   value: unknown;
   /** The original value before any transformations */
@@ -25,7 +25,7 @@ interface Params {
  * Validation specification that controls validation behavior.
  * Defines how the validation process should execute and handle different scenarios.
  */
-interface Spec {
+export interface Spec {
   /** Whether to remove unspecified keys from objects */
   strip: boolean;
   /** Whether to enforce strict type checking */
@@ -63,10 +63,6 @@ export interface ValidatorErrorOptions extends HttpErrorOptions {
   inner?: ValidationError[];
 }
 
-/**
- * Validation error interface.
- * Combines ValidatorErrorOptions with ValidationError class properties.
- */
 export interface ValidationError extends ValidatorErrorOptions {}
 
 /**

@@ -6,7 +6,7 @@ import type { App } from "./types.js";
 let app: App;
 
 beforeEach(() => {
-  app = createApp({ logger: false, routes: { log: false } });
+  app = createApp({ logger: false });
 });
 
 afterEach(() => {

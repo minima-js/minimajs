@@ -1,10 +1,27 @@
+/**
+ * Error handling utilities
+ *
+ * Provides error handling classes and utilities for HTTP error responses.
+ * Includes base error classes, error decorators, and utilities for working with HTTP status codes.
+ *
+ * @module @minimajs/server/error
+ *
+ * @example
+ * ```typescript
+ * import { HttpError, NotFoundError } from '@minimajs/server/error';
+ *
+ * throw new NotFoundError('Resource not found');
+ * throw new HttpError('Custom error', 400);
+ * ```
+ */
+
 import { StatusCodes } from "http-status-codes";
 import type { Dict, Request, Response } from "./types.js";
 import { isRequestAbortedError } from "./internal/response.js";
-import { createErrorDecoratorHandler } from "./utils/decorators/index.js";
+import { getDecoratedError } from "./utils/decorators/index.js";
 import { skipResponseDecorator } from "./utils/decorators/index.js";
 
-export type { ErrorDecorator } from "./utils/decorators/index.js";
+export type { ErrorDecorator, DecoratorOptions } from "./utils/decorators/index.js";
 
 /**
  * Represents the response body of an HTTP error.
@@ -116,8 +133,6 @@ export class ForbiddenError extends HttpError {
   }
 }
 
-const [createErrorDecorator, getDecoratedError] = createErrorDecoratorHandler();
-
 /**
  * Global error handler for HTTP requests.
  * Processes errors, applies error decorators, and renders appropriate error responses.
@@ -151,5 +166,3 @@ export async function errorHandler(error: unknown, req: Request, reply: Response
   await handler.render(req, reply);
   reply.hijack(); // block further response
 }
-
-export { createErrorDecorator };

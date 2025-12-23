@@ -1,10 +1,10 @@
-import { getContext } from "@minimajs/server/context";
+import { context } from "@minimajs/server";
 import type { Request, Response } from "./types.js";
 
-export function getRequest() {
-  return getContext().req as unknown as Request;
+export function $request() {
+  return context().req as unknown as Request;
 }
 
-export function getResponse() {
-  return getContext().reply as unknown as Response;
+export function $response() {
+  return context().reply as unknown as Response;
 }

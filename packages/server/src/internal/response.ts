@@ -3,13 +3,10 @@ import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import type { Next, Request, Response } from "../types.js";
 import { isAsyncIterator } from "../utils/iterable.js";
-import { createResponseDecoratorHandler, isResponseDecoratorSkipped } from "../utils/decorators/index.js";
+import { getDecoratedResponse, isResponseDecoratorSkipped } from "../utils/decorators/index.js";
 export type { ResponseDecorator } from "../utils/decorators/index.js";
 
 export const ResponseAbort = Symbol("RequestCancelled");
-
-const [createResponseDecorator, getDecoratedResponse] = createResponseDecoratorHandler();
-export { createResponseDecorator };
 
 export function isRequestAbortedError(err: unknown) {
   if (err instanceof Error && err.cause === ResponseAbort) {

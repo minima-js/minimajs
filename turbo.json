@@ -3,11 +3,12 @@
   "tasks": {
     "build": {
       "cache": true,
-      "dependsOn": ["^build"],
-      "outputs": ["lib/**", "build/**"]
-    },
-    "@minimajs/docs#build": {
-      "outputs": ["build/**"]
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "lib/**"
+      ]
     },
     "clean": {
       "cache": false

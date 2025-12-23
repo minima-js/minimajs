@@ -5,22 +5,20 @@ on:
     branches:
       - main
     paths:
-      - "packages/docs/**"
+      - "docs/**"
       - ".github/workflows/docs.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  build:
-    name: Deploy to GitHub Pages
+  deploy:
+    name: Build and Deploy Documentation
     runs-on: ubuntu-latest
 
     steps:
@@ -36,27 +34,29 @@ jobs:
           node-version-file: ".node-version"
           cache: "yarn"
 
+      - name: Cache Turbo
+        uses: actions/cache@v5
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ hashFiles('yarn.lock', 'turbo.json') }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
       - name: Install dependencies
         run: yarn install --immutable
 
+      - name: Build documentation
+        run: yarn build
+
       - name: Generate API References
-        run: yarn --cwd=packages/docs generate:api
+        run: yarn docs:api
 
       - name: Build documentation
-        run: yarn --cwd=packages/docs build
+        run: yarn docs:build
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+      - name: Deploy to minima-js.github.io
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: packages/docs/.vitepress/dist
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          personal_token: ${{ secrets.TOKEN_DOCS }}
+          external_repository: minima-js/minima-js.github.io
+          publish_dir: .vitepress/dist

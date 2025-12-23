@@ -16,7 +16,7 @@
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "devDependencies": {
-    "@minimajs/server": "workspace:^",
+    "@minimajs/server": "workspace:*",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.0.3",
     "@types/uuid": "^11.0.0",

@@ -2077,8 +2077,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@minimajs/auth@workspace:packages/auth"
   dependencies:
-    "@minimajs/server": "workspace:^"
+    "@jest/globals": "npm:^30.2.0"
+    "@minimajs/server": "workspace:*"
+    "@types/jest": "npm:^30.0.0"
     "@types/node": "npm:^25.0.3"
+    jest: "npm:^30.2.0"
+    jest-util: "npm:^30.2.0"
+    rimraf: "npm:^6.1.2"
+    ts-jest: "npm:^29.4.6"
+    typescript: "npm:^5.9.3"
   peerDependencies:
     "@minimajs/server": ">=0.3.0"
   languageName: unknown
@@ -2100,8 +2107,8 @@ __metadata:
   resolution: "@minimajs/cookie@workspace:packages/cookie"
   dependencies:
     "@fastify/cookie": "npm:^11.0.2"
-    "@minimajs/schema": "workspace:^"
-    "@minimajs/server": "workspace:^"
+    "@minimajs/schema": "workspace:*"
+    "@minimajs/server": "workspace:*"
     "@types/node": "npm:^25.0.3"
     fastify: "npm:^5.6.2"
     yup: "npm:^1.7.1"
@@ -2123,23 +2130,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@minimajs/docs@workspace:packages/docs":
-  version: 0.0.0-use.local
-  resolution: "@minimajs/docs@workspace:packages/docs"
-  dependencies:
-    typedoc: "npm:^0.28.15"
-    typedoc-plugin-markdown: "npm:^4.9.0"
-    typescript: "npm:^5.9.3"
-    vitepress: "npm:^1.6.4"
-    vue: "npm:^3.5.26"
-  languageName: unknown
-  linkType: soft
-
 "@minimajs/edge.js@workspace:packages/edge":
   version: 0.0.0-use.local
   resolution: "@minimajs/edge.js@workspace:packages/edge"
   dependencies:
-    "@minimajs/server": "workspace:^"
+    "@minimajs/server": "workspace:*"
     "@types/node": "npm:^25.0.3"
     edge.js: "npm:^6.4.0"
   peerDependencies:
@@ -2164,7 +2159,7 @@ __metadata:
   resolution: "@minimajs/multipart@workspace:packages/multipart"
   dependencies:
     "@fastify/busboy": "npm:^3.2.0"
-    "@minimajs/server": "workspace:^"
+    "@minimajs/server": "workspace:*"
     "@types/jest": "npm:^30.0.0"
     "@types/node": "npm:^25.0.3"
     "@types/uuid": "npm:^11.0.0"
@@ -2183,20 +2178,20 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@minimajs/schema@workspace:^, @minimajs/schema@workspace:packages/schema":
+"@minimajs/schema@workspace:*, @minimajs/schema@workspace:packages/schema":
   version: 0.0.0-use.local
   resolution: "@minimajs/schema@workspace:packages/schema"
   dependencies:
-    "@minimajs/server": "workspace:^"
+    "@minimajs/server": "workspace:*"
     "@types/node": "npm:^25.0.3"
     yup: "npm:^1.7.1"
   peerDependencies:
     "@minimajs/server": ">=0.3.0"
-    yup: ">=1.6.1"
+    yup: ^1.7.1
   languageName: unknown
   linkType: soft
 
-"@minimajs/server@workspace:^, @minimajs/server@workspace:packages/server":
+"@minimajs/server@workspace:*, @minimajs/server@workspace:packages/server":
   version: 0.0.0-use.local
   resolution: "@minimajs/server@workspace:packages/server"
   dependencies:
@@ -2207,6 +2202,7 @@ __metadata:
     deepmerge: "npm:^4.3.1"
     fastify: "npm:^5.6.2"
     http-status-codes: "npm:^2.3.0"
+    http-terminator: "npm:^3.2.0"
     jest: "npm:^30.2.0"
     jest-util: "npm:^30.2.0"
     pino: "npm:^10.1.0"
@@ -2214,6 +2210,11 @@ __metadata:
     rimraf: "npm:^6.1.2"
     ts-jest: "npm:^29.4.6"
     typescript: "npm:^5.9.3"
+  peerDependencies:
+    http-terminator: ^3.2.0
+  peerDependenciesMeta:
+    http-terminator:
+      optional: true
   languageName: unknown
   linkType: soft
 
@@ -3995,6 +3996,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"delay@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "delay@npm:5.0.0"
+  checksum: 10/62f151151ecfde0d9afbb8a6be37a6d103c4cb24f35a20ef3fe56f920b0d0d0bb02bc9c0a3084d0179ef669ca332b91155f2ee4d9854622cd2cdba5fc95285f9
+  languageName: node
+  linkType: hard
+
 "dequal@npm:^2.0.0":
   version: 2.0.3
   resolution: "dequal@npm:2.0.3"
@@ -4464,6 +4472,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fast-printf@npm:^1.6.9":
+  version: 1.6.10
+  resolution: "fast-printf@npm:1.6.10"
+  checksum: 10/6849a660f4f416a47261043d3e48b451b081d1103d56a2ef9e9cf19d68dd9a55d9376b4e3f055ac6d86c2c56e31c82d7112b77aff7a4ed2c697a0e0ce6caa581
+  languageName: node
+  linkType: hard
+
 "fast-querystring@npm:^1.0.0":
   version: 1.1.2
   resolution: "fast-querystring@npm:1.1.2"
@@ -4907,6 +4922,18 @@ __metadata:
   version: 2.3.0
   resolution: "http-status-codes@npm:2.3.0"
   checksum: 10/1b8a01940b5e14d3c5b2f842313f4531469b41ce4fa40ca3aae5c82a3101828db2cc9406bfb2d50a46e6d521d106577b6656c2b065c76125b99ee54b2cbbac09
+  languageName: node
+  linkType: hard
+
+"http-terminator@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "http-terminator@npm:3.2.0"
+  dependencies:
+    delay: "npm:^5.0.0"
+    p-wait-for: "npm:^3.2.0"
+    roarr: "npm:^7.0.4"
+    type-fest: "npm:^2.3.3"
+  checksum: 10/82d06be231c5705d3ecce1bce0d26e41df975cdfc470a6edfdfa64e9a19b273bf9114266acfe64f9aca245ead3dc618e718eaa415e18c36af1c2cdd923a3d19c
   languageName: node
   linkType: hard
 
@@ -6115,7 +6142,11 @@ __metadata:
     jest: "npm:^30.2.0"
     rimraf: "npm:^6.1.2"
     turbo: "npm:^2.6.3"
+    typedoc: "npm:^0.28.15"
+    typedoc-plugin-markdown: "npm:^4.9.0"
     typescript: "npm:^5.9.3"
+    vitepress: "npm:^1.6.4"
+    vue: "npm:^3.5.26"
   languageName: unknown
   linkType: soft
 
@@ -6449,6 +6480,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"p-finally@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "p-finally@npm:1.0.0"
+  checksum: 10/93a654c53dc805dd5b5891bab16eb0ea46db8f66c4bfd99336ae929323b1af2b70a8b0654f8f1eae924b2b73d037031366d645f1fd18b3d30cbd15950cc4b1d4
+  languageName: node
+  linkType: hard
+
 "p-limit@npm:^2.2.0":
   version: 2.3.0
   resolution: "p-limit@npm:2.3.0"
@@ -6492,10 +6530,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+"p-timeout@npm:^3.0.0":
+  version: 3.2.0
+  resolution: "p-timeout@npm:3.2.0"
+  dependencies:
+    p-finally: "npm:^1.0.0"
+  checksum: 10/3dd0eaa048780a6f23e5855df3dd45c7beacff1f820476c1d0d1bcd6648e3298752ba2c877aa1c92f6453c7dd23faaf13d9f5149fc14c0598a142e2c5e8d649c
+  languageName: node
+  linkType: hard
+
 "p-try@npm:^2.0.0":
   version: 2.2.0
   resolution: "p-try@npm:2.2.0"
   checksum: 10/f8a8e9a7693659383f06aec604ad5ead237c7a261c18048a6e1b5b85a5f8a067e469aa24f5bc009b991ea3b058a87f5065ef4176793a200d4917349881216cae
+  languageName: node
+  linkType: hard
+
+"p-wait-for@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "p-wait-for@npm:3.2.0"
+  dependencies:
+    p-timeout: "npm:^3.0.0"
+  checksum: 10/7f6840e9233d96836a233dee9c5b1c711bfdf76228d0eaea68fa74a79418f5eef6dc1915dadd28d17312a99f6a53daa308b1c18b779bc9c1dabcae3d6b35a086
   languageName: node
   linkType: hard
 
@@ -6983,6 +7039,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"roarr@npm:^7.0.4":
+  version: 7.21.2
+  resolution: "roarr@npm:7.21.2"
+  dependencies:
+    fast-printf: "npm:^1.6.9"
+    safe-stable-stringify: "npm:^2.4.3"
+    semver-compare: "npm:^1.0.0"
+  checksum: 10/539afca7edb7dd49175c04d7f36964205cb07ef375d14d66728d47adffc2f1726e83ca759358dbeec79c47fa60c7266f4f189cb7f60684de03035de019d4a8c6
+  languageName: node
+  linkType: hard
+
 "rollup@npm:^4.20.0":
   version: 4.53.5
   resolution: "rollup@npm:4.53.5"
@@ -7089,6 +7156,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"safe-stable-stringify@npm:^2.4.3":
+  version: 2.5.0
+  resolution: "safe-stable-stringify@npm:2.5.0"
+  checksum: 10/2697fa186c17c38c3ca5309637b4ac6de2f1c3d282da27cd5e1e3c88eca0fb1f9aea568a6aabdf284111592c8782b94ee07176f17126031be72ab1313ed46c5c
+  languageName: node
+  linkType: hard
+
 "safer-buffer@npm:>= 2.1.2 < 3.0.0":
   version: 2.1.2
   resolution: "safer-buffer@npm:2.1.2"
@@ -7100,6 +7174,13 @@ __metadata:
   version: 4.0.0
   resolution: "secure-json-parse@npm:4.0.0"
   checksum: 10/c36c9dec9afaf4ef929a5469995d70d2f20d3d89b57219f22e0349b342715987283dbc1a80ab6f39e0bb28f8c3f3f073ce5363765c20c8d003ac243b4a89bd3d
+  languageName: node
+  linkType: hard
+
+"semver-compare@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "semver-compare@npm:1.0.0"
+  checksum: 10/75f9c7a7786d1756f64b1429017746721e07bd7691bdad6368f7643885d3a98a27586777e9699456564f4844b407e9f186cc1d588a3f9c0be71310e517e942c3
   languageName: node
   linkType: hard
 
@@ -7753,7 +7834,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"type-fest@npm:^2.19.0":
+"type-fest@npm:^2.19.0, type-fest@npm:^2.3.3":
   version: 2.19.0
   resolution: "type-fest@npm:2.19.0"
   checksum: 10/7bf9e8fdf34f92c8bb364c0af14ca875fac7e0183f2985498b77be129dc1b3b1ad0a6b3281580f19e48c6105c037fb966ad9934520c69c6434d17fd0af4eed78

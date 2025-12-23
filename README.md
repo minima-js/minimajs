@@ -15,7 +15,7 @@ Minima.js is a cutting-edge TypeScript-first web framework built on Fastify, des
 ### **Developer Experience**
 
 - **Zero Boilerplate** - Start building immediately
-- **Context-Aware APIs** - No more prop drilling with `getRequest()`, `getBody()`, `getParam()`
+- **Context-Aware APIs** - No more prop drilling with `request()`, `body()`, `params()`
 - **100% TypeScript** - End-to-end type safety
 - **Modern Standards** - ESM-first, latest JavaScript features
 
@@ -68,14 +68,14 @@ app.post("/users/:id", (req, res) => {
 ### MinimaJS (Modern)
 
 ```typescript
-import { createApp, getParam, getBody, multipart } from "@minimajs/server";
+import { createApp, params } from "@minimajs/server";
+import { multipart } from "@minimajs/multipart";
 
 const app = createApp();
 
-app.post("/users/:id", multipart(), () => {
-  const userId = getParam("id"); // Context-aware, type-safe
-  const userData = getBody<User>(); // Automatic typing
-  const file = getField("file"); // Built-in multipart
+app.post("/users/:id", () => {
+  const userId = params.get("id"); // Context-aware, type-safe
+  const file = multipart.file("file"); // Built-in multipart
   // Zero boilerplate, maximum productivity
 });
 ```
@@ -107,11 +107,11 @@ Ensure that your `package.json` file has the `"type": "module"` field to enable 
 Creating Your Application
 
 ```typescript title="src/index.ts"
-import { createApp, getParam } from "@minimajs/server";
+import { createApp, params } from "@minimajs/server";
 
 const app = createApp();
 
-app.get("/:name", () => `Hello ${getParam("name")}!`);
+app.get("/:name", () => `Hello ${params.get("name")}!`);
 
 await app.listen({ port: 1234 });
 ```

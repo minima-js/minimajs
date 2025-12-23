@@ -12,16 +12,14 @@
     "build": "yarn clean && tsc --build",
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
-  "dependencies": {
-    "yup": "^1.7.1"
-  },
   "peerDependencies": {
     "@minimajs/server": ">=0.3.0",
-    "yup": ">=1.6.1"
+    "yup": "^1.7.1"
   },
   "devDependencies": {
-    "@minimajs/server": "workspace:^",
-    "@types/node": "^25.0.3"
+    "@minimajs/server": "workspace:*",
+    "@types/node": "^25.0.3",
+    "yup": "^1.7.1"
   },
   "files": [
     "lib"
