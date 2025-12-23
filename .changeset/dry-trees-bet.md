@@ -1,9 +1,9 @@
 ---
 "@minimajs/server": minor
-"@minimajs/multipart": patch
-"@minimajs/cookie": patch
-"@minimajs/schema": patch
-"@minimajs/auth": patch
+"@minimajs/multipart": minor
+"@minimajs/cookie": minor
+"@minimajs/schema": minor
+"@minimajs/auth": minor
 ---
 
 re-written more DX friendly ever.

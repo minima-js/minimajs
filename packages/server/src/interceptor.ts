@@ -52,7 +52,7 @@ export interface InterceptorOption {
  * async function hello(app: App) {
  *  app.get('/', () => 'hello');
  * }
- * export helloModule = interceptor([logRequest], hello)
+ * export const helloModule = interceptor([logRequest], hello)
  * ```
  * @since v0.1.0
  */
@@ -85,9 +85,9 @@ export namespace interceptor {
    *
    * @example
    * ```ts
-   * import { response } from '@minimajs/server';
+   * import { interceptor } from '@minimajs/server';
    * app.register(
-   *   response.decorate((body) => ({
+   *   interceptor.response((body) => ({
    *     success: true,
    *     data: body
    *   }))
