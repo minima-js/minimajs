@@ -2078,7 +2078,7 @@ __metadata:
   resolution: "@minimajs/auth@workspace:packages/auth"
   dependencies:
     "@jest/globals": "npm:^30.2.0"
-    "@minimajs/server": "workspace:^"
+    "@minimajs/server": "workspace:*"
     "@types/jest": "npm:^30.0.0"
     "@types/node": "npm:^25.0.3"
     jest: "npm:^30.2.0"
@@ -2107,8 +2107,8 @@ __metadata:
   resolution: "@minimajs/cookie@workspace:packages/cookie"
   dependencies:
     "@fastify/cookie": "npm:^11.0.2"
-    "@minimajs/schema": "workspace:^"
-    "@minimajs/server": "workspace:^"
+    "@minimajs/schema": "workspace:*"
+    "@minimajs/server": "workspace:*"
     "@types/node": "npm:^25.0.3"
     fastify: "npm:^5.6.2"
     yup: "npm:^1.7.1"
@@ -2134,7 +2134,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@minimajs/edge.js@workspace:packages/edge"
   dependencies:
-    "@minimajs/server": "workspace:^"
+    "@minimajs/server": "workspace:*"
     "@types/node": "npm:^25.0.3"
     edge.js: "npm:^6.4.0"
   peerDependencies:
@@ -2159,7 +2159,7 @@ __metadata:
   resolution: "@minimajs/multipart@workspace:packages/multipart"
   dependencies:
     "@fastify/busboy": "npm:^3.2.0"
-    "@minimajs/server": "workspace:^"
+    "@minimajs/server": "workspace:*"
     "@types/jest": "npm:^30.0.0"
     "@types/node": "npm:^25.0.3"
     "@types/uuid": "npm:^11.0.0"
@@ -2178,20 +2178,20 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@minimajs/schema@workspace:^, @minimajs/schema@workspace:packages/schema":
+"@minimajs/schema@workspace:*, @minimajs/schema@workspace:packages/schema":
   version: 0.0.0-use.local
   resolution: "@minimajs/schema@workspace:packages/schema"
   dependencies:
-    "@minimajs/server": "workspace:^"
+    "@minimajs/server": "workspace:*"
     "@types/node": "npm:^25.0.3"
     yup: "npm:^1.7.1"
   peerDependencies:
     "@minimajs/server": ">=0.3.0"
-    yup: ">=1.6.1"
+    yup: ^1.7.1
   languageName: unknown
   linkType: soft
 
-"@minimajs/server@workspace:^, @minimajs/server@workspace:packages/server":
+"@minimajs/server@workspace:*, @minimajs/server@workspace:packages/server":
   version: 0.0.0-use.local
   resolution: "@minimajs/server@workspace:packages/server"
   dependencies:
@@ -2212,6 +2212,9 @@ __metadata:
     typescript: "npm:^5.9.3"
   peerDependencies:
     http-terminator: ^3.2.0
+  peerDependenciesMeta:
+    http-terminator:
+      optional: true
   languageName: unknown
   linkType: soft
 

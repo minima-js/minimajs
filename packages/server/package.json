@@ -37,6 +37,11 @@
   "peerDependencies": {
     "http-terminator": "^3.2.0"
   },
+  "peerDependenciesMeta": {
+    "http-terminator": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@jest/globals": "^30.2.0",
     "@types/jest": "^30.0.0",

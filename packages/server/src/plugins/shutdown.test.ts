@@ -1,8 +1,7 @@
 import type { FastifyBaseLogger as Logger } from "fastify";
-import { shutdownListener, gracefulShutdown, type QuitHandler } from "./shutdown.js";
+import { shutdownListener, type QuitHandler } from "./shutdown.js";
 import type { Signals } from "../types.js";
 import { jest } from "@jest/globals";
-import type { FastifyInstance } from "fastify";
 
 describe("shutdownListener", () => {
   let quitHandler: QuitHandler;

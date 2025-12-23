@@ -8,7 +8,9 @@ import { createErrorDecorator, createResponseDecorator } from "./utils/decorator
 export type PluginCallback<T extends PluginOptions> = Plugin<T> | Promise<{ default: Plugin<T> }>;
 
 export type Interceptor = preHandlerHookHandler | preHandlerAsyncHookHandler;
-export type { InterceptorRegisterOptions };
+
+export type { ResponseDecorator, ErrorDecorator } from "./utils/decorators/index.js";
+export type { InterceptorRegisterOptions, InterceptorFilter };
 
 async function toCallback<T extends PluginOptions = {}>(callback: PluginCallback<T>): Promise<Plugin<T>> {
   if (callback instanceof Promise) {

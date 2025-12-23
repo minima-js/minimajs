@@ -10,7 +10,6 @@
   "ignore": [
     "@minimajs/azure-blob",
     "@minimajs/isc",
-    "@minimajs/docs",
     "@minimajs/kafka",
     "@minimajs/utility",
     "@minimajs/disk",
