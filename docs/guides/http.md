@@ -62,7 +62,7 @@ Retrieves the full request URL.
 ```typescript
 const url = request.url();
 console.log(url.pathname);
-console.log(url.searchParams.get('page'));
+console.log(url.searchParams.get("page"));
 ```
 
 #### request.route
@@ -103,8 +103,8 @@ Retrieves a single header value by name with optional transformation.
 **Examples:**
 
 ```typescript
-const auth = headers.get('authorization');                              // string | undefined
-const token = headers.get('authorization', (val) => val.split(' ')[1]); // string | undefined
+const auth = headers.get("authorization"); // string | undefined
+const token = headers.get("authorization", (val) => val.split(" ")[1]); // string | undefined
 ```
 
 #### headers.getAll
@@ -119,8 +119,8 @@ Retrieves all values for a header name with optional transformation.
 **Examples:**
 
 ```typescript
-const cookies = headers.getAll('cookie');                        // string[]
-const parsed = headers.getAll('cookie', (val) => val.split('=')); // string[][]
+const cookies = headers.getAll("cookie"); // string[]
+const parsed = headers.getAll("cookie", (val) => val.split("=")); // string[][]
 ```
 
 #### headers.set
@@ -134,7 +134,7 @@ Sets a response header.
 **Examples:**
 
 ```typescript
-headers.set('x-custom-header', 'value');
+headers.set("x-custom-header", "value");
 ```
 
 ### searchParams
@@ -152,7 +152,7 @@ const query = searchParams<{ page: string }>();
 console.log(query.page);
 
 // Or use searchParams.get
-const page = searchParams.get('page');
+const page = searchParams.get("page");
 ```
 
 **Namespace utilities:**
@@ -169,8 +169,8 @@ Retrieves a single search param by name with optional transformation.
 **Examples:**
 
 ```typescript
-const page = searchParams.get('page');                              // string | undefined
-const pageNum = searchParams.get('page', (val) => parseInt(val));   // number
+const page = searchParams.get("page"); // string | undefined
+const pageNum = searchParams.get("page", (val) => parseInt(val)); // number
 ```
 
 #### searchParams.getAll
@@ -185,8 +185,8 @@ Retrieves all values for a search param by name with optional transformation.
 **Examples:**
 
 ```typescript
-const tags = searchParams.getAll('tag');                           // string[]
-const tagIds = searchParams.getAll('tag', (val) => parseInt(val)); // number[]
+const tags = searchParams.getAll("tag"); // string[]
+const tagIds = searchParams.getAll("tag", (val) => parseInt(val)); // number[]
 ```
 
 ### params
@@ -204,7 +204,7 @@ const p = params<{ id: string }>();
 console.log(p.id);
 
 // Or use params.get
-const id = params.get('id');
+const id = params.get("id");
 ```
 
 **Namespace utilities:**
@@ -221,13 +221,13 @@ Retrieves a single param by name with optional transformation. Throws `NotFoundE
 **Examples:**
 
 ```typescript
-const id = params.get('id');                              // string
-const page = params.get('page', (val) => parseInt(val));  // number
-const age = params.get('age', (val) => {
+const id = params.get("id"); // string
+const page = params.get("page", (val) => parseInt(val)); // number
+const age = params.get("age", (val) => {
   const num = parseInt(val);
-  if (num < 0) throw new Error('must be positive');
+  if (num < 0) throw new Error("must be positive");
   return num;
-});                                                        // number
+}); // number
 ```
 
 #### params.optional
@@ -242,8 +242,8 @@ Retrieves a single param by name with optional transformation. Returns `undefine
 **Examples:**
 
 ```typescript
-const id = params.optional('id');                              // string | undefined
-const page = params.optional('page', (val) => parseInt(val));  // number | undefined
+const id = params.optional("id"); // string | undefined
+const page = params.optional("page", (val) => parseInt(val)); // number | undefined
 ```
 
 ### body
@@ -323,7 +323,7 @@ Sets the HTTP status code for the response.
 
 ```typescript
 response.status(200);
-response.status('CREATED');
+response.status("CREATED");
 ```
 
 ### Decorator / Filter
@@ -377,6 +377,7 @@ function saveUser() {
 The `hook` function creates lifecycle hook plugins that execute at specific points in the application lifecycle.
 
 **Available lifecycle events:**
+
 - `ready` - Executes when the application is ready
 - `close` - Executes when the application is closing
 - `listen` - Executes when the server starts listening
@@ -392,14 +393,18 @@ import { createApp, hook } from "@minimajs/server";
 const app = createApp();
 
 // Register a hook that runs when the app is ready
-app.register(hook("ready", async () => {
-  console.log("Application is ready!");
-}));
+app.register(
+  hook("ready", async () => {
+    console.log("Application is ready!");
+  })
+);
 
 // Register a hook that runs when the app is closing
-app.register(hook("close", async () => {
-  console.log("Application shutting down");
-}));
+app.register(
+  hook("close", async () => {
+    console.log("Application shutting down");
+  })
+);
 ```
 
 **Composing Multiple Hooks:**
@@ -421,7 +426,7 @@ const connectDB = hook("ready", async () => {
 app.register(plugin.compose(connectDB, closeDB));
 ```
 
-For more information about composing plugins, see the [Plugin guide](/guide/plugin).
+For more information about composing plugins, see the [Plugin guide](/guides/plugin.md).
 
 ## Exceptions
 
