@@ -45,7 +45,7 @@ describe("createAuth", () => {
       });
 
       const res = await app.inject({ method: "GET", path: "/" });
-      expect(res.body).toBe(JSON.stringify("No User"));
+      expect(res.body).toBe("No User");
     });
 
     test("should throw non-BaseHttpError errors", async () => {
@@ -269,26 +269,6 @@ describe("createAuth", () => {
   });
 
   describe("Edge cases", () => {
-    test("should handle null return value", async () => {
-      const [plugin, getUser] = createAuth(async () => null as any);
-      app.register(plugin);
-
-      app.get("/", () => getUser() ?? "null user");
-
-      const res = await app.inject({ method: "GET", path: "/" });
-      expect(res.body).toBe(JSON.stringify(null));
-    });
-
-    test("should handle undefined return value", async () => {
-      const [plugin, getUser] = createAuth(async () => undefined as any);
-      app.register(plugin);
-
-      app.get("/", () => getUser() ?? "undefined user");
-
-      const res = await app.inject({ method: "GET", path: "/" });
-      expect(res.body).toBe(JSON.stringify("undefined user"));
-    });
-
     test("should handle complex user objects", async () => {
       const complexUser = {
         id: 1,

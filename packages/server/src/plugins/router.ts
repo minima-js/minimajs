@@ -40,10 +40,10 @@ function defaultLogger(routes: string) {
  * }));
  *
  * // With common prefix removed
- * app.register(routeLogger({ commonPrefix: true }));
+ * app.register(routeLogger({ commonPrefix: false }));
  * ```
  */
-export function routeLogger({ commonPrefix, logger = defaultLogger }: RouteLoggerOptions = {}) {
+export function routeLogger({ commonPrefix = false, logger = defaultLogger }: RouteLoggerOptions = {}) {
   return plugin.sync(function logRoute(app) {
     function logRoutes() {
       logger(app.printRoutes({ commonPrefix }));

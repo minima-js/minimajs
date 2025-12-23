@@ -12,7 +12,8 @@
   },
   "exports": {
     ".": "./lib/index.js",
-    "./plugins": "./lib/plugins/index.js",
+    "./plugins/shutdown": "./lib/plugins/shutdown.js",
+    "./plugins/router": "./lib/plugins/router.js",
     "./error": "./lib/error.js",
     "./utils": "./lib/utils/index.js",
     "./logger": "./lib/logger.js",

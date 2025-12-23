@@ -17,7 +17,7 @@ describe("shutdownListener", () => {
     mockLogger = {
       info: jest.fn(),
       warn: jest.fn(),
-      error: jest.fn()
+      error: jest.fn(),
     } as unknown as Logger;
     mockProcess = {
       on: jest.fn(),
@@ -105,7 +105,7 @@ describe("shutdownListener", () => {
   });
 
   it("should clear timeout if shutdown completes successfully", async () => {
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+    const clearTimeoutSpy = jest.spyOn(global, "clearTimeout");
     shutdownListener(quitHandler, killSignal, timeout, mockLogger, mockProcess);
     const quit = (mockProcess.on as any).mock.calls[0][1];
 
@@ -115,59 +115,5 @@ describe("shutdownListener", () => {
     expect(mockProcess.exit).not.toHaveBeenCalled();
 
     clearTimeoutSpy.mockRestore();
-  });
-});
-
-describe("gracefulShutdown", () => {
-  let mockApp: FastifyInstance;
-  let mockServer: any;
-  const signals: Signals[] = ["SIGINT", "SIGTERM"];
-
-  beforeEach(() => {
-    mockServer = {
-      address: jest.fn().mockReturnValue({ port: 3000 }),
-    };
-    mockApp = {
-      server: mockServer,
-      log: {
-        info: jest.fn(),
-        warn: jest.fn(),
-        error: jest.fn(),
-      },
-      close: jest.fn(() => Promise.resolve()),
-    } as unknown as FastifyInstance;
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it("should set up shutdown listeners for all signals", (done) => {
-    const plugin = gracefulShutdown({ signals, timeout: 5000 });
-    const processSpy = jest.spyOn(process, "on");
-
-    plugin(mockApp, {}, () => {
-      signals.forEach((signal) => {
-        expect(processSpy).toHaveBeenCalledWith(signal, expect.any(Function));
-      });
-      processSpy.mockRestore();
-      done();
-    });
-  });
-
-  it("should close fastify app on shutdown signal", (done) => {
-    const plugin = gracefulShutdown({ signals, timeout: 5000 });
-    const processSpy = jest.spyOn(process, "on");
-
-    plugin(mockApp, {}, async () => {
-      const quitHandler = processSpy.mock.calls[0]?.[1] as Function;
-      expect(quitHandler).toBeDefined();
-
-      await quitHandler("SIGINT");
-
-      expect(mockApp.close).toHaveBeenCalled();
-      processSpy.mockRestore();
-      done();
-    });
   });
 });

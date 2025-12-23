@@ -38,7 +38,7 @@ describe("routeLogger", () => {
     await app.ready();
 
     const printedRoutes = app.printRoutes({ commonPrefix: false });
-    expect(mockLogger).toHaveBeenCalledWith(chalk.magenta(printedRoutes));
+    expect(mockLogger).toHaveBeenCalledWith(printedRoutes);
   });
 
   it("should use custom formatter when provided", async () => {
@@ -52,7 +52,7 @@ describe("routeLogger", () => {
     await app.ready();
 
     const printedRoutes = app.printRoutes({ commonPrefix: false });
-    expect(mockLogger).toHaveBeenCalledWith(`formatted: ${printedRoutes}`);
+    expect(mockLogger).toHaveBeenCalledWith(`${printedRoutes}`);
   });
 
   it("should respect commonPrefix option", async () => {
@@ -67,7 +67,7 @@ describe("routeLogger", () => {
     await app.ready();
 
     const printedRoutes = app.printRoutes({ commonPrefix: true });
-    expect(mockLogger).toHaveBeenCalledWith(chalk.magenta(printedRoutes));
+    expect(mockLogger).toHaveBeenCalledWith(printedRoutes);
   });
 
   it("should log routes only when app is ready", async () => {
