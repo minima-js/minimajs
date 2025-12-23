@@ -19,21 +19,22 @@ At the heart of this system is Node.js's native `AsyncLocalStorage` API. This al
 To create a context, you use the `createContext` function from `@minimajs/server`.
 
 ```typescript
-import { createContext } from '@minimajs/server';
+import { createContext } from "@minimajs/server";
 
 // Create a context to store a request-specific trace ID
-const [getTraceId, setTraceId] = createContext<string>('');
+const [getTraceId, setTraceId] = createContext<string>("");
 ```
 
 The `createContext` function returns a tuple with two functions:
-*   A **getter** (`getTraceId`) to retrieve the value from the context.
-*   A **setter** (`setTraceId`) to set the value in the context.
+
+- A **getter** (`getTraceId`) to retrieve the value from the context.
+- A **setter** (`setTraceId`) to set the value in the context.
 
 Here's how you might use it:
 
 ```typescript
-import { createApp, interceptor } from '@minimajs/server';
-import { randomUUID } from 'crypto';
+import { createApp, interceptor } from "@minimajs/server";
+import { randomUUID } from "crypto";
 
 // A middleware to set the trace ID for each request
 async function traceIdMiddleware() {
@@ -48,9 +49,9 @@ function someDeeplyNestedFunction() {
 }
 
 async function mainModule(app) {
-  app.get('/', () => {
+  app.get("/", () => {
     someDeeplyNestedFunction();
-    return { message: 'Hello, World!' };
+    return { message: "Hello, World!" };
   });
 }
 
@@ -69,8 +70,10 @@ The context is perfect for handling authentication. You can create a middleware 
 
 **1. Create the User Context**
 
-```typescript title="src/auth/context.ts"
-import { createContext } from '@minimajs/server';
+::: code-group
+
+```typescript [src/auth/context.ts]
+import { createContext } from "@minimajs/server";
 
 export interface User {
   id: number;
@@ -80,50 +83,58 @@ export interface User {
 export const [getUser, setUser] = createContext<User | null>(null);
 ```
 
+:::
+
 **2. Create the Authentication Middleware**
 
 ```typescript title="src/auth/middleware.ts"
-import { createAuth, UnauthorizedError } from '@minimajs/auth';
-import { headers } from '@minimajs/server';
-import { setUser, User } from './context';
-import { findUserByToken } from './service'; // Your user service
+// src/auth/middleware.ts
+import { headers, intercetor } from "@minimajs/server";
+import { setUser } from "./context";
+import { findUserByToken } from "./service"; // Your user service
 
-export const [authMiddleware, guard] = createAuth(async (): Promise<User> => {
-  const token = headers.get('authorization')?.split(' ')[1];
+export const authentication = intercetor.use(async () => {
+  const token = headers.get("authorization")?.split(" ")[1];
   const user = await findUserByToken(token);
-
-  if (!user) {
-    throw new UnauthorizedError('Invalid token');
-  }
-
   // Set the user in the context
   setUser(user);
-
-  return user;
 });
 ```
 
 **3. Access the User in a Route Handler**
 
 ```typescript title="src/profile/routes.ts"
-import { type App } from '@minimajs/server';
-import { getUser } from '../auth/context';
+// src/profile/routes.ts
+import { type App, abort } from "@minimajs/server";
+import { getUser } from "../auth/context";
+
+function getProfile() {
+  const user = getUser() ?? abort("Authnetication error", 401);
+  return { id: user.id, username: user.username };
+}
 
 export async function profileRoutes(app: App) {
-  app.get('/profile', () => {
-    const user = getUser(); // Easily access the user from the context
-    if (!user) {
-      // This should ideally not happen if the guard is used
-      throw new UnauthorizedError('Not authenticated');
-    }
-    return { id: user.id, username: user.username };
-  });
+  app.get("/profile", () => {});
 }
+```
+
+Stiching up
+
+```ts
+// src/index.ts
+
+const app = createApp();
+import { authentication } from "./auth/middleware";
+import { profileRoutes } from "./profile/routes";
+
+app.register(authentication);
+app.register(profileRoutes);
+await app.listen({ port: 1234 });
 ```
 
 ## Benefits of Using Context
 
-*   **Cleaner Code:** Eliminates the need to pass `req` and `res` everywhere.
-*   **Decoupling:** Your business logic doesn't need to be aware of the underlying HTTP framework.
-*   **Easier Third-Party Integration:** Integrate libraries that don't have direct access to `req`/`res` objects by simply calling them from within your request lifecycle code.
-*   **Improved Testability:** Your functions become easier to test in isolation as they have fewer dependencies.
+- **Cleaner Code:** Eliminates the need to pass `req` and `res` everywhere.
+- **Decoupling:** Your business logic doesn't need to be aware of the underlying HTTP framework.
+- **Easier Third-Party Integration:** Integrate libraries that don't have direct access to `req`/`res` objects by simply calling them from within your request lifecycle code.
+- **Improved Testability:** Your functions become easier to test in isolation as they have fewer dependencies.

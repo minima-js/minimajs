@@ -10,69 +10,83 @@ tags:
 
 Hooks are a powerful feature in Minima.js that allow you to tap into the request-response lifecycle and the application lifecycle. They provide a way to execute custom code at specific points, enabling you to extend and customize the framework's behavior.
 
-## Request/Response Hooks
+## defer
 
-Request/response hooks are executed within the context of a specific request. They allow you to run code at different stages of the request processing pipeline.
+The `defer` hook allows scheduling tasks for execution after sending the response.
 
-### `defer`
-
-The `defer` hook registers a callback that is executed **after** the response has been sent to the client. This is useful for tasks that don't need to block the response, such as:
-
-*   Sending analytics events
-*   Logging request-specific information
-*   Cleaning up resources used during the request
-
-```typescript
-import { createApp, defer } from "@minimajs/server";
-
-const app = createApp();
-
-app.get("/", (req, res) => {
-  // Some processing...
-
+```ts
+import { defer } from "@minimajs/server";
+function saveUser() {
+  // saving user
+  // save some log
+  // highlight-start
   defer(() => {
-    // This code will run after the response is sent
-    console.log("Response has been sent for /");
+    console.log("deleting log");
+    // delete log
+    // this will executed after request context completed
   });
-
-  res.send({ message: "Hello, World!" });
-});
+  // highlight-end
+}
 ```
 
-### `onError`
+## hook
 
-The `onError` hook registers a callback to handle errors that occur during the processing of a request. This is useful for implementing custom error logging or formatting for specific routes.
+The `hook` function creates lifecycle hook plugins that execute at specific points in the application lifecycle.
 
-```typescript
-import { createApp, onError } from "@minimajs/server";
+**Available lifecycle events:**
+
+- `ready` - Executes when the application is ready
+- `close` - Executes when the application is closing
+- `listen` - Executes when the server starts listening
+- `send` - Executes before sending the response
+- `register` - Executes when a plugin is registered
+
+**Basic Usage:**
+
+```ts
+import { createApp, hook } from "@minimajs/server";
 
 const app = createApp();
 
-app.get("/risky-operation", (req, res) => {
-  onError((error) => {
-    // This code will run if an error is thrown in this route
-    console.error("An error occurred in /risky-operation:", error);
-  });
+// Register a hook that runs when the app is ready
+app.register(
+  hook("ready", async () => {
+    console.log("Application is ready!");
+  })
+);
 
-  if (Math.random() > 0.5) {
-    throw new Error("Something went wrong!");
-  }
-
-  res.send({ status: "success" });
-});
+// Register a hook that runs when the app is closing
+app.register(
+  hook("close", async () => {
+    console.log("Application shutting down");
+  })
+);
 ```
 
-## Application Lifecycle Hooks
+**Composing Multiple Hooks:**
 
-Application lifecycle hooks allow you to tie into the lifecycle of the Minima.js application itself. They are useful for tasks like:
+Use `plugin.compose` to register multiple hooks together:
 
-*   Setting up and tearing down database connections
-*   Starting and stopping background services
-*   Loading configuration
+```ts
+import { createApp, hook, plugin } from "@minimajs/server";
 
-### `hook.define()`
+const closeDB = hook("close", async () => {
+  await connection.close();
+});
 
-The `hook.define()` function is the most common way to register multiple application lifecycle hooks at once. It takes an object where the keys are the names of the lifecycle events and the values are the corresponding callback functions.
+const connectDB = hook("ready", async () => {
+  await connection.connect();
+});
+
+// Compose and register both hooks together
+app.register(plugin.compose(connectDB, closeDB));
+```
+
+For more information about composing plugins, see the [Plugin guide](/guides/plugin.md).
+
+## hook.define
+
+The `hook.define()` function is a convenient way to register multiple application lifecycle hooks at once. It takes an object where the keys are the names of the lifecycle events and the values are the corresponding callback functions.
 
 ```typescript
 import { createApp, hook } from "@minimajs/server";
@@ -93,7 +107,7 @@ const appLifecycle = hook.define({
 app.register(appLifecycle);
 ```
 
-### Managing Resources with `hook.lifespan`
+## Managing Resources with hook.lifespan
 
 For resources that need to be initialized when the application starts and cleaned up when it stops (like database connections), Minima.js provides a convenient `hook.lifespan` utility.
 
