@@ -2,7 +2,7 @@ import { type Request, type Response, type Plugin } from "./types.js";
 import { plugin } from "./internal/plugins.js";
 import { invokeHandler, type Interceptor } from "./interceptor.js";
 
-interface RegisterMiddleware {
+export interface RegisterMiddleware {
   filter?(req: Request): boolean | Promise<boolean>;
 }
 

@@ -22,6 +22,7 @@ export default defineConfig({
         text: "Introduction",
         items: [
           { text: "What is Minima.js?", link: "/intro" },
+          { text: "Minima.js vs Crowd", link: "/minimajs-vs-crowd" },
           { text: "Getting Started", link: "/getting-started" },
         ],
       },
@@ -43,8 +44,14 @@ export default defineConfig({
           { text: "Hooks", link: "/guides/hooks" },
           { text: "Error Handling", link: "/guides/error-handling" },
           { text: "Logger", link: "/guides/logger" },
-          { text: "Graceful Shutdown", link: "/guides/graceful-shutdown" },
           { text: "Third-Party Integration", link: "/guides/third-party-integration" },
+        ],
+      },
+      {
+        text: "Plugins",
+        items: [
+          { text: "Route Logger", link: "/guides/route-logger" },
+          { text: "Graceful Shutdown", link: "/guides/graceful-shutdown" },
         ],
       },
       {

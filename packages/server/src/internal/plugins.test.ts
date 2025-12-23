@@ -21,7 +21,7 @@ describe("plugins", () => {
 
     test("it should auto-call done() when function has less than 3 parameters", async () => {
       let called = false;
-      const app = createApp({ logger: false, routes: { log: false } });
+      const app = createApp({ logger: false });
 
       const p = plugin.sync((_app) => {
         called = true;
@@ -36,7 +36,7 @@ describe("plugins", () => {
 
     test("it should not auto-call done() when function has 3 parameters", async () => {
       let called = false;
-      const app = createApp({ logger: false, routes: { log: false } });
+      const app = createApp({ logger: false });
 
       const p = plugin.sync((_app, _opts, done) => {
         called = true;
@@ -74,7 +74,7 @@ describe("plugins", () => {
     let app: App;
 
     beforeEach(() => {
-      app = createApp({ logger: false, routes: { log: false } });
+      app = createApp({ logger: false });
     });
 
     afterEach(() => app?.close());

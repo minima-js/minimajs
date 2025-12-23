@@ -5,7 +5,7 @@ import { getContext } from "../context.js";
 describe("dispatch", () => {
   let app: App;
   beforeEach(() => {
-    app = createApp({ logger: false, routes: { log: false } });
+    app = createApp({ logger: false });
   });
 
   afterEach(() => app?.close());

@@ -4,7 +4,7 @@ import { createApp, hook, defer, onError, plugin, type App } from "./index.js";
 describe("hooks", () => {
   let app: App;
   beforeEach(() => {
-    app = createApp({ logger: false, routes: { log: false } });
+    app = createApp({ logger: false });
   });
 
   afterEach(() => app?.close());

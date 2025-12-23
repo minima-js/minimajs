@@ -4,8 +4,6 @@ import merge from "deepmerge";
 import { minimajs } from "./internal/plugins.js";
 import type { App, AppOptions } from "./types.js";
 import { loggerOptions } from "./logger.js";
-import { shutdownListener } from "./shutdown.js";
-import { routeLogger } from "./router.js";
 export { interceptor, type Interceptor } from "./interceptor.js";
 
 export * from "./http.js";
@@ -37,12 +35,8 @@ function getDefaultConfig({ logger: loggerOverride, ...override }: AppOptions): 
 /**
  * Create an app instance
  */
-export function createApp({ killSignal = ["SIGTERM"], routes = { log: true }, ...opts }: AppOptions = {}): App {
+export function createApp(opts: AppOptions = {}): App {
   const app = fastify<Server>(getDefaultConfig(opts));
-  shutdownListener(() => app.close(), killSignal, app.log, process);
   app.register(minimajs);
-  if (routes.log) {
-    app.register(routeLogger);
-  }
   return app;
 }

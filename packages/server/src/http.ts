@@ -478,7 +478,7 @@ export namespace headers {
   export function getAll(name: HttpHeaderIncoming): string[];
   export function getAll<R>(name: HttpHeaderIncoming, transform: (value: string) => R): R[];
   export function getAll(name: HttpHeaderIncoming, transform?: (value: string) => unknown): unknown[] {
-    const values = getRequest().raw.headersDistinct[name];
+    const values = request().raw.headersDistinct[name];
     if (!values) return [];
     if (!transform) return values;
     return values.map(transform);
@@ -560,7 +560,7 @@ export const getHeader = headers.get;
  * @since v0.2.0
  */
 export function searchParams<T>() {
-  return getRequest().query as T;
+  return request().query as T;
 }
 
 /**
@@ -582,7 +582,7 @@ export namespace searchParams {
   export function get(name: string): string | undefined;
   export function get<R>(name: string, transform: (value: string) => R): R;
   export function get(name: string, transform?: (value: string) => unknown): unknown {
-    const queries = getRequest().query as Record<string, string | string[]>;
+    const queries = request().query as Record<string, string | string[]>;
     const value = toFirstValue(queries[name]);
     if (value === undefined) {
       return value;
@@ -605,7 +605,7 @@ export namespace searchParams {
   export function getAll(name: string): string[];
   export function getAll<R>(name: string, transform: (value: string) => R): R[];
   export function getAll(name: string, transform?: (value: string) => unknown): unknown[] {
-    const queries = getRequest().query as Record<string, string | string[]>;
+    const queries = request().query as Record<string, string | string[]>;
     if (!queries[name]) return [];
     const values = toArray(queries[name]);
     if (!transform) return values;

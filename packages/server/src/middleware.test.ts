@@ -5,7 +5,7 @@ import { jest } from "@jest/globals";
 describe("middleware", () => {
   let app: App;
   beforeEach(() => {
-    app = createApp({ routes: { log: false } });
+    app = createApp();
   });
   afterEach(() => app.close());
   test("should call middleware function", async () => {

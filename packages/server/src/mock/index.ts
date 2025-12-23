@@ -30,7 +30,7 @@ export type InjectResponse = Awaited<ReturnType<App["inject"]>>;
  * @since v0.1.0
  */
 export async function mockApp<T extends Route[]>(...routes: T): Promise<InjectResponse[]> {
-  const app = createApp({ routes: { log: false }, logger: false });
+  const app = createApp({ logger: false });
 
   // Register all routes
   routes.forEach(([opt, callback, decorate]) => {

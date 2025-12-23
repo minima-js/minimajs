@@ -30,12 +30,7 @@ export interface Request extends FastifyRequest {}
 export interface Response extends FastifyReply {}
 export interface Plugin<Options extends PluginOptions = Record<never, never>> extends FastifyPluginAsync<Options> {}
 
-export interface AppOptions extends FastifyHttpOptions<Server, FastifyBaseLogger> {
-  killSignal?: Signals[];
-  routes?: {
-    log: boolean;
-  };
-}
+export interface AppOptions extends FastifyHttpOptions<Server, FastifyBaseLogger> {}
 
 export type Dict<T = unknown> = NodeJS.Dict<T>;
 export type Next = (error?: unknown, response?: unknown) => void;

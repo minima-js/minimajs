@@ -6,7 +6,7 @@ import { jest } from "@jest/globals";
 describe("middleware", () => {
   let app: App;
   beforeEach(() => {
-    app = createApp({ routes: { log: false } });
+    app = createApp();
   });
   afterEach(() => app.close());
   test("should call middleware function", async () => {
@@ -106,7 +106,7 @@ describe("interceptor.response", () => {
   let app: App;
 
   beforeEach(() => {
-    app = createApp({ logger: false, routes: { log: false } });
+    app = createApp({ logger: false });
   });
 
   afterEach(() => app.close());
@@ -285,7 +285,7 @@ describe("interceptor.error", () => {
   let app: App;
 
   beforeEach(() => {
-    app = createApp({ routes: { log: false } });
+    app = createApp();
   });
 
   afterEach(() => app.close());

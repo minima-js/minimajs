@@ -4,7 +4,7 @@ import { mixin, createLogger } from "./logger.js";
 describe("Logger", () => {
   let app: App;
   beforeEach(() => {
-    app = createApp({ logger: false, routes: { log: false } });
+    app = createApp({ logger: false });
   });
 
   afterEach(() => app.close());
@@ -56,7 +56,7 @@ describe("Logger", () => {
     });
 
     it("should handle routes without plugin chain (null/undefined)", async () => {
-      const currentApp = createApp({ logger: false, routes: { log: false } });
+      const currentApp = createApp({ logger: false });
       (currentApp as any)[Symbol.for("fastify.plugin.nameChain")] = null;
       currentApp.get("/no-plugin-null", function noPluginRouteNull() {
         const result = mixin({});
@@ -68,7 +68,7 @@ describe("Logger", () => {
     });
 
     it("should handle routes without plugin chain (empty array)", async () => {
-      const currentApp = createApp({ logger: false, routes: { log: false } });
+      const currentApp = createApp({ logger: false });
       (currentApp as any)[Symbol.for("fastify.plugin.nameChain")] = [];
       currentApp.get("/no-plugin-empty", function noPluginRouteEmpty() {
         const result = mixin({});
