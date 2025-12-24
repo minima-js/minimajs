@@ -25,14 +25,14 @@ The first step is to create a validation schema using Yup. A schema defines the 
 
 Let's create a schema for a new user:
 
-```typescript title="src/user/schema.ts"
-import * as yup from "yup";
+```ts
+import yup from "yup";
 
-export const createUserSchema = yup.object({
+export const createUserSchema = {
   name: yup.string().min(2).required(),
   email: yup.string().email().required(),
   password: yup.string().min(8).required(),
-});
+};
 ```
 
 This schema defines a user object with a `name`, `email`, and `password`. It also specifies that the `name` must be at least 2 characters long, the `email` must be a valid email address, the `password` must be at least 8 characters long, and all fields are required.
@@ -79,10 +79,10 @@ You can also validate request headers and search parameters using the `createHea
 import { createHeaders, createSearchParams } from "@minimajs/schema";
 import * as yup from "yup";
 
-const paginationSchema = yup.object({
+const paginationSchema = {
   page: yup.number().integer().positive().default(1),
   limit: yup.number().integer().positive().default(10),
-});
+};
 
 const getPagination = createSearchParams(paginationSchema);
 

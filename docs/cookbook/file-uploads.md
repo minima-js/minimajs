@@ -5,19 +5,99 @@ sidebar_position: 2
 
 # Handling File Uploads
 
-File uploads are a common requirement in modern web applications. Minima.js provides a simple and efficient way to handle file uploads using the `@minimajs/multipart` package.
+File uploads are a common requirement in modern web applications. Minima.js, with the `@minimajs/multipart` package, provides a powerful and flexible way to handle multipart form data, including file uploads.
 
-This cookbook shows you how to handle single and multiple file uploads, access file information, and save uploaded files to disk.
+This guide covers two main approaches:
+
+- **Validation with Schema**: The recommended approach for most applications. It uses schema validation to ensure file types, sizes, and required fields are correct, providing a robust and secure way to handle uploads.
+- **Basic Usage**: A lower-level API for simple use cases or when you need more control over the file stream.
 
 ## Prerequisites
 
-Install the `@minimajs/multipart` package:
+Install the `@minimajs/multipart` package. For schema validation, you'll also need `yup`.
 
 ```bash
-npm install @minimajs/multipart
+npm install @minimajs/multipart yup
 ```
 
-## Single File Upload
+## Validation with Schema
+
+For production applications, it's highly recommended to use the `createMultipartUpload` function from `@minimajs/multipart/schema`. It provides a high-level API that integrates with `yup` for schema validation, temporary file management, and automatic cleanup.
+
+**Key Benefits:**
+
+- **Validation**: Define rules for file size, MIME types, and required fields.
+- **Security**: Automatically uses temporary files and cleans them up.
+- **Type-safe**: Infers the type of the uploaded data from your schema.
+
+```typescript title="src/upload/routes.ts"
+import { type App } from "@minimajs/server";
+import { createMultipartUpload, file } from "@minimajs/multipart/schema";
+import { string, array } from "yup";
+
+const upload = createMultipartUpload(
+  {
+    name: string().required(),
+    email: string().email().required(),
+    avatar: file()
+      .required()
+      .max(5 * 1024 * 1024, "Avatar must be less than 5MB")
+      .accept(["image/png", "image/jpeg"]),
+    documents: array(
+      file()
+        .max(10 * 1024 * 1024)
+        .accept(["application/pdf"])
+    ).max(3),
+  },
+  {
+    tmpDir: "./uploads/temp",
+    maxSize: 50 * 1024 * 1024, // 50MB total request size
+  }
+);
+
+export async function uploadRoutes(app: App) {
+  app.post("/upload/profile", async () => {
+    const data = await upload();
+
+    // At this point, files are validated and stored in a temp directory.
+    // The `data` object is fully typed.
+
+    // Move the avatar to a permanent location
+    const avatarPath = await data.avatar.move("./uploads/avatars");
+
+    const documentPaths = [];
+    if (data.documents) {
+      for (const doc of data.documents) {
+        documentPaths.push(await doc.move("./uploads/documents"));
+      }
+    }
+
+    return {
+      message: "Profile uploaded successfully",
+      name: data.name,
+      email: data.email,
+      avatar: avatarPath,
+      documents: documentPaths,
+    };
+  });
+}
+```
+
+### Testing with curl
+
+```bash
+curl -X POST \
+  -F "name=John Doe" \
+  -F "email=john.doe@example.com" \
+  -F "avatar=@/path/to/photo.jpg" \
+  -F "documents=@/path/to/file1.pdf" \
+  -F "documents=@/path/to/file2.pdf" \
+  http://localhost:3000/upload/profile
+```
+
+## Basic Usage: Single File Upload
+
+For simple scenarios, or when you need direct access to the file stream, you can use the lower-level `multipart` object.
 
 Use `multipart.file()` to handle a single file upload. You can optionally specify a field name to retrieve a specific file.
 
@@ -56,6 +136,7 @@ export async function uploadRoutes(app: App) {
 ```
 
 **Key Points:**
+
 - `multipart.file()` - Gets the first file from any field
 - `multipart.file("fieldName")` - Gets a file from a specific field
 - `file.move(dir, filename)` - Saves the file to disk
@@ -218,30 +299,9 @@ export async function uploadRoutes(app: App) {
 }
 ```
 
-## File Properties
-
-Each `File` instance provides the following properties:
-
-```typescript
-interface File {
-  field: string;        // Form field name
-  filename: string;     // Original filename
-  encoding: string;     // File encoding (e.g., '7bit')
-  mimeType: string;     // MIME type (e.g., 'image/png')
-  ext: string;          // File extension (e.g., '.png')
-  randomName: string;   // UUID-based random filename
-  stream: Readable;     // File content stream
-
-  // Methods
-  buffer(): Promise<Buffer>;                          // Read as buffer
-  move(dir?: string, filename?: string): Promise<string>;  // Save to disk
-  flush(): Promise<void>;                             // Discard file
-}
-```
-
 ## Complete Example
 
-Here's a complete example combining all the concepts:
+Here's a complete example combining the basic concepts:
 
 ```typescript title="src/index.ts"
 import { createApp } from "@minimajs/server";
@@ -292,41 +352,3 @@ app.post("/upload/batch", async () => {
 
 await app.listen({ port: 3000 });
 ```
-
-## Best Practices
-
-1. **Validate File Types**: Always validate MIME types before processing
-2. **Size Limits**: Use Busboy's built-in limits for file size restrictions
-3. **Security**: Never trust user-provided filenames - use random names
-4. **Storage**: Consider using cloud storage (S3, GCS) for production
-5. **Error Handling**: Always handle upload errors gracefully
-6. **Cleanup**: Use `file.flush()` to discard unwanted files
-
-## Advanced: Custom Storage
-
-For custom file processing or cloud storage:
-
-```typescript
-import { multipart } from "@minimajs/multipart";
-import { pipeline } from "node:stream/promises";
-
-app.post("/upload/custom", async () => {
-  const file = await multipart.file();
-
-  // Stream directly to custom destination
-  await pipeline(
-    file.stream,
-    yourCustomWriteStream // e.g., S3 upload stream
-  );
-
-  return { success: true };
-});
-```
-
-## Next Steps
-
-- Add file type validation using MIME types
-- Implement file size limits
-- Add image processing (resizing, optimization)
-- Integrate with cloud storage providers
-- Implement progress tracking for large uploads
