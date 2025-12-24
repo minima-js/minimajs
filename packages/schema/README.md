@@ -67,8 +67,7 @@ const getUserPayload = createBodyAsync({
 });
 
 async function createUser() {
-  // highlight-next-line
-  const payload = await getUserPayload();
+  const payload = await getUserPayload(); // [!code highlight]
   // Save data
   return "saved";
 }

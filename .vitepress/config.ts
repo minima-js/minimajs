@@ -10,7 +10,7 @@ export default defineConfig({
     logo: "/logo.svg",
     nav: [
       { text: "Home", link: "/" },
-      { text: "Guide", link: "/intro" },
+      { text: "Guide", link: "/getting-started" },
       { text: "Cookbook", link: "/cookbook/jwt-authentication" },
       { text: "Packages", link: "/packages/auth" },
       { text: "API Reference", link: "/api/README" },
@@ -20,9 +20,8 @@ export default defineConfig({
       {
         text: "Introduction",
         items: [
-          { text: "What is Minima.js?", link: "/intro" },
-          { text: "Minima.js vs Crowd", link: "/minimajs-vs-crowd" },
           { text: "Getting Started", link: "/getting-started" },
+          { text: "Minima.js vs Crowd", link: "/minimajs-vs-crowd" },
         ],
       },
       {
@@ -37,9 +36,10 @@ export default defineConfig({
         text: "Guides",
         items: [
           { text: "Routing", link: "/guides/routing" },
-          { text: "HTTP", link: "/guides/http" },
+          { text: "Request", link: "/guides/request" },
+          { text: "Response", link: "/guides/response" },
           { text: "Modules", link: "/guides/modules" },
-          { text: "Middleware", link: "/guides/middleware" },
+          { text: "Interceptors", link: "/guides/middleware" },
           { text: "Hooks", link: "/guides/hooks" },
           { text: "Error Handling", link: "/guides/error-handling" },
           { text: "Logger", link: "/guides/logger" },

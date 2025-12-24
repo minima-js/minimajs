@@ -10,7 +10,7 @@
   ],
   "entryPointStrategy": "packages",
   "out": "docs/api",
-  "basePath": "..",
+  "basePath": ".",
   "plugin": ["typedoc-plugin-markdown"],
   "excludePrivate": true,
   "excludeInternal": true,
@@ -23,6 +23,7 @@
   "indexFormat": "table",
   "packageOptions": {
     "excludeInternal": true,
+    "basePath": ".",
     "readme": "none"
   }
 }

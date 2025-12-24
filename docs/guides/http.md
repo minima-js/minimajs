@@ -26,8 +26,7 @@ Examples:
 ```ts
 import { body, request } from "@minimajs/server";
 app.get("/", () => {
-  // highlight-next-line
-  const req = request();
+  const req = request(); // [!code highlight]
   return req.url;
 });
 app.post("/", () => createUser(body()));
@@ -37,8 +36,7 @@ And even you can use request in nested function calls
 
 ```ts
 function getURL() {
-  // highlight-next-line
-  return request().url;
+  return request().url; // [!code highlight]
 }
 app.get("/", () => {
   const url = getURL();
@@ -406,14 +404,14 @@ async function findUser() {
   const user = await User.findOne({ _id: userId });
   if (!user) {
     // example 1: status code as number
-    // highlight-next-line
-    abort("User doesn't exists", 404);
+
+    abort("User doesn't exists", 404); // [!code highlight]
     // i won't be reachable
   }
   if (user.type !== "admin") {
     // Example 2: Abort with a custom message and status code
-    // highlight-next-line
-    abort("Unauthorized access", "UNAUTHORIZED");
+
+    abort("Unauthorized access", "UNAUTHORIZED"); // [!code highlight]
   }
   return user;
 }
@@ -430,8 +428,7 @@ async function findUser() {
   const userId = params.get("user");
   const user = await User.findOne({ _id: userId });
   if (!user) {
-    // highlight-next-line
-    abort.notFound();
+    abort.notFound(); // [!code highlight]
   }
   return user;
 }

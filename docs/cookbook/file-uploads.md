@@ -1,4 +1,4 @@
---- 
+---
 title: File Uploads
 sidebar_position: 2
 ---
@@ -7,111 +7,326 @@ sidebar_position: 2
 
 File uploads are a common requirement in modern web applications. Minima.js provides a simple and efficient way to handle file uploads using the `@minimajs/multipart` package.
 
-This recipe will show you how to handle single and multiple file uploads, access file information, and save the uploaded files to disk.
+This cookbook shows you how to handle single and multiple file uploads, access file information, and save uploaded files to disk.
 
 ## Prerequisites
 
-First, you need to install the `@minimajs/multipart` package:
+Install the `@minimajs/multipart` package:
 
 ```bash
 npm install @minimajs/multipart
 ```
 
-## 1. Handling a Single File Upload
+## Single File Upload
 
-To handle a single file upload, you can use the `file()` helper from `@minimajs/multipart`.
+Use `multipart.file()` to handle a single file upload. You can optionally specify a field name to retrieve a specific file.
 
-```typescript
-import { createApp } from '@minimajs/server';
-import { multipart } from '@minimajs/multipart';
-import * as fs from 'fs';
-import * as util from 'util';
+```typescript title="src/upload/routes.ts"
+import { type App } from "@minimajs/server";
+import { multipart } from "@minimajs/multipart";
 
-const pump = util.promisify(require('stream').pipeline);
+export async function uploadRoutes(app: App) {
+  app.post("/upload/single", async () => {
+    const file = await multipart.file();
 
-const app = createApp();
+    // Save file to uploads directory with a random name
+    const filename = await file.move("./uploads");
 
-app.post('/upload/single', async (request, reply) => {
-  const data = await multipart.file(request.raw);
+    return {
+      message: "File uploaded successfully",
+      filename,
+      originalName: file.filename,
+      mimeType: file.mimeType,
+    };
+  });
 
-  // data.file is a stream of the uploaded file
-  // data.filename is the name of the file
-  // data.mimetype is the MIME type of the file
+  // Upload from specific field
+  app.post("/upload/avatar", async () => {
+    const avatar = await multipart.file("avatar");
 
-  await pump(data.file, fs.createWriteStream(`./uploads/${data.filename}`));
+    // Save with custom filename
+    await avatar.move("./uploads", "avatar.png");
 
-  reply.send({ message: 'File uploaded successfully' });
-});
-
-await app.listen({ port: 3000 });
+    return {
+      message: "Avatar uploaded successfully",
+      size: (await avatar.buffer()).length,
+    };
+  });
+}
 ```
 
-In this example:
-*   We use `multipart.file()` to get the uploaded file from the request.
-*   The `multipart.file()` function returns an object containing the file stream, filename, and mimetype.
-*   We then use `stream.pipeline` to save the file to the `uploads` directory.
+**Key Points:**
+- `multipart.file()` - Gets the first file from any field
+- `multipart.file("fieldName")` - Gets a file from a specific field
+- `file.move(dir, filename)` - Saves the file to disk
+- `file.randomName` - Generated UUID-based filename with original extension
 
-You can test this route using `curl`:
+### Testing with curl
 
 ```bash
-curl -X POST -F "file=@/path/to/your/file.txt" http://localhost:3000/upload/single
+# Upload to any field
+curl -X POST -F "file=@/path/to/document.pdf" http://localhost:3000/upload/single
+
+# Upload to specific field
+curl -X POST -F "avatar=@/path/to/photo.jpg" http://localhost:3000/upload/avatar
 ```
 
-## 2. Handling Multiple File Uploads
+## Multiple File Uploads
 
-To handle multiple file uploads, you can use the `multipart.files()` helper. This helper returns an async iterator that you can use to iterate over the uploaded files.
+Use `multipart.files()` to handle multiple file uploads. It returns an async iterator that yields each uploaded file.
 
-```typescript
-import { createApp } from '@minimajs/server';
-import { multipart } from '@minimajs/multipart';
-import * as fs from 'fs';
-import * as util from 'util';
+```typescript title="src/upload/routes.ts"
+import { type App } from "@minimajs/server";
+import { multipart } from "@minimajs/multipart";
 
-const pump = util.promisify(require('stream').pipeline);
+export async function uploadRoutes(app: App) {
+  app.post("/upload/multiple", async () => {
+    const uploadedFiles = [];
 
-const app = createApp();
+    for await (const file of multipart.files()) {
+      const filename = await file.move("./uploads");
 
-app.post('/upload/multiple', async (request, reply) => {
-  const parts = multipart.files(request.raw);
+      uploadedFiles.push({
+        filename,
+        originalName: file.filename,
+        mimeType: file.mimeType,
+        field: file.field,
+      });
+    }
 
-  for await (const part of parts) {
-    await pump(part.file, fs.createWriteStream(`./uploads/${part.filename}`));
-  }
-
-  reply.send({ message: 'Files uploaded successfully' });
-});
-
-await app.listen({ port: 3000 });
+    return {
+      message: "Files uploaded successfully",
+      files: uploadedFiles,
+    };
+  });
+}
 ```
 
-You can test this route using `curl`:
+### Testing with curl
 
 ```bash
 curl -X POST \
-  -F "file1=@/path/to/your/file1.txt" \
-  -F "file2=@/path/to/your/file2.txt" \
+  -F "documents=@/path/to/file1.pdf" \
+  -F "documents=@/path/to/file2.pdf" \
+  -F "image=@/path/to/photo.jpg" \
   http://localhost:3000/upload/multiple
 ```
 
-## 3. Accessing Other Form Fields
+## Handling Form Fields with Files
 
-You can also access other form fields that are sent along with the file uploads. The `part` object in the async iterator contains a `fields` property, which is a map of the other form fields.
+Use `multipart.body()` to handle both files and text fields in a single request. It yields tuples of `[fieldName, value]` where value can be a string or File.
+
+```typescript title="src/upload/routes.ts"
+import { type App } from "@minimajs/server";
+import { multipart, isFile } from "@minimajs/multipart";
+
+export async function uploadRoutes(app: App) {
+  app.post("/upload/with-metadata", async () => {
+    const files = [];
+    const fields: Record<string, string> = {};
+
+    for await (const [name, value] of multipart.body()) {
+      if (isFile(value)) {
+        // Handle file upload
+        const filename = await value.move("./uploads");
+        files.push({
+          field: name,
+          filename,
+          originalName: value.filename,
+          mimeType: value.mimeType,
+        });
+      } else {
+        // Handle text field
+        fields[name] = value;
+      }
+    }
+
+    return {
+      message: "Upload complete",
+      files,
+      metadata: fields,
+    };
+  });
+}
+```
+
+### Testing with curl
+
+```bash
+curl -X POST \
+  -F "title=My Document" \
+  -F "description=Important file" \
+  -F "document=@/path/to/file.pdf" \
+  http://localhost:3000/upload/with-metadata
+```
+
+## Text Fields Only
+
+Use `multipart.fields()` when you only need text field data and want to ignore any files.
+
+```typescript title="src/upload/routes.ts"
+import { type App } from "@minimajs/server";
+import { multipart } from "@minimajs/multipart";
+
+export async function uploadRoutes(app: App) {
+  app.post("/submit-form", async () => {
+    const fields = await multipart.fields<{
+      name: string;
+      email: string;
+      message: string;
+    }>();
+
+    // Process form data
+    console.log(`Name: ${fields.name}`);
+    console.log(`Email: ${fields.email}`);
+
+    return {
+      message: "Form submitted successfully",
+      data: fields,
+    };
+  });
+}
+```
+
+## Working with File Buffers
+
+If you need to process file contents in memory instead of saving to disk, use `file.buffer()`:
+
+```typescript title="src/upload/routes.ts"
+import { type App } from "@minimajs/server";
+import { multipart } from "@minimajs/multipart";
+import { createHash } from "node:crypto";
+
+export async function uploadRoutes(app: App) {
+  app.post("/upload/checksum", async () => {
+    const file = await multipart.file();
+
+    // Read file as buffer
+    const buffer = await file.buffer();
+
+    // Calculate checksum
+    const hash = createHash("sha256");
+    hash.update(buffer);
+    const checksum = hash.digest("hex");
+
+    return {
+      filename: file.filename,
+      size: buffer.length,
+      checksum,
+    };
+  });
+}
+```
+
+## File Properties
+
+Each `File` instance provides the following properties:
 
 ```typescript
-app.post('/upload/with-fields', async (request, reply) => {
-  const parts = multipart.files(request.raw);
+interface File {
+  field: string;        // Form field name
+  filename: string;     // Original filename
+  encoding: string;     // File encoding (e.g., '7bit')
+  mimeType: string;     // MIME type (e.g., 'image/png')
+  ext: string;          // File extension (e.g., '.png')
+  randomName: string;   // UUID-based random filename
+  stream: Readable;     // File content stream
 
-  for await (const part of parts) {
-    console.log('Fieldname:', part.fieldname);
-    console.log('Filename:', part.filename);
-    console.log('Mimetype:', part.mimetype);
-    console.log('Fields:', part.fields); // Access other form fields
+  // Methods
+  buffer(): Promise<Buffer>;                          // Read as buffer
+  move(dir?: string, filename?: string): Promise<string>;  // Save to disk
+  flush(): Promise<void>;                             // Discard file
+}
+```
 
-    await pump(part.file, fs.createWriteStream(`./uploads/${part.filename}`));
+## Complete Example
+
+Here's a complete example combining all the concepts:
+
+```typescript title="src/index.ts"
+import { createApp } from "@minimajs/server";
+import { multipart, isFile } from "@minimajs/multipart";
+import { mkdir } from "node:fs/promises";
+
+const app = createApp();
+
+// Ensure uploads directory exists
+await mkdir("./uploads", { recursive: true });
+
+// Single file upload
+app.post("/upload", async () => {
+  const file = await multipart.file();
+  const filename = await file.move("./uploads");
+
+  return {
+    success: true,
+    filename,
+    originalName: file.filename,
+  };
+});
+
+// Multiple files with metadata
+app.post("/upload/batch", async () => {
+  const uploads = [];
+  let title = "";
+
+  for await (const [name, value] of multipart.body()) {
+    if (isFile(value)) {
+      const filename = await value.move("./uploads");
+      uploads.push({
+        field: name,
+        filename,
+        originalName: value.filename,
+      });
+    } else if (name === "title") {
+      title = value;
+    }
   }
 
-  reply.send({ message: 'Files uploaded successfully' });
+  return {
+    success: true,
+    title,
+    files: uploads,
+  };
+});
+
+await app.listen({ port: 3000 });
+```
+
+## Best Practices
+
+1. **Validate File Types**: Always validate MIME types before processing
+2. **Size Limits**: Use Busboy's built-in limits for file size restrictions
+3. **Security**: Never trust user-provided filenames - use random names
+4. **Storage**: Consider using cloud storage (S3, GCS) for production
+5. **Error Handling**: Always handle upload errors gracefully
+6. **Cleanup**: Use `file.flush()` to discard unwanted files
+
+## Advanced: Custom Storage
+
+For custom file processing or cloud storage:
+
+```typescript
+import { multipart } from "@minimajs/multipart";
+import { pipeline } from "node:stream/promises";
+
+app.post("/upload/custom", async () => {
+  const file = await multipart.file();
+
+  // Stream directly to custom destination
+  await pipeline(
+    file.stream,
+    yourCustomWriteStream // e.g., S3 upload stream
+  );
+
+  return { success: true };
 });
 ```
 
-This makes it easy to handle complex forms with both file uploads and other data.
+## Next Steps
+
+- Add file type validation using MIME types
+- Implement file size limits
+- Add image processing (resizing, optimization)
+- Integrate with cloud storage providers
+- Implement progress tracking for large uploads

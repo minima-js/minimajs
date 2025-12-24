@@ -68,11 +68,10 @@ As you can see, `someDeeplyNestedFunction` can access the `traceId` without havi
 
 The context is perfect for handling authentication. You can create a middleware that authenticates the user and stores the user object in the context. Then, any route handler or service can access the authenticated user directly.
 
-**1. Create the User Context**
-
 ::: code-group
 
-```typescript [src/auth/context.ts]
+```typescript [1. Create Context]
+// src/auth/context.ts
 import { createContext } from "@minimajs/server";
 
 export interface User {
@@ -83,54 +82,48 @@ export interface User {
 export const [getUser, setUser] = createContext<User | null>(null);
 ```
 
-:::
-
-**2. Create the Authentication Middleware**
-
-```typescript title="src/auth/middleware.ts"
+```typescript [2. Auth Middleware]
 // src/auth/middleware.ts
-import { headers, intercetor } from "@minimajs/server";
+import { headers, interceptor } from "@minimajs/server";
 import { setUser } from "./context";
-import { findUserByToken } from "./service"; // Your user service
+import { findUserByToken } from "./service";
 
-export const authentication = intercetor.use(async () => {
+export const authentication = interceptor.use(async () => {
   const token = headers.get("authorization")?.split(" ")[1];
   const user = await findUserByToken(token);
-  // Set the user in the context
-  setUser(user);
+  setUser(user); // [!code highlight]
 });
 ```
 
-**3. Access the User in a Route Handler**
-
-```typescript title="src/profile/routes.ts"
+```typescript [3. Use in Routes]
 // src/profile/routes.ts
 import { type App, abort } from "@minimajs/server";
 import { getUser } from "../auth/context";
+import { authentication } from "../auth/middleware";
 
 function getProfile() {
-  const user = getUser() ?? abort("Authnetication error", 401);
+  const user = getUser() ?? abort("Authentication error", 401); // [!code highlight]
   return { id: user.id, username: user.username };
 }
 
 export async function profileRoutes(app: App) {
-  app.get("/profile", () => {});
+  app.register(authentication);
+  app.get("/profile", getProfile); // [!code highlight]
 }
 ```
 
-Stiching up
-
-```ts
+```typescript [4. Main App]
 // src/index.ts
-
-const app = createApp();
-import { authentication } from "./auth/middleware";
+import { createApp } from "@minimajs/server";
 import { profileRoutes } from "./profile/routes";
 
-app.register(authentication);
+const app = createApp();
 app.register(profileRoutes);
+
 await app.listen({ port: 1234 });
 ```
+
+:::
 
 ## Benefits of Using Context
 

@@ -56,7 +56,7 @@ npm install @minimajs/server
 
 Optionally to run typescript
 
-```base
+```bash
 npm i -D tsx
 ```
 

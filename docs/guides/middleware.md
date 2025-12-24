@@ -1,114 +1,253 @@
 ---
-title: Middleware
+title: Interceptors
 sidebar_position: 4
 tags:
   - middleware
   - interceptor
+  - hooks
 ---
 
-# Middleware
+# Interceptors
 
-Middleware functions are a powerful feature in Minima.js that allow you to execute code before your route handlers. They are commonly used for tasks like:
+Interceptors are Minima.js's powerful middleware system that allows you to intercept and modify requests, responses, and errors. Unlike traditional middleware, interceptors are **module-scoped**, giving you fine-grained control over where they apply.
 
-*   Authentication and authorization
-*   Logging and metrics
-*   Request parsing and validation
-*   Adding data to the context
+## Why Interceptors?
 
-In Minima.js, middleware is handled by a function called `interceptor`.
+Common use cases include:
+
+- Authentication and authorization
+- Request/response transformation
+- Logging and metrics
+- Error handling and formatting
+- Adding data to the context
+
+## Types of Interceptors
+
+Minima.js provides several interceptor types:
+
+### 1. Module-Scoped Interceptor
+
+Wrap a module with middleware that only applies to routes within that module.
+
+```typescript
+import { interceptor } from "@minimajs/server";
+
+async function authMiddleware() {
+  const token = headers.get("authorization");
+  if (!token) abort("Unauthorized", 401);
+}
+
+// Wraps the module - middleware only runs for routes in this module
+const protectedModule = interceptor([authMiddleware], async (app) => {
+  app.get("/profile", () => ({ user: "data" }));
+  app.get("/settings", () => ({ settings: "data" }));
+});
+
+app.register(protectedModule);
+app.get("/public", () => "No auth required!"); // authMiddleware NOT called
+```
+
+**Key Point**: The middleware is **isolated** to the wrapped module. Other modules are unaffected.
+
+### 2. Injected Interceptor (`interceptor.use`)
+
+Inject middleware into a module or app. The middleware applies to that specific module/app and any child modules that register it.
+
+```typescript
+import { interceptor } from "@minimajs/server";
+
+async function loggerMiddleware() {
+  console.log(`[${request().method}] ${request().url}`);
+}
+
+// Create injectable middleware
+const logger = interceptor.use(loggerMiddleware);
+
+// Option 1: Register on app (applies to all routes)
+app.register(logger);
+
+// Option 2: Register in specific module
+async function apiModule(app: App) {
+  app.register(logger); // Only applies to this module's routes
+  app.get("/users", () => "users");
+  app.get("/posts", () => "posts");
+}
+```
+
+**With Filters:**
+
+```typescript
+const conditionalLogger = interceptor.use(
+  async () => console.log("Logging..."),
+  { filter: () => request().url.startsWith("/api") }
+);
+
+app.register(conditionalLogger);
+```
+
+### 3. Response Interceptor
+
+Transform or decorate response data.
+
+```typescript
+// App-level response decorator
+app.register(
+  interceptor.response((data) => {
+    return {
+      success: true,
+      timestamp: new Date().toISOString(),
+      data,
+    };
+  })
+);
+
+// Module-level (only affects this module)
+async function apiModule(app: App) {
+  app.register(
+    interceptor.response((data) => ({
+      version: "v1",
+      payload: data,
+    }))
+  );
+
+  app.get("/users", () => ({ users: [] }));
+  // Returns: { version: "v1", payload: { success: true, timestamp: "...", data: { users: [] } } }
+}
+```
+
+**Chaining**: Multiple decorators chain in order of registration.
+
+### 4. Error Interceptor
+
+Handle and format errors.
+
+```typescript
+app.register(
+  interceptor.error((error) => {
+    if (!(error instanceof Error)) throw error;
+
+    return {
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    };
+  })
+);
+
+app.get("/fail", () => abort("Something went wrong", 500));
+// Returns: { success: false, error: "Something went wrong", timestamp: "..." }
+```
+
+**Module-Scoped Error Handling:**
+
+```typescript
+async function apiModule(app: App) {
+  app.register(
+    interceptor.error((error) => {
+      if (!(error instanceof Error)) throw error;
+      return { apiError: true, message: error.message };
+    })
+  );
+
+  app.get("/test", () => abort("API Error"));
+}
+
+// Error handling only applies to routes in apiModule
+```
 
 ## Creating Middleware
 
-A middleware in Minima.js is an asynchronous function that can perform operations on the request and response.
+A middleware is simply an async function:
 
-Here's an example of a simple logger middleware:
+```typescript
+import { request, headers } from "@minimajs/server";
 
-```typescript title="src/middleware/logger.ts"
-import { request } from '@minimajs/server';
+async function authMiddleware() {
+  const token = headers.get("authorization")?.split(" ")[1];
+  const user = await validateToken(token);
+  setUser(user); // Store in context
+}
 
-export async function logger() {
+async function loggerMiddleware() {
   const req = request();
   console.log(`[${req.method}] ${req.url}`);
 }
 ```
 
-This middleware logs the HTTP method and URL of every incoming request.
-
-## Registering Middleware
-
-To use a middleware, you need to register it with your application or a specific module using the `interceptor` function.
-
-### Global Middleware
-
-You can register a middleware to be executed for every request in your application.
-
-```typescript title="src/index.ts"
-import { createApp, interceptor } from '@minimajs/server';
-import { logger } from './middleware/logger';
-import { homeModule } from './home';
-
-const app = createApp();
-
-const globalMiddleware = interceptor([logger]);
-
-app.register(globalMiddleware(homeModule));
-
-await app.listen({ port: 3000 });
-```
-
-### Module-Level Middleware
-
-You can also apply middleware to a specific module.
-
-```typescript title="src/user/index.ts"
-import { type App, interceptor } from '@minimajs/server';
-import { authMiddleware } from './middleware/auth';
-
-async function userModule(app: App) {
-  app.get('/', () => 'All users');
-}
-
-export const protectedUserModule = interceptor([authMiddleware], userModule);
-```
-
-Then, in your main application file:
-
-```typescript title="src/index.ts"
-import { createApp } from '@minimajs/server';
-import { protectedUserModule } from './user';
-
-const app = createApp();
-
-app.register(protectedUserModule, { prefix: '/users' });
-
-await app.listen({ port: 3000 });
-```
-
-Now, the `authMiddleware` will be executed for all routes defined in the `userModule`.
-
 ## Chaining Middleware
 
-The `interceptor` function accepts an array of middleware, allowing you to chain them together. The middleware will be executed in the order they are defined in the array.
+Pass an array to chain multiple middleware:
 
 ```typescript
-import { interceptor } from '@minimajs/server';
-import { logger } from './middleware/logger';
-import { authMiddleware } from './middleware/auth';
-
-const chainedMiddleware = interceptor([logger, authMiddleware]);
+const protectedModule = interceptor(
+  [loggerMiddleware, authMiddleware, rateLimitMiddleware],
+  async (app) => {
+    app.get("/admin", () => "Admin area");
+  }
+);
 ```
 
-## Using Express Middleware
+Middleware executes **in order** from left to right.
 
-Minima.js is compatible with Express middleware. You can use your favorite Express middleware with the `interceptor` function.
+## Filtering Middleware
+
+Use `interceptor.filter` for conditional execution:
 
 ```typescript
-import { interceptor } from '@minimajs/server';
-import * as cors from 'cors';
+import { interceptor, searchParams } from "@minimajs/server";
 
-const corsMiddleware = cors();
+const conditionalMiddleware = interceptor.filter(
+  async () => {
+    console.log("Only runs when filter returns true");
+  },
+  () => searchParams.get("debug") === "true" // Filter function
+);
 
-const appModule = interceptor([corsMiddleware], mainModule);
+const module = interceptor([conditionalMiddleware], async (app) => {
+  app.get("/test", () => "test");
+});
 ```
 
-This allows you to leverage the rich ecosystem of Express middleware in your Minima.js applications.
+## Express Middleware Compatibility
+
+Minima.js is compatible with Express middleware:
+
+```typescript
+import cors from "cors";
+import helmet from "helmet";
+
+const secureModule = interceptor(
+  [cors(), helmet()],
+  async (app) => {
+    app.get("/api/data", () => ({ data: "secure" }));
+  }
+);
+```
+
+## Module Isolation
+
+**Important**: Interceptors are module-scoped by design.
+
+```typescript
+async function moduleA(app: App) {
+  app.register(interceptor.response((data) => ({ moduleA: true, data })));
+  app.get("/a", () => "A"); // Response: { moduleA: true, data: "A" }
+}
+
+async function moduleB(app: App) {
+  app.get("/b", () => "B"); // Response: "B" (no decorator)
+}
+
+app.register(moduleA);
+app.register(moduleB);
+```
+
+Module A's response decorator **does not affect** Module B.
+
+## Best Practices
+
+1. **Use module-scoped interceptors** for feature-specific logic
+2. **Use `interceptor.use`** for cross-cutting concerns (logging, metrics)
+3. **Keep middleware focused** - one responsibility per middleware
+4. **Chain middleware thoughtfully** - order matters
+5. **Use filters** for conditional logic instead of if statements in middleware

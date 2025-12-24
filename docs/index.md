@@ -17,36 +17,42 @@ hero:
       link: https://github.com/minima-js/minimajs
 
 features:
-  - icon: '🚀'
-    title: 'TypeScript First'
-    details: 'Built entirely in TypeScript, for TypeScript. Enjoy a top-tier developer experience with excellent type safety and autocompletion.'
-  - icon: '✨'
-    title: 'Context over req/res'
-    details: 'Say goodbye to prop drilling! Access request data from anywhere in your code using a modern, AsyncLocalStorage-based context.'
-  - icon: '⚡️'
-    title: 'Modern JavaScript, Today'
-    details: 'Built for the future. Minima.js exclusively uses modern ECMAScript Modules (ESM) and the latest JavaScript features.'
-  - icon: '🧩'
-    title: 'Effortless Integration'
-    details: 'Easily integrate third-party libraries without passing `req` and `res` objects around. The context system makes it a breeze.'
-  - icon: '🛡️'
-    title: 'Best-in-class Tooling'
-    details: 'Comes with robust, built-in support for multipart form data and data validation using `@minimajs/multipart` and `@minimajs/schema`.'
-  - icon: '🎨'
-    title: 'Minimalist and Opinionated'
+  - icon:
+      src: /icon-rocket.svg
+    title: "TypeScript First"
+    details: "Built entirely in TypeScript, for TypeScript. Enjoy a top-tier developer experience with excellent type safety and autocompletion."
+  - icon:
+      src: /icon-sparkles.svg
+    title: "Context over req/res"
+    details: "Say goodbye to prop drilling! Access request data from anywhere in your code using a modern, AsyncLocalStorage-based context."
+  - icon:
+      src: /icon-zap.svg
+    title: "Modern JavaScript, Today"
+    details: "Built for the future. Minima.js exclusively uses modern ECMAScript Modules (ESM) and the latest JavaScript features."
+  - icon:
+      src: /icon-function.svg
+    title: "Functional Programming"
+    details: "Embrace a clean, functional approach with composable middleware and plugins. Write declarative, testable code without classes or decorators."
+  - icon:
+      src: /icon-plug.svg
+    title: "Effortless Integration"
+    details: "Seamlessly integrate any third-party library or package. The context system eliminates prop drilling, making integrations clean and simple."
+  - icon:
+      src: /icon-grid.svg
+    title: "Minimalist and Opinionated"
     details: 'A "one-rule of doing things" philosophy results in a consistent and predictable codebase with minimal boilerplate.'
-
 ---
+
 <div style="height: 1rem;"></div>
 
 ## As Easy As It Gets
 
 ```typescript
-import { createApp, params } from '@minimajs/server';
+import { createApp, params } from "@minimajs/server";
 
 const app = createApp();
 
-app.get('/:name', () => `Hello, ${params.get('name')}!`);
+app.get("/:name", () => `Hello, ${params.get("name")}!`);
 
 await app.listen({ port: 3000 });
 ```

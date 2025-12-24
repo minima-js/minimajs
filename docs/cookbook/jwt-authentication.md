@@ -5,136 +5,278 @@ sidebar_position: 1
 
 # JWT Authentication
 
-This recipe will show you how to implement JWT-based authentication in your Minima.js application. We will use the `@minimajs/auth` package to create an authentication middleware and the `jsonwebtoken` library to generate and verify JWTs.
+This cookbook shows you how to implement JWT-based authentication in your Minima.js application using the `@minimajs/auth` package. We'll build a complete authentication system with login, token generation, and protected routes.
 
 ## Prerequisites
 
-First, you need to install the required packages:
+Install the required packages:
 
 ```bash
 npm install @minimajs/auth jsonwebtoken
 npm install -D @types/jsonwebtoken
 ```
 
-## 1. Creating the Auth Middleware
+## Step 1: Create the Authentication Plugin
 
-The first step is to create an authentication middleware using the `createAuth` function from `@minimajs/auth`. This middleware will be responsible for verifying the JWT from the request headers and attaching the user to the context.
+Use `createAuth` to create an authentication plugin and resource accessor. The plugin will verify JWT tokens from the Authorization header.
 
-```typescript title="src/auth/middleware.ts"
-import { createAuth, UnauthorizedError } from '@minimajs/auth';
-import { headers } from '@minimajs/server';
-import * as jwt from 'jsonwebtoken';
+```typescript title="src/auth/index.ts"
+import { headers } from "@minimajs/server";
+import { createAuth, UnauthorizedError } from "@minimajs/auth";
+import jwt from "jsonwebtoken";
 
-const JWT_SECRET = 'your-super-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
-// A simple user type for demonstration
-export interface User {
+interface User {
   id: number;
   username: string;
 }
 
-export const [authMiddleware, guard, getUser] = createAuth(async (): Promise<User | null> => {
-  const authHeader = headers.get('authorization');
+export const [authPlugin, getUser] = createAuth<User>(async () => {
+  const authHeader = headers.get("authorization");
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return null; // No token, so no user
+  if (!authHeader?.startsWith("Bearer ")) {
+    throw new UnauthorizedError("No token provided");
   }
 
-  const token = authHeader.split(' ')[1];
+  const token = authHeader.split(" ")[1];
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; username: string };
     return { id: decoded.userId, username: decoded.username };
   } catch (error) {
-    throw new UnauthorizedError('Invalid token');
+    throw new UnauthorizedError("Invalid or expired token");
   }
 });
 ```
 
-In this code:
-*   We define a `User` interface.
-*   We use `createAuth` to create the authentication middleware.
-*   Inside the `createAuth` callback, we get the token from the `Authorization` header.
-*   We verify the token using `jwt.verify()`.
-*   If the token is valid, we return the user payload.
-*   If the token is invalid, we throw an `UnauthorizedError`.
+**Key Points:**
 
-## 2. Generating Tokens
+- `createAuth` returns `[plugin, resource]` - a plugin to register and a function to access the authenticated user
+- The callback throws `UnauthorizedError` when authentication fails
+- In optional mode (default), failed authentication is stored and `getUser()` returns `undefined`
 
-Next, we need a way to generate a JWT when a user logs in. Let's create a `login` route that generates a token for a user.
+## Step 2: Create Authentication Guards
+
+Guards are middleware functions that enforce authentication requirements for specific routes.
+
+```typescript title="src/auth/guards.ts"
+import { getUser } from "./index";
+import { ForbiddenError } from "@minimajs/server/error";
+
+// Basic authentication guard
+export function authenticated() {
+  getUser.required(); // Throws UnauthorizedError if not authenticated
+}
+
+// Admin-only guard
+export async function adminOnly() {
+  // async is required, otherwise need to call done
+  const user = getUser.required();
+
+  // Add your admin check logic here
+  if (!user.isAdmin) {
+    throw new ForbiddenError("Admin access required");
+  }
+}
+```
+
+## Step 3: Create Login Route
+
+Create a route that generates JWT tokens for authenticated users.
 
 ```typescript title="src/auth/routes.ts"
-import { type App, body } from '@minimajs/server';
-import * as jwt from 'jsonwebtoken';
+import { type App, body } from "@minimajs/server";
+import { UnauthorizedError } from "@minimajs/auth";
+import jwt from "jsonwebtoken";
 
-const JWT_SECRET = 'your-super-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
-// A mock user database
+// Mock user database (replace with real database)
 const users = [
-  { id: 1, username: 'john.doe', password: 'password123' },
+  { id: 1, username: "john.doe", password: "password123" },
+  { id: 2, username: "jane.smith", password: "secret456" },
 ];
 
 export async function authRoutes(app: App) {
-  app.post('/login', () => {
-    const { username, password } = body<{ username?: string; password?: string }>();
+  app.post("/login", () => {
+    const { username, password } = body<{ username: string; password: string }>();
 
-    const user = users.find(u => u.username === username && u.password === password);
+    const user = users.find((u) => u.username === username && u.password === password);
 
     if (!user) {
-      throw new UnauthorizedError('Invalid credentials');
+      throw new UnauthorizedError("Invalid credentials");
     }
 
-    const token = jwt.sign({ userId: user.id, username: user.username }, JWT_SECRET, {
-      expiresIn: '1h',
-    });
+    const token = jwt.sign({ userId: user.id, username: user.username }, JWT_SECRET, { expiresIn: "24h" });
 
     return { token };
   });
 }
 ```
 
-## 3. Protecting Routes
+## Step 4: Create Protected Routes
 
-Now that we have our authentication middleware, we can use it to protect our routes. The `guard` function returned by `createAuth` can be used to ensure that only authenticated users can access certain routes.
+Create routes that require authentication using the guard we created.
 
-Let's create a protected route that returns the current user's profile.
-
-```typescript title="src/profile/routes.ts"
-import { type App } from '@minimajs/server';
-import { getUser, User } from '../auth/middleware';
+```typescript [src/profile/routes.ts]
+import { type App } from "@minimajs/server";
+import { getUser } from "../auth";
 
 export async function profileRoutes(app: App) {
-  app.get('/profile', () => {
+  app.get("/profile", () => {
+    const user = getUser(); // User is guaranteed to exist because of the guard
+    return {
+      id: user.id,
+      username: user.username,
+    };
+  });
+
+  app.get("/settings", () => {
     const user = getUser();
-    return { user };
+    return {
+      username: user.username,
+      // Add user settings here
+    };
   });
 }
 ```
 
-## 4. Putting It All Together
+## Step 5: Put It All Together
 
-Finally, let's put everything together in our main application file.
+Register the auth plugin globally and use interceptors to protect specific routes.
 
 ```typescript title="src/index.ts"
-import { createApp, interceptor } from '@minimajs/server';
-import { authMiddleware, guard } from './auth/middleware';
-import { authRoutes } from './auth/routes';
-import { profileRoutes } from './profile/routes';
+import { createApp, interceptor } from "@minimajs/server";
+import { authPlugin } from "./auth";
+import { authenticated } from "./auth/guards";
+import { authRoutes } from "./auth/routes";
+import { profileRoutes } from "./profile/routes";
 
 const app = createApp();
 
-// Public routes (e.g., login)
+// Register auth plugin globally - this enables authentication checking for all routes
+app.register(authPlugin);
+
+// Public routes - no guard required
 app.register(authRoutes);
 
-// Protected routes
-const protectedRoutes = interceptor([authMiddleware, guard()], profileRoutes);
-app.register(protectedRoutes);
+// Protected routes - wrapped with authenticated guard
+app.register(interceptor([authenticated], profileRoutes));
 
 await app.listen({ port: 3000 });
 ```
 
-In this setup:
-*   The `/login` route is public.
-*   All routes defined in `profileRoutes` (i.e., `/profile`) are protected and require a valid JWT.
+## Testing the API
 
-Now you have a fully functional JWT authentication system in your Minima.js application!
+### 1. Login to get a token
+
+```bash
+curl -X POST http://localhost:3000/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "john.doe", "password": "password123"}'
+```
+
+**Response:**
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+### 2. Access protected route with token
+
+```bash
+curl http://localhost:3000/profile \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+**Response:**
+
+```json
+{
+  "id": 1,
+  "username": "john.doe"
+}
+```
+
+### 3. Access protected route without token
+
+```bash
+curl http://localhost:3000/profile
+```
+
+**Response:**
+
+```json
+{
+  "message": "No token provided"
+}
+```
+
+## Alternative: Required Authentication Mode
+
+If you want to protect ALL routes by default, use `required: true`:
+
+```typescript title="src/auth/index.ts"
+export const [authPlugin, getUser] = createAuth<User>(
+  async () => {
+    const authHeader = headers.get("authorization");
+
+    if (!authHeader?.startsWith("Bearer ")) {
+      throw new UnauthorizedError("No token provided");
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; username: string };
+      return { id: decoded.userId, username: decoded.username };
+    } catch (error) {
+      throw new UnauthorizedError("Invalid or expired token");
+    }
+  },
+  { required: true } // All routes protected by default
+);
+```
+
+With `required: true`:
+
+- `getUser()` returns `User` (not `User | undefined`)
+- No need for guards - all routes are automatically protected
+- No null checks needed in route handlers
+
+```typescript title="src/index.ts"
+import { createApp } from "@minimajs/server";
+import { authPlugin, getUser } from "./auth";
+
+const app = createApp();
+
+// All routes are now protected automatically
+app.register(authPlugin);
+
+app.get("/profile", () => {
+  const user = getUser(); // Type: User (not User | undefined)
+  return { id: user.id, username: user.username }; // No null checks needed
+});
+
+await app.listen({ port: 3000 });
+```
+
+## Best Practices
+
+1. **Use Environment Variables**: Store JWT secrets in environment variables, never hardcode them
+2. **Set Appropriate Expiration**: Use reasonable token expiration times (e.g., 15m for access tokens)
+3. **Implement Refresh Tokens**: For long-lived sessions, implement refresh token rotation
+4. **Hash Passwords**: Never store plain-text passwords - use bcrypt or argon2
+5. **Validate Input**: Always validate request bodies and handle errors properly
+6. **Use HTTPS**: Always use HTTPS in production to protect tokens in transit
+
+## Next Steps
+
+- Implement password hashing with bcrypt
+- Add refresh token rotation
+- Implement role-based access control (RBAC)
+- Add rate limiting to prevent brute force attacks
+- Store tokens securely on the client side

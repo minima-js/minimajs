@@ -7,7 +7,7 @@ sidebar_position: 4
 
 Data validation is a critical part of any web application. It ensures that the data you receive from clients is in the correct format and meets your application's requirements.
 
-Minima.js provides a powerful package, `@minimajs/schema`, for data validation. This package is designed to work seamlessly with popular validation libraries like [Yup](https://github.com/jquense/yup), [Zod](https://zod.dev/), and others.
+Minima.js provides a powerful package, `@minimajs/schema`, for data validation.
 
 This recipe will show you how to use `@minimajs/schema` with Yup to validate incoming request data.
 
@@ -26,7 +26,7 @@ The first step is to create a validation schema using Yup. A schema defines the 
 Let's create a schema for a new user:
 
 ```typescript title="src/user/schema.ts"
-import * as yup from 'yup';
+import * as yup from "yup";
 
 export const createUserSchema = yup.object({
   name: yup.string().min(2).required(),
@@ -42,41 +42,42 @@ This schema defines a user object with a `name`, `email`, and `password`. It als
 Now that we have a schema, we can use it to validate the request body. The `@minimajs/schema` package provides a `createBody` function for this purpose.
 
 ```typescript
-import { createApp } from '@minimajs/server';
-import { createBody } from '@minimajs/schema';
-import { createUserSchema } from './user/schema';
+import { createApp } from "@minimajs/server";
+import { createBody } from "@minimajs/schema";
+import { createUserSchema } from "./user/schema";
 
 const app = createApp();
 
 const getValidatedBody = createBody(createUserSchema);
 
-app.post('/users', () => {
+app.post("/users", () => {
   const { name, email, password } = getValidatedBody();
 
   // At this point, you can be sure that the data is valid.
   // ... create the user ...
 
-  return { message: 'User created' };
+  return { message: "User created" };
 });
 
 await app.listen({ port: 3000 });
 ```
 
 In this example:
-*   We use `createBody(createUserSchema)` to create a `getValidatedBody` function.
-*   When `getValidatedBody()` is called inside the route handler, it will:
-    1.  Parse the request body.
-    2.  Validate it against the `createUserSchema`.
-    3.  If the validation passes, it returns the validated data.
-    4.  If the validation fails, it automatically throws a `ValidationError` and sends a `400 Bad Request` response with the validation errors.
+
+- We use `createBody(createUserSchema)` to create a `getValidatedBody` function.
+- When `getValidatedBody()` is called inside the route handler, it will:
+  1.  Parse the request body.
+  2.  Validate it against the `createUserSchema`.
+  3.  If the validation passes, it returns the validated data.
+  4.  If the validation fails, it automatically throws a `ValidationError` and sends a `400 Bad Request` response with the validation errors.
 
 ## 3. Validating Headers and Search Params
 
 You can also validate request headers and search parameters using the `createHeaders` and `createSearchParams` functions.
 
 ```typescript
-import { createHeaders, createSearchParams } from '@minimajs/schema';
-import * as yup from 'yup';
+import { createHeaders, createSearchParams } from "@minimajs/schema";
+import * as yup from "yup";
 
 const paginationSchema = yup.object({
   page: yup.number().integer().positive().default(1),
@@ -85,7 +86,7 @@ const paginationSchema = yup.object({
 
 const getPagination = createSearchParams(paginationSchema);
 
-app.get('/posts', () => {
+app.get("/posts", () => {
   const { page, limit } = getPagination();
   // ... fetch posts with pagination ...
   return { page, limit };

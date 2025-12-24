@@ -4,32 +4,71 @@ sidebar_position: 1
 title: "Introduction"
 ---
 
-# Minima\.js: Where Efficiency Meets Elegance
+# What is Minima.js?
 
-Minima.js is a cutting-edge Node.js framework meticulously designed to empower developers to construct contemporary web applications with exceptional efficiency and elegance.
+Minima.js is a modern Node.js framework that reimagines how web applications should be built. It's designed for developers who want to write less code, ship faster, and maintain cleaner codebases.
 
-**Key Features:**
+## The Impact
 
-- **TypeScript First:** Minima.js is built entirely in TypeScript, for TypeScript. This means you get a top-tier developer experience with excellent type safety, autocompletion, and a significant reduction in runtime errors.
+### Best-in-Class Developer Experience
 
-- **Context over `req`/`res`:** Say goodbye to prop drilling! Minima.js uses modern `AsyncLocalStorage` to provide a global context for each request. You can access request data, headers, and more from anywhere in your code without passing `req` and `res` objects around.
+Minima.js offers the best TypeScript DX you'll find in any Node.js framework. Every API is fully typed, autocomplete works everywhere, and your editor becomes a powerful assistant that catches bugs before you even run your code.
 
-- **Modern JavaScript, Today:** Minima.js is built for the future. It exclusively uses modern ECMAScript Modules (ESM) and the latest JavaScript features, without being held back by backward compatibility concerns.
+### No Magic, Just TypeScript
 
-- **Effortless Third-Party Integration:** Integrating third-party libraries is a breeze. Since you can access the request context from anywhere, you can easily integrate libraries that don't have direct access to the `req`/`res` objects.
+Unlike other frameworks that rely on decorators, reflection, or runtime metadata, Minima.js is pure TypeScript. What you see is what you get. No hidden magic, no complex build steps, no guessing what's happening behind the scenes.
 
-- **Best-in-class Multipart and Schema Support:** Minima.js comes with robust, built-in support for multipart form data and data validation. The `@minimajs/multipart` and `@minimajs/schema` packages provide a seamless experience for handling file uploads and validating data.
+### Everything is Composable
 
-- **Minimalist and Opinionated:** Minima.js follows a "one-rule of doing things" philosophy, which results in a consistent and predictable codebase. The minimalist API and lack of boilerplate allow you to focus on writing your application's logic.
+Build your application like Lego blocks. Middleware, plugins, handlers - everything follows functional composition patterns. Reuse code across projects, combine behaviors effortlessly, and test each piece in isolation.
 
-- **Functional and Modular:** The framework encourages a functional and modular approach to building applications. This leads to cleaner, more maintainable, and scalable code.
+### Integration Made Simple
 
-**Unparalleled Development Experience:**
+Adding third-party libraries feels natural. No adapters, no wrappers, no fighting with `req`/`res` objects. The context system means any library can access request data without being explicitly passed down through your call stack.
 
-- **Blazing-Fast Builds:** Bundled with Esbuild, Minima.js ensures exceptional build times, enabling rapid development iteration and deployment.
-- **Straightforward Learning:** Designed with simplicity in mind, Minima.js offers an intuitive API and comprehensive documentation, making it easy for developers to get started quickly.
-- **Circular Dependency Management:** Minima.js provides a clever solution to circular dependencies, promoting cleaner code architecture and smoother development workflows.
+### Build Extensions in Minutes
 
-**Embrace the Future of Node.js Development**
+Creating plugins and extensions is remarkably simple. The functional API means you can create reusable utilities without learning complex plugin systems or framework internals.
 
-Minima.js represents a paradigm shift in web development, offering a powerful combination of modern JavaScript, functional programming, and developer-friendly features. Empower yourself to build exceptional Node.js applications with unparalleled speed, efficiency, and elegance – regardless of project size or complexity.
+## Quick Example
+
+```typescript
+import { createApp, params } from "@minimajs/server";
+
+const app = createApp();
+
+app.get("/:name", () => `Hello, ${params.get("name")}!`);
+
+await app.listen({ port: 3000 });
+```
+
+That's it. No classes, no decorators, no boilerplate. Just pure, simple code.
+
+## What This Means for You
+
+**Faster Development**
+Write less code, iterate faster, and ship features in hours instead of days.
+
+**Fewer Bugs**
+TypeScript catches errors at compile time. No more runtime surprises in production.
+
+**Easier Maintenance**
+Six months later, your code still makes sense. No magic to reverse-engineer.
+
+**Better Testing**
+Pure functions are easy to test. No mocking frameworks, no complex test setup.
+
+**Happier Teams**
+Clean code patterns mean faster onboarding and fewer debates about "the right way."
+
+## Who Should Use Minima.js?
+
+Minima.js is perfect for developers and teams who:
+
+- Value code clarity over clever abstractions
+- Want TypeScript that actually helps instead of fights
+- Prefer functional patterns over object-oriented complexity
+- Build APIs, microservices, or backend services
+- Care about long-term maintainability
+
+If you've ever felt frustrated by framework magic, bloated APIs, or poor TypeScript support - Minima.js was built for you.

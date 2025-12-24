@@ -61,7 +61,8 @@ This relies on:
 Request and response are available anywhere using AsyncLocalStorage:
 
 ```ts
-const { req, res } = context();
+import { request } from "@minimajs/server";
+const req = request(); // Request
 ```
 
 - No decorators
