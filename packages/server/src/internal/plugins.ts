@@ -1,45 +1,46 @@
 import { handleResponse } from "./response.js";
 import { wrap } from "./context.js";
 import { NotFoundError, errorHandler } from "../error.js";
-import type { FastifyPluginAsync, FastifyPluginOptions } from "fastify";
 import { dispatchError, dispatchSent } from "../hooks/dispatch.js";
 import { isAsyncFunction } from "node:util/types";
 import type { Plugin, PluginSync } from "../index.js";
 
-export interface PluginOption {
-  name?: string;
-  override?: boolean;
-}
+// Plugin symbols
+const kSkipOverride = Symbol.for("skip-override");
 
-const pluginOptionMappings: { [K in keyof PluginOption]-?: symbol } = {
-  name: Symbol.for("fastify.display-name"),
-  override: Symbol.for("skip-override"),
-};
-export function setOption(cb: Plugin<any> | PluginSync<any>, options: PluginOption) {
-  for (const [name, value] of Object.entries(options)) {
-    const option = pluginOptionMappings[name as keyof PluginOption];
-    (cb as any)[option] = value;
-  }
-  return cb;
-}
-
-export function plugin<T extends FastifyPluginOptions>(fn: Plugin<T>, name?: string) {
-  setOption(fn, { override: true });
-  if (name) {
-    setOption(fn, { name });
-  }
+/**
+ * Helper to set plugin name for debugging
+ */
+function setName<T extends Function>(fn: T, name: string): T {
+  Object.defineProperty(fn, "name", { value: name, configurable: true });
   return fn;
 }
 
 /**
- * Plugin utilities namespace providing helper functions for creating and composing Fastify plugins.
+ * Helper to mark plugin as allowing override
+ */
+function allowOverride<T extends Function>(fn: T): T {
+  (fn as any)[kSkipOverride] = true;
+  return fn;
+}
+
+/**
+ * Wraps a plugin function (optional, mainly for consistency)
+ */
+export function plugin<T = Record<never, never>>(fn: Plugin<T>, name?: string): Plugin<T> {
+  const wrapped = name ? setName(fn, name) : fn;
+  return allowOverride(wrapped);
+}
+
+/**
+ * Plugin utilities namespace providing helper functions for creating and composing plugins.
  */
 export namespace plugin {
   /**
    * Wraps a sync plugin to automatically call done() if the function doesn't accept it.
    * Prevents plugins from getting stuck if the user forgets to call done().
    */
-  function ensureDone<T extends FastifyPluginOptions>(fn: PluginSync<T>): PluginSync<T> {
+  function ensureDone<T = Record<never, never>>(fn: PluginSync<T>): PluginSync<T> {
     if (fn.length < 3) {
       return function wrapped(app, opts, done) {
         fn(app, opts, done);
@@ -49,17 +50,19 @@ export namespace plugin {
     return fn;
   }
 
-  export function sync<T extends FastifyPluginOptions>(fn: PluginSync<T>, name = fn.name) {
+  /**
+   * Creates a sync plugin with automatic done() handling
+   */
+  export function sync<T = Record<never, never>>(fn: PluginSync<T>, name?: string): PluginSync<T> {
     const wrappedFn = ensureDone(fn);
-    setOption(wrappedFn, { name: name, override: true });
-    return wrappedFn;
+    const named = name ? setName(wrappedFn, name) : wrappedFn;
+    return allowOverride(named);
   }
 
   /**
    * Type guard to check if a plugin is async or sync.
-   * Uses Node.js util.types.isAsyncFunction to determine if the plugin is an async function.
    */
-  function isAsync<Opts extends FastifyPluginOptions>(plg: Plugin<Opts> | PluginSync<Opts>): plg is FastifyPluginAsync {
+  function isAsync<Opts = Record<never, never>>(plg: Plugin<Opts> | PluginSync<Opts>): plg is Plugin<Opts> {
     return isAsyncFunction(plg);
   }
 
@@ -74,7 +77,8 @@ export namespace plugin {
    * app.register(plugin.compose(connectDB, closeDB));
    * ```
    */
-  export function compose<Opts extends FastifyPluginOptions>(...plugins: (Plugin<Opts> | PluginSync<Opts>)[]) {
+  export function compose<Opts = Record<never, never>>(...plugins: (Plugin<Opts> | PluginSync<Opts>)[]) {
+    const composedName = `compose(${plugins.map((p) => p.name || "anonymous").join(",")})`;
     return plugin<Opts>(async function composed(app, opts) {
       for (const plg of plugins) {
         if (isAsync(plg)) {
@@ -85,18 +89,18 @@ export namespace plugin {
           plg(app, opts, (err) => (err ? reject(err) : resolve()));
         });
       }
-    }, `compose(${plugins.map((p) => p.name || "anonymous").join(",")})`);
+    }, composedName);
   }
 }
 
-export const minimajs = plugin.sync(function minimajs(fastify) {
-  fastify.setErrorHandler(errorHandler);
-  fastify.setNotFoundHandler((req, res) => errorHandler(new NotFoundError(), req, res));
-  fastify.addContentTypeParser("multipart/form-data", (_, _1, next) => {
+export const minimajs = plugin.sync(function minimajs(app) {
+  app.setErrorHandler(errorHandler);
+  app.setNotFoundHandler((req, res) => errorHandler(new NotFoundError(), req, res));
+  app.addContentTypeParser("multipart/form-data", (_, _1, next) => {
     next(null);
   });
-  fastify.addHook("onRequest", wrap);
-  fastify.addHook("preSerialization", handleResponse);
-  fastify.addHook("onError", dispatchError);
-  fastify.addHook("onSend", dispatchSent);
+  app.addHook("onRequest", wrap);
+  app.addHook("preSerialization", handleResponse);
+  app.addHook("onError", dispatchError);
+  app.addHook("onSend", dispatchSent);
 });

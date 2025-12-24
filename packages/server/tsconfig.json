@@ -1,6 +1,7 @@
 {
   "extends": ["../config/tsconfig.base.json"],
   "include": ["src/**/*.ts", "./fastify.d.ts"],
+  "exclude": ["src/**/*.test.ts", "src/__tests__/**/*"],
   "compilerOptions": {
     "declaration": true,
     "declarationMap": true,

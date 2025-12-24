@@ -2198,9 +2198,11 @@ __metadata:
     "@jest/globals": "npm:^30.2.0"
     "@types/jest": "npm:^30.0.0"
     "@types/node": "npm:^25.0.3"
+    avvio: "npm:9"
     chalk: "npm:^5.6.2"
     deepmerge: "npm:^4.3.1"
     fastify: "npm:^5.6.2"
+    find-my-way: "npm:9"
     http-status-codes: "npm:^2.3.0"
     http-terminator: "npm:^3.2.0"
     jest: "npm:^30.2.0"
@@ -3462,6 +3464,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"avvio@npm:9":
+  version: 9.1.0
+  resolution: "avvio@npm:9.1.0"
+  dependencies:
+    "@fastify/error": "npm:^4.0.0"
+    fastq: "npm:^1.17.1"
+  checksum: 10/4bc7c0ac1b9e3a814db4bc5b89fd6a38b082614677d9a4e2d2b9c11bc830deac81dd0e5bdae4ba31b1e165c19de9f2772564fd3b840b3bfa5048f757bb6a4eda
+  languageName: node
+  linkType: hard
+
 "avvio@npm:^9.0.0":
   version: 9.0.0
   resolution: "avvio@npm:9.0.0"
@@ -4583,6 +4595,17 @@ __metadata:
   dependencies:
     to-regex-range: "npm:^5.0.1"
   checksum: 10/a7095cb39e5bc32fada2aa7c7249d3f6b01bd1ce461a61b0adabacccabd9198500c6fb1f68a7c851a657e273fce2233ba869638897f3d7ed2e87a2d89b4436ea
+  languageName: node
+  linkType: hard
+
+"find-my-way@npm:9":
+  version: 9.3.0
+  resolution: "find-my-way@npm:9.3.0"
+  dependencies:
+    fast-deep-equal: "npm:^3.1.3"
+    fast-querystring: "npm:^1.0.0"
+    safe-regex2: "npm:^5.0.0"
+  checksum: 10/f049b41d12f65bcef5366aa369450df246c83ca0bf5854e0072d1251ce0f364423350c18e8d66e38eb48737fa585963a16c21b675e10a63c9685238a1fefa20a
   languageName: node
   linkType: hard
 
@@ -7146,6 +7169,15 @@ __metadata:
   dependencies:
     ret: "npm:~0.5.0"
   checksum: 10/5607d4c20a92d66905d33556807da759ef0615d3b508ae7d6e7558e763bd59042bd30afb32d5f2456eb3f69a9d86fadbdf5e3e292494dae89fdae3087532602e
+  languageName: node
+  linkType: hard
+
+"safe-regex2@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "safe-regex2@npm:5.0.0"
+  dependencies:
+    ret: "npm:~0.5.0"
+  checksum: 10/61c061da3382e3fb9c1c5e50932da6926684132f69ef40da753ce2ae2746ef1be1e7d4d0c6b788d11c4596e8e3ce95775f147915a4893e1d129b86e7bec01ef2
   languageName: node
   linkType: hard
 
