@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "tsc -w",
-    "build": "yarn clean && tsc --build",
+    "build": "bun run clean && tsc --build",
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "peerDependencies": {

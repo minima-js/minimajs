@@ -1,8 +1,8 @@
 import type { Dict } from "../types.js";
+import type { App } from "./app.js";
 
 export interface RouteOptions {
   method: string;
-  url: string;
   path: string;
   params: string[];
   prefix?: string;
@@ -10,7 +10,10 @@ export interface RouteOptions {
   store?: unknown;
 }
 
-export interface Request {
+export interface Request<TRaw = any, TServer = App> {
+  readonly raw: TRaw;
+  readonly server: TServer;
+  readonly socket?: any;
   id: string;
   params: Dict<string>;
   query: Dict<string | string[]>;
@@ -21,4 +24,5 @@ export interface Request {
   url: string;
   originalUrl: string;
   method: string;
+  routeOptions: RouteOptions;
 }

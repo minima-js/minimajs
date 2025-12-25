@@ -1,5 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig.json",
   "extends": ["./tsconfig.json"],
+  "include": ["src/bun/**/*.ts", "src/interfaces/**/*.ts"],
   "exclude": ["src/**/*.test.ts", "src/__tests__/**/*"]
 }

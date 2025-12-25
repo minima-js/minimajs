@@ -12,6 +12,7 @@
   },
   "exports": {
     ".": "./lib/index.js",
+    "./bun": "./lib/bun/index.js",
     "./plugins/shutdown": "./lib/plugins/shutdown.js",
     "./plugins/router": "./lib/plugins/router.js",
     "./error": "./lib/error.js",
@@ -21,9 +22,9 @@
   },
   "scripts": {
     "dev": "tsc -w",
-    "build": "yarn clean && tsc -p ./tsconfig.build.json",
-    "test": "yarn node --no-warnings --experimental-vm-modules $(yarn bin jest)",
-    "coverage": "yarn test --coverage",
+    "build": "bun run clean && tsc -p ./tsconfig.build.json",
+    "test": "bun node --no-warnings --experimental-vm-modules $(yarn bin jest)",
+    "coverage": "bun test --coverage",
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "dependencies": {
@@ -46,6 +47,7 @@
   },
   "devDependencies": {
     "@jest/globals": "^30.2.0",
+    "@types/bun": "^1.3.5",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.0.3",
     "http-terminator": "^3.2.0",

@@ -20,6 +20,9 @@ import { MinimalServer } from "./node/server.js";
 import type { App, AppOptions } from "./types.js";
 import { logger, loggerOptions } from "./logger.js";
 
+// Runtime detection
+const isBun = typeof Bun !== "undefined";
+
 export * from "./interceptor.js";
 export * from "./http.js";
 export * from "./hooks/index.js";
