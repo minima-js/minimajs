@@ -1,7 +1,7 @@
 import Router from "find-my-way";
 import type { HookStore } from "../hooks/types.js";
 import type { RouteHandler } from "./route.js";
-import type { Serializer } from "./response.js";
+import type { ErrorHandler, Serializer } from "./response.js";
 
 export type Container = Map<symbol, unknown>;
 
@@ -13,6 +13,7 @@ export interface App {
   readonly router: Router.Instance<Router.HTTPVersion.V1>;
 
   serialize: Serializer;
+  errorHandler: ErrorHandler;
 
   get(path: string, handler: RouteHandler): this;
 
