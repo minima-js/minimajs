@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import assert from "node:assert";
-import { createAbortController } from "./response.js";
-import type { Request, Response } from "../types.js";
+import { Container, type App } from "../interfaces/app.js";
+import { type IncomingMessage, type ServerResponse } from "node:http";
 
 export type HookCallback = () => void | Promise<void>;
 export type ErrorHookCallback = (err: unknown) => any | Promise<any>;
@@ -12,26 +12,25 @@ export interface Hooks {
 }
 
 export interface Context {
-  readonly req: Request;
-  readonly reply: Response;
-  readonly local: Map<symbol, unknown>;
+  readonly app: App;
+  readonly req: Request; // WebApi Request
+  readonly res: Response; // WebApi Response
+  readonly container: Container; // app.container
+  readonly locals: Map<symbol, unknown>;
   readonly abortController: AbortController;
   readonly hooks: Hooks;
+  readonly rawReq?: IncomingMessage;
+  readonly rawRes?: ServerResponse;
 }
 
 const contextStorage = new AsyncLocalStorage<Context>();
 
-function createContextWrap(req: Request, reply: Response): Context {
-  return {
-    req,
-    reply,
-    local: new Map(),
-    abortController: createAbortController(req.raw, reply.raw),
-    hooks: { onSent: new Set(), onError: new Set() },
-  };
+export function defaultHooks(): Hooks {
+  return { onSent: new Set(), onError: new Set() };
 }
-export function wrap(req: Request, reply: Response, cb: () => unknown) {
-  return contextStorage.run(Object.freeze(createContextWrap(req, reply)), cb);
+
+export function wrap(context: Omit<Context, "hooks">, cb: () => unknown) {
+  return contextStorage.run(Object.freeze({ ...context, hooks: defaultHooks() }), cb);
 }
 
 export function safe<T, U extends unknown[]>(cb: (...args: U) => T) {
@@ -40,7 +39,7 @@ export function safe<T, U extends unknown[]>(cb: (...args: U) => T) {
 
 export function context() {
   const context = contextStorage.getStore();
-  assert(context, "Unable to access the context beyond the request scope.");
+  assert.ok(context, "context() was called outside of a request scope");
   return context;
 }
 

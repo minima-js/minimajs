@@ -1,7 +1,5 @@
 import type { IncomingHttpHeaders } from "node:http";
 import type { Logger } from "pino";
-import type { Request as MinimalRequest } from "./node/request.js";
-import type { Response as MinimalResponse } from "./node/response.js";
 
 export * from "./interfaces/index.js";
 
@@ -19,13 +17,6 @@ export type HttpHeaderIncoming = keyof OmitIndexSignature<IncomingHttpHeaders> |
 export interface PluginOptions {
   name?: string;
 }
-
-/**
- * The App interface in Minima.js represents a customized server instance equipped for handling requests.
- */
-
-export interface Request extends MinimalRequest {}
-export interface Response extends MinimalResponse {}
 
 export type Plugin<Opts = Record<never, never>> = (
   app: App,

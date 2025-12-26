@@ -1,10 +1,5 @@
-import { handleResponse } from "./response.js";
-import { wrap } from "./context.js";
-import { NotFoundError, errorHandler } from "../error.js";
-import { dispatchError, dispatchSent } from "../hooks/dispatch.js";
 import { isAsyncFunction } from "node:util/types";
 import type { Plugin, PluginSync } from "../index.js";
-
 // Plugin symbols
 const kSkipOverride = Symbol.for("skip-override");
 
@@ -92,15 +87,3 @@ export namespace plugin {
     }, composedName);
   }
 }
-
-export const minimajs = plugin.sync(function minimajs(app) {
-  app.setErrorHandler(errorHandler);
-  app.setNotFoundHandler((req, res) => errorHandler(new NotFoundError(), req, res));
-  app.addContentTypeParser("multipart/form-data", (_, _1, next) => {
-    next(null);
-  });
-  app.addHook("onRequest", wrap);
-  app.addHook("preSerialization", handleResponse);
-  app.addHook("onError", dispatchError);
-  app.addHook("onSend", dispatchSent);
-});

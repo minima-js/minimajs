@@ -1,6 +1,10 @@
 import type { RouteHandler } from "./route.js";
 
+export type Container = Map<symbol, unknown>;
+
 export interface App {
+  readonly container: Container;
+  readonly hooks: Map<any, any>;
   // HTTP methods
   get(path: string, handler: RouteHandler): this;
 

@@ -1,3 +1,4 @@
+import { type Server as BunServer } from "bun";
 import { default as Router } from "find-my-way";
 import avvio, { type Avvio } from "avvio";
 import type { Logger } from "pino";
@@ -5,6 +6,7 @@ import { Request } from "./request.js";
 import { Response } from "./response.js";
 import type { App } from "../interfaces/app.js";
 import type { RouteHandler } from "../interfaces/route.js";
+import { pluginOverride } from "../internal/override.js";
 
 type HookName = "onRequest" | "preSerialization" | "onError" | "onSend" | "onReady" | "onClose";
 type HookCallback = (req: Request, res: Response, next?: Next) => void | Promise<void>;
@@ -21,14 +23,15 @@ export interface BunServerOptions {
   prefix?: string;
 }
 
-export class BunServer implements App {
-  private server?: ReturnType<typeof Bun.serve>;
+export class Server implements App {
+  private server?: BunServer<unknown>;
   private router: Router.Instance<Router.HTTPVersion.V1>;
-  private hooks: Map<HookName, HookCallback[]> = new Map();
+  public hooks: Map<HookName, HookCallback[]> = new Map();
   private contentTypeParsers: ContentTypeParser[] = [];
   private errorHandler?: (error: unknown, req: Request, res: Response) => void | Promise<void>;
   private notFoundHandler?: (req: Request, res: Response) => void | Promise<void>;
   private prefix: string;
+  readonly container = new Map();
 
   public log: Logger;
 
@@ -39,6 +42,7 @@ export class BunServer implements App {
     this.prefix = opts.prefix || "";
     this.router = Router({ ignoreTrailingSlash: true });
     this.avvio = avvio<App>(this);
+    this.avvio.override = pluginOverride;
   }
 
   // HTTP methods
@@ -221,7 +225,10 @@ export class BunServer implements App {
   }
 
   // Request handling
-  private async handleRequest(rawReq: globalThis.Request, server: ReturnType<typeof Bun.serve>): Promise<globalThis.Response> {
+  private async handleRequest(
+    rawReq: globalThis.Request,
+    server: ReturnType<typeof Bun.serve>
+  ): Promise<globalThis.Response> {
     const req = new Request(rawReq, this as unknown as App, server);
     const res = new Response(this as unknown as App);
 

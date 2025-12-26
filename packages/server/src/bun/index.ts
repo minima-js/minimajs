@@ -1,14 +1,7 @@
 import type { Logger } from "pino";
 import pino from "pino";
 import merge from "deepmerge";
-import { BunServer, type BunServerOptions } from "./server.js";
-import type { App } from "../interfaces/app.js";
-
-// TODO: Port these from the shared code
-// export * from "../interceptor.js";
-// export * from "../http.js";
-// export * from "../hooks/index.js";
-// export * from "../context.js";
+import { Server, type BunServerOptions } from "./server.js";
 
 export * from "../interfaces/index.js";
 
@@ -37,10 +30,10 @@ function getDefaultConfig({ logger: loggerOverride }: BunAppOptions): Logger {
   return logger.child(loggerConfig);
 }
 
-export function createApp(opts: BunAppOptions = {}): App {
+export function createApp(opts: BunAppOptions = {}) {
   const appLogger = getDefaultConfig(opts);
   const { prefix } = opts;
-  const app = new BunServer(appLogger, { prefix }) as App;
+  const app = new Server(appLogger, { prefix });
   // TODO: Register minimajs plugin once ported
   // app.register(minimajs, {});
   return app;
