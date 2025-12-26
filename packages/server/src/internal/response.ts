@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
-import type { Next, Request, Response } from "../types.js";
+import type { Next } from "../types.js";
 import { isAsyncIterator } from "../utils/iterable.js";
 import { getDecoratedResponse, isResponseDecoratorSkipped } from "../utils/decorators/index.js";
 export type { ResponseDecorator } from "../utils/decorators/index.js";

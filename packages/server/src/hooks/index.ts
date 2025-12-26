@@ -15,6 +15,7 @@ import { type ErrorHookCallback, type HookCallback } from "../internal/context.j
 import { plugin } from "../internal/plugins.js";
 import { context } from "../context.js";
 import type { PluginSync } from "../types.js";
+import { type LifecycleHook } from "./types.js";
 export type { HookCallback, ErrorHookCallback };
 
 /**
@@ -39,7 +40,6 @@ export function onError(cb: ErrorHookCallback) {
  * Lifecycle hook event names supported by Minima.js.
  * These correspond to Fastify's lifecycle hook events.
  */
-export type LifecycleHook = "close" | "send" | "listen" | "ready" | "register";
 
 const hooksMapping: Record<LifecycleHook, ApplicationHook | BaseLifecycleHook> = {
   close: "onClose",

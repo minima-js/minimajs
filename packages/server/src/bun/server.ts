@@ -2,22 +2,16 @@ import { type Server as BunServer } from "bun";
 import { default as Router } from "find-my-way";
 import avvio, { type Avvio } from "avvio";
 import type { Logger } from "pino";
-import { Request } from "./request.js";
-import { Response } from "./response.js";
 import type { App } from "../interfaces/app.js";
 import type { RouteHandler } from "../interfaces/route.js";
 import { pluginOverride } from "../internal/override.js";
+import { type HookCallback, type HookStore, type LifecycleHook } from "../hooks/types.js";
+import { add2hooks } from "../hooks/manager.js";
+import { wrap } from "../internal/context.js";
+import { defaultSerializer } from "../internal/default-handler.js";
 
-type HookName = "onRequest" | "preSerialization" | "onError" | "onSend" | "onReady" | "onClose";
-type HookCallback = (req: Request, res: Response, next?: Next) => void | Promise<void>;
 type ReadyHookCallback = () => void | Promise<void>;
 type CloseHookCallback = () => void | Promise<void>;
-type Next = (error?: unknown, newPayload?: unknown) => void;
-
-interface ContentTypeParser {
-  test: (contentType: string) => boolean;
-  parser: (req: globalThis.Request, done: (err: Error | null, body?: unknown) => void) => void;
-}
 
 export interface BunServerOptions {
   prefix?: string;
@@ -25,17 +19,15 @@ export interface BunServerOptions {
 
 export class Server implements App {
   private server?: BunServer<unknown>;
-  private router: Router.Instance<Router.HTTPVersion.V1>;
-  public hooks: Map<HookName, HookCallback[]> = new Map();
-  private contentTypeParsers: ContentTypeParser[] = [];
-  private errorHandler?: (error: unknown, req: Request, res: Response) => void | Promise<void>;
-  private notFoundHandler?: (req: Request, res: Response) => void | Promise<void>;
-  private prefix: string;
+  readonly router: Router.Instance<Router.HTTPVersion.V1>;
+  public hooks: HookStore = new Map();
   readonly container = new Map();
+  private prefix: string;
+  private avvio: Avvio<App>;
 
   public log: Logger;
 
-  private avvio: Avvio<App>;
+  public serializer = defaultSerializer;
 
   constructor(logger: Logger, opts: BunServerOptions = {}) {
     this.log = logger;
@@ -89,7 +81,7 @@ export class Server implements App {
       method as Router.HTTPMethod,
       fullPath,
       () => {}, // Dummy handler for the router
-      { handler } // Store our handler in the store
+      { handler, server: this } // Store our handler in the store
     );
     return this;
   }
@@ -109,23 +101,20 @@ export class Server implements App {
   }
 
   // Hook management
-  addHook(hookName: HookName, callback: HookCallback | ReadyHookCallback | CloseHookCallback): this {
-    if (hookName === "onReady") {
+  addHook(hookName: LifecycleHook, callback: HookCallback | ReadyHookCallback | CloseHookCallback): this {
+    if (hookName === "ready") {
       this.avvio.ready(callback as ReadyHookCallback);
       return this;
     }
-    if (hookName === "onClose") {
+    if (hookName === "close") {
       this.avvio.onClose(callback as CloseHookCallback);
       return this;
     }
-
-    const hooks = this.hooks.get(hookName) || [];
-    hooks.push(callback as HookCallback);
-    this.hooks.set(hookName, hooks);
+    add2hooks(this.hooks, hookName, callback);
     return this;
   }
 
-  private async runHooks(hookName: HookName, req: Request, res: Response, payload?: unknown): Promise<unknown> {
+  private async runHooks(hookName: LifecycleHook, req: Request, res: Response, payload?: unknown): Promise<unknown> {
     const hooks = this.hooks.get(hookName) || [];
     let currentPayload = payload;
 
@@ -154,88 +143,14 @@ export class Server implements App {
     return currentPayload;
   }
 
-  // Error handling
-  setErrorHandler(handler: (error: unknown, req: Request, res: Response) => void | Promise<void>): this {
-    this.errorHandler = handler;
-    return this;
-  }
-
-  setNotFoundHandler(handler: (req: Request, res: Response) => void | Promise<void>): this {
-    this.notFoundHandler = handler;
-    return this;
-  }
-
-  private async runErrorHandler(error: unknown, req: Request, res: Response): Promise<void> {
-    const errorHooks = this.hooks.get("onError") || [];
-    for (const hook of errorHooks) {
-      try {
-        await hook(req, res, () => {});
-      } catch (err) {
-        this.log.error(err);
-      }
-    }
-
-    if (this.errorHandler) {
-      await this.errorHandler(error, req, res);
-    } else {
-      this.log.error(error);
-      if (!res.sent) {
-        res.status(500).send({ error: "Internal Server Error" });
-      }
-    }
-  }
-
-  // Body parsing
-  addContentTypeParser(
-    contentType: string,
-    parser: (req: globalThis.Request, done: (err: Error | null, body?: unknown) => void) => void
-  ): this {
-    this.contentTypeParsers.push({
-      test: (ct) => ct.includes(contentType),
-      parser,
-    });
-    return this;
-  }
-
-  private async parseBody(rawReq: globalThis.Request): Promise<unknown> {
-    const contentType = rawReq.headers.get("content-type") || "";
-
-    // Find matching parser
-    const customParser = this.contentTypeParsers.find((p) => p.test(contentType));
-    if (customParser) {
-      return new Promise((resolve, reject) => {
-        customParser.parser(rawReq, (err, body) => {
-          if (err) return reject(err);
-          resolve(body);
-        });
-      });
-    }
-
-    // Default JSON parser
-    if (contentType.includes("application/json")) {
-      try {
-        const text = await rawReq.text();
-        return text ? JSON.parse(text) : null;
-      } catch (err) {
-        throw err;
-      }
-    }
-
-    return null;
-  }
-
   // Request handling
+
   private async handleRequest(
     rawReq: globalThis.Request,
     server: ReturnType<typeof Bun.serve>
   ): Promise<globalThis.Response> {
-    const req = new Request(rawReq, this as unknown as App, server);
-    const res = new Response(this as unknown as App);
-
     try {
       // Parse query string
-      const urlObj = new URL(rawReq.url);
-      req.query = Object.fromEntries(urlObj.searchParams.entries());
 
       // onRequest hooks
       await this.runHooks("onRequest", req, res);
@@ -293,11 +208,15 @@ export class Server implements App {
   async listen(opts: { port: number; host?: string }): Promise<string> {
     await this.avvio.ready();
 
+    function onFetch(req: Request, server: BunServer<undefined>) {
+      return new Response("hey");
+    }
+
     this.server = Bun.serve({
       port: opts.port,
       hostname: opts.host || "0.0.0.0",
       development: process.env.NODE_ENV !== "production",
-      fetch: (req, server) => this.handleRequest(req, server),
+      fetch: onFetch,
     });
 
     const addr = `http://${opts.host || "localhost"}:${opts.port}`;
@@ -305,21 +224,16 @@ export class Server implements App {
   }
 
   async close(): Promise<void> {
-    await new Promise<void>((resolve, reject) => {
+    await new Promise<void>((resolve, reject) =>
       this.avvio.close((err) => {
         if (err) reject(err);
-        else resolve();
-      });
-    });
+        resolve();
+      })
+    );
 
     if (this.server) {
       // Graceful shutdown
       await this.server.stop();
     }
-  }
-
-  // Route printing (for routeLogger plugin)
-  printRoutes(opts: { commonPrefix?: boolean } = {}): string {
-    return this.router.prettyPrint({ commonPrefix: opts.commonPrefix });
   }
 }

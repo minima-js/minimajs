@@ -1,11 +1,19 @@
+import Router from "find-my-way";
+import type { HookStore } from "../hooks/types.js";
 import type { RouteHandler } from "./route.js";
+import type { Serializer } from "./response.js";
 
 export type Container = Map<symbol, unknown>;
 
 export interface App {
   readonly container: Container;
-  readonly hooks: Map<any, any>;
   // HTTP methods
+  readonly hooks: HookStore;
+
+  readonly router: Router.Instance<Router.HTTPVersion.V1>;
+
+  serialize: Serializer;
+
   get(path: string, handler: RouteHandler): this;
 
   post(path: string, handler: RouteHandler): this;
@@ -21,5 +29,6 @@ export interface App {
   options(path: string, handler: RouteHandler): this;
 
   all(path: string, handler: RouteHandler): this;
+
   register(plugin: (app: App, opts: any, done?: (err?: Error) => void) => void | Promise<void>, opts: any): this;
 }

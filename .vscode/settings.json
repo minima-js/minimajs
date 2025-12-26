@@ -3,14 +3,6 @@
     "**/.yarn": true,
     "**/.pnp.*": true
   },
-  "typescript.tsdk": ".yarn/sdks/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true,
-  "cSpell.words": [
-    "deepmerge",
-    "fastify",
-    "minimajs",
-    "pino",
-    "unsign"
-  ],
+  "cSpell.words": ["deepmerge", "fastify", "minimajs", "pino", "unsign"],
   "editor.defaultFormatter": "esbenp.prettier-vscode"
 }

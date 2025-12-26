@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import assert from "node:assert";
-import { Container, type App } from "../interfaces/app.js";
+import { type Container, type App } from "../interfaces/app.js";
 import { type IncomingMessage, type ServerResponse } from "node:http";
 
 export type HookCallback = () => void | Promise<void>;
@@ -13,6 +13,7 @@ export interface Hooks {
 
 export interface Context {
   readonly app: App;
+  readonly url: URL;
   readonly req: Request; // WebApi Request
   readonly res: Response; // WebApi Response
   readonly container: Container; // app.container
@@ -29,8 +30,8 @@ export function defaultHooks(): Hooks {
   return { onSent: new Set(), onError: new Set() };
 }
 
-export function wrap(context: Omit<Context, "hooks">, cb: () => unknown) {
-  return contextStorage.run(Object.freeze({ ...context, hooks: defaultHooks() }), cb);
+export function wrap<T>(context: Omit<Context, "hooks" | "locals">, cb: () => T) {
+  return contextStorage.run(Object.freeze({ ...context, locals: new Map(), hooks: defaultHooks() }), cb);
 }
 
 export function safe<T, U extends unknown[]>(cb: (...args: U) => T) {
