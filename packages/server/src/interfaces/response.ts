@@ -1,3 +1,3 @@
-export type ResponseBody = ReadableStream | string;
-export type Serializer = (req: Request, res: Response, body: unknown) => ResponseBody | Promise<ResponseBody>;
-export type ErrorHandler = (req: Request, error: unknown) => Response | Promise<Response>;
+export type ResponseBody = string | ReadableStream | ArrayBuffer | Blob | null;
+export type Serializer = (body: unknown, req: Request, res: Response) => ResponseBody | Promise<ResponseBody>;
+export type ErrorHandler = (error: unknown, req: Request) => Response | Promise<Response>;

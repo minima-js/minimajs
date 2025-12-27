@@ -5,7 +5,8 @@ import type { ErrorHandler, Serializer } from "./response.js";
 
 export type Container = Map<symbol, unknown>;
 
-export interface App {
+export interface App<T = unknown> {
+  server?: T;
   readonly container: Container;
   // HTTP methods
   readonly hooks: HookStore;
@@ -13,6 +14,7 @@ export interface App {
   readonly router: Router.Instance<Router.HTTPVersion.V1>;
 
   serialize: Serializer;
+
   errorHandler: ErrorHandler;
 
   get(path: string, handler: RouteHandler): this;

@@ -15,13 +15,8 @@
 
 import type { Logger } from "pino";
 import merge from "deepmerge";
-import { minimajs } from "./internal/plugins.js";
-import { MinimalServer } from "./node/server.js";
 import type { App, AppOptions } from "./types.js";
 import { logger, loggerOptions } from "./logger.js";
-
-// Runtime detection
-const isBun = typeof Bun !== "undefined";
 
 export * from "./interceptor.js";
 export * from "./http.js";
@@ -54,9 +49,4 @@ function getDefaultConfig({ logger: loggerOverride, ...override }: AppOptions): 
 /**
  * Create an app instance
  */
-export function createApp(opts: AppOptions = {}): App {
-  const appLogger = getDefaultConfig(opts);
-  const app = new MinimalServer(appLogger) as App;
-  app.register(minimajs);
-  return app;
-}
+export function createApp(opts: AppOptions = {}): App {}

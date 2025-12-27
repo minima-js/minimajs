@@ -7,8 +7,9 @@ import type { RouteHandler } from "../interfaces/route.js";
 import { pluginOverride } from "../internal/override.js";
 import { type HookCallback, type HookStore, type LifecycleHook } from "../hooks/types.js";
 import { add2hooks } from "../hooks/manager.js";
-import { wrap } from "../internal/context.js";
-import { defaultSerializer } from "../internal/default-handler.js";
+import { defaultSerializer, errorHandler } from "../internal/default-handler.js";
+import { handleRequest } from "../internal/request.js";
+import type { ErrorHandler, Serializer } from "../interfaces/response.js";
 
 type ReadyHookCallback = () => void | Promise<void>;
 type CloseHookCallback = () => void | Promise<void>;
@@ -17,8 +18,8 @@ export interface BunServerOptions {
   prefix?: string;
 }
 
-export class Server implements App {
-  private server?: BunServer<unknown>;
+export class Server implements App<BunServer<unknown>> {
+  server?: BunServer<unknown>;
   readonly router: Router.Instance<Router.HTTPVersion.V1>;
   public hooks: HookStore = new Map();
   readonly container = new Map();
@@ -27,7 +28,8 @@ export class Server implements App {
 
   public log: Logger;
 
-  public serializer = defaultSerializer;
+  public serialize: Serializer = defaultSerializer;
+  public errorHandler: ErrorHandler = errorHandler;
 
   constructor(logger: Logger, opts: BunServerOptions = {}) {
     this.log = logger;
@@ -114,102 +116,15 @@ export class Server implements App {
     return this;
   }
 
-  private async runHooks(hookName: LifecycleHook, req: Request, res: Response, payload?: unknown): Promise<unknown> {
-    const hooks = this.hooks.get(hookName) || [];
-    let currentPayload = payload;
-
-    for (const hook of hooks) {
-      if (res.sent) break;
-
-      await new Promise<void>((resolve, reject) => {
-        const next = (error?: unknown, newPayload?: unknown) => {
-          if (error) return reject(error);
-          if (newPayload !== undefined) {
-            currentPayload = newPayload;
-          }
-          resolve();
-        };
-
-        const result = hook(req, res, next);
-        if (result && typeof result.then === "function") {
-          result.then(() => resolve()).catch(reject);
-        } else if (hook.length < 3) {
-          // If hook doesn't accept next callback, resolve immediately
-          resolve();
-        }
-      });
-    }
-
-    return currentPayload;
-  }
-
-  // Request handling
-
-  private async handleRequest(
-    rawReq: globalThis.Request,
-    server: ReturnType<typeof Bun.serve>
-  ): Promise<globalThis.Response> {
-    try {
-      // Parse query string
-
-      // onRequest hooks
-      await this.runHooks("onRequest", req, res);
-      if (res.sent) return res.toResponse();
-
-      // Parse body
-      if (["POST", "PUT", "PATCH"].includes(req.method)) {
-        req.body = await this.parseBody(rawReq);
-      }
-
-      // Find route
-      const route = this.router.find(req.method as Router.HTTPMethod, urlObj.pathname);
-      if (!route) {
-        if (this.notFoundHandler) {
-          await this.notFoundHandler(req, res);
-        } else {
-          res.status(404).send({ error: "Not Found" });
-        }
-        return res.toResponse();
-      }
-
-      // Execute route handler from store
-      const handler = route.store?.handler as RouteHandler | undefined;
-      if (handler) {
-        req.params = route.params || {};
-        req.routeOptions = {
-          method: req.method,
-          path: urlObj.pathname,
-          params: Object.keys(route.params || {}),
-          prefix: this.prefix,
-        };
-
-        const result = await handler(req, res);
-        if (!res.sent && result !== undefined) {
-          res.send(result);
-        }
-      }
-    } catch (error) {
-      await this.runErrorHandler(error, req, res);
-    } finally {
-      // onSend hooks
-      if (!res.sent) {
-        try {
-          await this.runHooks("onSend", req, res);
-        } catch (err) {
-          this.log.error(err);
-        }
-      }
-    }
-
-    return res.toResponse();
-  }
-
   // Server lifecycle
   async listen(opts: { port: number; host?: string }): Promise<string> {
     await this.avvio.ready();
 
-    function onFetch(req: Request, server: BunServer<undefined>) {
-      return new Response("hey");
+    const app = this;
+    const router = this.router;
+
+    function onFetch(req: Request) {
+      return handleRequest(app, router, req);
     }
 
     this.server = Bun.serve({

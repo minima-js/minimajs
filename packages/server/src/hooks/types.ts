@@ -1,4 +1,4 @@
-export type LifecycleHook = "close" | "send" | "listen" | "ready" | "register";
+export type LifecycleHook = "preHandler" | "transform" | "send" | "error" | "sent" | "notFound" | "timeout" | "close" | "listen" | "ready" | "register";
 
 export type HookCallback = (...args: unknown[]) => void | Promise<void>;
 

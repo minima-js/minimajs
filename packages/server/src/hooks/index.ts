@@ -1,16 +1,4 @@
-import type {
-  ApplicationHook,
-  LifecycleHook as BaseLifecycleHook,
-  onCloseAsyncHookHandler,
-  onCloseHookHandler,
-  onListenAsyncHookHandler,
-  onListenHookHandler,
-  onReadyAsyncHookHandler,
-  onReadyHookHandler,
-  onRegisterHookHandler,
-  onSendAsyncHookHandler,
-  onSendHookHandler,
-} from "fastify/types/hooks.js";
+
 import { type ErrorHookCallback, type HookCallback } from "../internal/context.js";
 import { plugin } from "../internal/plugins.js";
 import { context } from "../context.js";
@@ -41,12 +29,14 @@ export function onError(cb: ErrorHookCallback) {
  * These correspond to Fastify's lifecycle hook events.
  */
 
-const hooksMapping: Record<LifecycleHook, ApplicationHook | BaseLifecycleHook> = {
+const hooksMapping: Partial<Record<LifecycleHook, ApplicationHook | BaseLifecycleHook>> = {
   close: "onClose",
-  send: "onSend",
+  transform: "onSend",
   listen: "onListen",
   ready: "onReady",
   register: "onRegister",
+  // Request-scoped hooks (preHandler, serialize, error, sent, notFound, timeout)
+  // are handled directly in the request handler, not via Fastify hooks
 };
 
 /**

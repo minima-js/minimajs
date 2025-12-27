@@ -3,6 +3,6 @@
     "**/.yarn": true,
     "**/.pnp.*": true
   },
-  "cSpell.words": ["deepmerge", "fastify", "minimajs", "pino", "unsign"],
+  "cSpell.words": ["avvio", "deepmerge", "fastify", "minimajs", "pino", "unsign"],
   "editor.defaultFormatter": "esbenp.prettier-vscode"
 }
