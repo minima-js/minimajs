@@ -8,10 +8,12 @@ import {
   NotFoundError,
   type ErrorResponse,
   type StatusCode,
+  type HttpErrorOptions,
 } from "./error.js";
 import type { Dict, HttpHeader, HttpHeaderIncoming, ResponseOptions } from "./types.js";
 
 import { ResponseAbort } from "./internal/response.js";
+import { createResponse } from "./internal/handler.js";
 
 import { toArray, toFirstValue } from "./utils/iterable.js";
 
@@ -34,12 +36,11 @@ import { toArray, toFirstValue } from "./utils/iterable.js";
  * @since v0.2.0
  */
 export async function response(body: unknown, options: ResponseOptions = {}): Promise<Response> {
-  const { app, req } = context();
   let status: number | undefined = undefined;
   if (options.status) {
     status = typeof options.status === "number" ? options.status : StatusCodes[options.status];
   }
-  return new Response(await app.serialize(body, req), { status, headers: options.headers });
+  return await createResponse(body, { status, headers: options.headers });
 }
 
 /**
@@ -87,16 +88,18 @@ export const setStatusCode = response.status;
  *
  * @param path - The URL path to redirect to
  * @param isPermanent - Whether the redirect is permanent (301) or temporary (302)
+ * @param options - Optional error options including custom headers
  * @throws {RedirectError}
  * @example
  * ```ts
  * redirect('/login');
  * redirect('/new-url', true); // permanent redirect
+ * redirect('/login', false, { headers: { 'X-Reason': 'session-expired' } });
  * ```
  * @since v0.2.0
  */
-export function redirect(path: string, isPermanent?: boolean): never {
-  throw new RedirectError(path, isPermanent);
+export function redirect(path: string, isPermanent?: boolean, options?: HttpErrorOptions): never {
+  throw new RedirectError(path, isPermanent, options);
 }
 
 /**
@@ -104,19 +107,21 @@ export function redirect(path: string, isPermanent?: boolean): never {
  *
  * @param response - The error response message
  * @param statusCode - The HTTP status code (default: 400)
+ * @param options - Optional error options including custom headers
  * @throws {HttpError}
  * @example
  * ```ts
  * abort('Unauthorized', 401);
  * abort('Bad Request');
+ * abort('Rate limit exceeded', 429, { headers: { 'Retry-After': '60' } });
  *
  * // Or use abort.notFound()
  * abort.notFound();
  * ```
  * @since v0.2.0
  */
-export function abort(response: ErrorResponse = "Bad Request", statusCode: StatusCode = 400): never {
-  throw new HttpError(response, statusCode);
+export function abort(response: ErrorResponse = "Bad Request", statusCode: StatusCode = 400, options?: HttpErrorOptions): never {
+  throw new HttpError(response, statusCode, options);
 }
 
 /**
@@ -127,14 +132,18 @@ export namespace abort {
   /**
    * Aborts the request with a 404 Not Found error.
    *
+   * @param message - Optional error message
+   * @param options - Optional error options including custom headers
    * @throws {NotFoundError}
    * @example
    * ```ts
    * abort.notFound();
+   * abort.notFound('User not found');
+   * abort.notFound('Resource not found', { headers: { 'X-Resource-Type': 'product' } });
    * ```
    */
-  export function notFound(): never {
-    throw new NotFoundError();
+  export function notFound(message?: string, options?: HttpErrorOptions): never {
+    throw new NotFoundError(message, "", options);
   }
 
   /**

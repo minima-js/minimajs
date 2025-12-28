@@ -37,13 +37,3 @@ export function getDecorator<T extends GenericCallback>(
 ): Map<T, InterceptorRegisterOptions> | undefined {
   return (app as any)[name] as Map<T, InterceptorRegisterOptions> | undefined;
 }
-
-/**
- * Creates a Fastify plugin that registers a decorator callback.
- * The plugin can be registered with optional filter options to conditionally apply decorators.
- */
-export function createDecoratorPlugin(id: symbol, decoratorType: string, cb: GenericCallback) {
-  return plugin.sync<InterceptorRegisterOptions>(function decorator(app, opt) {
-    addDecorator(id, app, opt, cb);
-  }, cb.name ?? decoratorType);
-}

@@ -31,7 +31,7 @@ export namespace context {
     const kName = Symbol();
     function getValue() {
       const { locals } = context();
-      if (!locals.has(kName) && value) {
+      if (!locals.has(kName) && value !== undefined) {
         locals.set(kName, isCallable(value) ? value() : value);
       }
       return locals.get(kName) as T;

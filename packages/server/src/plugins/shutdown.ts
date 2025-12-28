@@ -1,7 +1,5 @@
 import { plugin } from "../internal/plugins.js";
 import type { Signals } from "./../types.js";
-import type { FastifyBaseLogger } from "fastify";
-import { createHttpTerminator } from "http-terminator";
 
 export interface GracefulShutdownOptions {
   /** Array of signals to listen for (e.g., ['SIGINT', 'SIGTERM']) */
@@ -11,38 +9,28 @@ export interface GracefulShutdownOptions {
 }
 
 /**
- * Creates a Fastify plugin for graceful server shutdown.
+ * Creates a plugin for graceful server shutdown.
  *
- * Handles specified process signals by gracefully terminating HTTP connections
- * and closing the Fastify instance. Includes timeout protection to prevent hung shutdowns.
+ * Handles specified process signals by gracefully shutting down the server.
+ * Calls app.close() which stops the server and runs close hooks.
+ * Includes timeout protection to prevent hung shutdowns.
  *
  * @param options - Configuration options for graceful shutdown
  * @param options.signals - Array of process signals to listen for (default: ['SIGINT', 'SIGTERM'])
  * @param options.timeout - Timeout in milliseconds before forcing exit (default: 30000ms)
  *
- * @returns A Fastify plugin that sets up graceful shutdown handlers
+ * @returns A plugin that sets up graceful shutdown handlers
  *
  * @example
  * ```typescript
  * import { gracefulShutdown } from '@minimajs/server/plugins';
  *
  * app.register(gracefulShutdown());
+ * ```
  */
 export function gracefulShutdown({ signals = ["SIGINT", "SIGTERM"], timeout = 30_000 }: GracefulShutdownOptions = {}) {
-  return plugin.sync((app) => {
-    const httpTerminator = createHttpTerminator({
-      server: app.server,
-    });
-    shutdownListener(
-      async () => {
-        await httpTerminator.terminate();
-        await app.close();
-      },
-      signals,
-      timeout,
-      app.log,
-      process
-    );
+  return plugin((app) => {
+    shutdownListener(() => app.close(), signals, timeout, process);
   });
 }
 
@@ -55,31 +43,23 @@ export function shutdownListener(
   quitHandler: QuitHandler,
   killSignal: Signals[],
   timeout: number,
-  logger: FastifyBaseLogger,
   process: NodeJS.Process
 ) {
   let isShuttingDown = false;
 
   async function quit(sig: Signals) {
     if (isShuttingDown) {
-      logger.warn(`%s: shutdown already in progress`, sig);
       return;
     }
     isShuttingDown = true;
 
-    logger.info(`%s: closing server`, sig);
-    const start = Date.now();
-
     const timeoutHandle = setTimeout(() => {
-      logger.error(`Shutdown timeout after ${timeout}ms, forcing exit`);
       process.exit(1);
     }, timeout);
     timeoutHandle.unref();
 
     await quitHandler();
     clearTimeout(timeoutHandle);
-    const duration = Date.now() - start;
-    logger.info(`server closed in ${duration}ms`);
     next(sig);
   }
 

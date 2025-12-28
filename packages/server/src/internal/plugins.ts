@@ -1,8 +1,6 @@
-import { isAsyncFunction } from "node:util/types";
-import type { Plugin, PluginSync } from "../index.js";
+import { kSkipOverride } from "../symbols.js";
+import type { Plugin, PluginOptions } from "../interfaces/plugin.js";
 // Plugin symbols
-const kSkipOverride = Symbol.for("skip-override");
-
 /**
  * Helper to set plugin name for debugging
  */
@@ -22,7 +20,7 @@ function allowOverride<T extends Function>(fn: T): T {
 /**
  * Wraps a plugin function (optional, mainly for consistency)
  */
-export function plugin<T = Record<never, never>>(fn: Plugin<T>, name?: string): Plugin<T> {
+export function plugin<T extends PluginOptions>(fn: Plugin<T>, name?: string): Plugin<T> {
   const wrapped = name ? setName(fn, name) : fn;
   return allowOverride(wrapped);
 }
@@ -31,36 +29,6 @@ export function plugin<T = Record<never, never>>(fn: Plugin<T>, name?: string): 
  * Plugin utilities namespace providing helper functions for creating and composing plugins.
  */
 export namespace plugin {
-  /**
-   * Wraps a sync plugin to automatically call done() if the function doesn't accept it.
-   * Prevents plugins from getting stuck if the user forgets to call done().
-   */
-  function ensureDone<T = Record<never, never>>(fn: PluginSync<T>): PluginSync<T> {
-    if (fn.length < 3) {
-      return function wrapped(app, opts, done) {
-        fn(app, opts, done);
-        done();
-      };
-    }
-    return fn;
-  }
-
-  /**
-   * Creates a sync plugin with automatic done() handling
-   */
-  export function sync<T = Record<never, never>>(fn: PluginSync<T>, name?: string): PluginSync<T> {
-    const wrappedFn = ensureDone(fn);
-    const named = name ? setName(wrappedFn, name) : wrappedFn;
-    return allowOverride(named);
-  }
-
-  /**
-   * Type guard to check if a plugin is async or sync.
-   */
-  function isAsync<Opts = Record<never, never>>(plg: Plugin<Opts> | PluginSync<Opts>): plg is Plugin<Opts> {
-    return isAsyncFunction(plg);
-  }
-
   /**
    * Composes multiple plugins into a single plugin that registers all of them.
    *
@@ -72,17 +40,11 @@ export namespace plugin {
    * app.register(plugin.compose(connectDB, closeDB));
    * ```
    */
-  export function compose<Opts = Record<never, never>>(...plugins: (Plugin<Opts> | PluginSync<Opts>)[]) {
+  export function compose<Opts extends PluginOptions>(...plugins: Plugin<Opts>[]) {
     const composedName = `compose(${plugins.map((p) => p.name || "anonymous").join(",")})`;
     return plugin<Opts>(async function composed(app, opts) {
       for (const plg of plugins) {
-        if (isAsync(plg)) {
-          await plg(app, opts);
-          continue;
-        }
-        await new Promise<void>((resolve, reject) => {
-          plg(app, opts, (err) => (err ? reject(err) : resolve()));
-        });
+        await plg(app, opts);
       }
     }, composedName);
   }

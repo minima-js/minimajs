@@ -16,7 +16,7 @@
  */
 
 import { StatusCodes } from "http-status-codes";
-import type { App, Dict } from "./types.js";
+import type { App, Dict, HeadersInit } from "./types.js";
 export type { ErrorDecorator, DecoratorOptions } from "./utils/decorators/index.js";
 
 /**
@@ -45,6 +45,7 @@ export interface HttpErrorOptions extends ErrorOptions {
   code?: string;
   name?: string;
   base?: unknown;
+  headers?: HeadersInit;
 }
 
 export class HttpError extends BaseHttpError {
@@ -68,6 +69,7 @@ export class HttpError extends BaseHttpError {
   }
   public statusCode: number;
   public base?: unknown;
+  public headers?: HeadersInit;
   declare ["constructor"]: typeof HttpError;
   constructor(public response: ErrorResponse, statusCode: StatusCode, options?: HttpErrorOptions) {
     super(typeof response === "string" ? response : "Unknown error");
@@ -86,13 +88,14 @@ export class HttpError extends BaseHttpError {
   async render(app: App, req: Request): Promise<Response> {
     return new Response(await app.serialize(this.toJSON(), req), {
       status: this.statusCode,
+      headers: this.headers,
     });
   }
 }
 
 export class NotFoundError extends HttpError {
-  constructor(response: ErrorResponse = "", public pathname: string) {
-    super(response, 404);
+  constructor(response: ErrorResponse = "", public pathname: string = "", options?: HttpErrorOptions) {
+    super(response, 404, options);
     this.message = "Page not found";
   }
 
@@ -104,16 +107,20 @@ export class NotFoundError extends HttpError {
 
 export class RedirectError extends BaseHttpError {
   public statusCode: number;
-  constructor(public readonly url: string, isPermanent = false) {
+  public headers?: HeadersInit;
+  constructor(public readonly url: string, isPermanent = false, options?: HttpErrorOptions) {
     super();
     this.statusCode = isPermanent ? 301 : 302;
+    Object.assign(this, options);
   }
   async render(app: App, req: Request): Promise<Response> {
-    return new Response(undefined, {
+    // Create Headers object and merge with Location header
+    const headers = new Headers(this.headers);
+    headers.set("Location", this.url);
+
+    return new Response(null, {
       status: this.statusCode,
-      headers: {
-        Location: this.url,
-      },
+      headers,
     });
   }
 }
@@ -123,15 +130,14 @@ export class ValidationError extends HttpError {
     return 422;
   };
 
-  declare ["constructor"]: typeof ValidationError;
-  constructor(response: ErrorResponse = "Validation failed") {
-    super(response, 400);
-    this.statusCode ??= this.constructor.getStatusCode(this);
+  constructor(response: ErrorResponse = "Validation failed", options?: HttpErrorOptions) {
+    super(response, 400, options);
+    this.statusCode ??= (this.constructor as typeof ValidationError).getStatusCode(this);
   }
 }
 
 export class ForbiddenError extends HttpError {
-  constructor(response: ErrorResponse = "Forbidden") {
-    super(response, 403);
+  constructor(response: ErrorResponse = "Forbidden", options?: HttpErrorOptions) {
+    super(response, 403, options);
   }
 }

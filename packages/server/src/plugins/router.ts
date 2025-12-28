@@ -44,10 +44,10 @@ function defaultLogger(routes: string) {
  * ```
  */
 export function routeLogger({ commonPrefix = false, logger = defaultLogger }: RouteLoggerOptions = {}) {
-  return plugin.sync(function logRoute(app) {
+  return plugin(function logRoute(app) {
     function logRoutes() {
-      logger(app.printRoutes({ commonPrefix }));
+      logger(app.router.prettyPrint({ commonPrefix }));
     }
-    app.addHook("onReady", logRoutes);
+    app.on("ready", logRoutes);
   });
 }

@@ -21,9 +21,14 @@ export function createHooksStore(source?: HookStore): HookStore {
   return store;
 }
 
-export async function runHooks(store: HookStore, name: LifecycleHook, ...args: any[]): Promise<void> {
+export async function runHooks(store: HookStore, name: LifecycleHook, ...args: any[]): Promise<any> {
   const hooks = store[name];
+  let result: any;
   for (const hook of hooks) {
-    await hook(...args);
+    const hookResult = await hook(...args);
+    if (hookResult !== undefined) {
+      result = hookResult;
+    }
   }
+  return result;
 }

@@ -13,6 +13,7 @@ import {
   type OnTransformHook,
   type OnSendHook,
   type OnErrorHook,
+  type OnErrorSentHook,
   type OnSentHook,
   type OnTimeoutHook,
   type OnCloseHook,
@@ -113,6 +114,7 @@ export class Server implements App<BunServer<unknown>> {
   on(hook: "transform", callback: OnTransformHook): this;
   on(hook: "send", callback: OnSendHook): this;
   on(hook: "error", callback: OnErrorHook): this;
+  on(hook: "errorSent", callback: OnErrorSentHook): this;
   on(hook: "sent", callback: OnSentHook): this;
   on(hook: "timeout", callback: OnTimeoutHook): this;
   on(hook: "close", callback: OnCloseHook): this;

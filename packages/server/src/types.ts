@@ -10,7 +10,10 @@ type OmitIndexSignature<T> = {
 export type HttpHeader = string;
 export type HttpCodes = number;
 export type HttpHeaderIncoming = keyof OmitIndexSignature<IncomingHttpHeaders> | (string & Record<never, never>);
-export type HeadersInit = Record<string, string> | Headers | [string, string][];
+
+// Re-export from interfaces/response for backward compatibility
+export type { HeadersInit, CreateResponseOptions } from "./interfaces/response.js";
+import type { HeadersInit } from "./interfaces/response.js";
 
 export interface ResponseOptions {
   status?: keyof typeof StatusCodes | number;

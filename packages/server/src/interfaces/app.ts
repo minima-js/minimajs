@@ -6,6 +6,7 @@ import type {
   OnTransformHook,
   OnSendHook,
   OnErrorHook,
+  OnErrorSentHook,
   OnSentHook,
   OnTimeoutHook,
   OnCloseHook,
@@ -57,11 +58,14 @@ export interface App<T = unknown> {
 
   register<T extends PluginOptions>(plugin: Plugin<T>, opts?: T): this;
 
+  close(): Promise<void>;
+
   // Hook method overloads for type safety
   on(hook: "request", callback: OnRequestHook): this;
   on(hook: "transform", callback: OnTransformHook): this;
   on(hook: "send", callback: OnSendHook): this;
   on(hook: "error", callback: OnErrorHook): this;
+  on(hook: "errorSent", callback: OnErrorSentHook): this;
   on(hook: "sent", callback: OnSentHook): this;
   on(hook: "timeout", callback: OnTimeoutHook): this;
   on(hook: "close", callback: OnCloseHook): this;

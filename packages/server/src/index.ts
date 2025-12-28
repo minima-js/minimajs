@@ -26,6 +26,7 @@ export * from "./types.js";
 export * from "./context.js";
 export { logger } from "./logger.js";
 export { plugin } from "./internal/plugins.js";
+export { createResponse } from "./internal/handler.js";
 
 /**
  * Merges user-provided app options with default configuration values.

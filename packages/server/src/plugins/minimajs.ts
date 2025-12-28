@@ -1,0 +1,93 @@
+import { plugin } from "../internal/plugins.js";
+import { createContext } from "../context.js";
+
+type DeferCallback = () => void | Promise<void>;
+type ErrorCallback = (err: unknown) => void | Promise<void>;
+
+// Create context for storing deferred callbacks
+const [getDeferredCallbacks] = createContext<Set<DeferCallback>>(() => new Set());
+const [getErrorCallbacks] = createContext<Set<ErrorCallback>>(() => new Set());
+
+/**
+ * Registers a callback to execute after the response has been sent.
+ * Useful for cleanup tasks, logging, or post-response processing.
+ *
+ * @param cb - The callback function to execute after response is sent
+ *
+ * @example
+ * ```typescript
+ * import { defer } from '@minimajs/server';
+ *
+ * app.get('/user/:id', async (req) => {
+ *   const user = await getUser(params.get('id'));
+ *
+ *   defer(() => {
+ *     console.log('Response sent, logging metrics...');
+ *     logMetrics('user-fetched', { userId: user.id });
+ *   });
+ *
+ *   return user;
+ * });
+ * ```
+ */
+export function defer(cb: DeferCallback) {
+  getDeferredCallbacks().add(cb);
+}
+
+/**
+ * Registers an error handling callback for the current request context.
+ * Called when an error occurs during request processing.
+ *
+ * @param cb - The callback function to execute when an error occurs
+ *
+ * @example
+ * ```typescript
+ * import { onError } from '@minimajs/server';
+ *
+ * app.get('/data', async (req) => {
+ *   onError((err) => {
+ *     console.error('Request failed:', err);
+ *     // Cleanup resources, log to monitoring, etc.
+ *   });
+ *
+ *   const data = await fetchData();
+ *   return data;
+ * });
+ * ```
+ */
+export function onError(cb: ErrorCallback) {
+  getErrorCallbacks().add(cb);
+}
+
+/**
+ * Creates a plugin that enables defer and onError functionality.
+ * This plugin registers hooks to run deferred callbacks after response is sent
+ * and error callbacks when an error occurs.
+ *
+ * @returns A plugin that adds defer and onError functionality to the app
+ *
+ * @example
+ * ```typescript
+ * import { minimaPlugin } from '@minimajs/server/plugins';
+ *
+ * const app = createApp();
+ * app.register(minimaPlugin());
+ * ```
+ */
+export function minimajs() {
+  return plugin((app) => {
+    // Register sent hook for deferred callbacks
+    app.on("sent", async () => {
+      for (const cb of getDeferredCallbacks()) {
+        await cb();
+      }
+    });
+
+    // Register errorSent hook for error callbacks
+    app.on("errorSent", async (err) => {
+      for (const cb of getErrorCallbacks()) {
+        await cb(err);
+      }
+    });
+  });
+}
