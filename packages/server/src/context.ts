@@ -2,7 +2,7 @@ import { context as $context } from "./internal/context.js";
 import { isCallable } from "./utils/callable.js";
 export { safe } from "./internal/context.js";
 export { maybeContext } from "./internal/context.js";
-export type { Context, Hooks } from "./internal/context.js";
+export type { Context } from "./internal/context.js";
 
 export type OnceCallback<T> = () => T;
 
@@ -30,16 +30,16 @@ export namespace context {
   export function create<T>(value?: T | (() => T)) {
     const kName = Symbol();
     function getValue() {
-      const { local } = context();
-      if (!local.has(kName) && value) {
-        local.set(kName, isCallable(value) ? value() : value);
+      const { locals } = context();
+      if (!locals.has(kName) && value) {
+        locals.set(kName, isCallable(value) ? value() : value);
       }
-      return local.get(kName) as T;
+      return locals.get(kName) as T;
     }
 
     function setValue(val: T) {
-      const { local } = context();
-      local.set(kName, val);
+      const { locals } = context();
+      locals.set(kName, val);
     }
 
     return [getValue, setValue] as const;

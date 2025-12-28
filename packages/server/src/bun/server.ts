@@ -1,18 +1,29 @@
 import { type Server as BunServer } from "bun";
-import { default as Router } from "find-my-way";
+import Router from "find-my-way";
 import avvio, { type Avvio } from "avvio";
 import type { Logger } from "pino";
-import type { App } from "../interfaces/app.js";
-import type { RouteHandler } from "../interfaces/route.js";
+import type { App, RouteHandler, RouteOptions } from "../interfaces/app.js";
+import type { Plugin, PluginOptions } from "../interfaces/plugin.js";
 import { pluginOverride } from "../internal/override.js";
-import { type HookCallback, type HookStore, type LifecycleHook } from "../hooks/types.js";
-import { add2hooks } from "../hooks/manager.js";
-import { defaultSerializer, errorHandler } from "../internal/default-handler.js";
-import { handleRequest } from "../internal/request.js";
+import { kPluginName } from "../symbols.js";
+import {
+  type HookStore,
+  type LifecycleHook,
+  type OnRequestHook,
+  type OnTransformHook,
+  type OnSendHook,
+  type OnErrorHook,
+  type OnSentHook,
+  type OnTimeoutHook,
+  type OnCloseHook,
+  type OnListenHook,
+  type OnReadyHook,
+  type OnRegisterHook,
+} from "../interfaces/hooks.js";
+import { createHooksStore, runHooks } from "../hooks/manager.js";
+import { serialize, errorHandler } from "../internal/default-handler.js";
+import { handleRequest } from "../internal/handler.js";
 import type { ErrorHandler, Serializer } from "../interfaces/response.js";
-
-type ReadyHookCallback = () => void | Promise<void>;
-type CloseHookCallback = () => void | Promise<void>;
 
 export interface BunServerOptions {
   prefix?: string;
@@ -21,14 +32,14 @@ export interface BunServerOptions {
 export class Server implements App<BunServer<unknown>> {
   server?: BunServer<unknown>;
   readonly router: Router.Instance<Router.HTTPVersion.V1>;
-  public hooks: HookStore = new Map();
+  readonly hooks: HookStore = createHooksStore();
   readonly container = new Map();
   private prefix: string;
   private avvio: Avvio<App>;
 
   public log: Logger;
 
-  public serialize: Serializer = defaultSerializer;
+  public serialize: Serializer = serialize;
   public errorHandler: ErrorHandler = errorHandler;
 
   constructor(logger: Logger, opts: BunServerOptions = {}) {
@@ -41,46 +52,44 @@ export class Server implements App<BunServer<unknown>> {
 
   // HTTP methods
   get(path: string, handler: RouteHandler): this {
-    return this.route("GET", path, handler);
+    return this.route({ method: "GET", path }, handler);
   }
 
   post(path: string, handler: RouteHandler): this {
-    return this.route("POST", path, handler);
+    return this.route({ method: "POST", path }, handler);
   }
 
   put(path: string, handler: RouteHandler): this {
-    return this.route("PUT", path, handler);
+    return this.route({ method: "PUT", path }, handler);
   }
 
   delete(path: string, handler: RouteHandler): this {
-    return this.route("DELETE", path, handler);
+    return this.route({ method: "DELETE", path }, handler);
   }
 
   patch(path: string, handler: RouteHandler): this {
-    return this.route("PATCH", path, handler);
+    return this.route({ method: "PATCH", path }, handler);
   }
 
   head(path: string, handler: RouteHandler): this {
-    return this.route("HEAD", path, handler);
+    return this.route({ method: "HEAD", path }, handler);
   }
 
   options(path: string, handler: RouteHandler): this {
-    return this.route("OPTIONS", path, handler);
+    return this.route({ method: "OPTIONS", path }, handler);
   }
 
   all(path: string, handler: RouteHandler): this {
-    const methods = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
-    for (const method of methods) {
-      this.route(method, path, handler);
-    }
-    return this;
+    // Use wildcard '*' for all methods - find-my-way supports this
+    return this.route({ method: "*" as any, path }, handler);
   }
 
-  private route(method: string, path: string, handler: RouteHandler): this {
+  route(options: RouteOptions, handler: RouteHandler): this {
+    const { method, path } = options;
     const fullPath = this.prefix + path;
-    // Store the handler in the router's store
+    // find-my-way supports '*' wildcard for all HTTP methods
     this.router.on(
-      method as Router.HTTPMethod,
+      method,
       fullPath,
       () => {}, // Dummy handler for the router
       { handler, server: this } // Store our handler in the store
@@ -89,30 +98,37 @@ export class Server implements App<BunServer<unknown>> {
   }
 
   // Plugin system
-  register(plugin: (app: App, opts: any, done?: (err?: Error) => void) => void | Promise<void>, opts: any = {}): this {
-    this.avvio.use((instance, _, done) => {
-      const result = plugin(instance as unknown as App, opts, done);
-      if (result && typeof result.then === "function") {
-        result.then(() => done && done()).catch(done);
-      } else if (plugin.length < 3 && done) {
-        // If plugin doesn't accept done callback, call it manually
-        done();
-      }
+  register<T extends PluginOptions>(plugin: Plugin<T>, opts: T = {} as T): this {
+    this.avvio.use(async (instance) => {
+      const resolvedName = opts.name ?? plugin[kPluginName] ?? plugin.name;
+      const finalOpts = { ...opts, name: resolvedName } as T;
+      await runHooks(instance.hooks, "register", plugin, finalOpts);
+      await plugin(instance, finalOpts);
     });
     return this;
   }
 
-  // Hook management
-  addHook(hookName: LifecycleHook, callback: HookCallback | ReadyHookCallback | CloseHookCallback): this {
+  // Hook management - overloads for type safety
+  on(hook: "request", callback: OnRequestHook): this;
+  on(hook: "transform", callback: OnTransformHook): this;
+  on(hook: "send", callback: OnSendHook): this;
+  on(hook: "error", callback: OnErrorHook): this;
+  on(hook: "sent", callback: OnSentHook): this;
+  on(hook: "timeout", callback: OnTimeoutHook): this;
+  on(hook: "close", callback: OnCloseHook): this;
+  on(hook: "listen", callback: OnListenHook): this;
+  on(hook: "ready", callback: OnReadyHook): this;
+  on(hook: "register", callback: OnRegisterHook): this;
+  on(hookName: LifecycleHook, callback: (...args: any[]) => any): this {
     if (hookName === "ready") {
-      this.avvio.ready(callback as ReadyHookCallback);
+      this.avvio.ready(callback as OnReadyHook);
       return this;
     }
     if (hookName === "close") {
-      this.avvio.onClose(callback as CloseHookCallback);
+      this.avvio.onClose(callback as OnCloseHook);
       return this;
     }
-    add2hooks(this.hooks, hookName, callback);
+    this.hooks[hookName].add(callback);
     return this;
   }
 
@@ -127,14 +143,20 @@ export class Server implements App<BunServer<unknown>> {
       return handleRequest(app, router, req);
     }
 
+    const host = opts.host || "0.0.0.0";
+    const port = opts.port;
+
     this.server = Bun.serve({
-      port: opts.port,
-      hostname: opts.host || "0.0.0.0",
+      port,
+      hostname: host,
       development: process.env.NODE_ENV !== "production",
       fetch: onFetch,
     });
 
-    const addr = `http://${opts.host || "localhost"}:${opts.port}`;
+    // Execute listen hook with address information
+    await runHooks(this.hooks, "listen", { host, port });
+
+    const addr = `http://${opts.host || "localhost"}:${port}`;
     return addr;
   }
 

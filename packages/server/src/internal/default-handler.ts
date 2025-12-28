@@ -1,13 +1,18 @@
+import { BaseHttpError } from "../error.js";
+import type { App } from "../index.js";
 import type { ErrorHandler, Serializer } from "../interfaces/response.js";
 
-export const defaultSerializer: Serializer = (body: unknown, _req, _res) => {
+export const serialize: Serializer = (body: unknown, _req) => {
   if (body instanceof ReadableStream) return body;
   if (typeof body === "string") return body;
   return JSON.stringify(body);
 };
 
-export const errorHandler: ErrorHandler = (error: unknown, _req: Request) => {
-  return new Response(typeof error === "string" ? error : JSON.stringify({ error }), {
+export const errorHandler: ErrorHandler = async (error: unknown, req: Request, app: App) => {
+  if (error instanceof BaseHttpError) {
+    return error.render(app, req);
+  }
+  return new Response(await app.serialize(error, req), {
     status: 500,
     headers: {
       "Content-Type": "application/json",

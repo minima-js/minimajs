@@ -16,11 +16,7 @@
  */
 
 import { StatusCodes } from "http-status-codes";
-import type { Dict, Request, Response } from "./types.js";
-import { isRequestAbortedError } from "./internal/response.js";
-import { getDecoratedError } from "./utils/decorators/index.js";
-import { skipResponseDecorator } from "./utils/decorators/index.js";
-
+import type { App, Dict } from "./types.js";
 export type { ErrorDecorator, DecoratorOptions } from "./utils/decorators/index.js";
 
 /**
@@ -41,7 +37,7 @@ export abstract class BaseHttpError extends Error {
   static is(value: unknown): value is BaseHttpError {
     return value instanceof this;
   }
-  abstract render(req: Request, res: Response): void | Promise<void>;
+  abstract render(app: App, req: Request): Promise<Response>;
 }
 
 export interface HttpErrorOptions extends ErrorOptions {
@@ -87,20 +83,22 @@ export class HttpError extends BaseHttpError {
     return this.constructor.toJSON(this);
   }
 
-  async render(_: Request, res: Response) {
-    res.status(this.statusCode).send(this.toJSON());
+  async render(app: App, req: Request): Promise<Response> {
+    return new Response(await app.serialize(this.toJSON(), req), {
+      status: this.statusCode,
+    });
   }
 }
 
 export class NotFoundError extends HttpError {
-  constructor(response: ErrorResponse = "") {
+  constructor(response: ErrorResponse = "", public pathname: string) {
     super(response, 404);
     this.message = "Page not found";
   }
 
-  render(req: Request, res: Response): Promise<void> {
+  async render(app: App, req: Request): Promise<Response> {
     this.response ||= `Route ${req.method} ${req.url} not found`;
-    return super.render(req, res);
+    return super.render(app, req);
   }
 }
 
@@ -110,8 +108,13 @@ export class RedirectError extends BaseHttpError {
     super();
     this.statusCode = isPermanent ? 301 : 302;
   }
-  render(_: unknown, res: Response) {
-    res.redirect(this.url, this.statusCode);
+  async render(app: App, req: Request): Promise<Response> {
+    return new Response(undefined, {
+      status: this.statusCode,
+      headers: {
+        Location: this.url,
+      },
+    });
   }
 }
 
@@ -131,38 +134,4 @@ export class ForbiddenError extends HttpError {
   constructor(response: ErrorResponse = "Forbidden") {
     super(response, 403);
   }
-}
-
-/**
- * Global error handler for HTTP requests.
- * Processes errors, applies error decorators, and renders appropriate error responses.
- * Handles request aborted errors silently and converts unknown errors to HTTP errors.
- */
-export async function errorHandler(error: unknown, req: Request, reply: Response) {
-  if (error instanceof RedirectError) {
-    error.render(req, reply);
-    reply.hijack(); // block further response
-    return;
-  }
-  if (isRequestAbortedError(error)) {
-    return;
-  }
-  skipResponseDecorator(reply); // tell response decorator not to re-decorate this response
-  try {
-    const response = await getDecoratedError(req.server, req, error);
-    reply.send(response);
-    reply.hijack(); // block further response
-    return; // terminate here and send body!
-  } catch (err) {
-    error = err;
-  }
-  let handler: BaseHttpError;
-  if (BaseHttpError.is(error)) {
-    handler = error;
-  } else {
-    req.server.log.error(error);
-    handler = HttpError.create(error);
-  }
-  await handler.render(req, reply);
-  reply.hijack(); // block further response
 }

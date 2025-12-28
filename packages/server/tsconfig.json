@@ -1,7 +1,6 @@
 {
   "extends": ["../config/tsconfig.base.json"],
-  "include": ["src/bun/**/*.ts", "src/interfaces/**/*.ts"],
-  "exclude": ["src/**/*.test.ts", "src/__tests__/**/*"],
+  "exclude": ["src/**/*.test.ts", "src/__tests__/**/*", "src/node/**/*"],
   "compilerOptions": {
     "declaration": true,
     "declarationMap": true,

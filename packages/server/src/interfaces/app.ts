@@ -1,9 +1,29 @@
 import Router from "find-my-way";
-import type { HookStore } from "../hooks/types.js";
-import type { RouteHandler } from "./route.js";
+import type { HTTPMethod } from "find-my-way";
+import type {
+  HookStore,
+  OnRequestHook,
+  OnTransformHook,
+  OnSendHook,
+  OnErrorHook,
+  OnSentHook,
+  OnTimeoutHook,
+  OnCloseHook,
+  OnListenHook,
+  OnReadyHook,
+  OnRegisterHook,
+} from "./hooks.js";
 import type { ErrorHandler, Serializer } from "./response.js";
+import type { Plugin, PluginOptions } from "./plugin.js";
 
 export type Container = Map<symbol, unknown>;
+
+export type RouteHandler = (req: Request) => unknown;
+
+export interface RouteOptions {
+  method: HTTPMethod | HTTPMethod[];
+  path: string;
+}
 
 export interface App<T = unknown> {
   server?: T;
@@ -33,5 +53,19 @@ export interface App<T = unknown> {
 
   all(path: string, handler: RouteHandler): this;
 
-  register(plugin: (app: App, opts: any, done?: (err?: Error) => void) => void | Promise<void>, opts: any): this;
+  route(options: RouteOptions, handler: RouteHandler): this;
+
+  register<T extends PluginOptions>(plugin: Plugin<T>, opts?: T): this;
+
+  // Hook method overloads for type safety
+  on(hook: "request", callback: OnRequestHook): this;
+  on(hook: "transform", callback: OnTransformHook): this;
+  on(hook: "send", callback: OnSendHook): this;
+  on(hook: "error", callback: OnErrorHook): this;
+  on(hook: "sent", callback: OnSentHook): this;
+  on(hook: "timeout", callback: OnTimeoutHook): this;
+  on(hook: "close", callback: OnCloseHook): this;
+  on(hook: "listen", callback: OnListenHook): this;
+  on(hook: "ready", callback: OnReadyHook): this;
+  on(hook: "register", callback: OnRegisterHook): this;
 }

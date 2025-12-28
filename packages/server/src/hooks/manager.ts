@@ -1,25 +1,28 @@
-import type { HookCallback, HookStore, LifecycleHook } from "./types.js";
+import { LIFECYCLE_HOOKS, type HookStore, type LifecycleHook } from "../interfaces/hooks.js";
 
-export function cloneHooksStore(store: HookStore) {
-  const clone: HookStore = new Map();
-  for (const [key, set] of store) {
-    clone.set(key, new Set(set));
+/**
+ * Creates a new HookStore, optionally cloning from an existing store
+ * @param source - Optional source store to clone from
+ * @returns A new HookStore with all lifecycle hooks initialized
+ */
+export function createHooksStore(source?: HookStore): HookStore {
+  const store = {} as HookStore;
+
+  if (!source) {
+    for (const hook of LIFECYCLE_HOOKS) {
+      store[hook] = new Set();
+    }
+    return store;
   }
-  return clone;
+
+  for (const hook of LIFECYCLE_HOOKS) {
+    store[hook] = new Set(source[hook]);
+  }
+  return store;
 }
 
-export function add2hooks(store: HookStore, hook: LifecycleHook, callback: HookCallback) {
-  let set = store.get(hook);
-  if (!set) {
-    set = new Set<HookCallback>();
-    store.set(hook, set);
-  }
-  set.add(callback);
-}
-
-export async function runHooks(store: HookStore, name: LifecycleHook, ...args: any[]) {
-  const hooks = store.get(name);
-  if (!hooks) return;
+export async function runHooks(store: HookStore, name: LifecycleHook, ...args: any[]): Promise<void> {
+  const hooks = store[name];
   for (const hook of hooks) {
     await hook(...args);
   }

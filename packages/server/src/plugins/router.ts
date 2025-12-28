@@ -40,7 +40,7 @@ function defaultLogger(routes: string) {
  * }));
  *
  * // With common prefix removed
- * app.register(routeLogger({ commonPrefix: false }));
+ * app.register(routeLogger({ commonPrefix: false  }));
  * ```
  */
 export function routeLogger({ commonPrefix = false, logger = defaultLogger }: RouteLoggerOptions = {}) {

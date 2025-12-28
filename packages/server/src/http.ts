@@ -9,7 +9,7 @@ import {
   type ErrorResponse,
   type StatusCode,
 } from "./error.js";
-import type { Dict, HttpHeader, HttpHeaderIncoming, Request, Response } from "./types.js";
+import type { Dict, HttpHeader, HttpHeaderIncoming, ResponseOptions } from "./types.js";
 
 import { ResponseAbort } from "./internal/response.js";
 
@@ -20,17 +20,26 @@ import { toArray, toFirstValue } from "./utils/iterable.js";
 // ============================================================================
 
 /**
- * Retrieves the HTTP response object.
+ * Creates an HTTP response with serialized body, optional status code, and headers.
  *
  * @example
  * ```ts
- * const res = response();
- * res.status(200);
+ * return response({ message: 'Hello' }, { status: 200 });
+ * return response('Hello World');
+ * return response({ data: 'test' }, {
+ *   status: 'CREATED',
+ *   headers: { 'X-Custom': 'value' }
+ * });
  * ```
  * @since v0.2.0
  */
-export function response(): Response {
-  return context().reply;
+export async function response(body: unknown, options: ResponseOptions = {}): Promise<Response> {
+  const { app, req } = context();
+  let status: number | undefined = undefined;
+  if (options.status) {
+    status = typeof options.status === "number" ? options.status : StatusCodes[options.status];
+  }
+  return new Response(await app.serialize(body, req), { status, headers: options.headers });
 }
 
 /**
@@ -39,21 +48,19 @@ export function response(): Response {
  */
 export namespace response {
   /**
-   * Sets the response status code.
+   * Creates an empty response with the specified status code.
    *
    * @param statusCode - The HTTP status code (number or StatusCodes key)
    * @example
    * ```ts
-   * response.status(200);
-   * response.status('CREATED');
+   * return response.status(204); // No Content
+   * return response.status('NO_CONTENT');
    * ```
    * @since v0.2.0
    */
   export function status(statusCode: keyof typeof StatusCodes | number): Response {
-    if (typeof statusCode !== "number") {
-      statusCode = StatusCodes[statusCode];
-    }
-    return response().status(statusCode);
+    const code = typeof statusCode === "number" ? statusCode : StatusCodes[statusCode];
+    return new Response(null, { status: code });
   }
 }
 
@@ -236,25 +243,9 @@ export namespace request {
    * ```
    * @since v0.2.0
    */
-  export const url: () => URL = context.once(function getRequestURL() {
-    const req = request();
-    const host = `${req.protocol}://${req.hostname}`;
-    return new URL(req.originalUrl, host);
-  });
-
-  /**
-   * Retrieves the matched route options.
-   *
-   * @example
-   * ```ts
-   * const routeOpts = request.route();
-   * console.log(routeOpts.url);
-   * ```
-   * @since v0.2.0
-   */
-  export function route() {
-    const { routeOptions } = request();
-    return routeOptions;
+  export function url(): URL {
+    const { url } = context();
+    return url;
   }
 
   /**
@@ -271,7 +262,7 @@ export namespace request {
    * @since v0.2.0
    */
   export function signal(): AbortSignal {
-    return context().abortController.signal;
+    return context().signal;
   }
 }
 
@@ -339,7 +330,11 @@ export const getBody = body;
  * @since v0.2.0
  */
 export function params<T = Dict<string>>(): T {
-  return getRequest().params as T;
+  const { route } = context();
+  if (!route) {
+    return {} as T;
+  }
+  return route.params as T;
 }
 
 /**
