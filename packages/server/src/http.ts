@@ -11,10 +11,9 @@ import {
 } from "./error.js";
 import type { Dict, HttpHeader, HttpHeaderIncoming, ResponseOptions } from "./types.js";
 
-import { ResponseAbort, toStatusCode, type StatusCode } from "./internal/response.js";
+import { toStatusCode, type StatusCode } from "./internal/response.js";
 import { createResponse } from "./internal/handler.js";
-
-import { toArray, toFirstValue } from "./utils/iterable.js";
+import { isAbortError } from "./utils/errors.js";
 
 // ============================================================================
 //  Response
@@ -118,7 +117,11 @@ export function redirect(path: string, isPermanent?: boolean, options?: HttpErro
  * ```
  * @since v0.2.0
  */
-export function abort(response: ErrorResponse = "Bad Request", statusCode: StatusCode = 400, options?: HttpErrorOptions): never {
+export function abort(
+  response: ErrorResponse = "Bad Request",
+  statusCode: StatusCode = 400,
+  options?: HttpErrorOptions
+): never {
   throw new HttpError(response, statusCode, options);
 }
 
@@ -164,7 +167,7 @@ export namespace abort {
       throw error;
     }
     if (error instanceof Error) {
-      if (error.cause === ResponseAbort) {
+      if (isAbortError(error)) {
         throw error;
       }
       return;
@@ -476,8 +479,8 @@ export namespace headers {
   export function get(name: HttpHeaderIncoming): string | undefined;
   export function get<R>(name: HttpHeaderIncoming, transform: (value: string) => R): R | undefined;
   export function get(name: HttpHeaderIncoming, transform?: (value: string) => unknown): unknown {
-    const value = toFirstValue(request().headers[name]);
-    if (value === undefined) {
+    const value = request().headers.get(name);
+    if (value === null) {
       return value;
     }
     if (!transform) return value;
@@ -498,8 +501,7 @@ export namespace headers {
   export function getAll(name: HttpHeaderIncoming): string[];
   export function getAll<R>(name: HttpHeaderIncoming, transform: (value: string) => R): R[];
   export function getAll(name: HttpHeaderIncoming, transform?: (value: string) => unknown): unknown[] {
-    const values = request().raw.headersDistinct[name];
-    if (!values) return [];
+    const values = request().headers.getAll(name as any);
     if (!transform) return values;
     return values.map(transform);
   }
@@ -514,9 +516,9 @@ export namespace headers {
    * headers.set('x-custom-header', 'value');
    * ```
    */
-  export function set(name: HttpHeader, value: string): Response {
-    const { reply } = context();
-    return reply.header(name, value);
+  export function set(name: HttpHeader, value: string): void {
+    const { resInit } = context();
+    resInit.headers.set(name, value);
   }
 }
 
@@ -580,7 +582,8 @@ export const getHeader = headers.get;
  * @since v0.2.0
  */
 export function searchParams<T>() {
-  return request().query as T;
+  const { url } = context();
+  return Object.fromEntries(url.searchParams) as T;
 }
 
 /**
@@ -602,9 +605,9 @@ export namespace searchParams {
   export function get(name: string): string | undefined;
   export function get<R>(name: string, transform: (value: string) => R): R;
   export function get(name: string, transform?: (value: string) => unknown): unknown {
-    const queries = request().query as Record<string, string | string[]>;
-    const value = toFirstValue(queries[name]);
-    if (value === undefined) {
+    const { searchParams } = request.url();
+    const value = searchParams.get(name);
+    if (value === null) {
       return value;
     }
     if (!transform) return value;
@@ -625,9 +628,8 @@ export namespace searchParams {
   export function getAll(name: string): string[];
   export function getAll<R>(name: string, transform: (value: string) => R): R[];
   export function getAll(name: string, transform?: (value: string) => unknown): unknown[] {
-    const queries = request().query as Record<string, string | string[]>;
-    if (!queries[name]) return [];
-    const values = toArray(queries[name]);
+    const { searchParams } = request.url();
+    const values = searchParams.getAll(name);
     if (!transform) return values;
     return values.map(transform);
   }

@@ -1,5 +1,5 @@
 import { kSkipOverride } from "../symbols.js";
-import type { Plugin, PluginOptions } from "../interfaces/plugin.js";
+import type { Plugin, PluginMeta, PluginOptions } from "../interfaces/plugin.js";
 // Plugin symbols
 /**
  * Helper to set plugin name for debugging
@@ -25,6 +25,14 @@ export function plugin<T extends PluginOptions>(fn: Plugin<T>, name?: string): P
   return allowOverride(wrapped);
 }
 
+export function setOption(fn: Plugin, { name, skipOverride }: PluginMeta): void {
+  if (skipOverride) {
+    allowOverride(fn);
+  }
+  if (name !== undefined) {
+    setName(fn, name);
+  }
+}
 /**
  * Plugin utilities namespace providing helper functions for creating and composing plugins.
  */
@@ -40,6 +48,7 @@ export namespace plugin {
    * app.register(plugin.compose(connectDB, closeDB));
    * ```
    */
+
   export function compose<Opts extends PluginOptions>(...plugins: Plugin<Opts>[]) {
     const composedName = `compose(${plugins.map((p) => p.name || "anonymous").join(",")})`;
     return plugin<Opts>(async function composed(app, opts) {

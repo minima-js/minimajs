@@ -1,15 +1,13 @@
-import type { preHandlerAsyncHookHandler, preHandlerHookHandler } from "fastify";
-import type { App, Plugin, PluginOptions, Request, Response } from "./types.js";
+import type { OnErrorHook, OnRequestHook, OnTransformHook } from "./interfaces/hooks.js";
+import type { App } from "./interfaces/app.js";
+import type { Plugin, PluginOptions } from "./interfaces/plugin.js";
 import { plugin, setOption } from "./internal/plugins.js";
-import { isAsyncFunction } from "node:util/types";
 import type { InterceptorFilter, InterceptorRegisterOptions } from "./utils/decorators/helpers.js";
-import { createErrorDecorator, createResponseDecorator } from "./utils/decorators/index.js";
 
 export type PluginCallback<T extends PluginOptions> = Plugin<T> | Promise<{ default: Plugin<T> }>;
 
-export type Interceptor = preHandlerHookHandler | preHandlerAsyncHookHandler;
+export type Interceptor = OnRequestHook;
 
-export type { ResponseDecorator, ErrorDecorator } from "./utils/decorators/index.js";
 export type { InterceptorRegisterOptions, InterceptorFilter };
 
 async function toCallback<T extends PluginOptions = {}>(callback: PluginCallback<T>): Promise<Plugin<T>> {
@@ -22,19 +20,6 @@ async function toCallback<T extends PluginOptions = {}>(callback: PluginCallback
 
 function getModuleName(callback: PluginCallback<any>, opt: InterceptorOption) {
   return opt.name ?? (callback as any).name;
-}
-
-function isAsyncHandler(handler: Interceptor): handler is preHandlerAsyncHookHandler {
-  return isAsyncFunction(handler);
-}
-
-function invokeHandler(handler: Interceptor, app: App, req: Request, res: Response) {
-  if (isAsyncHandler(handler)) {
-    return handler.call(app, req, res);
-  }
-  return new Promise((resolve) => {
-    handler.call(app, req, res, resolve);
-  });
 }
 
 export interface InterceptorOption {
@@ -64,12 +49,12 @@ export function interceptor<T extends PluginOptions = {}>(
   async function module(app: App, appOpt: PluginOptions & T) {
     callback = callback as Plugin<T>;
     for (const handler of handlers) {
-      app.addHook("preHandler", handler);
+      app.on("request", handler);
     }
     callback = await toCallback(callback);
     return callback(app, appOpt);
   }
-  setOption(module, {
+  setOption(module as Plugin, {
     name: getModuleName(callback, opt),
   });
   return module;
@@ -98,7 +83,11 @@ export namespace interceptor {
    * ```
    * @since v0.2.0
    */
-  export const response = createResponseDecorator;
+  export function response(transform: OnTransformHook) {
+    return plugin(function onTransform(app) {
+      app.on("transform", transform);
+    });
+  }
 
   /**
    * Creates an error decorator plugin that transforms error responses.
@@ -118,7 +107,11 @@ export namespace interceptor {
    *   }))
    * );
    */
-  export const error = createErrorDecorator;
+  export function error(transform: OnErrorHook) {
+    return plugin(function onError(app) {
+      app.on("error", transform);
+    });
+  }
 
   /**
    * Creates a plugin that registers one or more interceptors as global middleware.
@@ -127,11 +120,11 @@ export namespace interceptor {
   export function use(...interceptors: Interceptor[]): Plugin<InterceptorRegisterOptions> {
     return plugin<InterceptorRegisterOptions>(async function middleware(app, { filter }) {
       for (const interceptor of interceptors) {
-        async function handler(req: Request, res: Response) {
+        async function handler(req: Request) {
           if (filter && !(await filter(req))) return;
-          return invokeHandler(interceptor, app, req, res);
+          return interceptor(req);
         }
-        app.addHook("preHandler", handler);
+        app.on("request", handler);
       }
     });
   }
@@ -141,11 +134,11 @@ export namespace interceptor {
    * Wraps an interceptor with conditional execution based on request properties.
    */
   export function filter(handler: Interceptor, handlerFilter: InterceptorFilter) {
-    const pluginHandler: preHandlerAsyncHookHandler = async (req, res) => {
+    const pluginHandler: OnRequestHook = async (req) => {
       if (!(await handlerFilter(req))) {
         return;
       }
-      return invokeHandler(handler, req.server, req, res);
+      return handler(req);
     };
     return pluginHandler;
   }

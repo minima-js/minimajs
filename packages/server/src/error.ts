@@ -16,8 +16,7 @@
  */
 
 import type { App, Dict, HeadersInit } from "./types.js";
-import { toStatusCode, type StatusCode } from "./internal/response.js";
-export type { ErrorDecorator, DecoratorOptions } from "./utils/decorators/index.js";
+import { toStatusCode, type StatusCode, createResponseFromState } from "./internal/response.js";
 
 /**
  * Represents the response body of an HTTP error.
@@ -31,7 +30,7 @@ export abstract class BaseHttpError extends Error {
   static is(value: unknown): value is BaseHttpError {
     return value instanceof this;
   }
-  abstract render(app: App, req: Request): Promise<Response>;
+  abstract render(req: Request, app: App): Promise<Response>;
 }
 
 export interface HttpErrorOptions extends ErrorOptions {
@@ -75,8 +74,8 @@ export class HttpError extends BaseHttpError {
     return this.constructor.toJSON(this);
   }
 
-  async render(app: App, req: Request): Promise<Response> {
-    return new Response(await app.serialize(this.toJSON(), req), {
+  async render(req: Request, app: App): Promise<Response> {
+    return createResponseFromState(await app.serialize(this.toJSON(), req), {
       status: this.statusCode,
       headers: this.headers,
     });
@@ -89,9 +88,9 @@ export class NotFoundError extends HttpError {
     this.message = "Page not found";
   }
 
-  async render(app: App, req: Request): Promise<Response> {
+  async render(req: Request, app: App): Promise<Response> {
     this.response ||= `Route ${req.method} ${req.url} not found`;
-    return super.render(app, req);
+    return super.render(req, app);
   }
 }
 
@@ -103,12 +102,12 @@ export class RedirectError extends BaseHttpError {
     this.statusCode = isPermanent ? 301 : 302;
     Object.assign(this, options);
   }
-  async render(app: App, req: Request): Promise<Response> {
-    // Create Headers object and merge with Location header
+  async render(_req: Request, _app: App): Promise<Response> {
+    // Merge instance headers with Location header
     const headers = new Headers(this.headers);
     headers.set("Location", this.url);
 
-    return new Response(null, {
+    return createResponseFromState(null, {
       status: this.statusCode,
       headers,
     });

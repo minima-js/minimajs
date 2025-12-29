@@ -2,6 +2,7 @@ import { BaseHttpError } from "../error.js";
 import type { App } from "../index.js";
 import type { ErrorHandler, Serializer } from "../interfaces/response.js";
 import { context } from "./context.js";
+import { createResponseFromState } from "./response.js";
 
 export const serialize: Serializer = (body: unknown, _req) => {
   if (body instanceof ReadableStream) return body;
@@ -13,9 +14,9 @@ export const serialize: Serializer = (body: unknown, _req) => {
 
 export const errorHandler: ErrorHandler = async (error: unknown, req: Request, app: App) => {
   if (error instanceof BaseHttpError) {
-    return error.render(app, req);
+    return error.render(req, app);
   }
-  return new Response(await app.serialize(error, req), {
+  return createResponseFromState(await app.serialize(error, req), {
     status: 500,
     headers: {
       "Content-Type": "application/json",

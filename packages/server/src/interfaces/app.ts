@@ -1,5 +1,5 @@
 import Router from "find-my-way";
-import type { HTTPMethod, HTTPVersion } from "find-my-way";
+import type { FindResult, HTTPMethod, HTTPVersion } from "find-my-way";
 import type {
   HookStore,
   OnRequestHook,
@@ -20,6 +20,12 @@ import type { Plugin, PluginOptions } from "./plugin.js";
 export type Container = Map<symbol, unknown>;
 
 export type RouteHandler = (req: Request) => unknown;
+
+export interface Route extends FindResult<HTTPVersion.V1> {
+  store: {
+    handler: RouteHandler;
+  };
+}
 
 export interface RouteOptions {
   method: HTTPMethod | HTTPMethod[];

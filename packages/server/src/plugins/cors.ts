@@ -1,5 +1,6 @@
 import { plugin } from "../internal/plugins.js";
 import { context } from "../internal/context.js";
+import { createResponseFromState } from "../internal/response.js";
 
 export interface CorsOptions {
   /** Configures the Access-Control-Allow-Origin header. Default: '*' */
@@ -160,7 +161,7 @@ export function cors(options: CorsOptions = {}) {
 
       // If preflightContinue is false, return early with OPTIONS response
       if (!config.preflightContinue) {
-        return new Response(null, {
+        return createResponseFromState(null, {
           status: config.optionsSuccessStatus,
           headers,
         });

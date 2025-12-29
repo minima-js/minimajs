@@ -1,9 +1,8 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import assert from "node:assert";
-import { type Container, type App } from "../interfaces/app.js";
+import type { Container, App, Route } from "../interfaces/app.js";
 import { type IncomingMessage, type ServerResponse } from "node:http";
-import type { FindResult, HTTPVersion } from "find-my-way";
-import type { MutableResponse } from "../interfaces/response.js";
+import type { ResponseState } from "../interfaces/response.js";
 
 export type HookCallback = () => void | Promise<void>;
 export type ErrorHookCallback = (err: unknown) => any | Promise<any>;
@@ -12,11 +11,11 @@ export interface Context {
   readonly app: App;
   readonly url: URL;
   readonly req: Request; // WebApi Request
-  readonly resInit: MutableResponse; // Mutable response headers/status
+  readonly resInit: ResponseState; // Mutable response headers/status
   readonly container: Container; // app.container
   readonly locals: Map<symbol, unknown>;
   readonly signal: AbortSignal;
-  readonly route: FindResult<HTTPVersion.V1> | null;
+  readonly route: Route | null;
   readonly rawReq?: IncomingMessage;
   readonly rawRes?: ServerResponse;
 }

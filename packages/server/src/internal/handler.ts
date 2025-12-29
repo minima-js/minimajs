@@ -4,25 +4,16 @@ import { runHooks } from "../hooks/manager.js";
 import { context, wrap, type Context } from "./context.js";
 import { NotFoundError } from "../error.js";
 import type { CreateResponseOptions } from "../interfaces/response.js";
-
-/**
- * Merges headers from context with provided headers
- * Context headers take precedence (override)
- */
-function mergeHeaders(base: Headers, ...headers: Headers[]): Headers {
-  const finalHeaders = new Headers(base);
-  for (const header of headers) {
-    for (const [key, value] of header.entries()) {
-      finalHeaders.set(key, value);
-    }
-  }
-  return finalHeaders;
-}
+import { mergeHeaders } from "../utils/headers.js";
 
 export async function createResponse(data: unknown, options: CreateResponseOptions = {}): Promise<Response> {
   const { app, req, resInit } = context();
-  const { status = 200, headers } = options;
-
+  if (options.headers) {
+    mergeHeaders(resInit.headers, new Headers(options.headers));
+  }
+  if (options.status) {
+    resInit.status = options.status;
+  }
   // If data is already a Response, return as-is (no header merging)
   if (data instanceof Response) {
     await runHooks(app.hooks, "sent", req);
@@ -42,10 +33,7 @@ export async function createResponse(data: unknown, options: CreateResponseOptio
   }
 
   // 5. Create response with merged headers
-  const response = new Response(body, {
-    status: status ?? resInit.status,
-    headers: mergeHeaders(new Headers(headers), resInit.headers),
-  });
+  const response = new Response(body, resInit);
 
   // 6. sent hook
   await runHooks(app.hooks, "sent", req);
@@ -81,7 +69,7 @@ export async function handleRequest<T>(
         // 1. request hook (runs for all requests, even not-found routes)
         const response = await runHooks(app.hooks, "request", req);
         if (response instanceof Response) {
-          return await createResponse(response);
+          return response;
         }
       }
       // Route not found

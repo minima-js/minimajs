@@ -19,8 +19,7 @@
 import { pino, type LoggerOptions } from "pino";
 import merge from "deepmerge";
 import { maybeContext } from "./context.js";
-import type { App, Dict, Request } from "./types.js";
-import { kPluginNameChain, kRequestContext } from "./internal/fastify.js";
+import type { App } from "./interfaces/app.js";
 
 export const loggerOptions: LoggerOptions = {
   transport: {
@@ -46,13 +45,8 @@ export function mixin(data: Dict<unknown>) {
   return data;
 }
 
-function getPluginNames(server: App): string {
-  const plugins = server[kPluginNameChain];
-  if (!plugins) return "";
-  return plugins[0] ?? "";
-}
-function getHandler(req: Request) {
-  return (req as any)[kRequestContext]?.handler.name.replace("bound ", "");
+function getPluginNames(_server: App): string {
+  return "";
 }
 
 const kModuleName = Symbol("module name");
@@ -62,16 +56,16 @@ function getModuleName() {
   if (!ctx) {
     return null;
   }
-  const { req, local } = ctx;
-  if (!local.has(kModuleName)) {
-    let name = getPluginNames(req.server);
-    const handler = getHandler(req);
+  const { route, locals } = ctx;
+  if (!locals.has(kModuleName)) {
+    let name = getPluginNames(ctx.app);
+    const handler = route?.store.handler.name;
     if (handler) {
       name = name + ":" + handler;
     }
-    local.set(kModuleName, name);
+    locals.set(kModuleName, name);
   }
-  return local.get(kModuleName);
+  return locals.get(kModuleName);
 }
 
 /**

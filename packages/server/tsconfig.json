@@ -1,6 +1,6 @@
 {
   "extends": ["../config/tsconfig.base.json"],
-  "exclude": ["src/**/*.test.ts", "src/__tests__/**/*", "src/node/**/*"],
+  "exclude": ["src/**/*.test.ts", "src/__tests__/**/*", "src/node/**/*", "src/mock/**/*"],
   "include": ["src/**/*"],
   "compilerOptions": {
     "declaration": true,
