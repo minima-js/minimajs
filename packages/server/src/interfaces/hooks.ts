@@ -33,9 +33,11 @@ export type OnReadyHook = () => void | Promise<void>;
 export type OnRegisterHook = (plugin: Plugin, opts: PluginOptions) => void | Promise<void>;
 
 // Generic hook callback type
-export type HookCallback = (...args: unknown[]) => void | Promise<void>;
+export type GenericHookCallback = (...args: any[]) => any | Promise<any>;
 
-// Hook store type - object with all lifecycle hooks pre-initialized
+// Hook store type - object with all lifecycle hooks pre-initialized and a clone method
 export type HookStore = {
-  [K in LifecycleHook]: Set<HookCallback>;
+  [K in LifecycleHook]: Set<GenericHookCallback>;
+} & {
+  clone(): HookStore;
 };

@@ -2,6 +2,7 @@ import type { OnErrorHook, OnRequestHook, OnTransformHook } from "./interfaces/h
 import type { App } from "./interfaces/app.js";
 import type { Plugin, PluginOptions } from "./interfaces/plugin.js";
 import { plugin, setOption } from "./internal/plugins.js";
+import { hook } from "./hooks/index.js";
 import type { InterceptorFilter, InterceptorRegisterOptions } from "./utils/decorators/helpers.js";
 
 export type PluginCallback<T extends PluginOptions> = Plugin<T> | Promise<{ default: Plugin<T> }>;
@@ -49,7 +50,7 @@ export function interceptor<T extends PluginOptions = {}>(
   async function module(app: App, appOpt: PluginOptions & T) {
     callback = callback as Plugin<T>;
     for (const handler of handlers) {
-      app.on("request", handler);
+      app.register(hook("request", handler));
     }
     callback = await toCallback(callback);
     return callback(app, appOpt);
@@ -84,9 +85,7 @@ export namespace interceptor {
    * @since v0.2.0
    */
   export function response(transform: OnTransformHook) {
-    return plugin(function onTransform(app) {
-      app.on("transform", transform);
-    });
+    return hook("transform", transform);
   }
 
   /**
@@ -108,9 +107,7 @@ export namespace interceptor {
    * );
    */
   export function error(transform: OnErrorHook) {
-    return plugin(function onError(app) {
-      app.on("error", transform);
-    });
+    return hook("error", transform);
   }
 
   /**
@@ -124,7 +121,7 @@ export namespace interceptor {
           if (filter && !(await filter(req))) return;
           return interceptor(req);
         }
-        app.on("request", handler);
+        app.register(hook("request", handler));
       }
     });
   }

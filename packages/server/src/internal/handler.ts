@@ -1,13 +1,13 @@
 import { type Instance, type HTTPMethod, type HTTPVersion } from "find-my-way";
 import { type App, type RouteHandler } from "../interfaces/app.js";
-import { runHooks } from "../hooks/manager.js";
-import { context, wrap, type Context } from "./context.js";
+import { runHooks, getHooks } from "../hooks/store.js";
+import { $context, wrap, type Context } from "./context.js";
 import { NotFoundError } from "../error.js";
 import type { CreateResponseOptions } from "../interfaces/response.js";
 import { mergeHeaders } from "../utils/headers.js";
 
 export async function createResponse(data: unknown, options: CreateResponseOptions = {}): Promise<Response> {
-  const { app, req, resInit } = context();
+  const { app, req, resInit } = $context();
   if (options.headers) {
     mergeHeaders(resInit.headers, new Headers(options.headers));
   }
@@ -16,19 +16,19 @@ export async function createResponse(data: unknown, options: CreateResponseOptio
   }
   // If data is already a Response, return as-is (no header merging)
   if (data instanceof Response) {
-    await runHooks(app.hooks, "sent", req);
+    await runHooks(app, "sent", req);
     return data;
   }
 
   // 1. transform hook
-  const transformed = runHooks.transform(app.hooks, data, req);
+  const transformed = runHooks.transform(app, data, req);
 
   // 2. serialize
   const body = await app.serialize(transformed, req);
 
   {
     // 3. send hook
-    const response = await runHooks(app.hooks, "send", body, req);
+    const response = await runHooks(app, "send", body, req);
     if (response instanceof Response) return response;
   }
 
@@ -36,7 +36,7 @@ export async function createResponse(data: unknown, options: CreateResponseOptio
   const response = new Response(body, resInit);
 
   // 6. sent hook
-  await runHooks(app.hooks, "sent", req);
+  await runHooks(app, "sent", req);
 
   return response;
 }
@@ -67,7 +67,7 @@ export async function handleRequest<T>(
     try {
       {
         // 1. request hook (runs for all requests, even not-found routes)
-        const response = await runHooks(app.hooks, "request", req);
+        const response = await runHooks(app, "request", req);
         if (response instanceof Response) {
           return response;
         }
@@ -85,7 +85,7 @@ export async function handleRequest<T>(
 }
 
 async function processRequest(handler: RouteHandler): Promise<Response> {
-  const { req } = context();
+  const { req } = $context();
 
   // Execute handler
   const data = await handler(req);
@@ -95,12 +95,13 @@ async function processRequest(handler: RouteHandler): Promise<Response> {
 }
 
 async function handleError(err: unknown): Promise<Response> {
-  const { app, req } = context();
+  const { app, req } = $context();
+  const hooks = getHooks(app);
 
   // No app-level error hooks - use default error handler
-  if (app.hooks.error.size === 0) {
+  if (hooks.error.size === 0) {
     const response = await app.errorHandler(err, req, app);
-    await runHooks(app.hooks, "errorSent", err, req);
+    await runHooks(app, "errorSent", err, req);
     return response;
   }
 
@@ -108,13 +109,13 @@ async function handleError(err: unknown): Promise<Response> {
   let response: Response;
   try {
     // Create error response (handles transform, serialize, send, and sent hooks)
-    response = await createResponse(await runHooks.error(app.hooks, err, req));
+    response = await createResponse(await runHooks.error(app, err, req));
   } catch (e) {
     response = await app.errorHandler(e, req, app);
   }
 
   // Run errorSent hook after error response is created
-  await runHooks(app.hooks, "errorSent", err, req);
+  await runHooks(app, "errorSent", err, req);
 
   return response;
 }

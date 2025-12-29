@@ -1,6 +1,6 @@
 import { abort, createApp, request, searchParams } from "./index.js";
 import { interceptor, type Interceptor } from "./interceptor.js";
-import type { App } from "./types.js";
+import type { App } from "./interfaces/app.js";
 import { jest } from "@jest/globals";
 
 describe("middleware", () => {

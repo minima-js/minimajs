@@ -1,4 +1,5 @@
 import { plugin } from "../internal/plugins.js";
+import { hook } from "../hooks/index.js";
 import { createContext } from "../context.js";
 
 type DeferCallback = () => void | Promise<void>;
@@ -75,19 +76,16 @@ export function onError(cb: ErrorCallback) {
  * ```
  */
 export function minimajs() {
-  return plugin((app) => {
-    // Register sent hook for deferred callbacks
-    app.on("sent", async () => {
+  return plugin.compose(
+    hook("sent", async () => {
       for (const cb of getDeferredCallbacks()) {
         await cb();
       }
-    });
-
-    // Register errorSent hook for error callbacks
-    app.on("errorSent", async (err) => {
+    }),
+    hook("errorSent", async (err: unknown) => {
       for (const cb of getErrorCallbacks()) {
         await cb(err);
       }
-    });
-  });
+    })
+  );
 }

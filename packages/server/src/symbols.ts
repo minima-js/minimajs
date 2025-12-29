@@ -10,3 +10,4 @@ export const kSkipOverride = Symbol.for("minima.plugin.skip-override");
 
 // Internal symbols
 export const kContext = Symbol.for("minima.context");
+export const kHooks = Symbol.for("minima.hooks");

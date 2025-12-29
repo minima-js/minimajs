@@ -1,5 +1,5 @@
 import { StatusCodes } from "http-status-codes";
-import { context } from "./internal/context.js";
+import { $context } from "./internal/context.js";
 
 import {
   RedirectError,
@@ -9,7 +9,7 @@ import {
   type ErrorResponse,
   type HttpErrorOptions,
 } from "./error.js";
-import type { Dict, HttpHeader, HttpHeaderIncoming, ResponseOptions } from "./types.js";
+import type { Dict, HttpHeader, HttpHeaderIncoming, ResponseOptions } from "./interfaces/response.js";
 
 import { toStatusCode, type StatusCode } from "./internal/response.js";
 import { createResponse } from "./internal/handler.js";
@@ -234,7 +234,7 @@ export namespace abort {
  * @since v0.2.0
  */
 export function request(): Request {
-  const { req } = context();
+  const { req } = $context();
   return req;
 }
 
@@ -254,7 +254,7 @@ export namespace request {
    * @since v0.2.0
    */
   export function url(): URL {
-    const { url } = context();
+    const { url } = $context();
     return url;
   }
 
@@ -272,7 +272,7 @@ export namespace request {
    * @since v0.2.0
    */
   export function signal(): AbortSignal {
-    return context().signal;
+    return $context().signal;
   }
 }
 
@@ -340,7 +340,7 @@ export const getBody = body;
  * @since v0.2.0
  */
 export function params<T = Dict<string>>(): T {
-  const { route } = context();
+  const { route } = $context();
   if (!route) {
     return {} as T;
   }
@@ -517,7 +517,7 @@ export namespace headers {
    * ```
    */
   export function set(name: HttpHeader, value: string): void {
-    const { resInit } = context();
+    const { resInit } = $context();
     resInit.headers.set(name, value);
   }
 }
@@ -582,7 +582,7 @@ export const getHeader = headers.get;
  * @since v0.2.0
  */
 export function searchParams<T>() {
-  const { url } = context();
+  const { url } = $context();
   return Object.fromEntries(url.searchParams) as T;
 }
 

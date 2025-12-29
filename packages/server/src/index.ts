@@ -16,7 +16,7 @@
 export * from "./interceptor.js";
 export * from "./http.js";
 export * from "./hooks/index.js";
-export * from "./types.js";
+export * from "./interfaces/index.js";
 
 export * from "./context.js";
 export { logger } from "./logger.js";

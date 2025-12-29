@@ -1,6 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import type { HeadersInit, ResponseBody } from "../interfaces/response.js";
-import { context } from "./context.js";
+import { $context } from "./context.js";
 import { mergeHeaders } from "../utils/headers.js";
 
 export type StatusCode = keyof typeof StatusCodes | number;
@@ -15,7 +15,7 @@ export function toStatusCode(code: StatusCode): number {
 }
 
 export function createResponseFromState(data: ResponseBody, options: ResponseInit): Response {
-  const { resInit } = context();
+  const { resInit } = $context();
   return new Response(data, {
     ...resInit,
     ...options,

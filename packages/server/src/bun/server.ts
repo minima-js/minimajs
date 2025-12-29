@@ -5,23 +5,9 @@ import type { Logger } from "pino";
 import type { App, RouteHandler, RouteOptions } from "../interfaces/app.js";
 import type { Plugin, PluginOptions } from "../interfaces/plugin.js";
 import { pluginOverride } from "../internal/override.js";
-import { kPluginName } from "../symbols.js";
-import {
-  type HookStore,
-  type LifecycleHook,
-  type OnRequestHook,
-  type OnTransformHook,
-  type OnSendHook,
-  type OnErrorHook,
-  type OnErrorSentHook,
-  type OnSentHook,
-  type OnTimeoutHook,
-  type OnCloseHook,
-  type OnListenHook,
-  type OnReadyHook,
-  type OnRegisterHook,
-} from "../interfaces/hooks.js";
-import { createHooksStore, runHooks } from "../hooks/manager.js";
+import { kPluginName, kHooks } from "../symbols.js";
+import { createHooksStore } from "../hooks/store.js";
+import { runHooks } from "../hooks/store.js";
 import { serialize, errorHandler } from "../internal/default-handler.js";
 import { handleRequest } from "../internal/handler.js";
 import type { ErrorHandler, Serializer } from "../interfaces/response.js";
@@ -33,7 +19,6 @@ export interface BunServerOptions {
 export class Server implements App<BunServer<unknown>> {
   server?: BunServer<unknown>;
   readonly router: Router.Instance<HTTPVersion.V1>;
-  readonly hooks: HookStore = createHooksStore();
   readonly container = new Map();
   private prefix: string;
   private avvio: Avvio<App>;
@@ -47,6 +32,10 @@ export class Server implements App<BunServer<unknown>> {
     this.log = logger;
     this.prefix = opts.prefix || "";
     this.router = Router({ ignoreTrailingSlash: true });
+
+    // Initialize hooks in container
+    this.container.set(kHooks, createHooksStore());
+
     this.avvio = avvio<App>(this, {
       expose: { close: "$close", use: "$use", ready: "$ready", onClose: "$onClose", after: "$after" },
     });
@@ -105,35 +94,28 @@ export class Server implements App<BunServer<unknown>> {
     this.avvio.use(async (instance) => {
       const resolvedName = opts.name ?? plugin[kPluginName] ?? plugin.name;
       const finalOpts = { ...opts, name: resolvedName } as T;
-      await runHooks(instance.hooks, "register", plugin, finalOpts);
+      await runHooks(instance, "register", plugin, finalOpts);
       await plugin(instance, finalOpts);
     });
     return this;
   }
 
-  // Hook management - overloads for type safety
-  on(hook: "request", callback: OnRequestHook): this;
-  on(hook: "transform", callback: OnTransformHook): this;
-  on(hook: "send", callback: OnSendHook): this;
-  on(hook: "error", callback: OnErrorHook): this;
-  on(hook: "errorSent", callback: OnErrorSentHook): this;
-  on(hook: "sent", callback: OnSentHook): this;
-  on(hook: "timeout", callback: OnTimeoutHook): this;
-  on(hook: "close", callback: OnCloseHook): this;
-  on(hook: "listen", callback: OnListenHook): this;
-  on(hook: "ready", callback: OnReadyHook): this;
-  on(hook: "register", callback: OnRegisterHook): this;
-  on(hookName: LifecycleHook, callback: (...args: any[]) => any): this {
-    if (hookName === "ready") {
-      this.avvio.ready(callback as OnReadyHook);
-      return this;
+  // Testing utility
+  async inject(request: Request | string): Promise<Response> {
+    let req: Request;
+
+    if (typeof request === "string") {
+      // If it's a string, create a GET request
+      const url = request.startsWith("http") ? request : `http://localhost${request.startsWith("/") ? "" : "/"}${request}`;
+      req = new Request(url);
+    } else {
+      req = request;
     }
-    if (hookName === "close") {
-      this.avvio.onClose(callback as OnCloseHook);
-      return this;
-    }
-    this.hooks[hookName].add(callback);
-    return this;
+
+    // Ensure avvio is ready before handling the request
+    await this.avvio.ready();
+
+    return handleRequest(this, this.router, req);
   }
 
   // Server lifecycle
@@ -158,7 +140,7 @@ export class Server implements App<BunServer<unknown>> {
     });
 
     // Execute listen hook with address information
-    await runHooks(this.hooks, "listen", { host, port });
+    await runHooks(this, "listen", { host, port });
 
     const addr = `http://${opts.host || "localhost"}:${port}`;
     return addr;

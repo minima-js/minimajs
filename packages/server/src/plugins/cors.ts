@@ -1,6 +1,6 @@
-import { plugin } from "../internal/plugins.js";
-import { context } from "../internal/context.js";
-import { createResponseFromState } from "../internal/response.js";
+import { hook } from "../hooks/index.js";
+import { response } from "../http.js";
+import { $context } from "../internal/context.js";
 
 export interface CorsOptions {
   /** Configures the Access-Control-Allow-Origin header. Default: '*' */
@@ -141,49 +141,40 @@ async function resolveOrigin(
  */
 export function cors(options: CorsOptions = {}) {
   const config = { ...defaultOptions, ...options };
-
-  return plugin((app) => {
-    // Handle preflight OPTIONS requests
-    app.on("request", async (req): Promise<Response | void> => {
+  return hook.define({
+    async request(req): Promise<void | Response> {
       if (req.method !== "OPTIONS") {
         return;
       }
-
       const origin = req.headers.get("origin") || "";
       const allowOrigin = await resolveOrigin(config.origin, origin);
 
       if (!allowOrigin) {
         return; // Origin not allowed, let it continue to return 404 or custom handler
       }
-
       // Build preflight CORS headers
       const headers = buildCorsHeaders(allowOrigin, config, true);
-
       // If preflightContinue is false, return early with OPTIONS response
       if (!config.preflightContinue) {
-        return createResponseFromState(null, {
+        return response(null, {
           status: config.optionsSuccessStatus,
           headers,
         });
       }
-    });
+    },
 
-    // Add CORS headers to all responses
-    app.on("send", async (_body, req) => {
+    async send(_body, req) {
       const origin = req.headers.get("origin") || "";
       const allowOrigin = await resolveOrigin(config.origin, origin);
-
       if (!allowOrigin) {
         return; // Origin not allowed, don't add CORS headers
       }
-
       const headers = buildCorsHeaders(allowOrigin, config, false);
-
       // Write CORS headers to context response
-      const { resInit: response } = context();
+      const { resInit: response } = $context();
       for (const [key, value] of Object.entries(headers)) {
         response.headers.set(key, value);
       }
-    });
+    },
   });
 }

@@ -1,5 +1,5 @@
+import type { Signals } from "../interfaces/index.js";
 import { plugin } from "../internal/plugins.js";
-import type { Signals } from "./../types.js";
 
 export interface GracefulShutdownOptions {
   /** Array of signals to listen for (e.g., ['SIGINT', 'SIGTERM']) */

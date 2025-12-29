@@ -15,7 +15,8 @@
  * ```
  */
 
-import type { App, Dict, HeadersInit } from "./types.js";
+import type { App } from "./interfaces/app.js";
+import type { Dict, HeadersInit } from "./interfaces/response.js";
 import { toStatusCode, type StatusCode, createResponseFromState } from "./internal/response.js";
 
 /**

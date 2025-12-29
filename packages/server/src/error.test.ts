@@ -1,7 +1,7 @@
 import { ForbiddenError, HttpError, NotFoundError, ValidationError } from "./error.js";
 import { createApp, redirect } from "./index.js";
 import { mockApp, mockRoute } from "./mock/index.js";
-import type { App } from "./types.js";
+import type { App } from "./interfaces/app.js";
 
 let app: App;
 
