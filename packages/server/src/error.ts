@@ -15,8 +15,8 @@
  * ```
  */
 
-import { StatusCodes } from "http-status-codes";
 import type { App, Dict, HeadersInit } from "./types.js";
+import { toStatusCode, type StatusCode } from "./internal/response.js";
 export type { ErrorDecorator, DecoratorOptions } from "./utils/decorators/index.js";
 
 /**
@@ -24,12 +24,6 @@ export type { ErrorDecorator, DecoratorOptions } from "./utils/decorators/index.
  * Can be either a simple string message or a dictionary object with custom error data.
  */
 export type ErrorResponse = string | Dict;
-
-/**
- * Represents an HTTP status code.
- * Can be either a named status code from the StatusCodes enum or a numeric status code.
- */
-export type StatusCode = keyof typeof StatusCodes | number;
 
 export abstract class BaseHttpError extends Error {
   abstract statusCode: number;
@@ -74,11 +68,7 @@ export class HttpError extends BaseHttpError {
   constructor(public response: ErrorResponse, statusCode: StatusCode, options?: HttpErrorOptions) {
     super(typeof response === "string" ? response : "Unknown error");
     Object.assign(this, options);
-    if (typeof statusCode !== "number") {
-      this.statusCode = StatusCodes[statusCode];
-    } else {
-      this.statusCode = statusCode;
-    }
+    this.statusCode = toStatusCode(statusCode);
   }
 
   public toJSON(): unknown {

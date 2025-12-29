@@ -36,7 +36,9 @@ const defaultOptions: Required<Omit<CorsOptions, "origin">> & { origin: string }
  */
 function buildCorsHeaders(
   allowOrigin: string,
-  config: Required<Omit<CorsOptions, "origin">> & { origin: string | string[] | ((origin: string) => boolean | Promise<boolean>) },
+  config: Required<Omit<CorsOptions, "origin">> & {
+    origin: string | string[] | ((origin: string) => boolean | Promise<boolean>);
+  },
   isPreflight: boolean
 ): Record<string, string> {
   const headers: Record<string, string> = {
@@ -177,7 +179,7 @@ export function cors(options: CorsOptions = {}) {
       const headers = buildCorsHeaders(allowOrigin, config, false);
 
       // Write CORS headers to context response
-      const { response } = context();
+      const { resInit: response } = context();
       for (const [key, value] of Object.entries(headers)) {
         response.headers.set(key, value);
       }

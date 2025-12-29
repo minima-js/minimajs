@@ -1,5 +1,5 @@
 import Router from "find-my-way";
-import type { HTTPMethod } from "find-my-way";
+import type { HTTPMethod, HTTPVersion } from "find-my-way";
 import type {
   HookStore,
   OnRequestHook,
@@ -32,7 +32,7 @@ export interface App<T = unknown> {
   // HTTP methods
   readonly hooks: HookStore;
 
-  readonly router: Router.Instance<Router.HTTPVersion.V1>;
+  readonly router: Router.Instance<HTTPVersion.V1>;
 
   serialize: Serializer;
 

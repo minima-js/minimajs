@@ -1,5 +1,5 @@
 import { StatusCodes } from "http-status-codes";
-import { context } from "./context.js";
+import { context } from "./internal/context.js";
 
 import {
   RedirectError,
@@ -7,12 +7,11 @@ import {
   BaseHttpError,
   NotFoundError,
   type ErrorResponse,
-  type StatusCode,
   type HttpErrorOptions,
 } from "./error.js";
 import type { Dict, HttpHeader, HttpHeaderIncoming, ResponseOptions } from "./types.js";
 
-import { ResponseAbort } from "./internal/response.js";
+import { ResponseAbort, toStatusCode, type StatusCode } from "./internal/response.js";
 import { createResponse } from "./internal/handler.js";
 
 import { toArray, toFirstValue } from "./utils/iterable.js";
@@ -38,7 +37,7 @@ import { toArray, toFirstValue } from "./utils/iterable.js";
 export async function response(body: unknown, options: ResponseOptions = {}): Promise<Response> {
   let status: number | undefined = undefined;
   if (options.status) {
-    status = typeof options.status === "number" ? options.status : StatusCodes[options.status];
+    status = toStatusCode(options.status);
   }
   return await createResponse(body, { status, headers: options.headers });
 }
@@ -60,8 +59,7 @@ export namespace response {
    * @since v0.2.0
    */
   export function status(statusCode: keyof typeof StatusCodes | number): Response {
-    const code = typeof statusCode === "number" ? statusCode : StatusCodes[statusCode];
-    return new Response(null, { status: code });
+    return new Response(null, { status: toStatusCode(statusCode) });
   }
 }
 

@@ -12,13 +12,13 @@ export interface Context {
   readonly app: App;
   readonly url: URL;
   readonly req: Request; // WebApi Request
+  readonly resInit: MutableResponse; // Mutable response headers/status
   readonly container: Container; // app.container
   readonly locals: Map<symbol, unknown>;
   readonly signal: AbortSignal;
   readonly route: FindResult<HTTPVersion.V1> | null;
   readonly rawReq?: IncomingMessage;
   readonly rawRes?: ServerResponse;
-  readonly response: MutableResponse; // Mutable response headers/status
 }
 
 const contextStorage = new AsyncLocalStorage<Context>();

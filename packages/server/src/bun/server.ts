@@ -1,5 +1,5 @@
 import { type Server as BunServer } from "bun";
-import Router from "find-my-way";
+import Router, { type HTTPVersion } from "find-my-way";
 import avvio, { type Avvio } from "avvio";
 import type { Logger } from "pino";
 import type { App, RouteHandler, RouteOptions } from "../interfaces/app.js";
@@ -32,7 +32,7 @@ export interface BunServerOptions {
 
 export class Server implements App<BunServer<unknown>> {
   server?: BunServer<unknown>;
-  readonly router: Router.Instance<Router.HTTPVersion.V1>;
+  readonly router: Router.Instance<HTTPVersion.V1>;
   readonly hooks: HookStore = createHooksStore();
   readonly container = new Map();
   private prefix: string;
@@ -47,7 +47,9 @@ export class Server implements App<BunServer<unknown>> {
     this.log = logger;
     this.prefix = opts.prefix || "";
     this.router = Router({ ignoreTrailingSlash: true });
-    this.avvio = avvio<App>(this);
+    this.avvio = avvio<App>(this, {
+      expose: { close: "$close", use: "$use", ready: "$ready", onClose: "$onClose", after: "$after" },
+    });
     this.avvio.override = pluginOverride;
   }
 
@@ -163,8 +165,9 @@ export class Server implements App<BunServer<unknown>> {
   }
 
   async close(): Promise<void> {
+    console.log("closing the server...", this.avvio.close);
     await new Promise<void>((resolve, reject) =>
-      this.avvio.close((err) => {
+      this.avvio.close((err: unknown) => {
         if (err) reject(err);
         resolve();
       })

@@ -32,3 +32,28 @@ export async function runHooks(store: HookStore, name: LifecycleHook, ...args: a
   }
   return result;
 }
+
+export namespace runHooks {
+  export function transform(hookStore: HookStore, data: unknown, req: Request) {
+    const hook = hookStore["transform"];
+    if (hook.size === 0) {
+      return data;
+    }
+    return runHooks(hookStore, "transform", data, req);
+  }
+
+  export async function error(store: HookStore, error: unknown, req: Request): Promise<any> {
+    const hooks = store["error"];
+    let result: any;
+    let err = error;
+    for (const hook of hooks) {
+      try {
+        result = await hook(err, req);
+      } catch (e) {
+        err = e;
+        result = undefined;
+      }
+    }
+    return result;
+  }
+}

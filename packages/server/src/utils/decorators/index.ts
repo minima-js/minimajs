@@ -1,5 +1,5 @@
-import type { App, Request, Response } from "../../types.js";
-import { createDecoratorPlugin, getDecorator } from "./helpers.js";
+import type { App } from "../../types.js";
+import { getDecorator } from "./helpers.js";
 
 export type { InterceptorRegisterOptions as DecoratorOptions } from "./helpers.js";
 export type ResponseDecorator = (body: unknown) => Promise<unknown> | unknown;

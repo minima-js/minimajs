@@ -2,6 +2,7 @@ import type { Logger } from "pino";
 import pino from "pino";
 import merge from "deepmerge";
 import { Server, type BunServerOptions } from "./server.js";
+import { minimajs } from "../plugins/minimajs.js";
 
 export * from "../interfaces/index.js";
 
@@ -34,7 +35,6 @@ export function createApp(opts: BunAppOptions = {}) {
   const appLogger = getDefaultConfig(opts);
   const { prefix } = opts;
   const app = new Server(appLogger, { prefix });
-  // TODO: Register minimajs plugin once ported
-  // app.register(minimajs, {});
+  app.register(minimajs());
   return app;
 }

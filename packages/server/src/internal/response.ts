@@ -4,6 +4,7 @@ import { pipeline } from "node:stream/promises";
 import type { Next } from "../types.js";
 import { isAsyncIterator } from "../utils/iterable.js";
 import { getDecoratedResponse, isResponseDecoratorSkipped } from "../utils/decorators/index.js";
+import { StatusCodes } from "http-status-codes";
 export type { ResponseDecorator } from "../utils/decorators/index.js";
 
 export const ResponseAbort = Symbol("RequestCancelled");
@@ -44,4 +45,15 @@ export function handleResponse(request: Request, response: Response, body: unkno
     next(null, body);
   }
   getDecoratedResponse(request.server, request, body).then(onResponse).catch(next);
+}
+
+export type StatusCode = keyof typeof StatusCodes | number;
+
+/**
+ * Converts a StatusCode (number or named status code) to a numeric status code
+ * @param code - Status code as number or StatusCodes key
+ * @returns Numeric status code
+ */
+export function toStatusCode(code: StatusCode): number {
+  return typeof code === "number" ? code : StatusCodes[code];
 }
