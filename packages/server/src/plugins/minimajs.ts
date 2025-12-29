@@ -1,9 +1,9 @@
 import { plugin } from "../internal/plugins.js";
-import { hook } from "../hooks/index.js";
+import { hook, type OnErrorSentHook } from "../hooks/index.js";
 import { createContext } from "../context.js";
 
+export type ErrorCallback = OnErrorSentHook;
 type DeferCallback = () => void | Promise<void>;
-type ErrorCallback = (err: unknown) => void | Promise<void>;
 
 // Create context for storing deferred callbacks
 const [getDeferredCallbacks] = createContext<Set<DeferCallback>>(() => new Set());
@@ -82,9 +82,9 @@ export function minimajs() {
         await cb();
       }
     }),
-    hook("errorSent", async (err: unknown) => {
+    hook("errorSent", async (err, req) => {
       for (const cb of getErrorCallbacks()) {
-        await cb(err);
+        await cb(err, req);
       }
     })
   );

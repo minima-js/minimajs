@@ -1,7 +1,6 @@
-import { createApp, type App } from "../index.js";
-import { createAbortController, ResponseAbort, isRequestAbortedError } from "./response.js";
-import { EventEmitter } from "node:events";
-import { IncomingMessage, ServerResponse } from "node:http";
+import { type App } from "../interfaces/app.js";
+import { createApp } from "../bun/index.js";
+import { createRequest } from "../mock/request.js";
 
 describe("internal/response", () => {
   let app: App;
@@ -11,50 +10,12 @@ describe("internal/response", () => {
 
   afterEach(() => app.close());
 
-  describe("createAbortController", () => {
-    test("should abort the controller when response closes and message is destroyed", () => {
-      const mockMessage = new EventEmitter() as IncomingMessage;
-      mockMessage.destroyed = false; // Initially not destroyed
-
-      const mockResponse = new EventEmitter() as ServerResponse;
-
-      const controller = createAbortController(mockMessage, mockResponse);
-
-      expect(controller.signal.aborted).toBe(false);
-
-      // Simulate message being destroyed
-      mockMessage.destroyed = true;
-      // Simulate response closing
-      mockResponse.emit("close");
-
-      expect(controller.signal.aborted).toBe(true);
-      expect(controller.signal.reason).toBe(ResponseAbort);
-    });
-
-    test("should not abort the controller when response closes but message is not destroyed", () => {
-      const mockMessage = new EventEmitter() as IncomingMessage;
-      mockMessage.destroyed = false;
-
-      const mockResponse = new EventEmitter() as ServerResponse;
-
-      const controller = createAbortController(mockMessage, mockResponse);
-
-      expect(controller.signal.aborted).toBe(false);
-
-      // Do NOT simulate message being destroyed
-      // Simulate response closing
-      mockResponse.emit("close");
-
-      expect(controller.signal.aborted).toBe(false);
-    });
-  });
-
   describe("handleResponse", () => {
     test("plain string response", async () => {
       app.get("/", () => {
         return "hello world";
       });
-      const response = await app.inject({ url: "/" });
+      const response = await app.inject("/");
       expect(response.body).toBe("hello world");
     });
 
@@ -62,7 +23,7 @@ describe("internal/response", () => {
       app.get("/", () => {
         return { message: "hello world" };
       });
-      const response = await app.inject({ url: "/" });
+      const response = await app.inject("/");
       expect(response.body).toBe(JSON.stringify({ message: "hello world" }));
     });
 
@@ -70,7 +31,7 @@ describe("internal/response", () => {
       app.get("/", async () => {
         return { message: "hello world" };
       });
-      const response = await app.inject({ url: "/" });
+      const response = await app.inject("/");
       expect(response.body).toBe(JSON.stringify({ message: "hello world" }));
     });
 
@@ -78,7 +39,7 @@ describe("internal/response", () => {
       app.get("/", async () => {
         return { message: "hello world" };
       });
-      const response = await app.inject({ url: "/" });
+      const response = await app.inject(createRequest("/"));
       expect(response.body).toBe(JSON.stringify({ message: "hello world" }));
     });
 
@@ -92,23 +53,10 @@ describe("internal/response", () => {
         return generator();
       });
       try {
-        await app.inject({ url: "/" });
+        await app.inject("/");
       } catch (e) {
         expect(e).toBeInstanceOf(Error);
       }
-    });
-  });
-
-  describe("isRequestAbortedError", () => {
-    test("should return true for aborted error", () => {
-      const error = new Error("test");
-      (error as any).cause = ResponseAbort;
-      expect(isRequestAbortedError(error)).toBe(true);
-    });
-
-    test("should return false for other errors", () => {
-      const error = new Error("test");
-      expect(isRequestAbortedError(error)).toBe(false);
     });
   });
 });

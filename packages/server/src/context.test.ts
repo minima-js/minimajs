@@ -1,5 +1,5 @@
 import { context, createContext } from "./context.js";
-import { mockContext } from "./mock/context.js";
+import { mockContext } from "./mock/index.js";
 import { jest } from "@jest/globals";
 
 describe("Context", () => {

@@ -1,4 +1,5 @@
-import { type App, createApp } from "../index.js";
+import { createApp } from "../bun/index.js";
+import type { App } from "../interfaces/app.js";
 import { routeLogger } from "./router.js";
 import chalk from "chalk";
 import { jest } from "@jest/globals";
@@ -8,11 +9,11 @@ describe("routeLogger", () => {
 
   beforeEach(() => {
     app = createApp();
-    app.get("/route1", async (_, reply) => {
-      reply.send("route1");
+    app.get("/route1", async () => {
+      return "route1";
     });
-    app.post("/route2", async (_, reply) => {
-      reply.send("route2");
+    app.post("/route2", async () => {
+      return "route2";
     });
   });
 
@@ -23,10 +24,10 @@ describe("routeLogger", () => {
   it("should log routes with default options using console.log and chalk", async () => {
     const spy = jest.spyOn(console, "log").mockImplementation(() => {});
 
-    await app.register(routeLogger());
+    app.register(routeLogger());
     await app.ready();
 
-    const printedRoutes = app.printRoutes({ commonPrefix: false });
+    const printedRoutes = app.router.prettyPrint({ commonPrefix: false });
     expect(spy).toHaveBeenCalledWith(chalk.magenta(printedRoutes));
 
     spy.mockRestore();
@@ -37,7 +38,7 @@ describe("routeLogger", () => {
     await app.register(routeLogger({ logger: mockLogger }));
     await app.ready();
 
-    const printedRoutes = app.printRoutes({ commonPrefix: false });
+    const printedRoutes = app.router.prettyPrint({ commonPrefix: false });
     expect(mockLogger).toHaveBeenCalledWith(printedRoutes);
   });
 
@@ -51,7 +52,7 @@ describe("routeLogger", () => {
     );
     await app.ready();
 
-    const printedRoutes = app.printRoutes({ commonPrefix: false });
+    const printedRoutes = app.router.prettyPrint({ commonPrefix: false });
     expect(mockLogger).toHaveBeenCalledWith(`${printedRoutes}`);
   });
 
@@ -66,13 +67,13 @@ describe("routeLogger", () => {
     );
     await app.ready();
 
-    const printedRoutes = app.printRoutes({ commonPrefix: true });
+    const printedRoutes = app.router.prettyPrint({ commonPrefix: true });
     expect(mockLogger).toHaveBeenCalledWith(printedRoutes);
   });
 
   it("should log routes only when app is ready", async () => {
     const mockLogger = jest.fn();
-    await app.register(routeLogger({ logger: mockLogger }));
+    app.register(routeLogger({ logger: mockLogger }));
     // Should not have been called yet
     expect(mockLogger).not.toHaveBeenCalled();
     await app.ready();

@@ -1,63 +1,9 @@
 import { jest } from "@jest/globals";
 import { plugin } from "./plugins.js";
-import { createApp, type App } from "../index.js";
+import { createApp } from "../bun/index.js";
+import type { App } from "../interfaces/app.js";
 
 describe("plugins", () => {
-  describe("createPluginSync", () => {
-    test("it should have skip override", () => {
-      const p: any = plugin.sync((_, __, done) => {
-        done();
-      });
-      expect(p[Symbol.for("skip-override")]).toBeTruthy();
-    });
-
-    test("it should have a name", () => {
-      const p: any = plugin.sync((_, __, done) => {
-        done();
-      }, "hello world");
-      expect(p[Symbol.for("skip-override")]).toBeTruthy();
-      expect(p[Symbol.for("fastify.display-name")]).toBe("hello world");
-    });
-
-    test("it should auto-call done() when function has less than 3 parameters", async () => {
-      let called = false;
-      const app = createApp({ logger: false });
-
-      const p = plugin.sync((_app) => {
-        called = true;
-      });
-
-      await app.register(p);
-      await app.ready();
-
-      expect(called).toBe(true);
-      await app.close();
-    });
-
-    test("it should not auto-call done() when function has 3 parameters", async () => {
-      let called = false;
-      const app = createApp({ logger: false });
-
-      const p = plugin.sync((_app, _opts, done) => {
-        called = true;
-        done();
-      });
-
-      await app.register(p);
-      await app.ready();
-
-      expect(called).toBe(true);
-      await app.close();
-    });
-
-    test("it should preserve function name when auto-wrapping", () => {
-      const namedFn = function myPlugin(_app: any) {};
-      const p: any = plugin.sync(namedFn);
-
-      expect(p[Symbol.for("fastify.display-name")]).toBe("myPlugin");
-    });
-  });
-
   describe("createPlugin", () => {
     test("it should set override and accept a async function", () => {
       const p: any = plugin(async (_, __) => {});
@@ -83,14 +29,12 @@ describe("plugins", () => {
       const plugin1 = jest.fn();
       const plugin2 = jest.fn();
 
-      const p1 = plugin.sync((_app, _opts, done) => {
+      const p1 = plugin((_app) => {
         plugin1();
-        done();
       });
 
-      const p2 = plugin.sync((_app, _opts, done) => {
+      const p2 = plugin((_app) => {
         plugin2();
-        done();
       });
 
       app.register(plugin.compose(p1, p2));
@@ -127,9 +71,8 @@ describe("plugins", () => {
       const syncCalled = jest.fn();
       const asyncCalled = jest.fn();
 
-      const syncPlugin = plugin.sync((_app, _opts, done) => {
+      const syncPlugin = plugin((_app) => {
         syncCalled();
-        done();
       });
 
       const asyncPlugin = plugin(async (_app, _opts) => {
@@ -146,22 +89,20 @@ describe("plugins", () => {
     });
 
     test("should register routes from composed plugins", async () => {
-      const p1 = plugin.sync((app, _opts, done) => {
+      const p1 = plugin((app) => {
         app.get("/route1", () => "route1");
-        done();
       });
 
-      const p2 = plugin.sync((app, _opts, done) => {
+      const p2 = plugin((app) => {
         app.get("/route2", () => "route2");
-        done();
       });
 
       app.register(plugin.compose(p1, p2));
 
       await app.ready();
 
-      const res1 = await app.inject({ url: "/route1" });
-      const res2 = await app.inject({ url: "/route2" });
+      const res1 = await app.inject("/route1");
+      const res2 = await app.inject("/route2");
 
       expect(res1.body).toBe("route1");
       expect(res2.body).toBe("route2");
@@ -172,9 +113,7 @@ describe("plugins", () => {
         throw new Error("Plugin error");
       });
 
-      const normalPlugin = plugin.sync((_app, _opts, done) => {
-        done();
-      });
+      const normalPlugin = plugin((_app) => {});
 
       app.register(plugin.compose(normalPlugin, errorPlugin));
 
@@ -182,13 +121,9 @@ describe("plugins", () => {
     });
 
     test("should handle sync plugin errors", async () => {
-      const errorPlugin = plugin.sync((_app, _opts, done) => {
-        done(new Error("Sync plugin error"));
-      });
+      const errorPlugin = plugin((_app) => {});
 
-      const normalPlugin = plugin.sync((_app, _opts, done) => {
-        done();
-      });
+      const normalPlugin = plugin((_app) => {});
 
       app.register(plugin.compose(normalPlugin, errorPlugin));
 
@@ -198,19 +133,16 @@ describe("plugins", () => {
     test("should execute plugins in order", async () => {
       const executionOrder: number[] = [];
 
-      const p1 = plugin.sync((_app, _opts, done) => {
+      const p1 = plugin((_app) => {
         executionOrder.push(1);
-        done();
       });
 
-      const p2 = plugin.sync((_app, _opts, done) => {
+      const p2 = plugin((_app) => {
         executionOrder.push(2);
-        done();
       });
 
-      const p3 = plugin.sync((_app, _opts, done) => {
+      const p3 = plugin((_app) => {
         executionOrder.push(3);
-        done();
       });
 
       app.register(plugin.compose(p1, p2, p3));
@@ -229,9 +161,8 @@ describe("plugins", () => {
     test("should work with single plugin", async () => {
       const singleCalled = jest.fn();
 
-      const p1 = plugin.sync((_app, _opts, done) => {
+      const p1 = plugin((_app) => {
         singleCalled();
-        done();
       });
 
       app.register(plugin.compose(p1));
@@ -246,19 +177,16 @@ describe("plugins", () => {
       const plugin2 = jest.fn();
       const plugin3 = jest.fn();
 
-      const p1 = plugin.sync((_app, _opts, done) => {
+      const p1 = plugin((_app) => {
         plugin1();
-        done();
       });
 
-      const p2 = plugin.sync((_app, _opts, done) => {
+      const p2 = plugin((_app) => {
         plugin2();
-        done();
       });
 
-      const p3 = plugin.sync((_app, _opts, done) => {
+      const p3 = plugin((_app) => {
         plugin3();
-        done();
       });
 
       const composed1 = plugin.compose(p1, p2);
@@ -276,14 +204,12 @@ describe("plugins", () => {
     test("should pass options to composed plugins", async () => {
       const receivedOpts: any[] = [];
 
-      const p1 = plugin.sync((_app, opts, done) => {
+      const p1 = plugin((_app, opts) => {
         receivedOpts.push(opts);
-        done();
       });
 
-      const p2 = plugin.sync((_app, opts, done) => {
+      const p2 = plugin((_app, opts) => {
         receivedOpts.push(opts);
-        done();
       });
 
       app.register(plugin.compose(p1, p2), { prefix: "/test" });
@@ -303,9 +229,8 @@ describe("plugins", () => {
         executionOrder.push("async1");
       });
 
-      const p2 = plugin.sync((_app, _opts, done) => {
+      const p2 = plugin((_app) => {
         executionOrder.push("sync");
-        done();
       });
 
       const p3 = plugin(async (_app, _opts) => {

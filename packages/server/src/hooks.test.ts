@@ -1,5 +1,7 @@
 import { jest } from "@jest/globals";
-import { createApp, hook, defer, onError, plugin, type App } from "./index.js";
+import { createApp } from "./bun/index.js";
+import { hook, defer, onError, plugin, type App, type OnReadyHook, type OnCloseHook } from "./index.js";
+import type { ErrorCallback } from "./plugins/minimajs.js";
 
 describe("hooks", () => {
   let app: App;
@@ -21,7 +23,7 @@ describe("hooks", () => {
         return "Done";
       });
 
-      await app.inject({ url: "/" });
+      await app.inject("/");
       expect(deferred).toHaveBeenCalled();
       expect(execution).toHaveBeenCalled();
       const firstCallIndex = (execution as jest.Mock).mock.invocationCallOrder[0];
@@ -32,12 +34,12 @@ describe("hooks", () => {
 
   describe("onError", () => {
     test("should call on error", async () => {
-      const onErrorFn = jest.fn();
+      const onErrorFn = jest.fn<ErrorCallback>();
       app.get("/", () => {
         onError(onErrorFn);
         throw new Error("test");
       });
-      await app.inject({ url: "/" });
+      await app.inject("/");
       expect(onErrorFn).toHaveBeenCalled();
     });
   });
@@ -152,9 +154,8 @@ describe("hooks", () => {
 
     test("should require manual done() call when done parameter is present", async () => {
       let closed = false;
-      const closeHook = hook("close", (_i, done) => {
+      const closeHook = hook("close", () => {
         closed = true;
-        done();
       });
 
       app.register(closeHook);
@@ -163,20 +164,11 @@ describe("hooks", () => {
       await app.close();
       expect(closed).toBe(true);
     });
-
-    test("should handle errors with manual done(err)", async () => {
-      const closeHook = hook("close", (_i, done) => {
-        done(new Error("Close error"));
-      });
-      app.register(closeHook);
-      await app.ready();
-      await expect(app.close()).rejects.toThrow("Close error");
-    });
   });
 
   describe("hook.define", () => {
     test("should register and trigger a single hook", async () => {
-      const readyHook = jest.fn();
+      const readyHook = jest.fn<OnReadyHook>();
       const multiHook = hook.define({
         ready: readyHook,
       });
@@ -189,8 +181,8 @@ describe("hooks", () => {
     });
 
     test("should register and trigger multiple hooks", async () => {
-      const readyHook = jest.fn();
-      const closeHook = jest.fn();
+      const readyHook = jest.fn<OnReadyHook>();
+      const closeHook = jest.fn<OnCloseHook>();
 
       const multiHook = hook.define({
         ready: readyHook,

@@ -48,6 +48,7 @@ export async function handleRequest<T>(
 ): Promise<Response> {
   const url = new URL(req.url);
   const route = router.find(req.method as HTTPMethod, url.pathname);
+
   const locals = new Map<symbol, unknown>();
 
   const app: App = route ? route.store.server : server;

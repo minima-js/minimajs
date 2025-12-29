@@ -2,7 +2,7 @@ import type { OnErrorHook, OnRequestHook, OnTransformHook } from "./interfaces/h
 import type { App } from "./interfaces/app.js";
 import type { Plugin, PluginOptions } from "./interfaces/plugin.js";
 import { plugin, setOption } from "./internal/plugins.js";
-import { hook } from "./hooks/index.js";
+import { addHook, hook } from "./hooks/index.js";
 import type { InterceptorFilter, InterceptorRegisterOptions } from "./utils/decorators/helpers.js";
 
 export type PluginCallback<T extends PluginOptions> = Plugin<T> | Promise<{ default: Plugin<T> }>;
@@ -82,10 +82,24 @@ export namespace interceptor {
    * app.get('/', () => 'hello');
    * // Returns: { success: true, data: 'hello' }
    * ```
+   *
+   * @example With filter
+   * ```ts
+   * app.register(
+   *   interceptor.response((body) => ({ data: body })),
+   *   { filter: (req) => req.url.pathname.startsWith('/api') }
+   * );
+   * ```
    * @since v0.2.0
    */
-  export function response(transform: OnTransformHook) {
-    return hook("transform", transform);
+  export function response(transform: OnTransformHook): Plugin<InterceptorRegisterOptions> {
+    return plugin<InterceptorRegisterOptions>(async function responsePlugin(app, { filter }) {
+      async function handler(data: unknown, req: Request) {
+        if (filter && !(await filter(req))) return data;
+        return transform(data, req);
+      }
+      addHook(app, "transform", handler);
+    });
   }
 
   /**
@@ -105,9 +119,24 @@ export namespace interceptor {
    *     details: body
    *   }))
    * );
+   * ```
+   *
+   * @example With filter
+   * ```ts
+   * app.register(
+   *   interceptor.error((err) => ({ error: err.message })),
+   *   { filter: (req) => req.url.pathname.startsWith('/api') }
+   * );
+   * ```
    */
-  export function error(transform: OnErrorHook) {
-    return hook("error", transform);
+  export function error(transform: OnErrorHook): Plugin<InterceptorRegisterOptions> {
+    return plugin<InterceptorRegisterOptions>(async function errorPlugin(app, { filter }) {
+      async function handler(err: unknown, req: Request) {
+        if (filter && !(await filter(req))) throw err;
+        return transform(err, req);
+      }
+      addHook(app, "error", handler);
+    });
   }
 
   /**

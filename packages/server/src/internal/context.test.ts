@@ -1,12 +1,11 @@
-import { mockContext } from "../mock/context.js";
-import { context, safe } from "./context.js";
+import { mockContext } from "../mock/index.js";
+import { $context as context, safe } from "./context.js";
 
 describe("Context", () => {
   describe("getContext", () => {
     test("should be same request", () => {
-      mockContext((req, res) => {
+      mockContext((req) => {
         expect(context().req).toBe(req);
-        expect(context().reply).toBe(res);
       });
     });
   });
@@ -15,7 +14,7 @@ describe("Context", () => {
       mockContext(() => {
         expect(context()).not.toBeNull();
         const data = safe((name: string) => {
-          expect(context).toThrow("Unable to access the context beyond the request scope.");
+          expect(context).toThrow("context() was called outside of a request scope");
           return "i am clean, " + name;
         });
         expect(data("Adil")).toBe("i am clean, Adil");

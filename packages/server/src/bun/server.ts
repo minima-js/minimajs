@@ -84,7 +84,7 @@ export class Server implements App<BunServer<unknown>> {
       method,
       fullPath,
       () => {}, // Dummy handler for the router
-      { handler, server: this } // Store our handler in the store
+      { handler, server: this, path: fullPath } // Store our handler and path in the store
     );
     return this;
   }
@@ -116,6 +116,11 @@ export class Server implements App<BunServer<unknown>> {
     await this.avvio.ready();
 
     return handleRequest(this, this.router, req);
+  }
+
+  // Lifecycle
+  async ready(): Promise<void> {
+    await this.avvio.ready();
   }
 
   // Server lifecycle

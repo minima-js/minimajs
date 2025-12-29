@@ -23,7 +23,7 @@ describe("HTTP Integration Tests", () => {
         },
         {
           method: "POST",
-          payload: createTestUser(),
+          body: createTestUser(),
           headers: testFixtures.headers.auth,
         }
       );
@@ -59,7 +59,7 @@ describe("HTTP Integration Tests", () => {
         }
       );
 
-      expect(response.statusCode).toBe(200);
+      expect(response.status).toBe(200);
       expect((response.body as any).pagination).toEqual({
         page: 1,
         limit: 10,
@@ -99,7 +99,7 @@ describe("HTTP Integration Tests", () => {
         },
         {
           method: "POST",
-          payload: {},
+          body: {},
         }
       );
 
@@ -167,7 +167,7 @@ describe("HTTP Integration Tests", () => {
         },
         {
           method: "POST",
-          payload: {
+          body: {
             title: "New Post",
             content: "Post content",
           },
@@ -188,7 +188,7 @@ describe("HTTP Integration Tests", () => {
         return { format: "json", data: [1, 2, 3] };
       });
 
-      expect(response.headers["content-type"]).toContain("application/json");
+      expect(response.headers.get("content-type")).toContain("application/json");
       expect(response.body).toEqual({ format: "json", data: [1, 2, 3] });
     });
 

@@ -10,6 +10,7 @@ export type RouteHandler = (req: Request) => unknown;
 export interface Route extends FindResult<HTTPVersion.V1> {
   store: {
     handler: RouteHandler;
+    path: string;
   };
 }
 
@@ -48,6 +49,8 @@ export interface App<T = unknown> {
   register<T extends PluginOptions>(plugin: Plugin<T>, opts?: T): this;
 
   inject(request: Request | string): Promise<Response>;
+
+  ready(): Promise<void>;
 
   close(): Promise<void>;
 }

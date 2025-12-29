@@ -1,4 +1,5 @@
-import { abort, createApp, request, searchParams } from "./index.js";
+import { abort, context, searchParams } from "./index.js";
+import { createApp } from "./bun/index.js";
 import { interceptor, type Interceptor } from "./interceptor.js";
 import type { App } from "./interfaces/app.js";
 import { jest } from "@jest/globals";
@@ -19,11 +20,13 @@ describe("middleware", () => {
       })
     );
     app.get("/", () => "welcome home");
-    const response = await app.inject({ url: "/" });
-    expect(response.body).toBe("welcome home");
+    const response = await app.inject("/");
+    const body = await response.text();
+    expect(body).toBe("welcome home");
     expect(hello).not.toHaveBeenCalled();
-    const response2 = await app.inject({ url: "/hello" });
-    expect(response2.body).toBe("hello");
+    const response2 = await app.inject("/hello");
+    const body2 = await response2.text();
+    expect(body2).toBe("hello");
     expect(hello).toHaveBeenCalled();
   });
 
@@ -42,11 +45,13 @@ describe("middleware", () => {
       )
     );
     app.get("/", () => "welcome home");
-    const response = await app.inject({ url: "/" });
-    expect(response.body).toBe("welcome home");
+    const response = await app.inject("/");
+    const body = await response.text();
+    expect(body).toBe("welcome home");
     expect(hello).not.toHaveBeenCalled();
-    const response2 = await app.inject({ url: "/hello" });
-    expect(response2.body).toBe("hello");
+    const response2 = await app.inject("/hello");
+    const body2 = await response2.text();
+    expect(body2).toBe("hello");
     expect(hello).toHaveBeenCalled();
   });
 
@@ -66,19 +71,21 @@ describe("middleware", () => {
       })
     );
     app.get("/", () => "welcome home");
-    const response = await app.inject({ url: "/" });
-    expect(response.body).toBe("welcome home");
+    const response = await app.inject("/");
+    const body = await response.text();
+    expect(body).toBe("welcome home");
     expect(hello).not.toHaveBeenCalled();
-    const response2 = await app.inject({ url: "/hello" });
-    expect(response2.body).toBe("hello");
+    const response2 = await app.inject("/hello");
+    const body2 = await response2.text();
+    expect(body2).toBe("hello");
     expect(hello).not.toHaveBeenCalled();
-    const response3 = await app.inject({ url: "/hello?name=Adil" });
+    const response3 = await app.inject("/hello?name=Adil");
     expect(response3.body).toBe("hello");
     expect(hello).toHaveBeenCalled();
   });
 
   test("should filter middleware function with non-async handler", async () => {
-    const hello = jest.fn<Interceptor>((_req, _res, done) => done());
+    const hello = jest.fn<Interceptor>();
     const filteredHello = interceptor.filter(hello, function doFilter() {
       return searchParams.get("name") === "Adil";
     });
@@ -90,13 +97,15 @@ describe("middleware", () => {
       })
     );
     app.get("/", () => "welcome home");
-    const response = await app.inject({ url: "/" });
-    expect(response.body).toBe("welcome home");
+    const response = await app.inject("/");
+    const body = await response.text();
+    expect(body).toBe("welcome home");
     expect(hello).not.toHaveBeenCalled();
-    const response2 = await app.inject({ url: "/hello" });
-    expect(response2.body).toBe("hello");
+    const response2 = await app.inject("/hello");
+    const body2 = await response2.text();
+    expect(body2).toBe("hello");
     expect(hello).not.toHaveBeenCalled();
-    const response3 = await app.inject({ url: "/hello?name=Adil" });
+    const response3 = await app.inject("/hello?name=Adil");
     expect(response3.body).toBe("hello");
     expect(hello).toHaveBeenCalled();
   });
@@ -120,7 +129,7 @@ describe("interceptor.response", () => {
       );
       app.get("/", () => ({ message: "hello world" }));
       await app.ready();
-      const res = await app.inject({ url: "/" });
+      const res = await app.inject("/");
       expect(res.body).toBe(
         JSON.stringify({
           decorated: true,
@@ -138,7 +147,7 @@ describe("interceptor.response", () => {
       );
       app.get("/", () => ({ message: "async test" }));
 
-      const res = await app.inject({ url: "/" });
+      const res = await app.inject("/");
       expect(res.body).toBe(
         JSON.stringify({
           decorated: true,
@@ -160,7 +169,7 @@ describe("interceptor.response", () => {
       );
       app.get("/", () => ({ value: "original" }));
 
-      const res = await app.inject({ url: "/" });
+      const res = await app.inject("/");
       expect(res.body).toBe(
         JSON.stringify({
           step2: true,
@@ -183,7 +192,7 @@ describe("interceptor.response", () => {
       app.register(interceptor.response((res) => ({ decorated: true, data: res })));
       app.register(helloModule);
 
-      const res = await app.inject({ url: "/hello" });
+      const res = await app.inject("/hello");
       expect(res.body).toBe(
         JSON.stringify({
           decorator: "level1",
@@ -208,7 +217,7 @@ describe("interceptor.response", () => {
       app.register(moduleWithDecorator);
       app.register(moduleWithoutDecorator);
 
-      const decorated = await app.inject({ url: "/decorated" });
+      const decorated = await app.inject("/decorated");
       expect(decorated.body).toBe(
         JSON.stringify({
           decorated: "YES",
@@ -216,7 +225,7 @@ describe("interceptor.response", () => {
         })
       );
 
-      const plain = await app.inject({ url: "/plain" });
+      const plain = await app.inject("/plain");
       expect(plain.body).toBe(JSON.stringify({ text: "should be plain" }));
     });
 
@@ -242,19 +251,19 @@ describe("interceptor.response", () => {
       app.register(moduleB);
       app.register(moduleC);
 
-      const a1 = await app.inject({ url: "/module-a/route1" });
+      const a1 = await app.inject("/module-a/route1");
       expect(a1.body).toBe(JSON.stringify({ source: "moduleA", data: { value: "A1" } }));
 
-      const a2 = await app.inject({ url: "/module-a/route2" });
+      const a2 = await app.inject("/module-a/route2");
       expect(a2.body).toBe(JSON.stringify({ source: "moduleA", data: { value: "A2" } }));
 
-      const b1 = await app.inject({ url: "/module-b/route1" });
+      const b1 = await app.inject("/module-b/route1");
       expect(b1.body).toBe(JSON.stringify({ source: "moduleB", data: { value: "B1" } }));
 
-      const b2 = await app.inject({ url: "/module-b/route2" });
+      const b2 = await app.inject("/module-b/route2");
       expect(b2.body).toBe(JSON.stringify({ source: "moduleB", data: { value: "B2" } }));
 
-      const c1 = await app.inject({ url: "/module-c/route1" });
+      const c1 = await app.inject("/module-c/route1");
       expect(c1.body).toBe(JSON.stringify({ source: "moduleC", data: { value: "C1" } }));
     });
 
@@ -267,7 +276,7 @@ describe("interceptor.response", () => {
       app.register(interceptor.response((res) => ({ app: true, data: res })));
       app.register(testModule);
 
-      const res = await app.inject({ url: "/test" });
+      const res = await app.inject("/test");
       expect(res.body).toBe(
         JSON.stringify({
           module: true,
@@ -288,20 +297,20 @@ describe("interceptor.use", () => {
   });
   afterEach(() => app.close());
   test("should call middleware function", async () => {
-    const hello = jest.fn().mockReturnValue(Promise.resolve());
+    const hello = jest.fn<() => Promise<void>>().mockReturnValue(Promise.resolve());
     app.register(interceptor.use(async () => hello()));
     app.get("/", () => {
       return "hello";
     });
-    await app.inject({ url: "/" });
+    await app.inject("/");
     expect(hello).toHaveBeenCalled();
   });
 
   test("should call middleware function on specific route", async () => {
-    const hello = jest.fn().mockReturnValue(Promise.resolve());
+    const hello = jest.fn<() => Promise<void>>().mockReturnValue(Promise.resolve());
     app.register(
       interceptor.use(async () => hello()),
-      { filter: () => request.route().url === "/hello" }
+      { filter: () => context().route?.store.path === "/hello" }
     );
     app.get("/", () => {
       return "home";
@@ -309,9 +318,9 @@ describe("interceptor.use", () => {
     app.get("/hello", () => {
       return "hello";
     });
-    await app.inject({ url: "/" });
+    await app.inject("/");
     expect(hello).not.toHaveBeenCalled();
-    await app.inject({ url: "/hello" });
+    await app.inject("/hello");
     expect(hello).toHaveBeenCalled();
   });
 });
@@ -334,8 +343,8 @@ describe("interceptor.error", () => {
     );
     app.get("/", () => abort("Something went wrong"));
 
-    const res = await app.inject({ url: "/" });
-    expect(res.statusCode).toBe(200);
+    const res = await app.inject("/");
+    expect(res.status).toBe(200);
     expect(res.body).toBe(
       JSON.stringify({
         success: false,
@@ -358,7 +367,7 @@ describe("interceptor.error", () => {
     );
     app.get("/", () => abort("Error message"));
 
-    const res = await app.inject({ url: "/" });
+    const res = await app.inject("/");
     expect(res.body).toBe(
       JSON.stringify({
         step2: true,
@@ -391,10 +400,10 @@ describe("interceptor.error", () => {
     app.register(moduleA);
     app.register(moduleB);
 
-    const a = await app.inject({ url: "/a" });
+    const a = await app.inject("/a");
     expect(a.body).toBe(JSON.stringify({ source: "moduleA", error: "A error" }));
 
-    const b = await app.inject({ url: "/b" });
+    const b = await app.inject("/b");
     expect(b.body).toBe(JSON.stringify({ source: "moduleB", error: "B error" }));
   });
 
@@ -412,7 +421,7 @@ describe("interceptor.error", () => {
     );
     app.register(testModule);
 
-    const res = await app.inject({ url: "/test" });
+    const res = await app.inject("/test");
     expect(res.body).toBe(
       JSON.stringify({
         module: true,
@@ -437,10 +446,10 @@ describe("interceptor.error", () => {
     app.get("/apply", () => abort("Apply error"));
     app.get("/skip", () => abort("Skip error"));
 
-    const apply = await app.inject({ url: "/apply" });
+    const apply = await app.inject("/apply");
     expect(apply.body).toBe(JSON.stringify({ filtered: true, error: "Apply error" }));
 
-    const skip = await app.inject({ url: "/skip" });
+    const skip = await app.inject("/skip");
     expect(skip.body).toBe(JSON.stringify({ message: "Skip error" }));
   });
 
@@ -457,8 +466,8 @@ describe("interceptor.error", () => {
 
     app.get("/", () => abort("Not found", 404));
 
-    const res = await app.inject({ url: "/" });
-    expect(res.statusCode).toBe(404);
+    const res = await app.inject("/");
+    expect(res.status).toBe(404);
     expect(res.body).toBe(JSON.stringify({ custom: true, message: "Not found" }));
   });
 });

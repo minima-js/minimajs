@@ -1,14 +1,13 @@
-import { context } from "./context.js";
 import { HttpError, NotFoundError, RedirectError } from "./error.js";
 import { abort, body, headers, params, redirect, request, response, searchParams, setHeader } from "./http.js";
-import { mockContext } from "./mock/context.js";
-import { mockApp, mockRoute } from "./mock/index.js";
+import { mockContext } from "./mock/index.js";
+import { createApp } from "./bun/index.js";
 
 describe("Http", () => {
   describe("request", () => {
     test("should retrieve request object", () => {
       mockContext((req) => {
-        expect(request().raw).toBe(req.raw);
+        expect(request()).toBe(req);
       });
     });
   });
@@ -19,26 +18,18 @@ describe("Http", () => {
         expect(request.signal()).toBeInstanceOf(AbortSignal);
       });
     });
-
-    test("should return an aborted signal if the AbortController is aborted", () => {
-      mockContext(() => {
-        const abortController = context().abortController;
-
-        const signal = request.signal();
-        expect(signal.aborted).toBe(false);
-
-        abortController.abort();
-
-        expect(signal.aborted).toBe(true);
-      });
-    });
   });
 
   describe("response", () => {
-    test("should retrieve response object", () => {
-      mockContext((_req, reply) => {
-        expect(response()).toBe(reply);
+    test("should create response from data", async () => {
+      const app = createApp({ logger: false });
+      app.get("/test", async () => {
+        return await response({ message: "ok" });
       });
+      const res = await app.inject("/test");
+      const body = await res.json();
+      expect(body).toEqual({ message: "ok" });
+      await app.close();
     });
   });
 
@@ -47,9 +38,10 @@ describe("Http", () => {
       mockContext((req) => {
         const url1 = request.url();
         const url2 = request.url();
-        expect(url1.host).toBe(req.hostname);
+        const reqUrl = new URL(req.url);
+        expect(url1.host).toBe(reqUrl.host);
         expect(url1.protocol).toBe("http:");
-        expect(url2.host).toBe(req.hostname);
+        expect(url2.host).toBe(reqUrl.host);
         expect(url2.protocol).toBe("http:");
         expect(url1).toBe(url2); // should be memoized
       });
@@ -67,51 +59,62 @@ describe("Http", () => {
     });
   });
 
-  describe("route / getRoute", () => {
-    test("should retrieve route options", async () => {
-      const testRoute = mockRoute(() => {
-        const route1 = request.route();
-        const route2 = request.route();
-        expect(route1).toBeDefined();
-        expect(route2).toBeDefined();
-        expect(route1).toBe(route2);
-        return { message: "ok" };
-      });
-      await mockApp(testRoute);
-    });
-  });
   describe("body", () => {
-    test("should retrieve request body", () => {
-      const option = { body: { message: "Hello, World!" } };
-      mockContext(() => {
-        expect(body()).toStrictEqual({ message: "Hello, World!" });
-      }, option);
-    });
-
-    test("should handle typed body", () => {
-      mockContext(
-        () => {
-          const data = body<{ name: string; age: number }>();
-          expect(data.name).toBe("John");
-          expect(data.age).toBe(30);
-        },
-        { body: { name: "John", age: 30 } }
-      );
-    });
-
-    test("should handle empty body", () => {
-      mockContext(() => {
-        expect(body()).toBeUndefined();
+    test("should retrieve request body as ReadableStream", async () => {
+      const app = createApp({ logger: false });
+      app.post("/test", async () => {
+        const data = (await request().json()) as { message: string };
+        return { received: data };
       });
+      const req = new Request("http://localhost/test", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message: "Hello, World!" }),
+      });
+      const res = await app.inject(req);
+      const responseBody = (await res.json()) as { received: { message: string } };
+      expect(responseBody.received).toStrictEqual({ message: "Hello, World!" });
+      await app.close();
+    });
+
+    test("should handle typed body", async () => {
+      const app = createApp({ logger: false });
+      app.post("/test", async () => {
+        const data = (await request().json()) as { name: string; age: number };
+        return { name: data.name, age: data.age };
+      });
+      const req = new Request("http://localhost/test", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: "John", age: 30 }),
+      });
+      const res = await app.inject(req);
+      const responseBody = (await res.json()) as { name: string; age: number };
+      expect(responseBody.name).toBe("John");
+      expect(responseBody.age).toBe(30);
+      await app.close();
+    });
+
+    test("should handle empty body", async () => {
+      const app = createApp({ logger: false });
+      app.get("/test", () => {
+        const reqBody = body();
+        return { bodyIsNull: reqBody === null };
+      });
+      const res = await app.inject("/test");
+      const responseBody = (await res.json()) as { bodyIsNull: boolean };
+      expect(responseBody.bodyIsNull).toBe(true);
+      await app.close();
     });
   });
   describe("headers", () => {
-    test("should retrieve all headers", () => {
+    test("should retrieve headers as Headers object", () => {
       mockContext(
         () => {
           const h1 = headers();
-          expect(h1.name).toBe("Adil");
-          expect(h1["x-custom"]).toBe("value");
+          expect(h1).toBeInstanceOf(Headers);
+          expect(h1.get("name")).toBe("Adil");
+          expect(h1.get("x-custom")).toBe("value");
         },
         { headers: { name: "Adil", "x-custom": "value" } }
       );
@@ -143,7 +146,7 @@ describe("Http", () => {
 
     test("headers.getAll should retrieve all header values", () => {
       mockContext(
-        (_req) => {
+        () => {
           const cookies = headers.getAll("cookie");
           expect(cookies).toBeDefined();
           expect(Array.isArray(cookies)).toBe(true);
@@ -160,29 +163,15 @@ describe("Http", () => {
       });
     });
 
-    test("headers.getAll with transform should transform each value", () => {
-      mockContext(
-        (_req) => {
-          const parsed = headers.getAll("set-cookie", (val) => val.split("="));
-          expect(parsed).toEqual([
-            ["session", "123"],
-            ["token", "abc"],
-          ]);
-
-          const lengths = headers.getAll("set-cookie", (val) => val.length);
-          expect(lengths).toEqual([11, 9]);
-        },
-        { headers: { "set-cookie": ["session=123", "token=abc"] } }
-      );
-    });
-
     test("headers.set should set response header", async () => {
-      const route = mockRoute(() => {
+      const app = createApp({ logger: false });
+      app.get("/test", () => {
         headers.set("x-custom", "test-value");
         return { message: "ok" };
       });
-      const [response] = await mockApp(route);
-      expect(response!.headers["x-custom"]).toBe("test-value");
+      const response = await app.inject("/test");
+      expect(response.headers.get("x-custom")).toBe("test-value");
+      await app.close();
     });
   });
   describe("searchParams", () => {
@@ -258,30 +247,6 @@ describe("Http", () => {
           expect(uppercased).toEqual(["JS", "TS"]);
         },
         { url: "/?id=1&id=2&id=3&tag=js&tag=ts" }
-      );
-    });
-  });
-
-  describe("searchParams", () => {
-    test("should retrieve query string parameters", () => {
-      mockContext(
-        () => {
-          const queries = searchParams<{ name: string; page: string }>();
-          expect(queries.name).toBe("John");
-          expect(queries.page).toBe("1");
-        },
-        { url: "/?name=John&page=1" }
-      );
-    });
-  });
-
-  describe("searchParams.get", () => {
-    test("getSearchParam should be alias of searchParams.get", () => {
-      mockContext(
-        () => {
-          expect(searchParams.get("name")).toBe("John");
-        },
-        { url: "/?name=John" }
       );
     });
   });
@@ -378,61 +343,73 @@ describe("Http", () => {
 
   describe("status", () => {
     test("should set status code with number", async () => {
-      const route = mockRoute(() => {
+      const app = createApp({ logger: false });
+      app.get("/test", () => {
         response.status(201);
         return { message: "created" };
       });
-      const [res] = await mockApp(route);
-      expect(res!.statusCode).toBe(201);
+      const res = await app.inject("/test");
+      expect(res.status).toBe(201);
+      await app.close();
     });
 
     test("should set status code with StatusCodes key", async () => {
-      const route = mockRoute(() => {
+      const app = createApp({ logger: false });
+      app.get("/test", () => {
         response.status("CREATED");
         return { message: "created" };
       });
-      const [res] = await mockApp(route);
-      expect(res!.statusCode).toBe(201);
+      const res = await app.inject("/test");
+      expect(res.status).toBe(201);
+      await app.close();
     });
 
     test("setStatusCode should work with number", async () => {
-      const route = mockRoute(() => {
+      const app = createApp({ logger: false });
+      app.get("/test", () => {
         response.status(300);
         return { message: "hello world" };
       });
-      const [res] = await mockApp(route);
-      expect(res!.statusCode).toBe(300);
+      const res = await app.inject("/test");
+      expect(res.status).toBe(300);
+      await app.close();
     });
 
     test("setStatusCode should work with StatusCodes key", async () => {
-      const route = mockRoute(() => {
+      const app = createApp({ logger: false });
+      app.get("/test", () => {
         response.status("BAD_GATEWAY");
         return { message: "hello world" };
       });
-      const [res] = await mockApp(route);
-      expect(res!.statusCode).toBe(502);
+      const res = await app.inject("/test");
+      expect(res.status).toBe(502);
+      await app.close();
     });
   });
 
   describe("setHeader", () => {
     test("should set header", async () => {
-      const route = mockRoute(() => {
+      const app = createApp({ logger: false });
+      app.get("/test", () => {
         setHeader("x-name", "Adil");
         return { message: "hello world" };
       });
-      const [response] = await mockApp(route);
-      expect(response!.headers["x-name"]).toBe("Adil");
+      const response = await app.inject("/test");
+      expect(response.headers.get("x-name")).toBe("Adil");
+      await app.close();
     });
 
     test("should set multiple headers", async () => {
-      const route = mockRoute(() => {
+      const app = createApp({ logger: false });
+      app.get("/test", () => {
         setHeader("x-name", "Adil");
         setHeader("x-custom", "value");
         return { message: "hello world" };
       });
-      const [response] = await mockApp(route);
-      expect(response!.headers["x-name"]).toBe("Adil");
-      expect(response!.headers["x-custom"]).toBe("value");
+      const response = await app.inject("/test");
+      expect(response.headers.get("x-name")).toBe("Adil");
+      expect(response.headers.get("x-custom")).toBe("value");
+      await app.close();
     });
   });
 

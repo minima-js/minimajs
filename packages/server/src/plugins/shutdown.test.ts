@@ -1,7 +1,7 @@
 import type { FastifyBaseLogger as Logger } from "fastify";
 import { shutdownListener, type QuitHandler } from "./shutdown.js";
-import type { Signals } from "../types.js";
 import { jest } from "@jest/globals";
+import type { Signals } from "../interfaces/index.js";
 
 describe("shutdownListener", () => {
   let quitHandler: QuitHandler;
@@ -34,7 +34,7 @@ describe("shutdownListener", () => {
   });
 
   it("should set up listeners for each kill signal", () => {
-    shutdownListener(quitHandler, killSignal, timeout, mockLogger, mockProcess);
+    shutdownListener(quitHandler, killSignal, timeout, mockProcess);
     expect(mockProcess.on).toHaveBeenCalledTimes(killSignal.length);
     killSignal.forEach((signal) => {
       expect(mockProcess.on).toHaveBeenCalledWith(signal, expect.any(Function));
@@ -42,7 +42,7 @@ describe("shutdownListener", () => {
   });
 
   it("should call quitHandler and log information when signal is received", async () => {
-    shutdownListener(quitHandler, killSignal, timeout, mockLogger, mockProcess);
+    shutdownListener(quitHandler, killSignal, timeout, mockProcess);
     const quit = (mockProcess.on as any).mock.calls[0][1]; // Get the quit function from the first signal listener
 
     await quit("SIGINT");
@@ -54,7 +54,7 @@ describe("shutdownListener", () => {
   });
 
   it("should kill the process after quitHandler is called", async () => {
-    shutdownListener(quitHandler, killSignal, timeout, mockLogger, mockProcess);
+    shutdownListener(quitHandler, killSignal, timeout, mockProcess);
     const quit = (mockProcess.on as any).mock.calls[0][1]; // Get the quit function from the first signal listener
 
     await quit("SIGINT");
@@ -64,7 +64,7 @@ describe("shutdownListener", () => {
 
   it("should not kill the process if listeners still exist", async () => {
     (mockProcess.listeners as any).mockReturnValue([jest.fn()]);
-    shutdownListener(quitHandler, killSignal, timeout, mockLogger, mockProcess);
+    shutdownListener(quitHandler, killSignal, timeout, mockProcess);
     const quit = (mockProcess.on as any).mock.calls[0][1]; // Get the quit function from the first signal listener
 
     await quit("SIGINT");
@@ -73,7 +73,7 @@ describe("shutdownListener", () => {
   });
 
   it("should prevent duplicate shutdown attempts", async () => {
-    shutdownListener(quitHandler, killSignal, timeout, mockLogger, mockProcess);
+    shutdownListener(quitHandler, killSignal, timeout, mockProcess);
     const quit = (mockProcess.on as any).mock.calls[0][1];
 
     // Start first shutdown
@@ -90,7 +90,7 @@ describe("shutdownListener", () => {
 
   it("should force exit after timeout if shutdown hangs", async () => {
     const hangingQuitHandler = jest.fn(() => new Promise<void>(() => {})); // Never resolves
-    shutdownListener(hangingQuitHandler, killSignal, timeout, mockLogger, mockProcess);
+    shutdownListener(hangingQuitHandler, killSignal, timeout, mockProcess);
     const quit = (mockProcess.on as any).mock.calls[0][1];
 
     // Start shutdown
@@ -105,7 +105,7 @@ describe("shutdownListener", () => {
 
   it("should clear timeout if shutdown completes successfully", async () => {
     const clearTimeoutSpy = jest.spyOn(global, "clearTimeout");
-    shutdownListener(quitHandler, killSignal, timeout, mockLogger, mockProcess);
+    shutdownListener(quitHandler, killSignal, timeout, mockProcess);
     const quit = (mockProcess.on as any).mock.calls[0][1];
 
     await quit("SIGINT");
