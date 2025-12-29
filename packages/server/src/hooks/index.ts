@@ -14,6 +14,7 @@ import type {
 } from "../interfaces/hooks.js";
 import type { Plugin } from "../interfaces/plugin.js";
 import { plugin } from "../internal/plugins.js";
+import { factory } from "./factory.js";
 import { addHook } from "./store.js";
 
 // ============================================================================
@@ -35,8 +36,8 @@ export function hook(name: "listen", callback: OnListenHook): Plugin;
 export function hook(name: "ready", callback: OnReadyHook): Plugin;
 export function hook(name: "register", callback: OnRegisterHook): Plugin;
 export function hook(name: LifecycleHook, callback: GenericHookCallback): Plugin {
-  return plugin(function hookPlugin(app) {
-    addHook(app, name, callback);
+  return factory(function hookPlugin(hooks) {
+    hooks[name].add(callback);
   });
 }
 

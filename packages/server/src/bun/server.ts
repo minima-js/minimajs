@@ -5,7 +5,7 @@ import type { Logger } from "pino";
 import type { App, RouteHandler, RouteOptions } from "../interfaces/app.js";
 import type { Plugin, PluginOptions } from "../interfaces/plugin.js";
 import { pluginOverride } from "../internal/override.js";
-import { kPluginName, kHooks } from "../symbols.js";
+import { kPluginName, kHooks, kHookFactory } from "../symbols.js";
 import { createHooksStore } from "../hooks/store.js";
 import { runHooks } from "../hooks/store.js";
 import { serialize, errorHandler } from "../internal/default-handler.js";
@@ -91,6 +91,10 @@ export class Server implements App<BunServer<unknown>> {
 
   // Plugin system
   register<T extends PluginOptions>(plugin: Plugin<T>, opts: T = {} as T): this {
+    if (kHookFactory in plugin) {
+      plugin(this, opts);
+      return this;
+    }
     this.avvio.use(async (instance) => {
       const resolvedName = opts.name ?? plugin[kPluginName] ?? plugin.name;
       const finalOpts = { ...opts, name: resolvedName } as T;
@@ -106,7 +110,9 @@ export class Server implements App<BunServer<unknown>> {
 
     if (typeof request === "string") {
       // If it's a string, create a GET request
-      const url = request.startsWith("http") ? request : `http://localhost${request.startsWith("/") ? "" : "/"}${request}`;
+      const url = request.startsWith("http")
+        ? request
+        : `http://localhost${request.startsWith("/") ? "" : "/"}${request}`;
       req = new Request(url);
     } else {
       req = request;

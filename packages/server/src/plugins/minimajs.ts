@@ -1,4 +1,3 @@
-import { plugin } from "../internal/plugins.js";
 import { hook, type OnErrorSentHook } from "../hooks/index.js";
 import { createContext } from "../context.js";
 
@@ -76,16 +75,16 @@ export function onError(cb: ErrorCallback) {
  * ```
  */
 export function minimajs() {
-  return plugin.compose(
-    hook("sent", async () => {
+  return hook.define({
+    async sent() {
       for (const cb of getDeferredCallbacks()) {
         await cb();
       }
-    }),
-    hook("errorSent", async (err, req) => {
+    },
+    async errorSent(err, req) {
       for (const cb of getErrorCallbacks()) {
         await cb(err, req);
       }
-    })
-  );
+    },
+  });
 }
