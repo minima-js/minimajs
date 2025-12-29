@@ -1,5 +1,5 @@
 import type { App } from "./app.js";
-import type { kHookFactory, kPluginName, kSkipOverride } from "../symbols.js";
+import type { kPluginSync, kPluginName, kPluginSkipOverride } from "../symbols.js";
 
 export interface PluginOptions {
   prefix?: string;
@@ -10,8 +10,8 @@ export interface PluginOptions {
 export interface Plugin<T extends PluginOptions = PluginOptions> {
   (app: App, opts: T): void | Promise<void>;
   [kPluginName]?: string;
-  [kSkipOverride]?: boolean;
-  [kHookFactory]?: boolean;
+  [kPluginSkipOverride]?: boolean;
+  [kPluginSync]?: boolean;
 }
 
 export interface PluginMeta {

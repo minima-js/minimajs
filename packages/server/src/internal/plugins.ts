@@ -1,5 +1,6 @@
-import { kSkipOverride } from "../symbols.js";
+import { kPluginSkipOverride, kPluginSync } from "../symbols.js";
 import type { Plugin, PluginMeta, PluginOptions } from "../interfaces/plugin.js";
+import type { App } from "../interfaces/app.js";
 // Plugin symbols
 /**
  * Helper to set plugin name for debugging
@@ -13,7 +14,7 @@ function setName<T extends Function>(fn: T, name: string): T {
  * Helper to mark plugin as allowing override
  */
 function allowOverride<T extends Function>(fn: T): T {
-  (fn as any)[kSkipOverride] = true;
+  (fn as any)[kPluginSkipOverride] = true;
   return fn;
 }
 
@@ -56,5 +57,10 @@ export namespace plugin {
         await plg(app, opts);
       }
     }, composedName);
+  }
+
+  export function sync(synced: (app: App) => void) {
+    (synced as any)[kPluginSync] = true;
+    return synced;
   }
 }

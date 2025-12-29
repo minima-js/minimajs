@@ -5,7 +5,7 @@ import type { Logger } from "pino";
 import type { App, RouteHandler, RouteOptions } from "../interfaces/app.js";
 import type { Plugin, PluginOptions } from "../interfaces/plugin.js";
 import { pluginOverride } from "../internal/override.js";
-import { kPluginName, kHooks, kHookFactory } from "../symbols.js";
+import { kPluginName, kHooks, kPluginSync } from "../symbols.js";
 import { createHooksStore } from "../hooks/store.js";
 import { runHooks } from "../hooks/store.js";
 import { serialize, errorHandler } from "../internal/default-handler.js";
@@ -91,7 +91,7 @@ export class Server implements App<BunServer<unknown>> {
 
   // Plugin system
   register<T extends PluginOptions>(plugin: Plugin<T>, opts: T = {} as T): this {
-    if (kHookFactory in plugin) {
+    if (kPluginSync in plugin) {
       plugin(this, opts);
       return this;
     }

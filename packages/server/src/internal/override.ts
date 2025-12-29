@@ -1,5 +1,5 @@
 import { type App, type Container } from "../interfaces/app.js";
-import { kSkipOverride } from "../symbols.js";
+import { kPluginSkipOverride } from "../symbols.js";
 
 /**
  * Checks if a value has a clone method
@@ -24,7 +24,7 @@ function cloneContainer(container: Container): Container {
 }
 
 export function pluginOverride(app: App, fn: any) {
-  if (fn[kSkipOverride]) return app;
+  if (fn[kPluginSkipOverride]) return app;
   return Object.create(app, {
     container: {
       value: cloneContainer(app.container),
