@@ -23,11 +23,18 @@ function cloneContainer(container: Container): Container {
   return newContainer;
 }
 
-export function pluginOverride(app: App, fn: any) {
+export function pluginOverride(app: App, fn: any, options: any) {
   if (fn[kPluginSkipOverride]) return app;
+  const { $prefix: parentPrefix = "", $prefixExclude: parentExclude = [] } = app as any;
   return Object.create(app, {
     container: {
       value: cloneContainer(app.container),
+    },
+    $prefix: {
+      value: options.prefix ? parentPrefix + options.prefix : parentPrefix,
+    },
+    $prefixExclude: {
+      value: [...parentExclude],
     },
   });
 }

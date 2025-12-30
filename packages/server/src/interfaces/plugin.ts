@@ -1,17 +1,38 @@
 import type { App } from "./app.js";
 import type { kPluginSync, kPluginName, kPluginSkipOverride } from "../symbols.js";
 
-export interface PluginOptions {
+// Options for register callbacks with prefix support
+export type PluginCallback<T extends PluginOptions> = (app: App, opts: T) => void | Promise<void>;
+
+export type RegisterOptions<T = {}> = T & {
   prefix?: string;
   name?: string;
-  [key: string]: any;
-}
+};
+// Options for register callbacks with prefix support
+export type PluginOptions<T = {}> = T & {
+  name?: string;
+};
 
+// Alias for backward compatibility
+
+// Plugin function (created with plugin wrapper, no prefix in user opts)
 export interface Plugin<T extends PluginOptions = PluginOptions> {
   (app: App, opts: T): void | Promise<void>;
   [kPluginName]?: string;
-  [kPluginSkipOverride]?: boolean;
-  [kPluginSync]?: boolean;
+  [kPluginSkipOverride]: true; // Wrapped plugins skip override
+}
+
+// Plugin function (created with plugin wrapper, no prefix in user opts)
+export interface PluginSync<T = any> {
+  (app: App, opts: T): void;
+  [kPluginName]?: string;
+  [kPluginSync]: true;
+}
+
+// Register callback (plain function, prefix allowed in register options)
+export interface Register<T extends RegisterOptions = RegisterOptions> {
+  (app: App, opts: T): void | Promise<void>;
+  [kPluginName]?: string;
 }
 
 export interface PluginMeta {

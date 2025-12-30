@@ -1,27 +1,18 @@
 import type { OnErrorHook, OnRequestHook, OnTransformHook } from "./interfaces/hooks.js";
 import type { App } from "./interfaces/app.js";
-import type { Plugin, PluginOptions } from "./interfaces/plugin.js";
-import { plugin, setOption } from "./internal/plugins.js";
+import type { Plugin, RegisterOptions, Register } from "./interfaces/plugin.js";
+import { plugin } from "./internal/plugins.js";
 import { addHook, hook } from "./hooks/index.js";
 import type { InterceptorFilter, InterceptorRegisterOptions } from "./utils/decorators/helpers.js";
 
-export type PluginCallback<T extends PluginOptions> = Plugin<T> | Promise<{ default: Plugin<T> }>;
+export type PluginCallback<T extends RegisterOptions> =
+  | Plugin<T>
+  | Register<T>
+  | Promise<{ default: Plugin<T> | Register<T> }>;
 
 export type Interceptor = OnRequestHook;
 
 export type { InterceptorRegisterOptions, InterceptorFilter };
-
-async function toCallback<T extends PluginOptions = {}>(callback: PluginCallback<T>): Promise<Plugin<T>> {
-  if (callback instanceof Promise) {
-    const resolved = await callback;
-    return resolved.default;
-  }
-  return callback;
-}
-
-function getModuleName(callback: PluginCallback<any>, opt: InterceptorOption) {
-  return opt.name ?? (callback as any).name;
-}
 
 export interface InterceptorOption {
   name?: string;
@@ -42,22 +33,15 @@ export interface InterceptorOption {
  * ```
  * @since v0.1.0
  */
-export function interceptor<T extends PluginOptions = {}>(
-  handlers: Interceptor[],
-  callback: PluginCallback<T>,
-  opt: InterceptorOption = {}
-) {
-  async function module(app: App, appOpt: PluginOptions & T) {
+export function interceptor<T extends RegisterOptions = {}>(handlers: Interceptor[], callback: Register<T>) {
+  async function module(app: App, appOpt: T) {
     callback = callback as Plugin<T>;
     for (const handler of handlers) {
       app.register(hook("request", handler));
     }
-    callback = await toCallback(callback);
     return callback(app, appOpt);
   }
-  setOption(module as Plugin, {
-    name: getModuleName(callback, opt),
-  });
+
   return module;
 }
 

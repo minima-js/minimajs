@@ -2,15 +2,17 @@ import { type Server as BunServer } from "bun";
 import Router, { type HTTPVersion } from "find-my-way";
 import avvio, { type Avvio } from "avvio";
 import type { Logger } from "pino";
-import type { App, RouteHandler, RouteOptions } from "../interfaces/app.js";
-import type { Plugin, PluginOptions } from "../interfaces/plugin.js";
+import type { App, RouteHandler, RouteOptions, RouteMetaDescriptor, PrefixOptions } from "../interfaces/app.js";
+import type { Plugin, PluginOptions, PluginSync, Register, RegisterOptions } from "../interfaces/plugin.js";
 import { pluginOverride } from "../internal/override.js";
-import { kPluginName, kHooks, kPluginSync } from "../symbols.js";
+import { createRouteMetadata, applyRoutePrefix } from "../internal/route.js";
+import { kHooks } from "../symbols.js";
 import { createHooksStore } from "../hooks/store.js";
 import { runHooks } from "../hooks/store.js";
 import { serialize, errorHandler } from "../internal/default-handler.js";
 import { handleRequest } from "../internal/handler.js";
 import type { ErrorHandler, Serializer } from "../interfaces/response.js";
+import { plugin as p } from "../internal/plugins.js";
 
 export interface BunServerOptions {
   prefix?: string;
@@ -20,7 +22,8 @@ export class Server implements App<BunServer<unknown>> {
   server?: BunServer<unknown>;
   readonly router: Router.Instance<HTTPVersion.V1>;
   readonly container = new Map();
-  private prefix: string;
+  $prefix: string;
+  $prefixExclude: string[];
   private avvio: Avvio<App>;
 
   public log: Logger;
@@ -30,7 +33,8 @@ export class Server implements App<BunServer<unknown>> {
 
   constructor(logger: Logger, opts: BunServerOptions = {}) {
     this.log = logger;
-    this.prefix = opts.prefix || "";
+    this.$prefix = opts.prefix || "";
+    this.$prefixExclude = [];
     this.router = Router({ ignoreTrailingSlash: true });
 
     // Initialize hooks in container
@@ -43,61 +47,82 @@ export class Server implements App<BunServer<unknown>> {
   }
 
   // HTTP methods
-  get(path: string, handler: RouteHandler): this {
-    return this.route({ method: "GET", path }, handler);
+  get(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
+    return this.route({ method: "GET", path }, ...args);
   }
 
-  post(path: string, handler: RouteHandler): this {
-    return this.route({ method: "POST", path }, handler);
+  post(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
+    return this.route({ method: "POST", path }, ...args);
   }
 
-  put(path: string, handler: RouteHandler): this {
-    return this.route({ method: "PUT", path }, handler);
+  put(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
+    return this.route({ method: "PUT", path }, ...args);
   }
 
-  delete(path: string, handler: RouteHandler): this {
-    return this.route({ method: "DELETE", path }, handler);
+  delete(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
+    return this.route({ method: "DELETE", path }, ...args);
   }
 
-  patch(path: string, handler: RouteHandler): this {
-    return this.route({ method: "PATCH", path }, handler);
+  patch(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
+    return this.route({ method: "PATCH", path }, ...args);
   }
 
-  head(path: string, handler: RouteHandler): this {
-    return this.route({ method: "HEAD", path }, handler);
+  head(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
+    return this.route({ method: "HEAD", path }, ...args);
   }
 
-  options(path: string, handler: RouteHandler): this {
-    return this.route({ method: "OPTIONS", path }, handler);
+  options(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
+    return this.route({ method: "OPTIONS", path }, ...args);
   }
 
-  all(path: string, handler: RouteHandler): this {
+  all(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
     // Use wildcard '*' for all methods - find-my-way supports this
-    return this.route({ method: "*" as any, path }, handler);
+    return this.route({ method: "*" as any, path }, ...args);
   }
 
-  route(options: RouteOptions, handler: RouteHandler): this {
+  route(options: RouteOptions, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
     const { method, path } = options;
-    const fullPath = this.prefix + path;
+    const handler = args[args.length - 1] as RouteHandler;
+    const metadata = args.slice(0, -1) as RouteMetaDescriptor[];
+
+    const fullPath = applyRoutePrefix(path, this.$prefix, this.$prefixExclude);
+    const routeContainer = createRouteMetadata(metadata, this);
+
     // find-my-way supports '*' wildcard for all HTTP methods
     this.router.on(
       method,
       fullPath,
-      () => {}, // Dummy handler for the router
-      { handler, server: this, path: fullPath } // Store our handler and path in the store
+      () => {}, // Dummy handler - actual handler is in store
+      {
+        handler,
+        server: this,
+        path: fullPath,
+        metadata: routeContainer,
+      }
     );
     return this;
   }
 
-  // Plugin system
-  register<T extends PluginOptions>(plugin: Plugin<T>, opts: T = {} as T): this {
-    if (kPluginSync in plugin) {
+  prefix(prefix: string, options: PrefixOptions = {}): this {
+    this.$prefix = prefix;
+    if (options.exclude) {
+      this.$prefixExclude = options.exclude;
+    }
+    return this;
+  }
+
+  // Plugin system - overloaded implementations
+  register<T>(plugin: Plugin<PluginOptions<T>>, opts?: T): this;
+  register<T>(plugin: PluginSync<T>, opts?: any): this;
+  register<T>(plugin: Register<RegisterOptions<T>>, opts?: T): this;
+  register(plugin: Plugin | PluginSync | Register, opts?: any): this {
+    if (p.isSync(plugin)) {
       plugin(this, opts);
       return this;
     }
     this.avvio.use(async (instance) => {
-      const resolvedName = opts.name ?? plugin[kPluginName] ?? plugin.name;
-      const finalOpts = { ...opts, name: resolvedName } as T;
+      const pluginName = p.getName(plugin, opts);
+      const finalOpts = opts ? { ...opts, name: pluginName } : { name: pluginName };
       await runHooks(instance, "register", plugin, finalOpts);
       await plugin(instance, finalOpts);
     });

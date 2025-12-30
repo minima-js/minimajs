@@ -5,7 +5,7 @@ import avvio, { type Avvio } from "avvio";
 import type { Logger } from "pino";
 import { Request } from "./request.js";
 import { Response } from "./response.js";
-import type { App } from "../interfaces/app.js";
+import type { App, RouteMetaDescriptor, RouteOptions } from "../interfaces/app.js";
 import type { RouteHandler } from "../interfaces/route.js";
 
 type HookName = "onRequest" | "preSerialization" | "onError" | "onSend" | "onReady" | "onClose";
@@ -39,47 +39,57 @@ export class MinimalServer implements App {
   }
 
   // HTTP methods
-  get(path: string, handler: RouteHandler): this {
-    return this.route("GET", path, handler);
+  get(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
+    return this.route({ method: "GET", path }, ...args);
   }
 
-  post(path: string, handler: RouteHandler): this {
-    return this.route("POST", path, handler);
+  post(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
+    return this.route({ method: "POST", path }, ...args);
   }
 
-  put(path: string, handler: RouteHandler): this {
-    return this.route("PUT", path, handler);
+  put(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
+    return this.route({ method: "PUT", path }, ...args);
   }
 
-  delete(path: string, handler: RouteHandler): this {
-    return this.route("DELETE", path, handler);
+  delete(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
+    return this.route({ method: "DELETE", path }, ...args);
   }
 
-  patch(path: string, handler: RouteHandler): this {
-    return this.route("PATCH", path, handler);
+  patch(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
+    return this.route({ method: "PATCH", path }, ...args);
   }
 
-  head(path: string, handler: RouteHandler): this {
-    return this.route("HEAD", path, handler);
+  head(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
+    return this.route({ method: "HEAD", path }, ...args);
   }
 
-  options(path: string, handler: RouteHandler): this {
-    return this.route("OPTIONS", path, handler);
+  options(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
+    return this.route({ method: "OPTIONS", path }, ...args);
   }
 
-  all(path: string, handler: RouteHandler): this {
+  all(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
     const methods = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
     for (const method of methods) {
-      this.route(method, path, handler);
+      this.route({ method: method as any, path }, ...args);
     }
     return this;
   }
 
-  private route(method: string, path: string, handler: RouteHandler): this {
-    this.router.on(method, path, async (req: Request, res: Response, params: Record<string, string>) => {
+  route(options: RouteOptions, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
+    const { method, path } = options;
+    const handler = args[args.length - 1] as RouteHandler;
+    const metadata = args.slice(0, -1) as RouteMetaDescriptor[];
+
+    // Store metadata in a container for this route
+    const routeContainer = new Map<symbol, unknown>();
+    for (const [symbol, value] of metadata) {
+      routeContainer.set(symbol, value);
+    }
+
+    this.router.on(method as any, path, async (req: Request, res: Response, params: Record<string, string>) => {
       req.params = params;
       req.routeOptions = {
-        method,
+        method: method as string,
         url: path,
         path,
         params: Object.keys(params),

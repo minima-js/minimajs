@@ -1,4 +1,4 @@
-import type { Plugin, PluginOptions } from "./plugin.js";
+import type { Plugin, RegisterOptions } from "./plugin.js";
 import type { ResponseBody } from "./response.js";
 
 // Constant array of all lifecycle hooks - single source of truth
@@ -30,7 +30,7 @@ export type OnTimeoutHook = (req: Request) => void | Promise<void>;
 export type OnCloseHook = () => void | Promise<void>;
 export type OnListenHook = (address: { host: string; port: number }) => void | Promise<void>;
 export type OnReadyHook = () => void | Promise<void>;
-export type OnRegisterHook = (plugin: Plugin, opts: PluginOptions) => void | Promise<void>;
+export type OnRegisterHook = (plugin: Plugin, opts: RegisterOptions) => void | Promise<void>;
 
 // Generic hook callback type
 export type GenericHookCallback = (...args: any[]) => any | Promise<any>;

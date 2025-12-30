@@ -1,39 +1,40 @@
-import { kPluginSkipOverride, kPluginSync } from "../symbols.js";
-import type { Plugin, PluginMeta, PluginOptions } from "../interfaces/plugin.js";
+import { kPluginName, kPluginSkipOverride, kPluginSync } from "../symbols.js";
+import type { Plugin, PluginCallback, PluginMeta, PluginOptions, PluginSync, Register } from "../interfaces/plugin.js";
 import type { App } from "../interfaces/app.js";
 // Plugin symbols
 /**
  * Helper to set plugin name for debugging
  */
-function setName<T extends Function>(fn: T, name: string): T {
-  Object.defineProperty(fn, "name", { value: name, configurable: true });
-  return fn;
-}
 
 /**
- * Helper to mark plugin as allowing override
+ * Helper to mark plugin as skipping override (wrapped plugins)
  */
-function allowOverride<T extends Function>(fn: T): T {
+function skipOverride(fn: any) {
   (fn as any)[kPluginSkipOverride] = true;
-  return fn;
+}
+
+export function setName(fn: any, name: string) {
+  fn[kPluginName] = name;
 }
 
 /**
- * Wraps a plugin function (optional, mainly for consistency)
+ * Wraps a plain function into a Plugin with automatic kPluginSkipOverride
+ * This prevents the plugin from being encapsulated and allows direct registration
  */
-export function plugin<T extends PluginOptions>(fn: Plugin<T>, name?: string): Plugin<T> {
-  const wrapped = name ? setName(fn, name) : fn;
-  return allowOverride(wrapped);
+export function plugin<T extends PluginOptions>(fn: PluginCallback<T>, name?: string): Plugin<T> {
+  setMeta(fn, { name, skipOverride: true });
+  return fn as Plugin<T>;
 }
 
-export function setOption(fn: Plugin, { name, skipOverride }: PluginMeta): void {
-  if (skipOverride) {
-    allowOverride(fn);
+export function setMeta(fn: Function, { name, skipOverride: shouldSkipOverride }: PluginMeta): void {
+  if (shouldSkipOverride) {
+    skipOverride(fn);
   }
   if (name !== undefined) {
     setName(fn, name);
   }
 }
+
 /**
  * Plugin utilities namespace providing helper functions for creating and composing plugins.
  */
@@ -50,17 +51,32 @@ export namespace plugin {
    * ```
    */
 
-  export function compose<Opts extends PluginOptions>(...plugins: Plugin<Opts>[]) {
+  export function compose<T extends PluginOptions = any>(...plugins: (Plugin<T> | PluginSync)[]) {
     const composedName = `compose(${plugins.map((p) => p.name || "anonymous").join(",")})`;
-    return plugin<Opts>(async function composed(app, opts) {
+    return plugin<T>(async function composed(app, opts) {
       for (const plg of plugins) {
         await plg(app, opts);
       }
     }, composedName);
   }
 
+  export function isSync(fn: Function): fn is PluginSync {
+    return kPluginSync in fn;
+  }
+
   export function sync(synced: (app: App) => void) {
-    (synced as any)[kPluginSync] = true;
+    (synced as unknown as PluginSync)[kPluginSync] = true;
     return synced;
+  }
+
+  export function getName(fn: Plugin | PluginSync | Register, opts?: { name?: string }): string {
+    // Priority: opts.name > fn[kPluginName] > fn.name
+    if (opts?.name !== undefined) {
+      return opts.name;
+    }
+    if (kPluginName in fn && typeof fn[kPluginName] === "string") {
+      return fn[kPluginName];
+    }
+    return fn.name || "anonymous";
   }
 }

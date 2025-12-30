@@ -212,7 +212,7 @@ describe("plugins", () => {
         receivedOpts.push(opts);
       });
 
-      app.register(plugin.compose(p1, p2), { prefix: "/test" });
+      app.register(plugin.compose(p1, p2));
 
       await app.ready();
 

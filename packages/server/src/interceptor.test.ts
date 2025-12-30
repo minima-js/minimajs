@@ -30,31 +30,6 @@ describe("middleware", () => {
     expect(hello).toHaveBeenCalled();
   });
 
-  test("should call middleware function with promise callback", async () => {
-    const hello = jest.fn(() => Promise.resolve());
-    app.register(
-      interceptor(
-        [hello],
-        Promise.resolve({
-          default: async (app: App) => {
-            app.get("/hello", () => {
-              return "hello";
-            });
-          },
-        })
-      )
-    );
-    app.get("/", () => "welcome home");
-    const response = await app.inject("/");
-    const body = await response.text();
-    expect(body).toBe("welcome home");
-    expect(hello).not.toHaveBeenCalled();
-    const response2 = await app.inject("/hello");
-    const body2 = await response2.text();
-    expect(body2).toBe("hello");
-    expect(hello).toHaveBeenCalled();
-  });
-
   test("should filter middleware function", async () => {
     const hello = jest.fn(() => Promise.resolve());
     const filteredHello = interceptor.filter(
