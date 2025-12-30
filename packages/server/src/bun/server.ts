@@ -179,17 +179,18 @@ export class Server implements App<BunServer<unknown>> {
   }
 
   async close(): Promise<void> {
-    // Run close hooks first
+    // 1. Stop accepting new connections immediately
+    if (this.server) {
+      await this.server.stop();
+    }
+    // 2. Run user cleanup hooks (database connections, file handles, etc.)
     await runHooks(this, "close");
+    // 3. Tear down plugin lifecycle (avvio close handlers)
     await new Promise<void>((resolve, reject) =>
       this.avvio.close((err: unknown) => {
         if (err) reject(err);
         resolve();
       })
     );
-
-    if (this.server) {
-      await this.server.stop();
-    }
   }
 }
