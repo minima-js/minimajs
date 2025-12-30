@@ -41,7 +41,7 @@ export class Server implements App<BunServer<unknown>> {
     this.container.set(kHooks, createHooksStore());
 
     this.avvio = avvio<App>(this, {
-      expose: { close: "$close", use: "$use", ready: "$ready", onClose: "$onClose", after: "$after" },
+      expose: { close: "$close", ready: "$ready" },
     });
     this.avvio.override = pluginOverride;
   }
@@ -86,7 +86,6 @@ export class Server implements App<BunServer<unknown>> {
     const metadata = args.slice(0, -1) as RouteMetaDescriptor[];
 
     const fullPath = applyRoutePrefix(path, this.$prefix, this.$prefixExclude);
-    const routeContainer = createRouteMetadata(metadata, this);
 
     // find-my-way supports '*' wildcard for all HTTP methods
     this.router.on(
@@ -97,7 +96,7 @@ export class Server implements App<BunServer<unknown>> {
         handler,
         server: this,
         path: fullPath,
-        metadata: routeContainer,
+        metadata: createRouteMetadata(metadata, this),
       }
     );
     return this;
@@ -120,12 +119,12 @@ export class Server implements App<BunServer<unknown>> {
       plugin(this, opts);
       return this;
     }
-    this.avvio.use(async (instance) => {
+    this.avvio.use(async (instance, opts) => {
       const pluginName = p.getName(plugin, opts);
       const finalOpts = opts ? { ...opts, name: pluginName } : { name: pluginName };
       await runHooks(instance, "register", plugin, finalOpts);
       await plugin(instance, finalOpts);
-    });
+    }, opts);
     return this;
   }
 
@@ -144,23 +143,21 @@ export class Server implements App<BunServer<unknown>> {
     }
 
     // Ensure avvio is ready before handling the request
-    await this.avvio.ready();
-
+    await this.ready();
     return handleRequest(this, this.router, req);
   }
 
   // Lifecycle
   async ready(): Promise<void> {
     await this.avvio.ready();
+    await runHooks(this, "ready", this);
   }
 
   // Server lifecycle
   async listen(opts: { port: number; host?: string }): Promise<string> {
-    await this.avvio.ready();
-
+    await this.ready();
     const app = this;
     const router = this.router;
-
     function onFetch(req: Request) {
       return handleRequest(app, router, req);
     }
@@ -177,13 +174,13 @@ export class Server implements App<BunServer<unknown>> {
 
     // Execute listen hook with address information
     await runHooks(this, "listen", { host, port });
-
     const addr = `http://${opts.host || "localhost"}:${port}`;
     return addr;
   }
 
   async close(): Promise<void> {
-    console.log("closing the server...", this.avvio.close);
+    // Run close hooks first
+    await runHooks(this, "close");
     await new Promise<void>((resolve, reject) =>
       this.avvio.close((err: unknown) => {
         if (err) reject(err);
@@ -192,7 +189,6 @@ export class Server implements App<BunServer<unknown>> {
     );
 
     if (this.server) {
-      // Graceful shutdown
       await this.server.stop();
     }
   }

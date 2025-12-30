@@ -1,6 +1,11 @@
-import { LIFECYCLE_HOOKS, type HookStore, type LifecycleHook, type GenericHookCallback } from "../interfaces/hooks.js";
+import { type HookStore, type GenericHookCallback } from "../interfaces/hooks.js";
 import type { App } from "../interfaces/app.js";
 import { kHooks } from "../symbols.js";
+
+const SERVER_HOOKS = ["close", "listen", "ready", "register"] as const;
+const LIFECYCLE_HOOKS = ["request", "transform", "send", "error", "errorSent", "sent", "timeout"] as const;
+
+export type LifecycleHook = (typeof SERVER_HOOKS)[number] | (typeof LIFECYCLE_HOOKS)[number];
 
 // ============================================================================
 // HookStore Management
@@ -9,22 +14,28 @@ import { kHooks } from "../symbols.js";
 /**
  * Creates a new HookStore, optionally cloning from an existing store
  */
-export function createHooksStore(source?: HookStore): HookStore {
+export function createHooksStore(): HookStore {
   const store = {} as HookStore;
 
-  if (!source) {
-    for (const hook of LIFECYCLE_HOOKS) {
-      store[hook] = new Set();
-    }
-  } else {
-    for (const hook of LIFECYCLE_HOOKS) {
-      store[hook] = new Set(source[hook]);
-    }
+  for (const hook of SERVER_HOOKS) {
+    store[hook] = new Set();
+  }
+
+  for (const hook of LIFECYCLE_HOOKS) {
+    store[hook] = new Set();
   }
 
   // Add clone method to make the store clonable
   store.clone = function (): HookStore {
-    return createHooksStore(this);
+    const store = {} as HookStore;
+    for (const hook of SERVER_HOOKS) {
+      store[hook] = this[hook];
+    }
+
+    for (const hook of LIFECYCLE_HOOKS) {
+      store[hook] = new Set(this[hook]);
+    }
+    return store;
   };
 
   return store;

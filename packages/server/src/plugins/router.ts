@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import { plugin } from "../internal/plugins.js";
-import { hook } from "../hooks/index.js";
+import { addHook } from "../hooks/index.js";
 
 export interface RouteLoggerOptions {
   /** Custom logger function to output routes. Defaults to console.log with magenta color */
@@ -45,11 +45,9 @@ function defaultLogger(routes: string) {
  * ```
  */
 export function routeLogger({ commonPrefix = false, logger = defaultLogger }: RouteLoggerOptions = {}) {
-  return plugin(function logRoute(app) {
-    app.register(
-      hook("ready", () => {
-        logger(app.router.prettyPrint({ commonPrefix }));
-      })
-    );
+  return plugin.sync(function logRoute(app) {
+    addHook(app, "ready", () => {
+      logger(app.router.prettyPrint({ commonPrefix }));
+    });
   });
 }

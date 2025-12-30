@@ -29,7 +29,7 @@ export interface GracefulShutdownOptions {
  * ```
  */
 export function gracefulShutdown({ signals = ["SIGINT", "SIGTERM"], timeout = 30_000 }: GracefulShutdownOptions = {}) {
-  return plugin((app) => {
+  return plugin.sync((app) => {
     shutdownListener(() => app.close(), signals, timeout, process);
   });
 }

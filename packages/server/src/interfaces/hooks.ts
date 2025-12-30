@@ -1,23 +1,9 @@
+import type { LifecycleHook } from "../hooks/store.js";
 import type { Plugin, RegisterOptions } from "./plugin.js";
 import type { ResponseBody } from "./response.js";
-
-// Constant array of all lifecycle hooks - single source of truth
-export const LIFECYCLE_HOOKS = [
-  "request",
-  "transform",
-  "send",
-  "error",
-  "errorSent",
-  "sent",
-  "timeout",
-  "close",
-  "listen",
-  "ready",
-  "register",
-] as const;
+export type { LifecycleHook };
 
 // Derive the union type from the constant array
-export type LifecycleHook = (typeof LIFECYCLE_HOOKS)[number];
 
 // Hook callback types with specific signatures for each lifecycle event
 export type OnRequestHook = (req: Request) => void | Response | Promise<void | Response>;
