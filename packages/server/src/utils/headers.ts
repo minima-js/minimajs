@@ -4,12 +4,13 @@
  */
 
 /**
- * Merges multiple Headers objects into a single Headers object.
+ * Merges multiple Headers objects into the base Headers object.
  * Later headers take precedence and override earlier ones.
+ * Mutates the base Headers object in place.
  *
- * @param base - The base Headers object to start with
+ * @param base - The base Headers object to merge into (will be mutated)
  * @param headers - Additional Headers objects to merge (in order of precedence)
- * @returns A new Headers object with all headers merged
+ * @returns The base Headers object with all headers merged
  *
  * @example
  * ```typescript
@@ -18,15 +19,15 @@
  * const base = new Headers({ 'Content-Type': 'text/plain' });
  * const override = new Headers({ 'Content-Type': 'application/json' });
  * const merged = mergeHeaders(base, override);
- * // merged will have Content-Type: application/json
+ * // base and merged are the same object
+ * // base will have Content-Type: application/json
  * ```
  */
 export function mergeHeaders(base: Headers, ...headers: Headers[]): Headers {
-  const finalHeaders = new Headers(base);
   for (const header of headers) {
-    for (const [key, value] of header.entries()) {
-      finalHeaders.set(key, value);
+    for (const [key, value] of header) {
+      base.set(key, value);
     }
   }
-  return finalHeaders;
+  return base;
 }

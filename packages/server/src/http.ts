@@ -520,6 +520,22 @@ export namespace headers {
     const { resInit } = $context();
     resInit.headers.set(name, value);
   }
+
+  /**
+   * Appends a response header (useful for headers that can have multiple values like Set-Cookie).
+   *
+   * @param name - The header name to append
+   * @param value - The header value
+   * @example
+   * ```ts
+   * headers.append('Set-Cookie', 'sessionId=abc123');
+   * headers.append('Set-Cookie', 'theme=dark');
+   * ```
+   */
+  export function append(name: HttpHeader, value: string): void {
+    const { resInit } = $context();
+    resInit.headers.append(name, value);
+  }
 }
 
 /**

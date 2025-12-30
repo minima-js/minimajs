@@ -41,51 +41,9 @@ export namespace context {
       const { locals } = context();
       locals.set(kName, val);
     }
-
     return [getValue, setValue] as const;
   }
-
-  /**
-   * called only once per request
-   */
-  export function once<T>(callback: OnceCallback<T>): OnceCallback<T> {
-    const empty = Symbol("empty");
-    const [getValue, setValue] = create<T | typeof empty>(empty);
-    return function handleRequest() {
-      let value = getValue();
-      if (value === empty) {
-        value = callback();
-        setValue(value);
-      }
-      return value;
-    };
-  }
-
-  /**
-   * memoize
-   */
-  export function memo<T, A extends unknown[]>(callback: (...params: A) => T): (...params: A) => T {
-    const [getStore] = create(new Map<string, T>());
-    return function handleRequest(...params: A) {
-      const key = JSON.stringify(params);
-      const cached = getStore();
-      if (cached.has(key)) {
-        return cached.get(key)!;
-      }
-      const value = callback(...params);
-      cached.set(key, value);
-      return value;
-    };
-  }
 }
-
-/**
- * Retrieves the current request context.
- * @see {@link context}
- * @since v0.1.0
- * @internal
- */
-export { $context as getContext };
 
 /**
  * Context enables sharing data within the request scope without the need to explicitly pass it around.
