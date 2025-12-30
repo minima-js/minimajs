@@ -21,4 +21,3 @@ export * from "./interfaces/index.js";
 export * from "./context.js";
 export { logger } from "./logger.js";
 export { plugin } from "./internal/plugins.js";
-export { createResponse } from "./internal/handler.js";

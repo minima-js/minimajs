@@ -12,7 +12,7 @@ import {
 import type { Dict, HttpHeader, HttpHeaderIncoming, ResponseOptions } from "./interfaces/response.js";
 
 import { toStatusCode, type StatusCode } from "./internal/response.js";
-import { createResponse } from "./internal/handler.js";
+import { createResponse } from "./internal/response.js";
 import { isAbortError } from "./utils/errors.js";
 
 // ============================================================================

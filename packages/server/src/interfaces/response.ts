@@ -19,11 +19,6 @@ export interface ResponseOptions {
   headers?: HeadersInit;
 }
 
-export interface CreateResponseOptions {
-  status?: number;
-  headers?: HeadersInit;
-}
-
 // ============================================================================
 // HTTP Types
 // ============================================================================
