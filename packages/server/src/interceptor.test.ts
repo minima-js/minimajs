@@ -412,7 +412,7 @@ describe("interceptor.error", () => {
         return { filtered: true, error: error.message };
       }),
       {
-        filter({ req }) {
+        filter({ request: req }) {
           return req.url !== "/skip";
         },
       }

@@ -1,25 +1,9 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import assert from "node:assert";
-import type { Container, App } from "../interfaces/app.js";
-import type { Route } from "../interfaces/route.js";
-import { type IncomingMessage, type ServerResponse } from "node:http";
-import type { ResponseState } from "../interfaces/response.js";
+import type { Context } from "../interfaces/context.js";
 
 export type HookCallback = () => void | Promise<void>;
 export type ErrorHookCallback = (err: unknown) => any | Promise<any>;
-
-export interface Context {
-  readonly app: App;
-  readonly url: URL;
-  readonly req: Request; // WebApi Request
-  readonly resInit: ResponseState; // Mutable response headers/status
-  readonly container: Container; // app.container
-  readonly locals: Map<symbol, unknown>;
-  readonly signal: AbortSignal;
-  readonly route: Route | null;
-  readonly rawReq?: IncomingMessage;
-  readonly rawRes?: ServerResponse;
-}
 
 const contextStorage = new AsyncLocalStorage<Context>();
 

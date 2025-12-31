@@ -5,7 +5,7 @@ describe("Context", () => {
   describe("getContext", () => {
     test("should be same request", () => {
       mockContext((req) => {
-        expect(context().req).toBe(req);
+        expect(context().request).toBe(req);
       });
     });
   });

@@ -17,7 +17,7 @@
 
 import type { Dict, HeadersInit } from "./interfaces/response.js";
 import { toStatusCode, type StatusCode, createResponseFromState } from "./internal/response.js";
-import type { Context } from "./internal/context.js";
+import type { Context } from "./interfaces/context.js";
 
 /**
  * Represents the response body of an HTTP error.
@@ -90,7 +90,7 @@ export class NotFoundError extends HttpError {
   }
 
   async render(ctx: Context): Promise<Response> {
-    this.response ||= `Route ${ctx.req.method} ${ctx.url.pathname} not found`;
+    this.response ||= `Route ${ctx.request.method} ${ctx.url.pathname} not found`;
     return super.render(ctx);
   }
 }

@@ -104,7 +104,7 @@ describe("Bun Server", () => {
     });
 
     it("should register ALL route (wildcard)", async () => {
-      app.all("/wildcard", (req: Request) => ({ method: req.method }));
+      app.all("/wildcard", ({ request: req }) => ({ method: req.method }));
 
       const getResponse = await app.inject("/wildcard");
       expect(((await getResponse.json()) as any).method).toBe("GET");
@@ -460,8 +460,8 @@ describe("Bun Server", () => {
     });
 
     it("should inject with request body", async () => {
-      app.post("/data", async (req) => {
-        const body = await req.json();
+      app.post("/data", async (ctx) => {
+        const body = await ctx.request.json();
         return { received: body };
       });
 

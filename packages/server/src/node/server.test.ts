@@ -103,7 +103,7 @@ describe("Node Server", () => {
     });
 
     it("should register ALL route (wildcard)", async () => {
-      app.all("/wildcard", (req: Request) => ({ method: req.method }));
+      app.all("/wildcard", (ctx) => ({ method: ctx.request.method }));
 
       const getResponse = await app.inject("/wildcard");
       expect(((await getResponse.json()) as any).method).toBe("GET");
@@ -275,7 +275,7 @@ describe("Node Server", () => {
     });
 
     it("should inject with request body", async () => {
-      app.post("/data", async (req) => {
+      app.post("/data", async ({ request: req }) => {
         const body = await req.json();
         return { received: body };
       });
@@ -373,7 +373,7 @@ describe("Node Server", () => {
   describe("Node.js Specific Features", () => {
     it("should handle Node.js IncomingMessage to Web Request conversion", async () => {
       app = createApp({ logger: false });
-      app.get("/headers", (req) => {
+      app.get("/headers", ({ request: req }) => {
         return {
           host: req.headers.get("host"),
           userAgent: req.headers.get("user-agent"),

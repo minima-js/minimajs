@@ -2,6 +2,8 @@ import { type z } from "zod";
 import { HttpError as BaseError, type HttpErrorOptions } from "@minimajs/server/error";
 import { ok } from "assert";
 
+export class SchemaError extends Error {}
+
 type ZodIssue = z.core.$ZodIssue;
 type ZodError<T = unknown> = z.core.$ZodError<T>;
 type ZodErrorMap = z.core.$ZodErrorMap;
@@ -27,10 +29,6 @@ export interface ValidatorErrorOptions extends Omit<HttpErrorOptions, 'base'> {
   base?: Error;
 }
 
-/**
- * Validation error interface.
- * Combines ValidatorErrorOptions with ValidationError class properties.
- */
 export interface ValidationError extends ValidatorErrorOptions {}
 
 export const defaultErrorMap: ZodErrorMap = (issue) => {
@@ -93,20 +91,20 @@ export class ValidationError extends BaseError {
    *   errors: ['Email is required', 'Password too short']
    * });
    * const json = ValidationError.toJSON(error);
-   * // {
-   * //   "message": "Validation failed",
-   * //   "issues": [
-   * //     {
-   * //       "code": "invalid_type",
-   * //       "expected": "string",
-   * //       "received": "undefined",
-   * //       "path": [
-   * //         "name"
-   * //       ],
-   * //       "message": "Required"
-   * //     }
-   * //   ]
-   * // }
+  // {
+  //   "message": "Validation failed",
+  //   "issues": [
+  //     {
+  //       "code": "invalid_type",
+  //       "expected": "string",
+  //       "received": "undefined",
+  //       "path": [
+  //         "name"
+  //       ],
+  //       "message": "Required"
+  //     }
+  //   ]
+  // }
    * ```
    */
   static toJSON(err: unknown) {

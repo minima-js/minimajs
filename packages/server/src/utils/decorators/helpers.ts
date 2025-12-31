@@ -1,7 +1,7 @@
-import type { Context } from "../../context.js";
+import type { Context } from "../../interfaces/index.js";
 import type { PluginOptions } from "../../interfaces/plugin.js";
 
-export type InterceptorFilter = (req: Context) => boolean | Promise<boolean>;
+export type InterceptorFilter = (ctx: Context) => boolean | Promise<boolean>;
 /**
  * Options for registering interceptors with filtering capabilities.
  */

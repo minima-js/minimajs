@@ -1,7 +1,7 @@
 import { type HookStore, type GenericHookCallback } from "../interfaces/hooks.js";
 import type { App } from "../interfaces/app.js";
 import { kHooks } from "../symbols.js";
-import type { Context } from "../context.js";
+import type { Context } from "../interfaces/index.js";
 
 const SERVER_HOOKS = ["close", "listen", "ready", "register"] as const;
 const LIFECYCLE_HOOKS = ["request", "transform", "send", "error", "errorSent", "sent", "timeout"] as const;

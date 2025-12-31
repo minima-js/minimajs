@@ -234,7 +234,7 @@ export namespace abort {
  * @since v0.2.0
  */
 export function request(): Request {
-  const { req } = $context();
+  const { request: req } = $context();
   return req;
 }
 
@@ -517,8 +517,8 @@ export namespace headers {
    * ```
    */
   export function set(name: HttpHeader, value: string): void {
-    const { resInit } = $context();
-    resInit.headers.set(name, value);
+    const { responseState: res } = $context();
+    res.headers.set(name, value);
   }
 
   /**
@@ -533,7 +533,7 @@ export namespace headers {
    * ```
    */
   export function append(name: HttpHeader, value: string): void {
-    const { resInit } = $context();
+    const { responseState: resInit } = $context();
     resInit.headers.append(name, value);
   }
 }

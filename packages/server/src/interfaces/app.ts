@@ -2,11 +2,12 @@ import Router from "find-my-way";
 import type { HTTPMethod, HTTPVersion } from "find-my-way";
 import type { ErrorHandler, Serializer } from "./response.js";
 import type { Plugin, PluginOptions, PluginSync, Register, RegisterOptions } from "./plugin.js";
+import type { Context } from "./context.js";
 
 export type Container = Map<symbol, unknown>;
 export type RouteMetadata = Map<symbol, Set<unknown>>;
 
-export type RouteHandler = (req: Request) => unknown;
+export type RouteHandler = (ctx: Context) => unknown;
 export type RouteMetaDescriptor =
   | [symbol: symbol, value: unknown]
   | ((path: string, handler: RouteHandler, app: App) => [symbol: symbol, value: unknown]);

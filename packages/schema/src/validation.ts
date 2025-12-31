@@ -1,67 +1,42 @@
 import { z, ZodError } from "zod";
-import { SchemaError, ValidationError } from "./error.js";
-import { context } from "@minimajs/server";
-import type { SchemaLifecycleTypes } from "./schema.js";
-
-const kSchemaMetadata = Symbol("minimajs.schema.metadata");
-
-export interface SchemaMetadata<T = unknown> {
-  type: SchemaLifecycleTypes;
-  schema: z.ZodTypeAny;
-  callback: () => Promise<T> | T;
-}
-export function setScehmaMetadata(cb: any, metadata: SchemaMetadata) {
-  cb[kSchemaMetadata] = metadata;
-}
-export function getSchemaMetadata(cb: any): SchemaMetadata {
-  return cb[kSchemaMetadata];
-}
-
-/**
- * Callback function that returns data to be validated.
- */
-export type DataCallback = () => unknown;
+import { ValidationError } from "./error.js";
 
 export interface ValidationOptions {
   stripUnknown?: boolean;
 }
 
-export function validatorAsync<T extends z.ZodTypeAny>(
-  schema: T,
-  data: DataCallback,
-  option: ValidationOptions | undefined,
-  type: SchemaLifecycleTypes
-): () => z.infer<T> {
-  const symbol = Symbol("minimajs.schema");
-  function getData(): z.infer<T> {
-    const { locals } = context();
-    if (!locals.has(symbol)) {
-      throw new SchemaError("Schema not register");
-    }
-    return locals.get(symbol)!;
-  }
+type DataCallback = () => unknown;
 
-  setScehmaMetadata(getData, {
-    schema,
-    type,
-    callback: async () => {
-      const { locals } = context();
-      const val = await validateObjectAsync(schema, data(), option);
-      locals.set(symbol, val);
-    },
-  });
-
-  return getData;
+export function validator<T extends z.ZodTypeAny>(schema: T, data: DataCallback, option?: ValidationOptions) {
+  return function getData(): z.infer<T> {
+    return validateSchema(schema, data(), option);
+  };
 }
 
-async function validateObjectAsync(schema: z.ZodTypeAny, data: unknown, option?: ValidationOptions) {
-  try {
-    // If passthrough is true, allow unknown properties
-    let finalSchema = schema;
-    if (option?.stripUnknown === false && schema._def?.typeName === "ZodObject") {
-      finalSchema = (schema as any).passthrough();
-    }
+export function validatorAsync<T extends z.ZodTypeAny>(schema: T, data: DataCallback, option?: ValidationOptions) {
+  return function getData(): Promise<z.infer<T>> {
+    return validateSchemaAsync(schema, data(), option);
+  };
+}
 
+function validateSchema(schema: z.ZodTypeAny, data: unknown, option?: ValidationOptions) {
+  try {
+    let finalSchema = schema;
+    if (option?.stripUnknown === false && schema instanceof z.ZodObject) {
+      finalSchema = schema.passthrough();
+    }
+    return finalSchema.parse(data);
+  } catch (err) {
+    dealWithException(err);
+  }
+}
+
+async function validateSchemaAsync(schema: z.ZodTypeAny, data: unknown, option?: ValidationOptions) {
+  try {
+    let finalSchema = schema;
+    if (option?.stripUnknown === false && schema instanceof z.ZodObject) {
+      finalSchema = schema.passthrough();
+    }
     return await finalSchema.parseAsync(data);
   } catch (err) {
     dealWithException(err);

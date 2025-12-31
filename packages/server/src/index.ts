@@ -12,9 +12,10 @@
  * app.listen({ port: 3000 });
  * ```
  */
+// Exporting all types
+export * from "./interfaces/index.js";
 
 // Exports Contexts
-export type { Context } from "./internal/context.js";
 export * from "./context.js";
 
 // Export Intercetpros
@@ -22,7 +23,6 @@ export * from "./interceptor.js";
 
 export * from "./http.js";
 export * from "./hooks/index.js";
-export * from "./interfaces/index.js";
 
 export { logger } from "./logger.js";
 export { plugin } from "./internal/plugins.js";

@@ -1,4 +1,4 @@
-import type { Context } from "../context.js";
+import type { Context } from "../interfaces/index.js";
 import type { LifecycleHook } from "../hooks/store.js";
 import type { Plugin, RegisterOptions } from "./plugin.js";
 import type { ResponseBody } from "./response.js";

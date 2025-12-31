@@ -4,7 +4,7 @@ import type { Plugin, RegisterOptions, Register } from "./interfaces/plugin.js";
 import { plugin } from "./internal/plugins.js";
 import { addHook, hook } from "./hooks/index.js";
 import type { InterceptorFilter, InterceptorRegisterOptions } from "./utils/decorators/helpers.js";
-import type { Context } from "./context.js";
+import type { Context } from "./interfaces/index.js";
 
 export type Interceptor = OnRequestHook;
 

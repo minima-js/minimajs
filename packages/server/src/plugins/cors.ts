@@ -1,6 +1,5 @@
 import { hook } from "../hooks/index.js";
 import { response } from "../http.js";
-import { $context } from "../internal/context.js";
 
 export interface CorsOptions {
   /** Configures the Access-Control-Allow-Origin header. Default: '*' */
@@ -142,7 +141,7 @@ async function resolveOrigin(
 export function cors(options: CorsOptions = {}) {
   const config = { ...defaultOptions, ...options };
   return hook.define({
-    async request({ req }): Promise<void | Response> {
+    async request({ request: req }): Promise<void | Response> {
       if (req.method !== "OPTIONS") {
         return;
       }
@@ -163,7 +162,7 @@ export function cors(options: CorsOptions = {}) {
       }
     },
 
-    async send(_body, { req }) {
+    async send(_body, { request: req, responseState: res }) {
       const origin = req.headers.get("origin") || "";
       const allowOrigin = await resolveOrigin(config.origin, origin);
       if (!allowOrigin) {
@@ -171,9 +170,8 @@ export function cors(options: CorsOptions = {}) {
       }
       const headers = buildCorsHeaders(allowOrigin, config, false);
       // Write CORS headers to context response
-      const { resInit: response } = $context();
       for (const [key, value] of Object.entries(headers)) {
-        response.headers.set(key, value);
+        res.headers.set(key, value);
       }
     },
   });

@@ -1,6 +1,6 @@
 import type { StatusCodes } from "http-status-codes";
 import type { IncomingHttpHeaders } from "node:http";
-import type { Context } from "../context.js";
+import type { Context } from "../interfaces/index.js";
 
 export type ResponseBody = string | ReadableStream | ArrayBuffer | Blob | null;
 export type Serializer = (body: unknown, ctx: Context) => ResponseBody | Promise<ResponseBody>;

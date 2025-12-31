@@ -2,7 +2,6 @@ import { $context } from "./internal/context.js";
 import { isCallable } from "./utils/callable.js";
 export { safe } from "./internal/context.js";
 export { maybeContext } from "./internal/context.js";
-export type { Context } from "./internal/context.js";
 
 export type OnceCallback<T> = () => T;
 

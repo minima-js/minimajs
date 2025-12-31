@@ -2,7 +2,8 @@ import { type Instance, type HTTPMethod, type HTTPVersion } from "find-my-way";
 import { type App, type RouteHandler } from "../interfaces/app.js";
 import { type Route } from "../interfaces/route.js";
 import { runHooks, getHooks } from "../hooks/store.js";
-import { $context, wrap, type Context } from "./context.js";
+import { wrap } from "./context.js";
+import { type Context } from "../interfaces/context.js";
 import { NotFoundError } from "../error.js";
 import { createResponse } from "./response.js";
 import { result2route } from "./route.js";
@@ -31,9 +32,9 @@ export async function handleRequest<T>(
     route,
     locals,
     container: app.container,
-    req,
+    request: req,
     signal: req.signal,
-    resInit: { headers: new Headers() }, // Initialize mutable response headers
+    responseState: { headers: new Headers() }, // Initialize mutable response headers
   };
 
   return wrap(ctx, async () => {
@@ -50,18 +51,16 @@ export async function handleRequest<T>(
         return await handleError(new NotFoundError(`Route ${req.method} ${url.pathname} not found`), ctx);
       }
       // Route found - process request
-      return await processRequest(route.handler);
+      return await processRequest(route.handler, ctx);
     } catch (err) {
       return await handleError(err, ctx);
     }
   });
 }
 
-async function processRequest(handler: RouteHandler): Promise<Response> {
-  const { req } = $context();
-
+async function processRequest(handler: RouteHandler, ctx: Context): Promise<Response> {
   // Execute handler
-  const data = await handler(req);
+  const data = await handler(ctx);
 
   // Create and return response (handles all hooks and serialization)
   return await createResponse(data);

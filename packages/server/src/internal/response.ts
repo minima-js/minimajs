@@ -16,7 +16,7 @@ export function toStatusCode(code: StatusCode): number {
 }
 
 export function createResponseFromState(data: ResponseBody, options: ResponseInit): Response {
-  const { resInit } = $context();
+  const { responseState: resInit } = $context();
   return new Response(data, {
     ...resInit,
     ...options,
@@ -27,7 +27,7 @@ export function createResponseFromState(data: ResponseBody, options: ResponseIni
 }
 export async function createResponse(data: unknown, options: ResponseInit = {}): Promise<Response> {
   const ctx = $context();
-  const { app, req, resInit } = ctx;
+  const { app, request: req, responseState: resInit } = ctx;
   if (options.headers) {
     mergeHeaders(resInit.headers, new Headers(options.headers as HeadersInit));
   }
