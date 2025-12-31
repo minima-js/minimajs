@@ -4,7 +4,7 @@ import type { ErrorHandler, Serializer } from "./response.js";
 import type { Plugin, PluginOptions, PluginSync, Register, RegisterOptions } from "./plugin.js";
 
 export type Container = Map<symbol, unknown>;
-export type RouteMetadata = Map<symbol, unknown>;
+export type RouteMetadata = Map<symbol, Set<unknown>>;
 
 export type RouteHandler = (req: Request) => unknown;
 export type RouteMetaDescriptor =

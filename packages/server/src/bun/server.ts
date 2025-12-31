@@ -7,8 +7,6 @@ import type { App, RouteHandler, RouteOptions, RouteMetaDescriptor, PrefixOption
 import type { Plugin, PluginOptions, PluginSync, Register, RegisterOptions } from "../interfaces/plugin.js";
 import { pluginOverride } from "../internal/override.js";
 import { createRouteMetadata, applyRoutePrefix } from "../internal/route.js";
-import { kHooks } from "../symbols.js";
-import { createHooksStore } from "../hooks/store.js";
 import { runHooks } from "../hooks/store.js";
 import { serialize, errorHandler } from "../internal/default-handler.js";
 import { handleRequest } from "../internal/handler.js";
@@ -42,8 +40,6 @@ export class Server<T> implements App<BunServer<T>> {
     this.$prefixExclude = [];
     this.router = opts.router || Router({ ignoreTrailingSlash: true });
     // Initialize hooks in container
-    this.container.set(kHooks, createHooksStore());
-
     this.boot = avvio<App>(this, {
       autostart: false,
       expose: { close: "$close", ready: "$ready" },

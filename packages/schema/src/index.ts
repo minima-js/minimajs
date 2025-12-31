@@ -9,15 +9,15 @@ function getSearchParams() {
 const [getBody] = context.create(() => request().json());
 
 export function createBody<T extends z.ZodTypeAny>(schema: T, option?: ParseParams): () => z.infer<T> {
-  return validatorAsync(schema, getBody, option);
+  return validatorAsync(schema, getBody, option, "body");
 }
 
 export function createHeaders<T extends z.ZodRawShape>(schema: T, option?: ParseParams) {
-  return validatorAsync(z.object(schema), headers, option);
+  return validatorAsync(z.object(schema), headers, option, "headers");
 }
 
 export function createSearchParams<T extends z.ZodRawShape>(schema: T, option?: ParseParams) {
-  return validatorAsync(z.object(schema), getSearchParams, option);
+  return validatorAsync(z.object(schema), getSearchParams, option, "searchParams");
 }
 
 export { ValidationError, type ValidatorErrorOptions, defaultErrorMap, type ZodErrorMap } from "./error.js";

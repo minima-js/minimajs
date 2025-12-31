@@ -14,11 +14,15 @@ function isClonable(value: unknown): value is { clone(): unknown } {
 function cloneContainer(container: Container): Container {
   const newContainer: Container = new Map();
   for (const [key, value] of container) {
+    if (Array.isArray(value)) {
+      newContainer.set(key, [...value]);
+      continue;
+    }
     if (isClonable(value)) {
       newContainer.set(key, value.clone());
-    } else {
-      newContainer.set(key, value);
+      continue;
     }
+    newContainer.set(key, value);
   }
   return newContainer;
 }

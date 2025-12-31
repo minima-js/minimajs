@@ -1,5 +1,7 @@
-import { hook, type OnErrorSentHook } from "../hooks/index.js";
+import { createHooksStore, hook, type OnErrorSentHook } from "../hooks/index.js";
 import { createContext } from "../context.js";
+import { plugin } from "../internal/plugins.js";
+import { kAppDescriptor, kHooks } from "../symbols.js";
 
 export type ErrorCallback = OnErrorSentHook;
 type DeferCallback = () => void | Promise<void>;
@@ -75,7 +77,7 @@ export function onError(cb: ErrorCallback) {
  * ```
  */
 export function minimajs() {
-  return hook.define({
+  const hooks = hook.define({
     async sent() {
       for (const cb of getDeferredCallbacks()) {
         await cb();
@@ -86,5 +88,11 @@ export function minimajs() {
         await cb(err, req);
       }
     },
+  });
+
+  return plugin.sync((app) => {
+    app.container.set(kHooks, createHooksStore());
+    app.container.set(kAppDescriptor, []);
+    app.register(hooks);
   });
 }

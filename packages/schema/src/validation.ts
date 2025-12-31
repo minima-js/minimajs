@@ -1,6 +1,7 @@
 import { z, ZodError, type ParseParams } from "zod";
 import { SchemaError, ValidationError } from "./error.js";
 import { context } from "@minimajs/server";
+import type { SchemaLifecycleTypes } from "./schema.js";
 
 const kSchemaMetadata = Symbol("minimajs.schema.metadata");
 z.array(z.string(), {
@@ -8,6 +9,7 @@ z.array(z.string(), {
 });
 
 export interface SchemaMetadata<T = unknown> {
+  type: SchemaLifecycleTypes;
   schema: z.ZodTypeAny;
   callback: () => Promise<T> | T;
 }
@@ -26,7 +28,8 @@ export type DataCallback = () => unknown;
 export function validatorAsync<T extends z.ZodTypeAny>(
   schema: T,
   data: DataCallback,
-  option?: ParseParams
+  option: ParseParams | undefined,
+  type: SchemaLifecycleTypes
 ): () => z.infer<T> {
   const symbol = Symbol("minimajs.schema");
   function getData(): z.infer<T> {
@@ -38,6 +41,7 @@ export function validatorAsync<T extends z.ZodTypeAny>(
   }
   setScehmaMetadata(getData, {
     schema,
+    type,
     callback: () => validateObjectAsync(schema, data(), option),
   });
 

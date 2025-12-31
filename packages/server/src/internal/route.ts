@@ -1,5 +1,6 @@
 import type { App, RouteHandler, RouteMetaDescriptor, RouteMetadata } from "../interfaces/app.js";
 import type { Route, RouteFindResult } from "../interfaces/route.js";
+import { getDescriptorsAll } from "./descriptor.js";
 
 /**
  * Creates a RouteMetadata map from route descriptors
@@ -11,10 +12,12 @@ export function createRouteMetadata<T>(
   app: App<T>
 ): RouteMetadata {
   const routeContainer: RouteMetadata = new Map();
-  for (const descriptor of descriptors) {
-    // Check if descriptor is a function or a tuple
-    const [symbol, value] = typeof descriptor === "function" ? descriptor(path, handler, app) : descriptor;
-    routeContainer.set(symbol, value);
+  for (const descriptor of [...getDescriptorsAll(app.container), ...descriptors]) {
+    const [name, value] = typeof descriptor === "function" ? descriptor(path, handler, app) : descriptor;
+    if (!routeContainer.has(name)) {
+      routeContainer.set(name, new Set());
+    }
+    routeContainer.get(name)!.add(value);
   }
   return routeContainer;
 }

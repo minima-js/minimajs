@@ -1,34 +1,44 @@
-import { z } from "zod";
-import { hook, type Context, type PluginSync, type RouteMetadata, type RouteMetaDescriptor } from "@minimajs/server";
+import {
+  hook,
+  type App,
+  type Context,
+  type PluginSync,
+  type RouteHandler,
+  type RouteMetaDescriptor,
+} from "@minimajs/server";
 import { kSchema } from "./symbols.js";
+import { getSchemaMetadata, type SchemaMetadata } from "./validation.js";
 
-type SchemaLifecycleTypes = "body" | "header" | "response" | "searchParams";
+export type SchemaLifecycleTypes = "body" | "headers" | "response" | "searchParams";
 
-type SchemaStore = [type: SchemaLifecycleTypes, schema: z.ZodAny][];
-
-function createRouteMetadataDescriptor(fn: any) {
-  const symbol = Symbol("schema.infor");
-  function getDescriptor(): RouteMetaDescriptor {
-    return;
-  }
-
-  function getValue(metadata: RouteMetadata) {
-    return metadata.get(symbol);
-  }
-
-  return [getDescriptor, getValue] as const;
+interface SchemaStore {
+  path: string;
+  handler: RouteHandler;
+  app: App;
+  schemas: SchemaMetadata[];
 }
 
 export function configureSchema(): PluginSync {
-  function handleRequest({ route }: Context) {
+  async function handleRequest({ route }: Context) {
     if (!route) return;
-    const schema = route.metadata.get(kSchema);
+    const schemaStore = route.metadata.get(kSchema) as Set<SchemaStore>;
+    for (const store of schemaStore) {
+      for (const schema of store.schemas) {
+        await schema.callback();
+      }
+    }
   }
   return hook("request", handleRequest);
 }
 
-export function schema(...schemas): RouteMetaDescriptor {
+export function schema(...schemas: Function[]): RouteMetaDescriptor {
   return function descriptor(path, handler, app) {
-    return [kSchema, ""];
+    const values: SchemaStore = {
+      path,
+      handler,
+      app,
+      schemas: schemas.map((x) => getSchemaMetadata(x)),
+    } as SchemaStore;
+    return [kSchema, values];
   };
 }
