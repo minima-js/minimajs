@@ -13,13 +13,14 @@ import { serialize, errorHandler } from "../internal/default-handler.js";
 import { handleRequest } from "../internal/handler.js";
 import type { ErrorHandler, Serializer } from "../interfaces/response.js";
 import { plugin as p } from "../internal/plugins.js";
+import type { RouteFindResult } from "../interfaces/route.js";
 
 export interface BunServerOptions {
   prefix?: string;
 }
 
-export class Server implements App<BunServer<unknown>> {
-  server?: BunServer<unknown>;
+export class Server<T> implements App<BunServer<T>> {
+  server?: BunServer<T>;
   readonly router: Router.Instance<HTTPVersion.V1>;
   readonly container = new Map();
   $prefix: string;
@@ -93,11 +94,12 @@ export class Server implements App<BunServer<unknown>> {
       fullPath,
       () => {}, // Dummy handler - actual handler is in store
       {
-        handler,
         server: this,
         path: fullPath,
+        methods: Array.isArray(method) ? method : [method],
+        handler,
         metadata: createRouteMetadata(metadata, this),
-      }
+      } satisfies RouteFindResult<BunServer<T>>["store"]
     );
     return this;
   }

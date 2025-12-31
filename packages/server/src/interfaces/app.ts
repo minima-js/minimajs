@@ -1,5 +1,5 @@
 import Router from "find-my-way";
-import type { FindResult, HTTPMethod, HTTPVersion } from "find-my-way";
+import type { HTTPMethod, HTTPVersion } from "find-my-way";
 import type { ErrorHandler, Serializer } from "./response.js";
 import type { Plugin, PluginOptions, PluginSync, Register, RegisterOptions } from "./plugin.js";
 
@@ -8,14 +8,6 @@ export type RouteMetadata = Map<symbol, unknown>;
 
 export type RouteHandler = (req: Request) => unknown;
 export type RouteMetaDescriptor = [symbol: symbol, value: unknown] | ((app: App) => [symbol: symbol, value: unknown]);
-
-export interface Route extends FindResult<HTTPVersion.V1> {
-  store: {
-    handler: RouteHandler;
-    path: string;
-    metadata: RouteMetadata;
-  };
-}
 
 export interface RouteOptions {
   method: HTTPMethod | HTTPMethod[];

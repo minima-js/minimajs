@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import assert from "node:assert";
-import type { Container, App, Route } from "../interfaces/app.js";
+import type { Container, App } from "../interfaces/app.js";
+import type { Route } from "../interfaces/route.js";
 import { type IncomingMessage, type ServerResponse } from "node:http";
 import type { ResponseState } from "../interfaces/response.js";
 

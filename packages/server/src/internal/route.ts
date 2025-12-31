@@ -1,4 +1,5 @@
 import type { App, RouteMetaDescriptor, RouteMetadata } from "../interfaces/app.js";
+import type { Route, RouteFindResult } from "../interfaces/route.js";
 
 /**
  * Creates a RouteMetadata map from route descriptors
@@ -17,8 +18,16 @@ export function createRouteMetadata(descriptors: RouteMetaDescriptor[], app: App
  * Applies prefix to a path, considering exclusions
  */
 export function applyRoutePrefix(path: string, prefix: string, excludeList: string[]): string {
-  const shouldExclude = excludeList.some(
-    (excludePath) => path === excludePath || path.startsWith(excludePath + "/")
-  );
+  const shouldExclude = excludeList.some((excludePath) => path === excludePath || path.startsWith(excludePath + "/"));
   return shouldExclude ? path : prefix + path;
+}
+
+export function result2route(route: RouteFindResult<unknown>): Route {
+  return {
+    params: route.params,
+    methods: route.store.methods,
+    handler: route.store.handler,
+    path: route.store.path,
+    metadata: route.store.metadata,
+  } satisfies Route;
 }

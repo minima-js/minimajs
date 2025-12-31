@@ -1,9 +1,12 @@
 import { type Instance, type HTTPMethod, type HTTPVersion } from "find-my-way";
 import { type App, type RouteHandler } from "../interfaces/app.js";
+import { type Route } from "../interfaces/route.js";
 import { runHooks, getHooks } from "../hooks/store.js";
 import { $context, wrap, type Context } from "./context.js";
 import { NotFoundError } from "../error.js";
 import { createResponse } from "./response.js";
+import { result2route } from "./route.js";
+import type { RouteFindResult } from "../interfaces/route.js";
 
 export async function handleRequest<T>(
   server: App<T>,
@@ -11,11 +14,16 @@ export async function handleRequest<T>(
   req: Request
 ): Promise<Response> {
   const url = new URL(req.url);
-  const route = router.find(req.method as HTTPMethod, url.pathname);
+  const result: RouteFindResult<T> | null = router.find(req.method as HTTPMethod, url.pathname);
+  let route: Route | null = null;
+  let app = server;
 
   const locals = new Map<symbol, unknown>();
 
-  const app: App = route ? route.store.server : server;
+  if (result) {
+    route = result2route(result);
+    app = result.store.server;
+  }
 
   const ctx: Context = {
     app,
@@ -42,7 +50,7 @@ export async function handleRequest<T>(
         return await handleError(new NotFoundError(`Route ${req.method} ${url.pathname} not found`, url.pathname));
       }
       // Route found - process request
-      return await processRequest(route.store.handler);
+      return await processRequest(route.handler);
     } catch (err) {
       return await handleError(err);
     }
