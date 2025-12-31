@@ -9,9 +9,7 @@ beforeEach(() => {
   app = createApp({ logger: false });
 });
 
-afterEach(() => {
-  return app.close();
-});
+afterEach(() => app.close());
 
 describe("error module", () => {
   describe("errorHandler", () => {

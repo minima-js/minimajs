@@ -14,9 +14,12 @@ import { handleRequest } from "../internal/handler.js";
 import type { ErrorHandler, Serializer } from "../interfaces/response.js";
 import { plugin as p } from "../internal/plugins.js";
 import type { RouteFindResult } from "../interfaces/route.js";
+import { createLogger } from "../logger.js";
 
 export interface BunServerOptions {
   prefix?: string;
+  logger?: Logger;
+  router?: Router.Instance<HTTPVersion.V1>;
 }
 
 export class Server<T> implements App<BunServer<T>> {
@@ -32,12 +35,11 @@ export class Server<T> implements App<BunServer<T>> {
   public serialize: Serializer = serialize;
   public errorHandler: ErrorHandler = errorHandler;
 
-  constructor(logger: Logger, opts: BunServerOptions = {}) {
-    this.log = logger;
+  constructor(opts: BunServerOptions = {}) {
+    this.log = opts.logger || createLogger({ enabled: false });
     this.$prefix = opts.prefix || "";
     this.$prefixExclude = [];
-    this.router = Router({ ignoreTrailingSlash: true });
-
+    this.router = opts.router || Router({ ignoreTrailingSlash: true });
     // Initialize hooks in container
     this.container.set(kHooks, createHooksStore());
 

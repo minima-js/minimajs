@@ -23,8 +23,9 @@
   "scripts": {
     "dev": "tsc -w",
     "build": "bun run clean && tsc -p ./tsconfig.build.json",
-    "test": "bun node --no-warnings --experimental-vm-modules $(yarn bin jest)",
-    "coverage": "bun test --coverage",
+    "test": "bun test --timeout=2000",
+    "test:jest": "node --no-warnings --experimental-vm-modules node_modules/.bin/jest --detectOpenHandles",
+    "coverage": "bun test --coverage --timeout=2000",
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "dependencies": {

@@ -2,7 +2,7 @@ import type { Logger } from "pino";
 import pino from "pino";
 import merge from "deepmerge";
 import Router, { type HTTPVersion } from "find-my-way";
-import { Server, type BunServerOptions } from "./server.js";
+import { Server, type NodeServerOptions } from "./server.js";
 import { minimajs } from "../plugins/minimajs.js";
 
 export * from "../interfaces/index.js";
@@ -13,12 +13,13 @@ const loggerOptions = {
 
 const logger = pino(loggerOptions);
 
-export interface BunAppOptions extends Omit<BunServerOptions, "router" | "logger"> {
+export interface NodeAppOptions extends Omit<NodeServerOptions, "router" | "logger"> {
   logger?: Logger | boolean;
+  disableRequestLogging?: boolean;
   router?: Router.Instance<HTTPVersion.V1> | Router.Config<HTTPVersion.V1>;
 }
 
-function getDefaultConfig({ logger: loggerOverride }: BunAppOptions): Logger {
+function getDefaultConfig({ logger: loggerOverride }: NodeAppOptions): Logger {
   let loggerConfig = loggerOptions;
 
   if (loggerOverride === false) {
@@ -32,14 +33,16 @@ function getDefaultConfig({ logger: loggerOverride }: BunAppOptions): Logger {
   return logger.child(loggerConfig);
 }
 
-export function createApp(opts: BunAppOptions = {}) {
+export function createApp(opts: NodeAppOptions = {}) {
   const appLogger = getDefaultConfig(opts);
   const { prefix, router: routerOption } = opts;
+
   const router =
     routerOption && typeof routerOption === "object" && "on" in routerOption
       ? routerOption
       : Router((routerOption as Router.Config<HTTPVersion.V1> | undefined) || { ignoreTrailingSlash: true });
-  const app = new Server({ logger: appLogger, prefix, router });
+
+  const app = new Server({ prefix, logger: appLogger, router });
   app.register(minimajs());
   return app;
 }

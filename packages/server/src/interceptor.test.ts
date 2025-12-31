@@ -1,8 +1,8 @@
+import { describe, test, expect, beforeEach, afterEach, jest } from "@jest/globals";
 import { abort, context, searchParams } from "./index.js";
 import { createApp } from "./bun/index.js";
 import { interceptor, type Interceptor } from "./interceptor.js";
 import type { App } from "./interfaces/app.js";
-import { jest } from "@jest/globals";
 
 describe("middleware", () => {
   let app: App;
@@ -285,7 +285,7 @@ describe("interceptor.use", () => {
     const hello = jest.fn<() => Promise<void>>().mockReturnValue(Promise.resolve());
     app.register(
       interceptor.use(async () => hello()),
-      { filter: () => context().route?.store.path === "/hello" }
+      { filter: () => context().route?.path === "/hello" }
     );
     app.get("/", () => {
       return "home";

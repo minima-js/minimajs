@@ -15,9 +15,9 @@
  * ```
  */
 
-import type { App } from "./interfaces/app.js";
 import type { Dict, HeadersInit } from "./interfaces/response.js";
 import { toStatusCode, type StatusCode, createResponseFromState } from "./internal/response.js";
+import type { Context } from "./internal/context.js";
 
 /**
  * Represents the response body of an HTTP error.
@@ -31,7 +31,7 @@ export abstract class BaseHttpError extends Error {
   static is(value: unknown): value is BaseHttpError {
     return value instanceof this;
   }
-  abstract render(req: Request, app: App): Promise<Response>;
+  abstract render(ctx: Context): Response | Promise<Response>;
 }
 
 export interface HttpErrorOptions extends ErrorOptions {
@@ -75,8 +75,8 @@ export class HttpError extends BaseHttpError {
     return this.constructor.toJSON(this);
   }
 
-  async render(req: Request, app: App): Promise<Response> {
-    return createResponseFromState(await app.serialize(this.toJSON(), req), {
+  async render(ctx: Context): Promise<Response> {
+    return createResponseFromState(await ctx.app.serialize(this.toJSON(), ctx.req), {
       status: this.statusCode,
       headers: this.headers,
     });
@@ -89,9 +89,9 @@ export class NotFoundError extends HttpError {
     this.message = "Page not found";
   }
 
-  async render(req: Request, app: App): Promise<Response> {
-    this.response ||= `Route ${req.method} ${req.url} not found`;
-    return super.render(req, app);
+  async render(ctx: Context): Promise<Response> {
+    this.response ||= `Route ${ctx.req.method} ${ctx.url.pathname} not found`;
+    return super.render(ctx);
   }
 }
 
@@ -103,7 +103,7 @@ export class RedirectError extends BaseHttpError {
     this.statusCode = isPermanent ? 301 : 302;
     Object.assign(this, options);
   }
-  async render(_req: Request, _app: App): Promise<Response> {
+  render(_ctx: Context): Response {
     // Merge instance headers with Location header
     const headers = new Headers(this.headers);
     headers.set("Location", this.url);

@@ -14,9 +14,12 @@ export const serialize: Serializer = (body: unknown, _req) => {
 
 export const errorHandler: ErrorHandler = async (error: unknown, req: Request, app: App) => {
   if (error instanceof BaseHttpError) {
-    return error.render(req, app);
+    const ctx = $context();
+    return error.render(ctx);
   }
-  return createResponseFromState(await app.serialize(error, req), {
+  // For non-HTTP errors, return a generic message to avoid leaking internal details
+  const errorBody = { message: "Unable to process request" };
+  return createResponseFromState(await app.serialize(errorBody, req), {
     status: 500,
     headers: {
       "Content-Type": "application/json",

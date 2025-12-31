@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from "@jest/globals";
 import { createApp } from "./index.js";
 import type { Server } from "./server.js";
 
-describe("Bun Server", () => {
-  let app: Server<any>;
+describe("Node Server", () => {
+  let app: Server;
 
   afterEach(async () => {
     if (app) {
@@ -106,10 +106,10 @@ describe("Bun Server", () => {
       app.all("/wildcard", (req: Request) => ({ method: req.method }));
 
       const getResponse = await app.inject("/wildcard");
-      expect((await getResponse.json() as any).method).toBe("GET");
+      expect(((await getResponse.json()) as any).method).toBe("GET");
 
       const postResponse = await app.inject(new Request("http://localhost/wildcard", { method: "POST" }));
-      expect((await postResponse.json() as any).method).toBe("POST");
+      expect(((await postResponse.json()) as any).method).toBe("POST");
     });
   });
 
@@ -126,7 +126,7 @@ describe("Bun Server", () => {
       });
 
       const response = await app.inject("/users/123");
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.id).toBe("123");
     });
 
@@ -137,7 +137,7 @@ describe("Bun Server", () => {
       });
 
       const response = await app.inject("/users/123/posts/456");
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.userId).toBe("123");
       expect(data.postId).toBe("456");
     });
@@ -150,7 +150,7 @@ describe("Bun Server", () => {
 
       const response = await app.inject("/api/users");
       expect(response.status).toBe(200);
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.success).toBe(true);
     });
 
@@ -160,11 +160,11 @@ describe("Bun Server", () => {
       app.prefix("/v2").get("/users", () => ({ version: 2 }));
 
       const v1Response = await app.inject("/v1/users");
-      const v1Data = await v1Response.json() as any;
+      const v1Data = (await v1Response.json()) as any;
       expect(v1Data.version).toBe(1);
 
       const v2Response = await app.inject("/v2/users");
-      const v2Data = await v2Response.json() as any;
+      const v2Data = (await v2Response.json()) as any;
       expect(v2Data.version).toBe(2);
     });
 
@@ -179,7 +179,7 @@ describe("Bun Server", () => {
 
       const healthResponse = await app.inject("/health");
       expect(healthResponse.status).toBe(200);
-      const healthData = await healthResponse.json() as any;
+      const healthData = (await healthResponse.json()) as any;
       expect(healthData.excluded).toBe(true);
     });
   });
@@ -201,7 +201,7 @@ describe("Bun Server", () => {
       expect(pluginCalled).toBe(true);
 
       const response = await app.inject("/plugin-route");
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.fromPlugin).toBe(true);
     });
 
@@ -218,19 +218,22 @@ describe("Bun Server", () => {
       expect(pluginCalled).toBe(true);
 
       const response = await app.inject("/async-route");
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.async).toBe(true);
     });
 
     it("should register plugin with options", async () => {
-      app.register<{ name: string }>(async (instance, opts) => {
-        instance.get("/greeting", () => ({ message: `Hello ${opts.name}` }));
-      }, { name: "World" });
+      app.register<{ name: string }>(
+        async (instance, opts) => {
+          instance.get("/greeting", () => ({ message: `Hello ${opts.name}` }));
+        },
+        { name: "World" }
+      );
 
       await app.ready();
 
       const response = await app.inject("/greeting");
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.message).toBe("Hello World");
     });
   });
@@ -245,7 +248,7 @@ describe("Bun Server", () => {
 
       const response = await app.inject("/test");
       expect(response.status).toBe(200);
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.injected).toBe(true);
     });
 
@@ -256,7 +259,7 @@ describe("Bun Server", () => {
       const response = await app.inject(request);
 
       expect(response.status).toBe(200);
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.method).toBe("POST");
     });
 
@@ -267,7 +270,7 @@ describe("Bun Server", () => {
       });
 
       const response = await app.inject("/search?q=test");
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.query).toBe("test");
     });
 
@@ -284,7 +287,7 @@ describe("Bun Server", () => {
       });
 
       const response = await app.inject(request);
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       expect(data.received).toEqual({ test: "data" });
     });
   });
@@ -364,6 +367,45 @@ describe("Bun Server", () => {
       const response = await app.inject("/custom");
       const text = await response.text();
       expect(text).toBe('Custom: {"test":true}');
+    });
+  });
+
+  describe("Node.js Specific Features", () => {
+    it("should handle Node.js IncomingMessage to Web Request conversion", async () => {
+      app = createApp({ logger: false });
+      app.get("/headers", (req) => {
+        return {
+          host: req.headers.get("host"),
+          userAgent: req.headers.get("user-agent"),
+        };
+      });
+
+      const response = await app.inject(
+        new Request("http://localhost/headers", {
+          headers: {
+            "User-Agent": "test-agent",
+          },
+        })
+      );
+
+      const data = (await response.json()) as any;
+      expect(data.host).toBe("localhost");
+      expect(data.userAgent).toBe("test-agent");
+    });
+
+    it("should handle Web Response to ServerResponse conversion", async () => {
+      app = createApp({ logger: false });
+      app.get("/response-test", () => {
+        return { status: "ok", timestamp: new Date().toISOString() };
+      });
+
+      const response = await app.inject("/response-test");
+      expect(response.status).toBe(200);
+      expect(response.headers.get("content-type")).toContain("application/json");
+
+      const data = (await response.json()) as any;
+      expect(data.status).toBe("ok");
+      expect(data.timestamp).toBeDefined();
     });
   });
 });

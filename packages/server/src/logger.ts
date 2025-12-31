@@ -59,7 +59,7 @@ function getModuleName() {
   const { route, locals } = ctx;
   if (!locals.has(kModuleName)) {
     let name = getPluginNames(ctx.app);
-    const handler = route?.store.handler.name;
+    const handler = route?.handler.name;
     if (handler) {
       name = name + ":" + handler;
     }

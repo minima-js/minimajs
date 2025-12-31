@@ -1,41 +1,54 @@
-import { createServer, type Server as HttpServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { isAsyncFunction } from "node:util/types";
-import { default as Router } from "find-my-way";
+import { type Server as NodeServer, type IncomingMessage, type ServerResponse, createServer } from "node:http";
+import Router, { type HTTPVersion } from "find-my-way";
 import avvio, { type Avvio } from "avvio";
 import type { Logger } from "pino";
-import { Request } from "./request.js";
-import { Response } from "./response.js";
-import type { App, RouteMetaDescriptor, RouteOptions } from "../interfaces/app.js";
-import type { RouteHandler } from "../interfaces/route.js";
+import type { App, RouteHandler, RouteOptions, RouteMetaDescriptor, PrefixOptions } from "../interfaces/app.js";
+import type { Plugin, PluginOptions, PluginSync, Register, RegisterOptions } from "../interfaces/plugin.js";
+import { pluginOverride } from "../internal/override.js";
+import { createRouteMetadata, applyRoutePrefix } from "../internal/route.js";
+import { kHooks } from "../symbols.js";
+import { createHooksStore } from "../hooks/store.js";
+import { runHooks } from "../hooks/store.js";
+import { serialize, errorHandler } from "../internal/default-handler.js";
+import { handleRequest } from "../internal/handler.js";
+import type { ErrorHandler, Serializer } from "../interfaces/response.js";
+import { plugin as p } from "../internal/plugins.js";
+import type { RouteFindResult } from "../interfaces/route.js";
+import { toWebRequest, fromWebResponse } from "./utils.js";
+import { createLogger } from "../logger.js";
 
-type HookName = "onRequest" | "preSerialization" | "onError" | "onSend" | "onReady" | "onClose";
-type HookCallback = (req: Request, res: Response, next?: Next) => void | Promise<void>;
-type ReadyHookCallback = () => void | Promise<void>;
-type CloseHookCallback = () => void | Promise<void>;
-
-interface ContentTypeParser {
-  test: (contentType: string) => boolean;
-  parser: (req: IncomingMessage, done: (err: Error | null, body?: unknown) => void) => void;
+export interface NodeServerOptions {
+  prefix?: string;
+  logger?: Logger;
+  router?: Router.Instance<HTTPVersion.V1>;
 }
 
-export class MinimalServer implements App {
-  private Request: new () => Request;
-  private server: HttpServer;
-  private router: Router.Instance<Router.HTTPVersion.V1>;
-  private hooks: Map<HookName, HookCallback[]> = new Map();
-  private contentTypeParsers: ContentTypeParser[] = [];
-  private errorHandler?: (error: unknown, req: Request, res: Response) => void | Promise<void>;
-  private notFoundHandler?: (req: Request, res: Response) => void | Promise<void>;
+export class Server implements App<NodeServer> {
+  server?: NodeServer;
+  readonly router: Router.Instance<HTTPVersion.V1>;
+  readonly container = new Map();
+  $prefix: string;
+  $prefixExclude: string[];
+  private avvio: Avvio<App>;
 
   public log: Logger;
 
-  private avvio: Avvio<App>;
+  public serialize: Serializer = serialize;
+  public errorHandler: ErrorHandler = errorHandler;
 
-  constructor(logger: Logger) {
-    this.log = logger;
-    this.server = createServer(this.handleRequest.bind(this));
-    this.router = Router({ ignoreTrailingSlash: true });
-    this.avvio = avvio<App>(this);
+  constructor(opts: NodeServerOptions = {}) {
+    this.log = opts.logger || createLogger({ enabled: false });
+    this.$prefix = opts.prefix || "";
+    this.$prefixExclude = [];
+    this.router = opts.router || Router({ ignoreTrailingSlash: true });
+
+    // Initialize hooks in container
+    this.container.set(kHooks, createHooksStore());
+
+    this.avvio = avvio<App>(this, {
+      expose: { close: "$close", ready: "$ready" },
+    });
+    this.avvio.override = pluginOverride;
   }
 
   // HTTP methods
@@ -68,11 +81,8 @@ export class MinimalServer implements App {
   }
 
   all(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
-    const methods = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
-    for (const method of methods) {
-      this.route({ method: method as any, path }, ...args);
-    }
-    return this;
+    // Use wildcard '*' for all methods - find-my-way supports this
+    return this.route({ method: "*" as any, path }, ...args);
   }
 
   route(options: RouteOptions, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
@@ -80,253 +90,122 @@ export class MinimalServer implements App {
     const handler = args[args.length - 1] as RouteHandler;
     const metadata = args.slice(0, -1) as RouteMetaDescriptor[];
 
-    // Store metadata in a container for this route
-    const routeContainer = new Map<symbol, unknown>();
-    for (const [symbol, value] of metadata) {
-      routeContainer.set(symbol, value);
+    const fullPath = applyRoutePrefix(path, this.$prefix, this.$prefixExclude);
+
+    // find-my-way supports '*' wildcard for all HTTP methods
+    this.router.on(
+      method,
+      fullPath,
+      () => {}, // Dummy handler - actual handler is in store
+      {
+        server: this,
+        path: fullPath,
+        methods: Array.isArray(method) ? method : [method],
+        handler,
+        metadata: createRouteMetadata(metadata, this),
+      } satisfies RouteFindResult<NodeServer>["store"]
+    );
+    return this;
+  }
+
+  prefix(prefix: string, options: PrefixOptions = {}): this {
+    this.$prefix = prefix;
+    if (options.exclude) {
+      this.$prefixExclude = options.exclude;
     }
-
-    this.router.on(method as any, path, async (req: Request, res: Response, params: Record<string, string>) => {
-      req.params = params;
-      req.routeOptions = {
-        method: method as string,
-        url: path,
-        path,
-        params: Object.keys(params),
-      };
-
-      try {
-        const result = await handler(req, res);
-        if (!res.sent && result !== undefined) {
-          res.send(result);
-        }
-      } catch (error) {
-        await this.runErrorHandler(error, req, res);
-      }
-    });
     return this;
   }
 
-  // Plugin system
-  register(plugin: (app: App, opts: any, done?: (err?: Error) => void) => void | Promise<void>, opts: any = {}): this {
-    this.avvio.use((instance, _, done) => {
-      if (isAsyncFunction(plugin)) {
-        plugin(instance as unknown as App, opts)
-          .then(() => done && done())
-          .catch(done);
-      } else {
-        plugin(instance as unknown as App, opts, done);
-        // If plugin doesn't accept done callback, call it manually
-        if (plugin.length < 3 && done) {
-          done();
-        }
-      }
-    });
-    return this;
-  }
-
-  // Hook management
-  addHook(hookName: HookName, callback: HookCallback | ReadyHookCallback | CloseHookCallback): this {
-    if (hookName === "onReady") {
-      this.avvio.ready(callback as ReadyHookCallback);
+  // Plugin system - overloaded implementations
+  register<T>(plugin: Plugin<PluginOptions<T>>, opts?: T): this;
+  register<T>(plugin: PluginSync<T>, opts?: any): this;
+  register<T>(plugin: Register<RegisterOptions<T>>, opts?: T): this;
+  register(plugin: Plugin | PluginSync | Register, opts?: any): this {
+    if (p.isSync(plugin)) {
+      plugin(this, opts);
       return this;
     }
-    if (hookName === "onClose") {
-      this.avvio.onClose(callback as CloseHookCallback);
-      return this;
-    }
-
-    const hooks = this.hooks.get(hookName) || [];
-    hooks.push(callback as HookCallback);
-    this.hooks.set(hookName, hooks);
+    this.avvio.use(async (instance, opts) => {
+      const pluginName = p.getName(plugin, opts);
+      const finalOpts = opts ? { ...opts, name: pluginName } : { name: pluginName };
+      await runHooks(instance, "register", plugin, finalOpts);
+      await plugin(instance, finalOpts);
+    }, opts);
     return this;
   }
 
-  private async runHooks(hookName: HookName, req: Request, res: Response, payload?: unknown): Promise<unknown> {
-    const hooks = this.hooks.get(hookName) || [];
-    let currentPayload = payload;
+  // Testing utility
+  async inject(request: Request | string): Promise<Response> {
+    let req: Request;
 
-    for (const hook of hooks) {
-      if (res.sent) break;
-
-      await new Promise<void>((resolve, reject) => {
-        const next = (error?: unknown, newPayload?: unknown) => {
-          if (error) return reject(error);
-          if (newPayload !== undefined) {
-            currentPayload = newPayload;
-          }
-          resolve();
-        };
-
-        if (isAsyncFunction(hook)) {
-          hook(req, res, next)
-            .then(() => resolve())
-            .catch(reject);
-        } else {
-          hook(req, res, next);
-          // If hook doesn't accept next callback, resolve immediately
-          if (hook.length < 3) {
-            resolve();
-          }
-        }
-      });
-    }
-
-    return currentPayload;
-  }
-
-  // Error handling
-  setErrorHandler(handler: (error: unknown, req: Request, res: Response) => void | Promise<void>): this {
-    this.errorHandler = handler;
-    return this;
-  }
-
-  setNotFoundHandler(handler: (req: Request, res: Response) => void | Promise<void>): this {
-    this.notFoundHandler = handler;
-    return this;
-  }
-
-  private async runErrorHandler(error: unknown, req: Request, res: Response): Promise<void> {
-    const errorHooks = this.hooks.get("onError") || [];
-    for (const hook of errorHooks) {
-      try {
-        await hook(req, res, () => {});
-      } catch (err) {
-        this.log.error(err);
-      }
-    }
-
-    if (this.errorHandler) {
-      await this.errorHandler(error, req, res);
+    if (typeof request === "string") {
+      // If it's a string, create a GET request
+      const url = request.startsWith("http")
+        ? request
+        : `http://localhost${request.startsWith("/") ? "" : "/"}${request}`;
+      req = new Request(url);
     } else {
-      this.log.error(error);
-      if (!res.sent) {
-        res.status(500).send({ error: "Internal Server Error" });
-      }
+      req = request;
     }
+
+    // Ensure avvio is ready before handling the request
+    await this.ready();
+    return handleRequest(this, this.router, req);
   }
 
-  // Body parsing
-  addContentTypeParser(
-    contentType: string,
-    parser: (req: IncomingMessage, payload: unknown, done: (err: Error | null, body?: unknown) => void) => void
-  ): this {
-    this.contentTypeParsers.push({
-      test: (ct) => ct.includes(contentType),
-      parser,
-    });
-    return this;
-  }
-
-  private async parseBody(rawReq: IncomingMessage): Promise<unknown> {
-    const contentType = rawReq.headers["content-type"] || "";
-
-    // Find matching parser
-    const customParser = this.contentTypeParsers.find((p) => p.test(contentType));
-    if (customParser) {
-      return new Promise((resolve, reject) => {
-        customParser.parser(rawReq, null, (err, body) => {
-          if (err) return reject(err);
-          resolve(body);
-        });
-      });
-    }
-
-    // Default JSON parser
-    if (contentType.includes("application/json")) {
-      return new Promise((resolve, reject) => {
-        let data = "";
-        rawReq.on("data", (chunk) => (data += chunk));
-        rawReq.on("end", () => {
-          try {
-            resolve(data ? JSON.parse(data) : null);
-          } catch (err) {
-            reject(err);
-          }
-        });
-        rawReq.on("error", reject);
-      });
-    }
-
-    return null;
-  }
-
-  // Request handling
-  private async handleRequest(rawReq: IncomingMessage, rawRes: ServerResponse): Promise<void> {
-    const req = new Request(rawReq, this as unknown as App, rawReq.socket);
-    const res = new Response(rawRes, this as unknown as App);
-
-    try {
-      // Parse query string
-      const urlObj = new URL(req.url, `http://${req.hostname}`);
-      req.query = Object.fromEntries(urlObj.searchParams.entries());
-
-      // onRequest hooks
-      await this.runHooks("onRequest", req, res);
-      if (res.sent) return;
-
-      // Parse body
-      if (["POST", "PUT", "PATCH"].includes(req.method)) {
-        req.body = await this.parseBody(rawReq);
-      }
-
-      // Find route
-      const route = this.router.find(req.method, urlObj.pathname);
-      if (!route) {
-        if (this.notFoundHandler) {
-          await this.notFoundHandler(req, res);
-        } else {
-          res.status(404).send({ error: "Not Found" });
-        }
-        return;
-      }
-
-      // Execute route handler
-      await route.handler(req, res, route.params);
-    } catch (error) {
-      await this.runErrorHandler(error, req, res);
-    } finally {
-      // onSend hooks
-      if (!res.sent) {
-        try {
-          await this.runHooks("onSend", req, res);
-        } catch (err) {
-          this.log.error(err);
-        }
-      }
-    }
+  // Lifecycle
+  async ready(): Promise<void> {
+    await this.avvio.ready();
+    await runHooks(this, "ready", this);
   }
 
   // Server lifecycle
   async listen(opts: { port: number; host?: string }): Promise<string> {
-    await this.avvio.ready();
+    await this.ready();
+    const app = this;
+    const router = this.router;
 
-    return new Promise((resolve, reject) => {
-      this.server.listen(opts.port, opts.host || "0.0.0.0", () => {
-        const addr = `http://${opts.host || "localhost"}:${opts.port}`;
-        resolve(addr);
-      });
-      this.server.on("error", reject);
-    });
-  }
+    async function onRequest(req: IncomingMessage, res: ServerResponse) {
+      const request = toWebRequest(req);
+      const response = await handleRequest(app, router, request);
+      await fromWebResponse(response, res);
+    }
 
-  async close(): Promise<void> {
-    await new Promise<void>((resolve, reject) => {
-      this.avvio.close((err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-    return new Promise((resolve, reject) => {
-      this.server.close((err) => {
-        if (err) return reject(err);
+    const host = opts.host || "0.0.0.0";
+    const port = opts.port;
+
+    this.server = createServer(onRequest);
+
+    await new Promise<void>((resolve) => {
+      this.server!.listen(port, host, () => {
         resolve();
       });
     });
+
+    // Execute listen hook with address information
+    await runHooks(this, "listen", { host, port });
+    const addr = `http://${opts.host || "localhost"}:${port}`;
+    return addr;
   }
 
-  // Route printing (for routeLogger plugin)
-  printRoutes(opts: { commonPrefix?: boolean } = {}): string {
-    return this.router.prettyPrint({ commonPrefix: opts.commonPrefix });
+  async close(): Promise<void> {
+    // 1. Stop accepting new connections immediately
+    if (this.server) {
+      await new Promise<void>((resolve, reject) => {
+        this.server!.close((err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+    }
+    // 2. Run user cleanup hooks (database connections, file handles, etc.)
+    await runHooks(this, "close");
+    // 3. Tear down plugin lifecycle (avvio close handlers)
+    await new Promise<void>((resolve, reject) =>
+      this.avvio.close((err: unknown) => {
+        if (err) reject(err);
+        resolve();
+      })
+    );
   }
 }
