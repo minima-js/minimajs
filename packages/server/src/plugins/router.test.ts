@@ -1,8 +1,8 @@
+import { describe, it, expect, beforeEach, afterEach, jest } from "@jest/globals";
 import { createApp } from "../bun/index.js";
 import type { App } from "../interfaces/app.js";
 import { routeLogger } from "./router.js";
 import chalk from "chalk";
-import { jest } from "@jest/globals";
 
 describe("routeLogger", () => {
   let app: App;

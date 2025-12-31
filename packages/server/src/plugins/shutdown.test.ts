@@ -1,6 +1,6 @@
+import { describe, it, expect, beforeEach, afterEach, jest } from "@jest/globals";
 import type { FastifyBaseLogger as Logger } from "fastify";
 import { shutdownListener, type QuitHandler } from "./shutdown.js";
-import { jest } from "@jest/globals";
 import type { Signals } from "../interfaces/index.js";
 
 describe("shutdownListener", () => {
