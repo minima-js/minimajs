@@ -126,7 +126,7 @@ describe("Http", () => {
         () => {
           expect(headers.get("authorization")).toBe("Bearer token");
           expect(headers.get("x-custom")).toBe("value");
-          expect(headers.get("x-missing")).toBeUndefined();
+          expect(headers.get("x-missing")).toBeNull();
         },
         { headers: { authorization: "Bearer token", "x-custom": "value" } }
       );
@@ -192,7 +192,7 @@ describe("Http", () => {
         () => {
           expect(searchParams.get("name")).toBe("John Doe");
           expect(searchParams.get("page")).toBe("2");
-          expect(searchParams.get("missing")).toBeUndefined();
+          expect(searchParams.get("missing")).toBeNull();
         },
         { url: "/?name=John Doe&page=2" }
       );

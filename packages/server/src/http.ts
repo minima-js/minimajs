@@ -57,8 +57,9 @@ export namespace response {
    * ```
    * @since v0.2.0
    */
-  export function status(statusCode: keyof typeof StatusCodes | number): Response {
-    return new Response(null, { status: toStatusCode(statusCode) });
+  export function status(statusCode: StatusCode): void {
+    const { responseState: res } = $context();
+    res.status = toStatusCode(statusCode);
   }
 }
 
@@ -501,7 +502,20 @@ export namespace headers {
   export function getAll(name: HttpHeaderIncoming): string[];
   export function getAll<R>(name: HttpHeaderIncoming, transform: (value: string) => R): R[];
   export function getAll(name: HttpHeaderIncoming, transform?: (value: string) => unknown): unknown[] {
-    const values = request().headers.getAll(name as any);
+    // Web Standards Headers.getAll() only supports 'set-cookie'
+    // For other headers, we need to split the value manually
+    const value = request().headers.get(name);
+    if (value === null) {
+      return [];
+    }
+    // If it's set-cookie, use getAll
+    if (name.toLowerCase() === "set-cookie") {
+      const values = request().headers.getAll("set-cookie" as any);
+      if (!transform) return values;
+      return values.map(transform);
+    }
+    // For other headers, split by comma (HTTP standard)
+    const values = value.split(",").map((v) => v.trim());
     if (!transform) return values;
     return values.map(transform);
   }
