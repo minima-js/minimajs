@@ -41,7 +41,7 @@ export async function createResponse(data: unknown, options: ResponseInit = {}):
   }
 
   // 1. transform hook
-  const transformed = runHooks.transform(app, data, ctx);
+  const transformed = await runHooks.transform(app, data, ctx);
 
   // 2. serialize
   const body = await app.serialize(transformed, ctx);

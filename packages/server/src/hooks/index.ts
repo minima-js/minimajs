@@ -77,10 +77,10 @@ export namespace hook {
       ready: OnReadyHook;
       register: OnRegisterHook;
     }>
-  ): Plugin {
-    return plugin(function defineHooksPlugin(app) {
+  ): PluginSync {
+    return factory(function defineHooksPlugin(hookStore) {
       for (const [name, callback] of Object.entries(hooks)) {
-        addHook(app, name as LifecycleHook, callback as GenericHookCallback);
+        hookStore[name as LifecycleHook].add(callback as GenericHookCallback);
       }
     });
   }

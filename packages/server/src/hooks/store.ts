@@ -104,6 +104,9 @@ export namespace runHooks {
         result = undefined;
       }
     }
+    if (result === undefined) {
+      throw err;
+    }
     return result;
   }
 }

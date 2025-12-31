@@ -121,8 +121,8 @@ export class ValidationError extends HttpError {
   };
 
   constructor(response: ErrorResponse = "Validation failed", options?: HttpErrorOptions) {
-    super(response, 400, options);
-    this.statusCode ??= (this.constructor as typeof ValidationError).getStatusCode(this);
+    super(response, 422, options);
+    this.statusCode = (this.constructor as typeof ValidationError).getStatusCode(this);
   }
 }
 

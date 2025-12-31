@@ -157,7 +157,7 @@ export class Server<T> implements App<BunServer<T>> {
   }
 
   // Server lifecycle
-  async listen(opts: { port: number; host?: string }): Promise<string> {
+  async listen(opts: { port: number; host?: string }): Promise<BunServer<T>> {
     await this.ready();
     const app = this;
     const router = this.router;
@@ -167,18 +167,17 @@ export class Server<T> implements App<BunServer<T>> {
 
     const host = opts.host || "0.0.0.0";
     const port = opts.port;
-
-    this.server = Bun.serve({
+    const srv = Bun.serve<T>({
       port,
       hostname: host,
       development: process.env.NODE_ENV !== "production",
       fetch: onFetch,
     });
+    this.server = srv;
 
     // Execute listen hook with address information
-    await runHooks(this, "listen", { host, port });
-    const addr = `http://${opts.host || "localhost"}:${port}`;
-    return addr;
+    await runHooks(this, "listen", srv);
+    return srv;
   }
 
   async close(): Promise<void> {

@@ -80,7 +80,7 @@ async function handleError(err: unknown, ctx: Context): Promise<Response> {
   let response: Response;
   try {
     // Create error response (handles transform, serialize, send, and sent hooks)
-    response = await createResponse(await runHooks.error(ctx.app, ctx));
+    response = await createResponse(await runHooks.error(err, ctx));
   } catch (e) {
     response = await ctx.app.errorHandler(e, ctx);
   }
