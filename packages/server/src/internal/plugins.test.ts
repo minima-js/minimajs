@@ -2,17 +2,18 @@ import { describe, test, expect, beforeEach, afterEach, jest } from "@jest/globa
 import { plugin } from "./plugins.js";
 import { createApp } from "../bun/index.js";
 import type { App } from "../interfaces/app.js";
+import { kPluginName, kPluginSkipOverride } from "../symbols.js";
 
 describe("plugins", () => {
   describe("createPlugin", () => {
     test("it should set override and accept a async function", () => {
       const p: any = plugin(async (_, __) => {});
-      expect(p[Symbol.for("skip-override")]).toBeTruthy();
+      expect(p[kPluginSkipOverride]).toBeTruthy();
     });
     test("it should set override and accept a async function set a name", () => {
       const p: any = plugin(async (_, __) => {}, "hello world");
-      expect(p[Symbol.for("skip-override")]).toBeTruthy();
-      expect(p[Symbol.for("fastify.display-name")]).toBeTruthy();
+      expect(p[kPluginSkipOverride]).toBeTruthy();
+      expect(p[kPluginName]).toBeTruthy();
     });
   });
 

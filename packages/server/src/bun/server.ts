@@ -1,3 +1,4 @@
+import "../internal/avvio-patch.js";
 import { type Server as BunServer } from "bun";
 import Router, { type HTTPVersion } from "find-my-way";
 import avvio, { type Avvio } from "avvio";
@@ -44,6 +45,7 @@ export class Server<T> implements App<BunServer<T>> {
     this.container.set(kHooks, createHooksStore());
 
     this.avvio = avvio<App>(this, {
+      autostart: false,
       expose: { close: "$close", ready: "$ready" },
     });
     this.avvio.override = pluginOverride;
@@ -79,8 +81,9 @@ export class Server<T> implements App<BunServer<T>> {
   }
 
   all(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
-    // Use wildcard '*' for all methods - find-my-way supports this
-    return this.route({ method: "*" as any, path }, ...args);
+    // Register route for all HTTP methods
+    const methods = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
+    return this.route({ method: methods as any, path }, ...args);
   }
 
   route(options: RouteOptions, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {

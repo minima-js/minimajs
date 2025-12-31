@@ -98,6 +98,7 @@
         "uuid": "^13.0.0",
       },
       "devDependencies": {
+        "@jest/globals": "^30.2.0",
         "@minimajs/server": "workspace:*",
         "@types/jest": "^30.0.0",
         "@types/node": "^25.0.3",
