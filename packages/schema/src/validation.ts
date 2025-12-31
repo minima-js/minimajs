@@ -1,12 +1,9 @@
-import { z, ZodError, type ParseParams } from "zod";
+import { z, ZodError } from "zod";
 import { SchemaError, ValidationError } from "./error.js";
 import { context } from "@minimajs/server";
 import type { SchemaLifecycleTypes } from "./schema.js";
 
 const kSchemaMetadata = Symbol("minimajs.schema.metadata");
-z.array(z.string(), {
-  description: "hello",
-});
 
 export interface SchemaMetadata<T = unknown> {
   type: SchemaLifecycleTypes;
@@ -25,10 +22,14 @@ export function getSchemaMetadata(cb: any): SchemaMetadata {
  */
 export type DataCallback = () => unknown;
 
+export interface ValidationOptions {
+  stripUnknown?: boolean;
+}
+
 export function validatorAsync<T extends z.ZodTypeAny>(
   schema: T,
   data: DataCallback,
-  option: ParseParams | undefined,
+  option: ValidationOptions | undefined,
   type: SchemaLifecycleTypes
 ): () => z.infer<T> {
   const symbol = Symbol("minimajs.schema");
@@ -39,18 +40,29 @@ export function validatorAsync<T extends z.ZodTypeAny>(
     }
     return locals.get(symbol)!;
   }
+
   setScehmaMetadata(getData, {
     schema,
     type,
-    callback: () => validateObjectAsync(schema, data(), option),
+    callback: async () => {
+      const { locals } = context();
+      const val = await validateObjectAsync(schema, data(), option);
+      locals.set(symbol, val);
+    },
   });
 
   return getData;
 }
 
-async function validateObjectAsync(schema: z.ZodTypeAny, data: unknown, option?: ParseParams) {
+async function validateObjectAsync(schema: z.ZodTypeAny, data: unknown, option?: ValidationOptions) {
   try {
-    return await schema.parseAsync(data, option);
+    // If passthrough is true, allow unknown properties
+    let finalSchema = schema;
+    if (option?.stripUnknown === false && schema._def?.typeName === "ZodObject") {
+      finalSchema = (schema as any).passthrough();
+    }
+
+    return await finalSchema.parseAsync(data);
   } catch (err) {
     dealWithException(err);
   }

@@ -1,14 +1,18 @@
-import { ZodError, type ZodIssue, type ZodErrorMap } from "zod";
+import { type z } from "zod";
 import { HttpError as BaseError, type HttpErrorOptions } from "@minimajs/server/error";
 import { ok } from "assert";
 
 export class SchemaError extends Error {}
 
+type ZodIssue = z.core.$ZodIssue;
+type ZodError<T = unknown> = z.core.$ZodError<T>;
+type ZodErrorMap = z.core.$ZodErrorMap;
+
 /**
  * Options for creating a validation error.
  * Extends HTTP error options with validation-specific properties.
  */
-export interface ValidatorErrorOptions extends HttpErrorOptions {
+export interface ValidatorErrorOptions extends Omit<HttpErrorOptions, 'base'> {
   /** The value that failed validation */
   value?: unknown;
   /** Dot-notation path to the field that failed validation */
@@ -27,15 +31,19 @@ export interface ValidatorErrorOptions extends HttpErrorOptions {
 
 export interface ValidationError extends ValidatorErrorOptions {}
 
-export const defaultErrorMap: ZodErrorMap = (issue, ctx) => {
-  switch (issue.code) {
+export const defaultErrorMap: ZodErrorMap = (issue) => {
+  const code = (issue as any).code;
+  const received = (issue as any).received;
+  const expected = (issue as any).expected;
+
+  switch (code) {
     case "invalid_type":
-      if (issue.received === "undefined") {
-        return { message: "Required" };
+      if (received === "undefined") {
+        return "Required";
       }
-      return { message: `Expected ${issue.expected}, received ${issue.received}` };
+      return `Expected ${expected}, received ${received}`;
     default:
-      return { message: ctx.defaultError };
+      return undefined;
   }
 };
 

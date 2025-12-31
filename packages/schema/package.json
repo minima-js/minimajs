@@ -14,12 +14,12 @@
   },
   "peerDependencies": {
     "@minimajs/server": ">=0.3.0",
-    "zod": "^3.23.8"
+    "zod": "^4.3.2"
   },
   "devDependencies": {
     "@minimajs/server": "workspace:*",
     "@types/node": "^25.0.3",
-    "zod": "^3.23.8"
+    "zod": "^4.3.2"
   },
   "files": [
     "lib"
