@@ -88,8 +88,7 @@ export class Server implements App<NodeServer> {
   route(options: RouteOptions, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
     const { method, path } = options;
     const handler = args[args.length - 1] as RouteHandler;
-    const metadata = args.slice(0, -1) as RouteMetaDescriptor[];
-
+    const descriptors = args.slice(0, -1) as RouteMetaDescriptor[];
     const fullPath = applyRoutePrefix(path, this.$prefix, this.$prefixExclude);
 
     // find-my-way supports '*' wildcard for all HTTP methods
@@ -102,7 +101,7 @@ export class Server implements App<NodeServer> {
         path: fullPath,
         methods: Array.isArray(method) ? method : [method],
         handler,
-        metadata: createRouteMetadata(metadata, this),
+        metadata: createRouteMetadata(descriptors, fullPath, handler, this),
       } satisfies RouteFindResult<NodeServer>["store"]
     );
     return this;

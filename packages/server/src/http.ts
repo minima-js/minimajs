@@ -144,7 +144,7 @@ export namespace abort {
    * ```
    */
   export function notFound(message?: string, options?: HttpErrorOptions): never {
-    throw new NotFoundError(message, "", options);
+    throw new NotFoundError(message, options);
   }
 
   /**

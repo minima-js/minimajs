@@ -1,26 +1,30 @@
-import type { IncomingHttpHeaders } from "node:http";
-import assert from "node:assert";
+import { Readable } from "node:stream";
+import { ok } from "node:assert";
 import { Busboy, type BusboyConfig, type BusboyHeaders } from "@fastify/busboy";
 import { File } from "./file.js";
-import { request, type Request } from "@minimajs/server";
+import { context } from "@minimajs/server";
 import { ValidationError } from "@minimajs/server/error";
 import { createIteratorAsync, stream2void } from "./stream.js";
 import { UploadError } from "./errors.js";
 
 type Config = Omit<BusboyConfig, "headers">;
 
-function ensureContentType(headers: IncomingHttpHeaders): asserts headers is BusboyHeaders {
-  assert("content-type" in headers, new ValidationError("Invalid content type or not exists in header"));
+function toBusBoyHeaders(headers: Headers): BusboyHeaders {
+  ok(headers.has("content-type"), new ValidationError("Invalid content type or not exists in header"));
+  return {
+    "content-type": headers.get("content-type")!,
+  };
 }
 
-function busboy(req: Request, opt: Config) {
-  const { headers } = req;
-  ensureContentType(headers);
+function busboy(opt: Config) {
+  const { req, rawReq } = context();
+  const stream = rawReq ? rawReq : Readable.fromWeb(req.body as any);
+  const headers = toBusBoyHeaders(req.headers);
   const bb = new Busboy({
     ...opt,
     headers,
   });
-  req.raw.pipe(bb);
+  stream.pipe(bb);
   return bb;
 }
 
@@ -48,9 +52,8 @@ export namespace multipart {
     if (!name) {
       limits.files = 1;
     }
-    const req = request();
     return new Promise<File>((resolve, reject) => {
-      const bb = busboy(req, { limits });
+      const bb = busboy({ limits });
       bb.on("file", (uploadedName, file, filename, encoding, mimeType) => {
         if (name && uploadedName !== name) {
           file.pipe(stream2void());
@@ -77,9 +80,8 @@ export namespace multipart {
    * ```
    */
   export function files() {
-    const req = request();
     const [stream, iterator] = createIteratorAsync<File>();
-    const bb = busboy(req, {
+    const bb = busboy({
       limits: { fields: 0 },
     });
     bb.on("file", (uploadedName, file, filename, encoding, mimeType) => {
@@ -102,9 +104,8 @@ export namespace multipart {
    * ```
    */
   export function fields<T extends Record<string, string>>() {
-    const req = request();
     const values: any = {};
-    const bb = busboy(req, {
+    const bb = busboy({
       limits: { files: 0 },
     });
     bb.on("field", (name, value) => {
@@ -134,9 +135,8 @@ export namespace multipart {
    * ```
    */
   export function body() {
-    const req = request();
     const [stream, iterator] = createIteratorAsync<[string, string | File]>();
-    const bb = busboy(req, {});
+    const bb = busboy({});
     bb.on("field", (name, value) => {
       stream.push([name, value]);
     });

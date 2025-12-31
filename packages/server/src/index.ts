@@ -13,11 +13,16 @@
  * ```
  */
 
+// Exports Contexts
+export type { Context } from "./internal/context.js";
+export * from "./context.js";
+
+// Export Intercetpros
 export * from "./interceptor.js";
+
 export * from "./http.js";
 export * from "./hooks/index.js";
 export * from "./interfaces/index.js";
 
-export * from "./context.js";
 export { logger } from "./logger.js";
 export { plugin } from "./internal/plugins.js";

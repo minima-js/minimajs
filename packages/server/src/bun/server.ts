@@ -89,7 +89,7 @@ export class Server<T> implements App<BunServer<T>> {
   route(options: RouteOptions, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
     const { method, path } = options;
     const handler = args[args.length - 1] as RouteHandler;
-    const metadata = args.slice(0, -1) as RouteMetaDescriptor[];
+    const descriptors = args.slice(0, -1) as RouteMetaDescriptor[];
 
     const fullPath = applyRoutePrefix(path, this.$prefix, this.$prefixExclude);
 
@@ -103,7 +103,7 @@ export class Server<T> implements App<BunServer<T>> {
         path: fullPath,
         methods: Array.isArray(method) ? method : [method],
         handler,
-        metadata: createRouteMetadata(metadata, this),
+        metadata: createRouteMetadata(descriptors, fullPath, handler, this),
       } satisfies RouteFindResult<BunServer<T>>["store"]
     );
     return this;

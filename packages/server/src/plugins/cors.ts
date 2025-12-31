@@ -142,7 +142,7 @@ async function resolveOrigin(
 export function cors(options: CorsOptions = {}) {
   const config = { ...defaultOptions, ...options };
   return hook.define({
-    async request(req): Promise<void | Response> {
+    async request({ req }): Promise<void | Response> {
       if (req.method !== "OPTIONS") {
         return;
       }
@@ -163,7 +163,7 @@ export function cors(options: CorsOptions = {}) {
       }
     },
 
-    async send(_body, req) {
+    async send(_body, { req }) {
       const origin = req.headers.get("origin") || "";
       const allowOrigin = await resolveOrigin(config.origin, origin);
       if (!allowOrigin) {

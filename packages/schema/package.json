@@ -1,7 +1,7 @@
 {
   "name": "@minimajs/schema",
   "version": "1.1.0",
-  "description": "Schema validation powered by Yup for request/response validation with type safety",
+  "description": "Schema validation powered by Zod for request/response validation with type safety",
   "type": "module",
   "exports": {
     ".": "./lib/index.js",
@@ -14,12 +14,12 @@
   },
   "peerDependencies": {
     "@minimajs/server": ">=0.3.0",
-    "yup": "^1.7.1"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@minimajs/server": "workspace:*",
     "@types/node": "^25.0.3",
-    "yup": "^1.7.1"
+    "zod": "^3.23.8"
   },
   "files": [
     "lib"

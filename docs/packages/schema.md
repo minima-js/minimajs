@@ -3,7 +3,7 @@ title: Schema
 sidebar_position: 1
 ---
 
-Schema, built on top of Yup, provides a comprehensive set of validation tools and exposes everything from `@minimajs/schema` to facilitate seamless validation in your applications.
+Schema, built on top of Zod, provides a comprehensive set of validation tools and exposes everything from `@minimajs/schema` to facilitate seamless validation in your applications.
 
 ### Installation
 
@@ -15,14 +15,17 @@ npm install @minimajs/schema
 
 ### Validating Request Body
 
-To validate request bodies, you can use the `createBody` function along with Yup schema definitions. Here's an example:
+To validate request bodies, you can use the `createBody` function along with Zod schema definitions. Here's an example:
 
 ```typescript
-import { createBody, string } from "@minimajs/schema";
+import { z } from "zod";
+import { createBody } from "@minimajs/schema";
 
-const getUserPayload = createBody({
-  name: string().required(),
+const UserPayload = z.object({
+  name: z.string(),
 });
+
+const getUserPayload = createBody(UserPayload);
 
 function createUser() {
   const payload = getUserPayload(); // { name: string } type will be inferred.
@@ -38,38 +41,49 @@ In this example, we define a schema for validating user payloads with a required
 
 ### Custom Validation Type
 
-You can also create custom validation types using Yup's `test` function. Here's an example:
+You can also create custom validation types using Zod's `refine` function. Here's an example:
 
 ```typescript
-const jamesSchema = string().test(
-  "is-james",
-  (d) => `${d.path} is not James`,
-  (value) => value == null || value === "James"
-);
+import { z } from "zod";
+
+const jamesSchema = z.string().refine((value) => value === "James", {
+  message: "is not James",
+});
 ```
 
-This schema ensures that the value is either `null`, `undefined`, or equals "James".
+This schema ensures that the value is equal to "James".
 
 ### Async Validation
 
-In some cases, you may need to perform asynchronous validation, such as checking if a username is unique. You can achieve this by defining a custom validator with an asynchronous test function. Here's how you can create a custom username validator:
+In some cases, you may need to perform asynchronous validation, such as checking if a username is unique. You can achieve this by defining a custom validator with an asynchronous `refine` function. Here's how you can create a custom username validator:
 
 ```typescript
+import { z } from "zod";
+
 // validation/rules.ts
-const username = string().test(
-  "username",
-  (d) => `${d.path} is taken`,
-  async (value) => User.findOne({ username: value })
+const username = z.string().refine(
+  async (value) => {
+    const user = await User.findOne({ username: value });
+    return !user;
+  },
+  {
+    message: "username is taken",
+  }
 );
 ```
 
 This validator checks if the username already exists in the database asynchronously.
 
 ```typescript title="src/user/index.ts"
-const getUserPayload = createBodyAsync({
-  name: string().required(),
-  username: username().required(),
+import { z } from "zod";
+import { createBodyAsync } from "@minimajs/schema";
+
+const UserPayload = z.object({
+  name: z.string(),
+  username: username,
 });
+
+const getUserPayload = createBodyAsync(UserPayload);
 
 async function createUser() {
   // highlight-next-line

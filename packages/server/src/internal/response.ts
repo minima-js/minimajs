@@ -26,7 +26,8 @@ export function createResponseFromState(data: ResponseBody, options: ResponseIni
   });
 }
 export async function createResponse(data: unknown, options: ResponseInit = {}): Promise<Response> {
-  const { app, req, resInit } = $context();
+  const ctx = $context();
+  const { app, req, resInit } = ctx;
   if (options.headers) {
     mergeHeaders(resInit.headers, new Headers(options.headers as HeadersInit));
   }
@@ -35,15 +36,15 @@ export async function createResponse(data: unknown, options: ResponseInit = {}):
   }
   // If data is already a Response, return as-is (no header merging)
   if (data instanceof Response) {
-    await runHooks(app, "sent", req);
+    await runHooks(app, "sent", ctx);
     return data;
   }
 
   // 1. transform hook
-  const transformed = runHooks.transform(app, data, req);
+  const transformed = runHooks.transform(app, data, ctx);
 
   // 2. serialize
-  const body = await app.serialize(transformed, req);
+  const body = await app.serialize(transformed, ctx);
 
   {
     // 3. send hook

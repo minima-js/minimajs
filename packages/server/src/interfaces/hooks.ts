@@ -1,3 +1,4 @@
+import type { Context } from "../context.js";
 import type { LifecycleHook } from "../hooks/store.js";
 import type { Plugin, RegisterOptions } from "./plugin.js";
 import type { ResponseBody } from "./response.js";
@@ -6,13 +7,15 @@ export type { LifecycleHook };
 // Derive the union type from the constant array
 
 // Hook callback types with specific signatures for each lifecycle event
-export type OnRequestHook = (req: Request) => void | Response | Promise<void | Response>;
-export type OnTransformHook = (data: unknown, req: Request) => unknown | Promise<unknown>;
-export type OnSendHook = (serialized: ResponseBody, req: Request) => void | Response | Promise<void | Response>;
-export type OnErrorHook = (err: unknown, req: Request) => unknown | Promise<unknown>;
-export type OnErrorSentHook = (err: unknown, req: Request) => void | Promise<void>;
-export type OnSentHook = (req: Request) => void | Promise<void>;
-export type OnTimeoutHook = (req: Request) => void | Promise<void>;
+export type OnRequestHook = (ctx: Context) => void | Response | Promise<void | Response>;
+export type OnTransformHook = (data: unknown, ctx: Context) => unknown | Promise<unknown>;
+export type OnSendHook = (serialized: ResponseBody, ctx: Context) => void | Response | Promise<void | Response>;
+export type OnErrorHook = (err: unknown, ctx: Context) => unknown | Promise<unknown>;
+export type OnErrorSentHook = (err: unknown, ctx: Context) => void | Promise<void>;
+export type OnSentHook = (ctx: Context) => void | Promise<void>;
+export type OnTimeoutHook = (ctx: Context) => void | Promise<void>;
+
+// Server Hooks
 export type OnCloseHook = () => void | Promise<void>;
 export type OnListenHook = (address: { host: string; port: number }) => void | Promise<void>;
 export type OnReadyHook = () => void | Promise<void>;

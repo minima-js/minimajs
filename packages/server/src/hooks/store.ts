@@ -1,6 +1,7 @@
 import { type HookStore, type GenericHookCallback } from "../interfaces/hooks.js";
 import type { App } from "../interfaces/app.js";
 import { kHooks } from "../symbols.js";
+import type { Context } from "../context.js";
 
 const SERVER_HOOKS = ["close", "listen", "ready", "register"] as const;
 const LIFECYCLE_HOOKS = ["request", "transform", "send", "error", "errorSent", "sent", "timeout"] as const;
@@ -81,23 +82,23 @@ export async function runHooks(app: App, name: LifecycleHook, ...args: any[]): P
 }
 
 export namespace runHooks {
-  export function transform(app: App, data: unknown, req: Request) {
+  export function transform(app: App, data: unknown, ctx: Context) {
     const store = app.container.get(kHooks) as HookStore;
     const hook = store["transform"];
     if (hook.size === 0) {
       return data;
     }
-    return runHooks(app, "transform", data, req);
+    return runHooks(app, "transform", data, ctx);
   }
 
-  export async function error(app: App, error: unknown, req: Request): Promise<any> {
-    const store = app.container.get(kHooks) as HookStore;
+  export async function error(error: unknown, ctx: Context): Promise<any> {
+    const store = ctx.app.container.get(kHooks) as HookStore;
     const hooks = store["error"];
     let result: any;
     let err = error;
     for (const hook of hooks) {
       try {
-        result = await hook(err, req);
+        result = await hook(err, ctx);
       } catch (e) {
         err = e;
         result = undefined;

@@ -4,11 +4,7 @@ import type { Plugin, RegisterOptions, Register } from "./interfaces/plugin.js";
 import { plugin } from "./internal/plugins.js";
 import { addHook, hook } from "./hooks/index.js";
 import type { InterceptorFilter, InterceptorRegisterOptions } from "./utils/decorators/helpers.js";
-
-export type PluginCallback<T extends RegisterOptions> =
-  | Plugin<T>
-  | Register<T>
-  | Promise<{ default: Plugin<T> | Register<T> }>;
+import type { Context } from "./context.js";
 
 export type Interceptor = OnRequestHook;
 
@@ -78,9 +74,9 @@ export namespace interceptor {
    */
   export function response(transform: OnTransformHook): Plugin<InterceptorRegisterOptions> {
     return plugin<InterceptorRegisterOptions>(async function responsePlugin(app, { filter }) {
-      async function handler(data: unknown, req: Request) {
-        if (filter && !(await filter(req))) return data;
-        return transform(data, req);
+      async function handler(data: unknown, ctx: Context) {
+        if (filter && !(await filter(ctx))) return data;
+        return transform(data, ctx);
       }
       addHook(app, "transform", handler);
     });
@@ -115,9 +111,9 @@ export namespace interceptor {
    */
   export function error(transform: OnErrorHook): Plugin<InterceptorRegisterOptions> {
     return plugin<InterceptorRegisterOptions>(async function errorPlugin(app, { filter }) {
-      async function handler(err: unknown, req: Request) {
-        if (filter && !(await filter(req))) throw err;
-        return transform(err, req);
+      async function handler(err: unknown, ctx: Context) {
+        if (filter && !(await filter(ctx))) throw err;
+        return transform(err, ctx);
       }
       addHook(app, "error", handler);
     });
@@ -130,9 +126,9 @@ export namespace interceptor {
   export function use(...interceptors: Interceptor[]): Plugin<InterceptorRegisterOptions> {
     return plugin<InterceptorRegisterOptions>(async function middleware(app, { filter }) {
       for (const interceptor of interceptors) {
-        async function handler(req: Request) {
-          if (filter && !(await filter(req))) return;
-          return interceptor(req);
+        async function handler(ctx: Context) {
+          if (filter && !(await filter(ctx))) return;
+          return interceptor(ctx);
         }
         app.register(hook("request", handler));
       }
@@ -144,11 +140,11 @@ export namespace interceptor {
    * Wraps an interceptor with conditional execution based on request properties.
    */
   export function filter(handler: Interceptor, handlerFilter: InterceptorFilter) {
-    const pluginHandler: OnRequestHook = async (req) => {
-      if (!(await handlerFilter(req))) {
+    const pluginHandler: OnRequestHook = async (ctx) => {
+      if (!(await handlerFilter(ctx))) {
         return;
       }
-      return handler(req);
+      return handler(ctx);
     };
     return pluginHandler;
   }

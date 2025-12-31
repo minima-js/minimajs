@@ -1,5 +1,5 @@
 import { BaseHttpError } from "../error.js";
-import type { App } from "../index.js";
+import type { Context } from "../index.js";
 import type { ErrorHandler, Serializer } from "../interfaces/response.js";
 import { $context } from "./context.js";
 import { createResponseFromState } from "./response.js";
@@ -12,14 +12,13 @@ export const serialize: Serializer = (body: unknown, _req) => {
   return JSON.stringify(body);
 };
 
-export const errorHandler: ErrorHandler = async (error: unknown, req: Request, app: App) => {
+export const errorHandler: ErrorHandler = async (error: unknown, ctx: Context) => {
   if (error instanceof BaseHttpError) {
-    const ctx = $context();
     return error.render(ctx);
   }
   // For non-HTTP errors, return a generic message to avoid leaking internal details
   const errorBody = { message: "Unable to process request" };
-  return createResponseFromState(await app.serialize(errorBody, req), {
+  return createResponseFromState(await ctx.app.serialize(errorBody, ctx), {
     status: 500,
     headers: {
       "Content-Type": "application/json",

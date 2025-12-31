@@ -1,10 +1,10 @@
 import type { StatusCodes } from "http-status-codes";
 import type { IncomingHttpHeaders } from "node:http";
-import type { App } from "./app.js";
+import type { Context } from "../context.js";
 
 export type ResponseBody = string | ReadableStream | ArrayBuffer | Blob | null;
-export type Serializer = (body: unknown, req: Request) => ResponseBody | Promise<ResponseBody>;
-export type ErrorHandler = (error: unknown, req: Request, app: App) => Response | Promise<Response>;
+export type Serializer = (body: unknown, ctx: Context) => ResponseBody | Promise<ResponseBody>;
+export type ErrorHandler = (error: unknown, ctx: Context) => Response | Promise<Response>;
 
 export type HeadersInit = Record<string, string> | Headers | [string, string][];
 

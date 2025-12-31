@@ -28,12 +28,13 @@ The `createAuth` function is the primary API for setting up authentication in yo
 function createAuth<T>(
   callback: () => Promise<T> | T,
   option?: { required?: boolean }
-): [Plugin<RegisterMiddleware>, AuthResource<T>]
+): [Plugin<RegisterMiddleware>, AuthResource<T>];
 ```
 
 ### Parameters
 
 - **`callback`**: An async or sync function that performs your authentication logic
+
   - Should return the authenticated data (e.g., user object)
   - Should throw a `BaseHttpError` (like `UnauthorizedError`) if authentication fails
   - Executed once per request before route handlers run
@@ -45,6 +46,7 @@ function createAuth<T>(
 ### Returns
 
 A tuple `[plugin, resource]`:
+
 - **`plugin`**: Middleware plugin to register with your app
 - **`resource`**: Function to access authenticated data with two modes:
   - `resource()` - Returns the auth data or `undefined` (if optional mode)
@@ -387,6 +389,7 @@ export const [authPlugin, getUser] = createAuth(async () => {
 The `createAuth` function handles errors intelligently:
 
 - **`BaseHttpError`** (and subclasses like `UnauthorizedError`):
+
   - In **optional mode**: Error is stored, `resource()` returns `undefined`
   - In **required mode**: Error is thrown immediately when accessing the resource
   - `resource.required()` always throws the error
@@ -417,9 +420,9 @@ const [authPlugin, getUser] = createAuth(async () => {
 
 ```typescript
 import {
-  UnauthorizedError,  // 401
-  ForbiddenError,     // 403
-  BaseHttpError       // Custom status codes
+  UnauthorizedError, // 401
+  ForbiddenError, // 403
+  BaseHttpError, // Custom status codes
 } from "@minimajs/auth";
 
 // Usage

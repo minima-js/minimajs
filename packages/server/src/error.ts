@@ -76,7 +76,7 @@ export class HttpError extends BaseHttpError {
   }
 
   async render(ctx: Context): Promise<Response> {
-    return createResponseFromState(await ctx.app.serialize(this.toJSON(), ctx.req), {
+    return createResponseFromState(await ctx.app.serialize(this.toJSON(), ctx), {
       status: this.statusCode,
       headers: this.headers,
     });
@@ -84,7 +84,7 @@ export class HttpError extends BaseHttpError {
 }
 
 export class NotFoundError extends HttpError {
-  constructor(response: ErrorResponse = "", public pathname: string = "", options?: HttpErrorOptions) {
+  constructor(response: ErrorResponse = "", options?: HttpErrorOptions) {
     super(response, 404, options);
     this.message = "Page not found";
   }

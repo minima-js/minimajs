@@ -7,7 +7,9 @@ export type Container = Map<symbol, unknown>;
 export type RouteMetadata = Map<symbol, unknown>;
 
 export type RouteHandler = (req: Request) => unknown;
-export type RouteMetaDescriptor = [symbol: symbol, value: unknown] | ((app: App) => [symbol: symbol, value: unknown]);
+export type RouteMetaDescriptor =
+  | [symbol: symbol, value: unknown]
+  | ((path: string, handler: RouteHandler, app: App) => [symbol: symbol, value: unknown]);
 
 export interface RouteOptions {
   method: HTTPMethod | HTTPMethod[];

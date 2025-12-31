@@ -1,101 +1,107 @@
-import { ValidationError as ValidationBaseError } from "yup";
-import { ValidationError as BaseError, type HttpErrorOptions } from "@minimajs/server/error";
+import { ZodError, type ZodIssue, type ZodErrorMap } from "zod";
+import { HttpError as BaseError, type HttpErrorOptions } from "@minimajs/server/error";
 import { ok } from "assert";
 
-/**
- * Parameters associated with a validation error.
- * Contains detailed information about the validation context and configuration.
- */
-export interface Params {
-  /** The current value being validated */
-  value: unknown;
-  /** The original value before any transformations */
-  originalValue: unknown;
-  /** Human-readable label for the field */
-  label: string;
-  /** Dot-notation path to the field in the object being validated */
-  path: string;
-  /** Validation specification and configuration */
-  spec: Spec;
-  /** Whether to disable stack trace generation for this validation */
-  disableStackTrace: boolean;
-}
-
-/**
- * Validation specification that controls validation behavior.
- * Defines how the validation process should execute and handle different scenarios.
- */
-export interface Spec {
-  /** Whether to remove unspecified keys from objects */
-  strip: boolean;
-  /** Whether to enforce strict type checking */
-  strict: boolean;
-  /** Whether to abort validation on the first error encountered */
-  abortEarly: boolean;
-  /** Whether to validate nested objects recursively */
-  recursive: boolean;
-  /** Whether to disable stack trace generation */
-  disableStackTrace: boolean;
-  /** Whether the value can be null */
-  nullable: boolean;
-  /** Whether the value can be undefined */
-  optional: boolean;
-  /** Whether to coerce values to the expected type */
-  coerce: boolean;
-}
+export class SchemaError extends Error {}
 
 /**
  * Options for creating a validation error.
  * Extends HTTP error options with validation-specific properties.
  */
 export interface ValidatorErrorOptions extends HttpErrorOptions {
-  /** Validation parameters containing context and configuration */
-  params?: Params;
   /** The value that failed validation */
   value?: unknown;
   /** Dot-notation path to the field that failed validation */
-  path?: string;
+  path?: string | (string | number)[];
   /** The type of validation error (e.g., 'required', 'min', 'max') */
   type?: string;
   /** Array of error messages for all validation failures */
   errors?: string[];
+  /** Array of zod issues */
+  issues?: ZodIssue[];
   /** Nested validation errors for complex object validation */
   inner?: ValidationError[];
+  /** The base error */
+  base?: Error;
 }
 
 export interface ValidationError extends ValidatorErrorOptions {}
 
+export const defaultErrorMap: ZodErrorMap = (issue, ctx) => {
+  switch (issue.code) {
+    case "invalid_type":
+      if (issue.received === "undefined") {
+        return { message: "Required" };
+      }
+      return { message: `Expected ${issue.expected}, received ${issue.received}` };
+    default:
+      return { message: ctx.defaultError };
+  }
+};
+
 /**
  * Custom validation error class for schema validation failures.
  * Extends the base HTTP error with validation-specific properties and methods.
- * Provides integration with Yup validation errors and enhanced error reporting.
+ * Provides integration with Zod validation errors and enhanced error reporting.
  */
 export class ValidationError extends BaseError {
   /**
-   * Creates a ValidationError from a Yup ValidationBaseError.
+   * Creates a ValidationError from a ZodError.
    * Recursively converts nested validation errors.
    *
    * @example
    * ```ts
    * try {
-   *   await schema.validate(data);
+   *   await schema.parse(data);
    * } catch (err) {
-   *   if (err instanceof YupValidationError) {
-   *     const validationError = ValidationError.createFromBase(err);
+   *   if (err instanceof ZodError) {
+   *     const validationError = ValidationError.createFromZodError(err);
    *     throw validationError;
    *   }
    * }
    * ```
    */
-  static createFromBase(base: ValidationBaseError) {
+  static createFromZodError(base: ZodError) {
     const error = new ValidationError(base.message, { base });
-    error.params = base.params as unknown as Params;
-    error.value = base.value;
-    error.path = base.path;
-    error.type = base.type;
-    error.errors = base.errors;
-    error.inner = base.inner.map((x) => ValidationError.createFromBase(x));
+    error.issues = base.issues;
+    error.inner = base.issues.map((x) => {
+      const issueError = new ValidationError(x.message);
+      issueError.path = x.path;
+      return issueError;
+    });
     return error;
+  }
+
+  /**
+   * Serializes a ValidationError to JSON for HTTP responses.
+   *
+   * @throws AssertionError if err is not a ValidationError instance
+   *
+   * @example
+   * ```ts
+   * const error = new ValidationError('Validation failed', {
+   *   errors: ['Email is required', 'Password too short']
+   * });
+   * const json = ValidationError.toJSON(error);
+  // {
+  //   "message": "Validation failed",
+  //   "issues": [
+  //     {
+  //       "code": "invalid_type",
+  //       "expected": "string",
+  //       "received": "undefined",
+  //       "path": [
+  //         "name"
+  //       ],
+  //       "message": "Required"
+  //     }
+  //   ]
+  // }
+   * ```
+   */
+  static toJSON(err: unknown) {
+    ok(err instanceof ValidationError);
+    return { message: err.message, issues: err.issues };
   }
 
   /** Array of nested validation errors for complex object validation */
@@ -126,25 +132,4 @@ export class ValidationError extends BaseError {
   }
 }
 
-/**
- * Serializes a ValidationError to JSON for HTTP responses.
- * Returns either just the message (if abortEarly is true) or the message with all errors.
- *
- * @throws AssertionError if err is not a ValidationError instance
- *
- * @example
- * ```ts
- * const error = new ValidationError('Validation failed', {
- *   errors: ['Email is required', 'Password too short']
- * });
- * const json = ValidationError.toJSON(error);
- * // { message: '...', errors: ['Email is required', 'Password too short'] }
- * ```
- */
-ValidationError.toJSON = function toJSON(err: unknown) {
-  ok(err instanceof ValidationError);
-  if (err.params?.spec.abortEarly) {
-    return { message: err.response };
-  }
-  return { message: err.response, errors: err.errors };
-};
+export type { ZodErrorMap };

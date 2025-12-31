@@ -40,19 +40,19 @@ export async function handleRequest<T>(
     try {
       {
         // 1. request hook (runs for all requests, even not-found routes)
-        const response = await runHooks(app, "request", req);
+        const response = await runHooks(app, "request", ctx);
         if (response instanceof Response) {
           return response;
         }
       }
       // Route not found
       if (!route) {
-        return await handleError(new NotFoundError(`Route ${req.method} ${url.pathname} not found`, url.pathname));
+        return await handleError(new NotFoundError(`Route ${req.method} ${url.pathname} not found`), ctx);
       }
       // Route found - process request
       return await processRequest(route.handler);
     } catch (err) {
-      return await handleError(err);
+      return await handleError(err, ctx);
     }
   });
 }
@@ -67,14 +67,13 @@ async function processRequest(handler: RouteHandler): Promise<Response> {
   return await createResponse(data);
 }
 
-async function handleError(err: unknown): Promise<Response> {
-  const { app, req } = $context();
-  const hooks = getHooks(app);
+async function handleError(err: unknown, ctx: Context): Promise<Response> {
+  const hooks = getHooks(ctx.app);
 
   // No app-level error hooks - use default error handler
   if (hooks.error.size === 0) {
-    const response = await app.errorHandler(err, req, app);
-    await runHooks(app, "errorSent", err, req);
+    const response = await ctx.app.errorHandler(err, ctx);
+    await runHooks(ctx.app, "errorSent", ctx);
     return response;
   }
 
@@ -82,13 +81,13 @@ async function handleError(err: unknown): Promise<Response> {
   let response: Response;
   try {
     // Create error response (handles transform, serialize, send, and sent hooks)
-    response = await createResponse(await runHooks.error(app, err, req));
+    response = await createResponse(await runHooks.error(ctx.app, ctx));
   } catch (e) {
-    response = await app.errorHandler(e, req, app);
+    response = await ctx.app.errorHandler(e, ctx);
   }
 
   // Run errorSent hook after error response is created
-  await runHooks(app, "errorSent", err, req);
+  await runHooks(ctx.app, "errorSent", ctx);
 
   return response;
 }
