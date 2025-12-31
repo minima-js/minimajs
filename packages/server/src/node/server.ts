@@ -29,7 +29,7 @@ export class Server implements App<NodeServer> {
   readonly container = new Map();
   $prefix: string;
   $prefixExclude: string[];
-  private avvio: Avvio<App>;
+  private boot: Avvio<App>;
 
   public log: Logger;
 
@@ -45,10 +45,10 @@ export class Server implements App<NodeServer> {
     // Initialize hooks in container
     this.container.set(kHooks, createHooksStore());
 
-    this.avvio = avvio<App>(this, {
+    this.boot = avvio<App>(this, {
       expose: { close: "$close", ready: "$ready" },
     });
-    this.avvio.override = pluginOverride;
+    this.boot.override = pluginOverride;
   }
 
   // HTTP methods
@@ -125,7 +125,7 @@ export class Server implements App<NodeServer> {
       plugin(this, opts);
       return this;
     }
-    this.avvio.use(async (instance, opts) => {
+    this.boot.use(async (instance, opts) => {
       const pluginName = p.getName(plugin, opts);
       const finalOpts = opts ? { ...opts, name: pluginName } : { name: pluginName };
       await runHooks(instance, "register", plugin, finalOpts);
@@ -155,7 +155,7 @@ export class Server implements App<NodeServer> {
 
   // Lifecycle
   async ready(): Promise<void> {
-    await this.avvio.ready();
+    await this.boot.ready();
     await runHooks(this, "ready", this);
   }
 
@@ -202,7 +202,7 @@ export class Server implements App<NodeServer> {
     await runHooks(this, "close");
     // 3. Tear down plugin lifecycle (avvio close handlers)
     await new Promise<void>((resolve, reject) =>
-      this.avvio.close((err: unknown) => {
+      this.boot.close((err: unknown) => {
         if (err) reject(err);
         resolve();
       })
