@@ -16,7 +16,7 @@ export const errorHandler: ErrorHandler = async (error: unknown, ctx: Context) =
   if (error instanceof BaseHttpError) {
     return error.render(ctx);
   }
-  console.error(error);
+  ctx.app.log.error(error);
   // For non-HTTP errors, return a generic message to avoid leaking internal details
   const errorBody = { message: "Unable to process request" };
   return createResponseFromState(await ctx.app.serialize(errorBody, ctx), {

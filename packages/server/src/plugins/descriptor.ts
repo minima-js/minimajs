@@ -1,4 +1,4 @@
-import type { RouteMetaDescriptor } from "../interfaces/app.js";
+import type { RouteMetaDescriptor } from "../interfaces/route.js";
 import { getDescriptorsAll } from "../internal/descriptor.js";
 import { plugin } from "../internal/plugins.js";
 

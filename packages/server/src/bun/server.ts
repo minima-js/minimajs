@@ -1,188 +1,35 @@
-import { type Server as BunServer } from "bun";
-import Router, { type HTTPVersion } from "find-my-way";
-import { type Avvio } from "avvio";
-import type { Logger } from "pino";
-import type {
-  App,
-  RouteHandler,
-  RouteOptions,
-  RouteMetaDescriptor,
-  PrefixOptions,
-  Address,
-} from "../interfaces/app.js";
-import type { Plugin, PluginOptions, PluginSync, Register, RegisterOptions } from "../interfaces/plugin.js";
-import { createRouteMetadata, applyRoutePrefix } from "../internal/route.js";
-import { runHooks } from "../hooks/store.js";
-import { serialize, errorHandler } from "../internal/default-handler.js";
-import { handleRequest } from "../internal/handler.js";
-import type { ErrorHandler, Serializer } from "../interfaces/response.js";
-import { plugin as p } from "../internal/plugins.js";
-import type { RouteFindResult } from "../interfaces/route.js";
-import { createLogger } from "../logger.js";
-import { createBoot, wrapPlugin } from "../internal/boot.js";
+import { type Server as BunServer, type Serve } from "bun";
+import type { Address, ServerAdapter, ListenOptions, RequestHandler, ListenResult } from "../interfaces/server.js";
 
-export interface BunServerOptions {
-  prefix?: string;
-  logger?: Logger;
-  router?: Router.Instance<HTTPVersion.V1>;
-}
+export type BunServeOptions<T = unknown> = Omit<Serve.Options<T>, "fetch" | "port" | "hostname">;
 
-export class Server<T> implements App<BunServer<T>> {
-  server?: BunServer<T>;
-  readonly router: Router.Instance<HTTPVersion.V1>;
-  readonly container = new Map();
-  $prefix: string;
-  $prefixExclude: string[];
-  private boot: Avvio<App>;
+export class BunServerAdapter<T = unknown> implements ServerAdapter<BunServer<T>> {
+  constructor(private readonly serverOptions: BunServeOptions<T> = {}) {}
 
-  public log: Logger;
-
-  public serialize: Serializer = serialize;
-  public errorHandler: ErrorHandler = errorHandler;
-
-  constructor(opts: BunServerOptions = {}) {
-    this.log = opts.logger || createLogger({ enabled: false });
-    this.$prefix = opts.prefix || "";
-    this.$prefixExclude = [];
-    this.router = opts.router || Router({ ignoreTrailingSlash: true });
-    // Initialize hooks in container
-    this.boot = createBoot(this);
-  }
-
-  // HTTP methods
-  get(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
-    return this.route({ method: "GET", path }, ...args);
-  }
-
-  post(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
-    return this.route({ method: "POST", path }, ...args);
-  }
-
-  put(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
-    return this.route({ method: "PUT", path }, ...args);
-  }
-
-  delete(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
-    return this.route({ method: "DELETE", path }, ...args);
-  }
-
-  patch(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
-    return this.route({ method: "PATCH", path }, ...args);
-  }
-
-  head(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
-    return this.route({ method: "HEAD", path }, ...args);
-  }
-
-  options(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
-    return this.route({ method: "OPTIONS", path }, ...args);
-  }
-
-  all(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
-    // Register route for all HTTP methods
-    const methods = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
-    return this.route({ method: methods as any, path }, ...args);
-  }
-
-  route(options: RouteOptions, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
-    const { method, path } = options;
-    const handler = args[args.length - 1] as RouteHandler;
-    const descriptors = args.slice(0, -1) as RouteMetaDescriptor[];
-
-    const fullPath = applyRoutePrefix(path, this.$prefix, this.$prefixExclude);
-
-    // find-my-way supports '*' wildcard for all HTTP methods
-    this.router.on(
-      method,
-      fullPath,
-      () => {}, // Dummy handler - actual handler is in store
-      {
-        server: this,
-        path: fullPath,
-        methods: Array.isArray(method) ? method : [method],
-        handler,
-        metadata: createRouteMetadata(descriptors, fullPath, handler, this),
-      } satisfies RouteFindResult<BunServer<T>>["store"]
-    );
-    return this;
-  }
-
-  prefix(prefix: string, options: PrefixOptions = {}): this {
-    this.$prefix = prefix;
-    if (options.exclude) {
-      this.$prefixExclude = options.exclude;
-    }
-    return this;
-  }
-
-  // Plugin system - overloaded implementations
-  register<T>(plugin: Plugin<PluginOptions<T>>, opts?: T): this;
-  register<T>(plugin: PluginSync<T>, opts?: any): this;
-  register<T>(plugin: Register<RegisterOptions<T>>, opts?: T): this;
-  register(plugin: Plugin | PluginSync | Register, opts?: any): this {
-    if (p.isSync(plugin)) {
-      plugin(this, opts);
-      return this;
-    }
-    this.boot.use(wrapPlugin(plugin), opts);
-    return this;
-  }
-
-  // Testing utility
-  async inject(request: Request): Promise<Response> {
-    await this.ready();
-    return handleRequest(this, this.router, request);
-  }
-
-  // Lifecycle
-  async ready(): Promise<void> {
-    await this.boot.ready();
-    await runHooks(this, "ready", this);
-  }
-
-  // Server lifecycle
-  async listen(opts: { port: number; host?: string }): Promise<Address> {
-    await this.ready();
-    const app = this;
-    const router = this.router;
-    function onFetch(req: Request) {
-      return handleRequest(app, router, req);
-    }
-
+  async listen(opts: ListenOptions, requestHandler: RequestHandler): Promise<ListenResult<BunServer<T>>> {
     const host = opts.host || "0.0.0.0";
     const port = opts.port;
-    const srv = Bun.serve<T>({
+
+    const server = Bun.serve<T>({
+      ...(this.serverOptions as any),
       port,
       hostname: host,
-      development: process.env.NODE_ENV !== "production",
-      fetch: onFetch,
+      development: this.serverOptions.development ?? process.env.NODE_ENV !== "production",
+      fetch: requestHandler,
     });
-    this.server = srv;
 
-    // Execute listen hook with address information
-    await runHooks(this, "listen", srv);
-    return {
-      hostname: srv.hostname!,
-      port: srv.port!,
-      family: (srv as any).address?.family,
-      protocol: srv.protocol!,
-      address: srv.url.href,
+    const address: Address = {
+      hostname: server.hostname!,
+      port: server.port!,
+      family: (server as any).address?.family,
+      protocol: server.protocol!,
+      address: server.url.href,
     };
+
+    return { server, address };
   }
 
-  async close(): Promise<void> {
-    // 1. Stop accepting new connections immediately
-    if (this.server) {
-      await this.server.stop();
-    }
-    // 2. Run user cleanup hooks (database connections, file handles, etc.)
-    await runHooks(this, "close");
-    // 3. Tear down plugin lifecycle (boot close handlers)
-    await new Promise<void>((resolve, reject) =>
-      this.boot.close((err: unknown) => {
-        if (err) reject(err);
-        resolve();
-      })
-    );
+  async close(server: BunServer<T>): Promise<void> {
+    await server.stop();
   }
 }

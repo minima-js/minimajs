@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach } from "@jest/globals";
 import { createApp } from "./index.js";
-import type { Server } from "./server.js";
+import type { Server } from "../server.js";
 import { createRequest } from "../mock/request.js";
 describe("Bun Server", () => {
   let app: Server<any>;
@@ -121,7 +121,7 @@ describe("Bun Server", () => {
     test("should handle route parameters", async () => {
       app.get("/users/:id", (req) => {
         const url = new URL(req.url);
-          const id = url.pathname.split("/")[2];
+        const id = url.pathname.split("/")[2];
         return { id };
       });
 
@@ -132,7 +132,7 @@ describe("Bun Server", () => {
 
     test("should handle multiple route parameters", async () => {
       app.get("/users/:userId/posts/:postId", (req) => {
-          const parts = new URL(req.url).pathname.split("/");
+        const parts = new URL(req.url).pathname.split("/");
         return { userId: parts[2], postId: parts[4] };
       });
 

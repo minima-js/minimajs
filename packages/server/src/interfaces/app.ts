@@ -1,38 +1,22 @@
 import Router from "find-my-way";
-import type { HTTPMethod, HTTPVersion } from "find-my-way";
+import type { HTTPVersion } from "find-my-way";
 import type { ErrorHandler, Serializer } from "./response.js";
 import type { Plugin, PluginOptions, PluginSync, Register, RegisterOptions } from "./plugin.js";
 import type { Context } from "./context.js";
+import type { PrefixOptions, RouteMetaDescriptor, RouteOptions } from "./route.js";
+import type { Logger } from "pino";
 
 export type Container = Map<symbol, unknown>;
 export type RouteMetadata = Map<symbol, Set<unknown>>;
 
 export type RouteHandler = (ctx: Context) => unknown;
-export type RouteMetaDescriptor =
-  | [symbol: symbol, value: unknown]
-  | ((path: string, handler: RouteHandler, app: App) => [symbol: symbol, value: unknown]);
-
-export interface RouteOptions {
-  method: HTTPMethod | HTTPMethod[];
-  path: string;
-}
-
-export interface PrefixOptions {
-  exclude?: string[];
-}
-
-export interface Address {
-  hostname: string;
-  port: number;
-  family: string;
-  protocol: "http" | "https";
-  address: string;
-}
 
 export interface App<T = unknown> {
   server?: T;
   readonly container: Container;
   readonly router: Router.Instance<HTTPVersion.V1>;
+
+  log: Logger;
 
   serialize: Serializer;
 

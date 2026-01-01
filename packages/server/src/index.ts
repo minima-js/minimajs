@@ -12,6 +12,9 @@
  * app.listen({ port: 3000 });
  * ```
  */
+
+import { logger } from "./logger.js";
+
 // Exporting all types
 export * from "./interfaces/index.js";
 
@@ -23,6 +26,8 @@ export * from "./interceptor.js";
 
 export * from "./http.js";
 export * from "./hooks/index.js";
+export { logger };
 
-export { logger } from "./logger.js";
 export { plugin } from "./internal/plugins.js";
+
+export { createApp } from "./node/index.js";

@@ -1,5 +1,5 @@
-import type { App, RouteHandler, RouteMetaDescriptor, RouteMetadata } from "../interfaces/app.js";
-import type { Route, RouteFindResult } from "../interfaces/route.js";
+import type { App, RouteHandler, RouteMetadata } from "../interfaces/app.js";
+import type { Route, RouteFindResult, RouteMetaDescriptor } from "../interfaces/route.js";
 import { getDescriptorsAll } from "./descriptor.js";
 
 /**
