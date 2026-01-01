@@ -1,208 +1,113 @@
-import { Schema, ArraySchema, type ObjectShape, type AnyObject, type Flags, type Maybe, type Message } from "yup";
+import { z } from "zod";
 import { UploadedFile } from "./uploaded-file.js";
 import { humanFileSize } from "../helpers.js";
 import { validateFileType } from "./validator.js";
 
-export type Test = Schema["tests"][0];
+export type ExtractTest = { max?: number; accept?: string[] };
+export type ExtractTests = Record<string, ExtractTest>;
 
-/**
- * Yup schema for validating uploaded files.
- * Provides validation methods for file size and MIME type.
- *
- * @example
- * ```ts
- * import { file } from '@minimajs/multipart/schema';
- *
- * const schema = file()
- *   .required()
- *   .max(5 * 1024 * 1024) // 5MB
- *   .accept(['image/png', 'image/jpeg']);
- * ```
- */
-export class FileSchema<
-  TType extends Maybe<UploadedFile> = UploadedFile | undefined,
-  TContext = AnyObject,
-  TDefault = undefined,
-  TFlags extends Flags = ""
-> extends Schema<TType, TContext, TDefault, TFlags> {
-  constructor() {
-    super({
-      type: UploadedFile.name,
-      check(value): value is NonNullable<TType> {
-        return value instanceof UploadedFile;
-      },
-    });
-  }
+export type FileBuilder = {
+  schema: z.ZodType<UploadedFile | undefined>;
+  _meta?: ExtractTest & { isFile?: true };
+  max(size: number, message?: string): FileBuilder;
+  accept(types: string[], message?: string): FileBuilder;
+  required(message?: string): FileBuilder;
+  toZod(): z.ZodType<UploadedFile | undefined>;
+};
 
-  /**
-   * Validates that the file size is at least the specified minimum in bytes.
-   *
-   * @example
-   * ```ts
-   * file().min(1024) // At least 1KB
-   * ```
-   */
-  min(size: number, message?: Message<{ min: number }>) {
-    const defaultMessage: Message<{ min: number }> = (params) => {
-      return `The file ${params.path} is too small. Minimum size: ${humanFileSize(
-        size
-      )} bytes, actual size: ${humanFileSize(params.value.size)} bytes`;
-    };
-
-    return this.test({
-      name: "min",
-      params: { min: size },
-      message: message ?? defaultMessage,
-      skipAbsent: true,
-      test(value) {
-        return value!.size > size;
-      },
-    });
-  }
-
-  /**
-   * Validates that the file size does not exceed the specified maximum in bytes.
-   *
-   * @example
-   * ```ts
-   * file().max(5 * 1024 * 1024) // Max 5MB
-   * ```
-   */
-  max(size: number, message?: Message<{ max: number }>) {
-    const defaultMessage: Message<{ min: number }> = (params) => {
-      return `The file ${params.path} is too large. Maximum size: ${humanFileSize(
-        size
-      )} bytes, actual size: ${humanFileSize(params.value.size)} bytes`;
-    };
-    return this.test({
-      name: "max",
-      params: { max: size },
-      message: message ?? defaultMessage,
-      skipAbsent: true,
-      test(value) {
-        return value!.size < size;
-      },
-    });
-  }
-
-  /**
-   * Validates that the file MIME type matches one of the allowed types.
-   *
-   * @example
-   * ```ts
-   * file().accept(['image/png', 'image/jpeg'])
-   * file().accept(['application/pdf'])
-   * ```
-   */
-  accept(type: string[], message?: Message<{ mimeType: string[] }>) {
-    const defaultMessage: Message<{ mimeType: string[] }> = (params) => {
-      return `Invalid file type: ${params.value.filename}. Allowed types are: ${params.mimeType.join(", ")}.`;
-    };
-
-    return this.test({
-      name: "accept",
-      params: { mimeType: type },
-      message: message ?? defaultMessage,
-      skipAbsent: true,
-      test(value) {
-        return validateFileType(value!, type);
-      },
-    });
-  }
-
-  /**
-   * Marks the file field as required.
-   *
-   * @example
-   * ```ts
-   * file().required('Avatar is required')
-   * ```
-   */
-  required(message?: Message<any>) {
-    return super.required(message).withMutation((schema: this) => {
-      return schema.test({
-        message: message || "${path} is a required field",
-        name: "required",
-        skipAbsent: true,
-        test: (value) => !!value,
-      });
-    });
-  }
-}
-
-export interface FileSchema<
-  TType extends Maybe<UploadedFile> = UploadedFile | undefined,
-  TContext = AnyObject,
-  TDefault = undefined,
-  TFlags extends Flags = ""
-> extends Schema<TType, TContext, TDefault, TFlags> {
-  required(msg?: Message): FileSchema<NonNullable<TType>, TContext, TDefault, TFlags>;
+function attachMeta(builder: FileBuilder, meta: Partial<ExtractTest> & { isFile?: true }) {
+  builder._meta = Object.assign({}, builder._meta || {}, meta);
+  return builder;
 }
 
 /**
- * Creates a new FileSchema instance for validating uploaded files.
- *
- * @example
- * ```ts
- * import { file, createMultipartUpload } from '@minimajs/multipart/schema';
- * import { string } from 'yup';
- *
- * const upload = createMultipartUpload({
- *   name: string().required(),
- *   avatar: file()
- *     .required()
- *     .max(5 * 1024 * 1024)
- *     .accept(['image/png', 'image/jpeg'])
- * });
- *
- * const data = await upload();
- * ```
+ * Create a Zod schema for UploadedFile with chainable helper methods via refinements.
  */
-function file(): FileSchema;
-function file<T extends UploadedFile, TContext extends Maybe<AnyObject> = AnyObject>(): FileSchema<
-  T | undefined,
-  TContext
->;
-function file() {
-  return new FileSchema();
+function file(): FileBuilder {
+  let schema: z.ZodTypeAny = z.instanceof(UploadedFile).optional();
+
+  // we'll create a builder object that wraps the zod schema and stores metadata
+  let builder!: FileBuilder;
+
+  const max = (size: number, message?: string) => {
+    const defaultMessage = (val: any) =>
+      `The file ${val?.field} is too large. Maximum size: ${humanFileSize(size)} bytes, actual size: ${humanFileSize(
+        val?.size
+      )} bytes`;
+    schema = schema.refine((v: any) => v === undefined || v.size <= size, {
+      message: message ?? (defaultMessage as any),
+    });
+    attachMeta(builder, { max: size, isFile: true });
+    builder.schema = schema as any;
+    return builder;
+  };
+
+  const accept = (types: string[], message?: string) => {
+    const defaultMessage = (val: any) => `Invalid file type: ${val?.filename}. Allowed types are: ${types.join(", ")}.`;
+    schema = schema.refine((v: any) => v === undefined || validateFileType(v, types), {
+      message: message ?? (defaultMessage as any),
+    });
+    attachMeta(builder, { accept: types, isFile: true });
+    builder.schema = schema as any;
+    return builder;
+  };
+
+  const required = (message?: string) => {
+    schema = schema.refine((v: any) => !!v, { message: message ?? ("${path} is a required field" as any) });
+    attachMeta(builder, { isFile: true });
+    builder.schema = schema as any;
+    return builder;
+  };
+
+  builder = {
+    schema: schema as any,
+    _meta: undefined,
+    max,
+    accept,
+    required,
+    toZod() {
+      return this.schema;
+    },
+  };
+  return builder;
 }
 
 export { file };
 
-export interface ExtractTest {
-  max?: Test;
-  accept?: Test;
-}
-export type ExtractTests = Record<string, ExtractTest>;
-
-export function extractTests<T extends ObjectShape>(obj: T) {
+export function extractTests(obj: Record<string, any> | any) {
   const tests: ExtractTests = {};
+  // If a zod object is passed, get its shape
+  const shape = obj && obj._def && typeof obj._def.shape === "function" ? obj._def.shape() : obj;
 
-  function filterTest(test: Test, key: string) {
-    if (test.OPTIONS?.name === "max") {
-      tests[key]!.max = test;
-      return false;
-    }
-    if (test.OPTIONS?.name === "accept") {
-      tests[key]!.accept = test;
-      return false;
-    }
-    return true;
-  }
-
-  for (const [key, value] of Object.entries(obj)) {
+  for (const [key, value] of Object.entries(shape)) {
     tests[key] = {};
-    if (value instanceof ArraySchema && value.innerType instanceof FileSchema) {
-      value.innerType.tests = value.innerType.tests.filter((x) => filterTest(x, key));
+    // builder with metadata
+    if (value && typeof value === "object" && "_meta" in value && (value as any)._meta) {
+      const m = (value as any)._meta as ExtractTest | undefined;
+      if (m?.max) tests[key].max = m.max;
+      if (m?.accept) tests[key].accept = m.accept;
+      continue;
     }
-    if (value instanceof FileSchema) {
-      value.tests = value.tests.filter((x) => filterTest(x, key));
+
+    // legacy: zod-attached __multipart
+    const meta = (value as any).__multipart;
+    if (meta) {
+      if (meta.max) tests[key].max = meta.max;
+      if (meta.accept) tests[key].accept = meta.accept;
+    }
+
+    // array of files (if inner schema had metadata attached via legacy method)
+    const inner = (value as any)?._def?.type;
+    if (inner && (inner as any).__multipart) {
+      const im = (inner as any).__multipart;
+      if (im.max) tests[key].max = im.max;
+      if (im.accept) tests[key].accept = im.accept;
     }
   }
   return tests;
 }
 
-export function getTestMaxSize(test: Test | undefined): number {
+export function getTestMaxSize(test: ExtractTest | undefined): number {
   if (!test) return Infinity;
-  return (test.OPTIONS?.params?.max as number) ?? (Infinity as number);
+  return test.max ?? Infinity;
 }

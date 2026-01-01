@@ -1,27 +1,21 @@
-import { type ISchema, type Reference, ValidationError as ValidationBaseError } from "yup";
+import { ZodError } from "zod";
 import { ValidationError } from "./error.js";
 import { humanFileSize } from "../helpers.js";
 import type { File } from "../file.js";
-import { assertError } from "../errors.js";
-import { FileSchema, type Test } from "./schema.js";
-import { UploadedFile } from "./uploaded-file.js";
 
-export async function validateField(
-  name: string,
-  value: unknown,
-  schema: ISchema<any, any, any, any> | Reference<unknown>
-) {
+export async function validateField(_name: string, value: unknown, schema: any) {
   try {
-    return await (schema as ISchema<any>).validate(value);
+    // Use Zod parseAsync to validate value for the provided schema
+    if (typeof schema?.parseAsync === "function") {
+      return await schema.parseAsync(value);
+    }
+    // fallback: assume it's a plain validator function
+    return await (schema as any)(value);
   } catch (err) {
-    assertError(err, ValidationBaseError);
-    throw new ValidationError(`${err.message.replace("this", name)}`, {
-      base: err,
-      params: err.params as any,
-      path: name,
-      value,
-      type: "string",
-    });
+    if (err instanceof ZodError) {
+      throw ValidationError.createFromZod(err);
+    }
+    throw err;
   }
 }
 
@@ -74,37 +68,21 @@ export function validateFileType(file: File, accept: string[]) {
   return false;
 }
 
-export function testMimeType(file: File, test: Test | undefined, schema: FileSchema) {
-  if (!test) return;
-  return new Promise((resolve, reject) => {
-    test(
-      {
-        path: file.field,
-        value: file,
-        originalValue: file,
-        options: {},
-        schema,
-      },
-      reject,
-      resolve
-    );
-  });
+export function testMimeType(file: File, accept: string[] | undefined) {
+  if (!accept || !accept.length) return;
+  if (!validateFileType(file, accept)) {
+    throw new ValidationError(`Invalid file type: ${file.filename}`, { path: file.field });
+  }
 }
 
-export async function testMaxSize(test: Test | undefined, file: File, size: number, schema: FileSchema) {
-  if (!test) return;
-  const tmpFile = new UploadedFile(file, "", size);
-  return new Promise<any>((resolve, reject) => {
-    test(
-      {
-        path: file.field,
-        value: tmpFile,
-        originalValue: tmpFile,
-        options: {},
-        schema,
-      },
-      reject,
-      resolve
+export async function testMaxSize(max: number | undefined, file: File, size: number) {
+  if (!max) return;
+  if (size > max) {
+    throw new ValidationError(
+      `The file ${file.field} is too large. Maximum size: ${humanFileSize(max)} bytes, actual size: ${humanFileSize(
+        size
+      )} bytes`,
+      { path: file.field }
     );
-  });
+  }
 }

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from "@jest/globals";
+import { describe, test, expect, beforeEach, afterEach, jest } from "@jest/globals";
 import { shutdownListener, type QuitHandler } from "./shutdown.js";
 import type { Signals } from "../interfaces/index.js";
 import type { Logger } from "pino";
@@ -33,7 +33,7 @@ describe("shutdownListener", () => {
     jest.useRealTimers();
   });
 
-  it("should set up listeners for each kill signal", () => {
+  test("should set up listeners for each kill signal", () => {
     shutdownListener(quitHandler, killSignal, timeout, mockProcess);
     expect(mockProcess.on).toHaveBeenCalledTimes(killSignal.length);
     killSignal.forEach((signal) => {
@@ -53,7 +53,7 @@ describe("shutdownListener", () => {
     expect(mockProcess.off).toHaveBeenCalledWith("SIGINT", quit);
   });
 
-  it("should kill the process after quitHandler is called", async () => {
+  test("should kill the process after quitHandler is called", async () => {
     shutdownListener(quitHandler, killSignal, timeout, mockProcess);
     const quit = (mockProcess.on as any).mock.calls[0][1]; // Get the quit function from the first signal listener
 
@@ -62,7 +62,7 @@ describe("shutdownListener", () => {
     expect(mockProcess.kill).toHaveBeenCalledWith(mockProcess.pid, "SIGINT");
   });
 
-  it("should not kill the process if listeners still exist", async () => {
+  test("should not kill the process if listeners still exist", async () => {
     (mockProcess.listeners as any).mockReturnValue([jest.fn()]);
     shutdownListener(quitHandler, killSignal, timeout, mockProcess);
     const quit = (mockProcess.on as any).mock.calls[0][1]; // Get the quit function from the first signal listener
@@ -103,7 +103,7 @@ describe("shutdownListener", () => {
     expect(mockProcess.exit).toHaveBeenCalledWith(1);
   });
 
-  it("should clear timeout if shutdown completes successfully", async () => {
+  test("should clear timeout if shutdown completes successfully", async () => {
     const clearTimeoutSpy = jest.spyOn(global, "clearTimeout");
     shutdownListener(quitHandler, killSignal, timeout, mockProcess);
     const quit = (mockProcess.on as any).mock.calls[0][1];

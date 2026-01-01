@@ -12,7 +12,8 @@
   "scripts": {
     "dev": "tsc -w",
     "build": "yarn clean && tsc --build",
-    "test": "yarn node --no-warnings --experimental-vm-modules $(yarn bin jest)",
+    "test": "bun test src/",
+    "test:jest": "yarn node --no-warnings --experimental-vm-modules $(yarn bin jest)",
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "devDependencies": {

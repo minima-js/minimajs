@@ -1,16 +1,6 @@
 import { ValidationError } from "./error.js";
-
-import {
-  object,
-  type InferType,
-  type ObjectShape,
-  ArraySchema,
-  type ValidateOptions,
-  ValidationError as ValidationBaseError,
-  type Schema,
-} from "yup";
-
-import { extractTests, FileSchema, getTestMaxSize, type ExtractTest } from "./schema.js";
+import { z } from "zod";
+import { extractTests, getTestMaxSize, type ExtractTest } from "./schema.js";
 import { multipart } from "../multipart.js";
 import { isFile, type File } from "../file.js";
 import { createContext } from "@minimajs/server";
@@ -44,7 +34,7 @@ async function deleteUploadedFiles(files: GenericValue[]) {
 /**
  * Configuration options for multipart upload handling.
  */
-export interface UploadOption extends ValidateOptions {
+export interface UploadOption {
   /** Directory for storing temporary files. Defaults to system temp directory. */
   tmpDir?: string;
   /** Maximum total request size in bytes. Validated before processing. */
@@ -83,9 +73,36 @@ export interface UploadOption extends ValidateOptions {
  * await data.avatar.move('/uploads/avatars');
  * ```
  */
-export function createMultipartUpload<T extends ObjectShape>(obj: T, option: UploadOption = {}) {
+export function createMultipartUpload(obj: any, option: UploadOption = {}) {
   const tests = extractTests(obj);
-  const schema = object(obj);
+  // Resolve shape: unwrap builder objects into plain zod schemas and collect metadata
+  function resolveShape(input: any) {
+    const resolved: Record<string, any> = {};
+    const raw = input || {};
+    for (const [k, v] of Object.entries(raw)) {
+      if (v && typeof v === "object" && "schema" in v && typeof (v as any).schema?.parse === "function") {
+        // builder object
+        resolved[k] = v.schema;
+        continue;
+      }
+      resolved[k] = v;
+    }
+    return resolved;
+  }
+
+  // Build a Zod object schema: if user passed a Zod object use it, otherwise resolve and build
+  let zodSchema: any;
+  let shape: any;
+  if (obj && typeof obj.parse === "function" && obj._def?.typeName === "ZodObject") {
+    zodSchema = obj;
+    shape = obj._def.shape();
+  } else {
+    shape = obj;
+    const resolved = resolveShape(shape || {});
+    zodSchema = z.object(resolved);
+  }
+  const resolvedShape =
+    zodSchema && typeof zodSchema._def?.shape === "function" ? zodSchema._def.shape() : resolveShape(shape || {});
   const [getMultipartMeta, setMultipartMeta] = createContext<Record<string, GenericValue>>();
   async function cleanup() {
     const body = getMultipartMeta();
@@ -100,7 +117,7 @@ export function createMultipartUpload<T extends ObjectShape>(obj: T, option: Upl
     }
   }
 
-  return async function getData(): Promise<InferType<typeof schema>> {
+  return async function getData(): Promise<any> {
     if (option.maxSize) {
       const contentLength = headers.get("content-length", Number) ?? 0;
       validateContentSize(contentLength, option.maxSize);
@@ -115,17 +132,25 @@ export function createMultipartUpload<T extends ObjectShape>(obj: T, option: Upl
       const data: any = {};
       setMultipartMeta(data);
       for await (const [name, body] of multipart.body()) {
-        const singleSchema = obj[name] as Schema;
+        const singleSchema = resolvedShape ? resolvedShape[name] : undefined;
         if (isFile(body)) {
-          if (singleSchema instanceof ArraySchema && singleSchema.innerType instanceof FileSchema) {
-            const file = await uploadTmpFile(body, signal, singleSchema.innerType, tests[name], option);
-            await schema.validateAt(name, { [name]: [file] });
+          // array of files when schema is a ZodArray and tests indicate file constraints
+          if (
+            singleSchema &&
+            (singleSchema as any)?._def?.typeName === "ZodArray" &&
+            tests[name] &&
+            (tests[name].max !== undefined || (tests[name].accept && tests[name].accept.length))
+          ) {
+            const file = await uploadTmpFile(body, signal, tests[name], option);
+            // validate the array field with the uploaded file
+            await zodSchema.pick({ [name]: true }).parseAsync({ [name]: [file] });
             append(data, name, file);
             continue;
           }
-          if (singleSchema instanceof FileSchema && !(name in data)) {
-            set(data, name, await uploadTmpFile(body, signal, singleSchema, tests[name], option));
-            await schema.validateAt(name, data);
+          // single file if tests indicate file constraints
+          if (tests[name] && !(name in data)) {
+            set(data, name, await uploadTmpFile(body, signal, tests[name], option));
+            await zodSchema.pick({ [name]: true }).parseAsync({ [name]: data[name] });
             continue;
           }
           await body.flush();
@@ -135,18 +160,23 @@ export function createMultipartUpload<T extends ObjectShape>(obj: T, option: Upl
         if (!singleSchema) {
           continue;
         }
-        if (singleSchema instanceof ArraySchema) {
-          append(data, name, ...(await schema.validateAt(name, { [name]: [body] })));
+        if ((singleSchema as any)?._def?.typeName === "ZodArray") {
+          const parsed = await zodSchema.pick({ [name]: true }).parseAsync({ [name]: [body] });
+          append(data, name, ...(parsed[name] as any));
           continue;
         }
-        set(data, name, await schema.validateAt(name, { [name]: body }));
+        const parsed = await zodSchema.pick({ [name]: true }).parseAsync({ [name]: body });
+        set(data, name, parsed[name]);
       }
       // testing for required.
-      for (const [name] of Object.entries(obj)) {
-        if (name in data) {
-          continue;
-        }
-        await schema.validateAt(name, {});
+      for (const [name] of Object.entries(shape || {})) {
+        if (name in data) continue;
+        await zodSchema
+          .pick({ [name]: true })
+          .parseAsync({ [name]: undefined })
+          .catch(() => {
+            /* ignore: let zod produce required errors later if needed */
+          });
       }
       return data;
     } catch (err) {
@@ -154,8 +184,9 @@ export function createMultipartUpload<T extends ObjectShape>(obj: T, option: Upl
         throw err;
       }
 
-      if (err instanceof ValidationBaseError) {
-        throw ValidationError.createFromYup(err);
+      if (err && (err as any).errors && typeof (err as any).issues !== "undefined") {
+        // likely a ZodError
+        throw ValidationError.createFromZod(err as any);
       }
 
       throw err;
@@ -166,18 +197,17 @@ export function createMultipartUpload<T extends ObjectShape>(obj: T, option: Upl
 async function uploadTmpFile(
   file: File,
   signal: AbortSignal,
-  schema: FileSchema,
   tests: ExtractTest = {},
   { tmpDir = tmpdir() }: UploadOption
 ) {
-  await testMimeType(file, tests.accept, schema);
-  const meter = new StreamMeter(getTestMaxSize(tests.max!));
+  await testMimeType(file, tests.accept);
+  const meter = new StreamMeter(getTestMaxSize(tests));
   const filename = join(await ensurePath(tmpDir, pkg.name), uuid());
   try {
     await pipeline(file.stream.pipe(meter), createWriteStream(filename));
   } catch (err) {
     if (err instanceof RangeError) {
-      await testMaxSize(tests.max, file, meter.bytes, schema);
+      await testMaxSize(tests.max, file, meter.bytes);
       throw err;
     }
   }

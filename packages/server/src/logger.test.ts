@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "@jest/globals";
+import { describe, test, expect, beforeEach, afterEach } from "@jest/globals";
 import { createApp } from "./bun/index.js";
 import type { App } from "./interfaces/app.js";
 import { mixin, createLogger } from "./logger.js";
@@ -13,7 +13,7 @@ describe("Logger", () => {
   afterEach(() => app.close());
 
   describe("mixin function", () => {
-    it("should return data with module name if present", async () => {
+    test("should return data with module name if present", async () => {
       app.get("/", function homePage() {
         const result = mixin({});
         expect(result).toEqual({ name: "fastify:homePage" });
@@ -22,7 +22,7 @@ describe("Logger", () => {
       await app.inject(createRequest("/"));
     });
 
-    it("should not override existing name property", async () => {
+    test("should not override existing name property", async () => {
       app.get("/test", function testRoute() {
         const result = mixin({ name: "custom-name" });
         expect(result).toEqual({ name: "custom-name" });
@@ -31,13 +31,13 @@ describe("Logger", () => {
       await app.inject(createRequest("/test"));
     });
 
-    it("should return data as-is when no context available", () => {
+    test("should return data as-is when no context available", () => {
       // Outside of request context
       const result = mixin({ foo: "bar" });
       expect(result).toEqual({ foo: "bar" });
     });
 
-    it("should handle empty data object", async () => {
+    test("should handle empty data object", async () => {
       app.get("/empty", function emptyRoute() {
         const result = mixin({});
         expect(result).toHaveProperty("name");
@@ -46,7 +46,7 @@ describe("Logger", () => {
       await app.inject(createRequest("/empty"));
     });
 
-    it("should preserve other properties in data", async () => {
+    test("should preserve other properties in data", async () => {
       app.get("/props", function propsRoute() {
         const result = mixin({ level: 30, msg: "test message", timestamp: Date.now() });
         expect(result).toHaveProperty("name");
@@ -58,7 +58,7 @@ describe("Logger", () => {
       await app.inject(createRequest("/props"));
     });
 
-    it("should handle routes without plugin chain (null/undefined)", async () => {
+    test("should handle routes without plugin chain (null/undefined)", async () => {
       const currentApp = createApp({ logger: false });
       (currentApp as any)[Symbol.for("fastify.plugin.nameChain")] = null;
       currentApp.get("/no-plugin-null", function noPluginRouteNull() {
@@ -70,7 +70,7 @@ describe("Logger", () => {
       await currentApp.close();
     });
 
-    it("should handle routes without plugin chain (empty array)", async () => {
+    test("should handle routes without plugin chain (empty array)", async () => {
       const currentApp = createApp({ logger: false });
       (currentApp as any)[Symbol.for("fastify.plugin.nameChain")] = [];
       currentApp.get("/no-plugin-empty", function noPluginRouteEmpty() {
@@ -82,7 +82,7 @@ describe("Logger", () => {
       await currentApp.close();
     });
 
-    it("should handle routes without handler name", async () => {
+    test("should handle routes without handler name", async () => {
       app.get("/no-handler", () => {
         const result = mixin({});
         expect(result).toHaveProperty("name");
@@ -91,7 +91,7 @@ describe("Logger", () => {
       await app.inject(createRequest("/no-handler"));
     });
 
-    it("should handle nested route handlers", async () => {
+    test("should handle nested route handlers", async () => {
       app.register(async (instance) => {
         instance.get("/nested", function nestedRoute() {
           const result = mixin({});
@@ -102,7 +102,7 @@ describe("Logger", () => {
       await app.inject(createRequest("/nested"));
     });
 
-    it("should cache module name in local context", async () => {
+    test("should cache module name in local context", async () => {
       app.get("/cached", function cachedRoute() {
         // First call should set the cache
         const result1 = mixin({});
@@ -116,18 +116,18 @@ describe("Logger", () => {
   });
 
   describe("createLogger", () => {
-    it("should create logger with custom options", () => {
+    test("should create logger with custom options", () => {
       const customLogger = createLogger({ level: "debug" });
       expect(customLogger).toBeDefined();
       expect(customLogger.level).toBe("debug");
     });
 
-    it("should create logger with default mixin", () => {
+    test("should create logger with default mixin", () => {
       const customLogger = createLogger({});
       expect(customLogger).toBeDefined();
     });
 
-    it("should merge options with defaults", () => {
+    test("should merge options with defaults", () => {
       const customLogger = createLogger({
         level: "error",
         name: "custom-logger",

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "@jest/globals";
+import { describe, test, expect, beforeEach, afterEach } from "@jest/globals";
 import { createApp } from "./index.js";
 import type { Server } from "./server.js";
 import { createRequest } from "../mock/request.js";
@@ -12,25 +12,25 @@ describe("Bun Server", () => {
   });
 
   describe("createApp", () => {
-    it("should create an app with default options", () => {
+    test("should create an app with default options", () => {
       app = createApp();
       expect(app).toBeDefined();
       expect(app.router).toBeDefined();
       expect(app.container).toBeDefined();
     });
 
-    it("should create an app with logger disabled", () => {
+    test("should create an app with logger disabled", () => {
       app = createApp({ logger: false });
       expect(app).toBeDefined();
       expect(app.log).toBeDefined();
     });
 
-    it("should create an app with custom prefix", () => {
+    test("should create an app with custom prefix", () => {
       app = createApp({ prefix: "/api/v1" });
       expect(app.$prefix).toBe("/api/v1");
     });
 
-    it("should create an app with custom router config", () => {
+    test("should create an app with custom router config", () => {
       app = createApp({ router: { ignoreTrailingSlash: false } });
       expect(app.router).toBeDefined();
     });
@@ -41,7 +41,7 @@ describe("Bun Server", () => {
       app = createApp({ logger: false });
     });
 
-    it("should register GET route", async () => {
+    test("should register GET route", async () => {
       app.get("/users", () => ({ method: "GET" }));
 
       const response = await app.inject(createRequest("/users"));
@@ -50,7 +50,7 @@ describe("Bun Server", () => {
       expect(data).toEqual({ method: "GET" });
     });
 
-    it("should register POST route", async () => {
+    test("should register POST route", async () => {
       app.post("/users", () => ({ method: "POST" }));
 
       const response = await app.inject(new Request("http://localhost/users", { method: "POST" }));
@@ -59,7 +59,7 @@ describe("Bun Server", () => {
       expect(data).toEqual({ method: "POST" });
     });
 
-    it("should register PUT route", async () => {
+    test("should register PUT route", async () => {
       app.put("/users/1", () => ({ method: "PUT" }));
 
       const response = await app.inject(new Request("http://localhost/users/1", { method: "PUT" }));
@@ -68,7 +68,7 @@ describe("Bun Server", () => {
       expect(data).toEqual({ method: "PUT" });
     });
 
-    it("should register DELETE route", async () => {
+    test("should register DELETE route", async () => {
       app.delete("/users/1", () => ({ method: "DELETE" }));
 
       const response = await app.inject(new Request("http://localhost/users/1", { method: "DELETE" }));
@@ -77,7 +77,7 @@ describe("Bun Server", () => {
       expect(data).toEqual({ method: "DELETE" });
     });
 
-    it("should register PATCH route", async () => {
+    test("should register PATCH route", async () => {
       app.patch("/users/1", () => ({ method: "PATCH" }));
 
       const response = await app.inject(new Request("http://localhost/users/1", { method: "PATCH" }));
@@ -86,14 +86,14 @@ describe("Bun Server", () => {
       expect(data).toEqual({ method: "PATCH" });
     });
 
-    it("should register HEAD route", async () => {
+    test("should register HEAD route", async () => {
       app.head("/health", () => ({}));
 
       const response = await app.inject(new Request("http://localhost/health", { method: "HEAD" }));
       expect(response.status).toBe(200);
     });
 
-    it("should register OPTIONS route", async () => {
+    test("should register OPTIONS route", async () => {
       app.options("/users", () => ({ method: "OPTIONS" }));
 
       const response = await app.inject(new Request("http://localhost/users", { method: "OPTIONS" }));
@@ -102,7 +102,7 @@ describe("Bun Server", () => {
       expect(data).toEqual({ method: "OPTIONS" });
     });
 
-    it("should register ALL route (wildcard)", async () => {
+    test("should register ALL route (wildcard)", async () => {
       app.all("/wildcard", ({ request: req }) => ({ method: req.method }));
 
       const getResponse = await app.inject(createRequest("/wildcard"));
@@ -118,10 +118,10 @@ describe("Bun Server", () => {
       app = createApp({ logger: false });
     });
 
-    it("should handle route parameters", async () => {
+    test("should handle route parameters", async () => {
       app.get("/users/:id", (req) => {
         const url = new URL(req.url);
-        const id = url.pathname.split("/")[2];
+        const id = url.pathname.spltest("/")[2];
         return { id };
       });
 
@@ -130,9 +130,9 @@ describe("Bun Server", () => {
       expect(data.id).toBe("123");
     });
 
-    it("should handle multiple route parameters", async () => {
+    test("should handle multiple route parameters", async () => {
       app.get("/users/:userId/posts/:postId", (req) => {
-        const parts = new URL(req.url).pathname.split("/");
+        const parts = new URL(req.url).pathname.spltest("/");
         return { userId: parts[2], postId: parts[4] };
       });
 
@@ -144,7 +144,7 @@ describe("Bun Server", () => {
   });
 
   describe("Prefix", () => {
-    it("should apply prefix to routes", async () => {
+    test("should apply prefix to routes", async () => {
       app = createApp({ logger: false, prefix: "/api" });
       app.get("/users", () => ({ success: true }));
 
@@ -154,7 +154,7 @@ describe("Bun Server", () => {
       expect(data.success).toBe(true);
     });
 
-    it("should allow changing prefix dynamically", async () => {
+    test("should allow changing prefix dynamically", async () => {
       app = createApp({ logger: false });
       app.prefix("/v1").get("/users", () => ({ version: 1 }));
       app.prefix("/v2").get("/users", () => ({ version: 2 }));
@@ -168,7 +168,7 @@ describe("Bun Server", () => {
       expect(v2Data.version).toBe(2);
     });
 
-    it("should handle prefix exclusion", async () => {
+    test("should handle prefix exclusion", async () => {
       app = createApp({ logger: false });
       app.prefix("/api", { exclude: ["/health"] });
       app.get("/users", () => ({ prefixed: true }));
@@ -189,7 +189,7 @@ describe("Bun Server", () => {
       app = createApp({ logger: false });
     });
 
-    it("should inject with string URL", async () => {
+    test("should inject with string URL", async () => {
       app.get("/test", () => ({ injected: true }));
 
       const response = await app.inject(createRequest("/test"));
@@ -198,7 +198,7 @@ describe("Bun Server", () => {
       expect(data.injected).toBe(true);
     });
 
-    it("should inject with Request object", async () => {
+    test("should inject with Request object", async () => {
       app.post("/test", () => ({ method: "POST" }));
 
       const request = new Request("http://localhost/test", { method: "POST" });
@@ -209,7 +209,7 @@ describe("Bun Server", () => {
       expect(data.method).toBe("POST");
     });
 
-    it("should inject with query parameters", async () => {
+    test("should inject with query parameters", async () => {
       app.get("/search", (req) => {
         const url = new URL(req.url);
         return { query: url.searchParams.get("q") };
@@ -220,7 +220,7 @@ describe("Bun Server", () => {
       expect(data.query).toBe("test");
     });
 
-    it("should inject with request body", async () => {
+    test("should inject with request body", async () => {
       app.post("/data", async (ctx) => {
         const body = await ctx.request.json();
         return { received: body };
@@ -239,7 +239,7 @@ describe("Bun Server", () => {
   });
 
   describe("Lifecycle", () => {
-    it("should call ready hooks", async () => {
+    test("should call ready hooks", async () => {
       app = createApp({ logger: false });
       let readyCalled = false;
 
@@ -253,7 +253,7 @@ describe("Bun Server", () => {
       expect(readyCalled).toBe(true);
     });
 
-    it("should handle close gracefully", async () => {
+    test("should handle close gracefully", async () => {
       app = createApp({ logger: false });
       await app.ready();
       await app.close();
@@ -262,7 +262,7 @@ describe("Bun Server", () => {
   });
 
   describe("Server Lifecycle", () => {
-    it("should start and stop server", async () => {
+    test("should start and stop server", async () => {
       app = createApp({ logger: false });
       app.get("/test", () => ({ running: true }));
 
@@ -275,7 +275,7 @@ describe("Bun Server", () => {
       expect(app.server).toBeDefined(); // Server object still exists after close
     });
 
-    it("should handle listen with custom host", async () => {
+    test("should handle listen with custom host", async () => {
       app = createApp({ logger: false });
 
       const server = await app.listen({ port: 0, host: "127.0.0.1" });
@@ -291,7 +291,7 @@ describe("Bun Server", () => {
       app = createApp({ logger: false });
     });
 
-    it("should handle route handler errors", async () => {
+    test("should handle route handler errors", async () => {
       app.get("/error", () => {
         throw new Error("Test error");
       });
@@ -300,14 +300,14 @@ describe("Bun Server", () => {
       expect(response.status).toBeGreaterThanOrEqual(500);
     });
 
-    it("should handle 404 for non-existent routes", async () => {
+    test("should handle 404 for non-existent routes", async () => {
       const response = await app.inject(createRequest("/non-existent"));
       expect(response.status).toBe(404);
     });
   });
 
   describe("Custom Serializer", () => {
-    it("should use custom serializer", async () => {
+    test("should use custom serializer", async () => {
       app = createApp({ logger: false });
       app.serialize = (data) => `Custom: ${JSON.stringify(data)}`;
       app.get("/custom", () => ({ test: true }));
@@ -323,7 +323,7 @@ describe("Bun Server", () => {
       app = createApp({ logger: false });
     });
 
-    it("should access context in route handler", async () => {
+    test("should access context in route handler", async () => {
       const { context } = await import("../context.js");
 
       app.get("/context-test", () => {
@@ -337,7 +337,7 @@ describe("Bun Server", () => {
       expect(data.hasLocals).toBe(true);
     });
 
-    it("should create and use context values within same request", async () => {
+    test("should create and use context values within same request", async () => {
       const { createContext } = await import("../context.js");
 
       const [getUser, setUser] = createContext<{ name: string }>();
@@ -353,7 +353,7 @@ describe("Bun Server", () => {
       expect(data.user).toEqual({ name: "John" });
     });
 
-    it("should use default value in context", async () => {
+    test("should use default value in context", async () => {
       const { createContext } = await import("../context.js");
 
       const [getConfig] = createContext<{ theme: string }>({ theme: "dark" });
@@ -367,7 +367,7 @@ describe("Bun Server", () => {
       expect(data.config).toEqual({ theme: "dark" });
     });
 
-    it("should use callable default value in context", async () => {
+    test("should use callable default value in context", async () => {
       const { createContext } = await import("../context.js");
 
       const [getTimestamp] = createContext<number>(() => Date.now());
@@ -387,7 +387,7 @@ describe("Bun Server", () => {
       app = createApp({ logger: false });
     });
 
-    it("should handle HttpError", async () => {
+    test("should handle HttpError", async () => {
       const { HttpError } = await import("../error.js");
 
       app.get("/http-error", () => {
@@ -400,7 +400,7 @@ describe("Bun Server", () => {
       expect(data.message).toBe("Custom error");
     });
 
-    it("should handle HttpError with object response", async () => {
+    test("should handle HttpError with object response", async () => {
       const { HttpError } = await import("../error.js");
 
       app.get("/http-error-obj", () => {
@@ -414,7 +414,7 @@ describe("Bun Server", () => {
       expect(data.field).toBe("email");
     });
 
-    it("should handle HttpError with headers", async () => {
+    test("should handle HttpError with headers", async () => {
       const { HttpError } = await import("../error.js");
 
       app.get("/http-error-headers", () => {
@@ -428,7 +428,7 @@ describe("Bun Server", () => {
       expect(response.headers.get("X-Custom")).toBe("Header");
     });
 
-    it("should create HttpError from Error instance", async () => {
+    test("should create HttpError from Error instance", async () => {
       const { HttpError } = await import("../error.js");
 
       app.get("/http-error-from-error", () => {
@@ -440,7 +440,7 @@ describe("Bun Server", () => {
       expect(response.status).toBe(500);
     });
 
-    it("should create HttpError from non-Error value", async () => {
+    test("should create HttpError from non-Error value", async () => {
       const { HttpError } = await import("../error.js");
 
       app.get("/http-error-from-value", () => {
@@ -452,7 +452,7 @@ describe("Bun Server", () => {
       expect(response.status).toBe(500);
     });
 
-    it("should handle ValidationError", async () => {
+    test("should handle ValidationError", async () => {
       const { ValidationError } = await import("../error.js");
 
       app.get("/validation-error", () => {
@@ -465,7 +465,7 @@ describe("Bun Server", () => {
       expect(data.message).toBe("Invalid data");
     });
 
-    it("should handle ForbiddenError", async () => {
+    test("should handle ForbiddenError", async () => {
       const { ForbiddenError } = await import("../error.js");
 
       app.get("/forbidden", () => {
@@ -478,7 +478,7 @@ describe("Bun Server", () => {
       expect(data.message).toBe("Forbidden");
     });
 
-    it("should handle RedirectError", async () => {
+    test("should handle RedirectError", async () => {
       const { RedirectError } = await import("../error.js");
 
       app.get("/redirect-temp", () => {
@@ -490,7 +490,7 @@ describe("Bun Server", () => {
       expect(response.headers.get("Location")).toBe("/new-location");
     });
 
-    it("should handle RedirectError with permanent redirect", async () => {
+    test("should handle RedirectError with permanent redirect", async () => {
       const { RedirectError } = await import("../error.js");
 
       app.get("/redirect-perm", () => {
@@ -502,7 +502,7 @@ describe("Bun Server", () => {
       expect(response.headers.get("Location")).toBe("/new-location");
     });
 
-    it("should handle RedirectError with custom headers", async () => {
+    test("should handle RedirectError with custom headers", async () => {
       const { RedirectError } = await import("../error.js");
 
       app.get("/redirect-headers", () => {
@@ -523,7 +523,7 @@ describe("Bun Server", () => {
       app = createApp({ logger: false });
     });
 
-    it("should register and run request hook", async () => {
+    test("should register and run request hook", async () => {
       const { hook } = await import("../hooks/index.js");
       let hookCalled = false;
 
@@ -539,7 +539,7 @@ describe("Bun Server", () => {
       expect(hookCalled).toBe(true);
     });
 
-    it("should run request hook that returns early response", async () => {
+    test("should run request hook that returns early response", async () => {
       const { hook } = await import("../hooks/index.js");
 
       app.register(
@@ -557,7 +557,7 @@ describe("Bun Server", () => {
       expect(data.intercepted).toBe(true);
     });
 
-    it("should register and run transform hook", async () => {
+    test("should register and run transform hook", async () => {
       const { hook } = await import("../hooks/index.js");
       let transformCalled = false;
 
@@ -577,7 +577,7 @@ describe("Bun Server", () => {
       expect(data.transformed).toBe(true);
     });
 
-    it("should register and run send hook", async () => {
+    test("should register and run send hook", async () => {
       const { hook } = await import("../hooks/index.js");
       let sendCalled = false;
 
@@ -593,7 +593,7 @@ describe("Bun Server", () => {
       expect(sendCalled).toBe(true);
     });
 
-    it("should register and run sent hook", async () => {
+    test("should register and run sent hook", async () => {
       const { hook } = await import("../hooks/index.js");
       let sentCalled = false;
 
@@ -609,7 +609,7 @@ describe("Bun Server", () => {
       expect(sentCalled).toBe(true);
     });
 
-    it("should register and run error hook", async () => {
+    test("should register and run error hook", async () => {
       const { hook } = await import("../hooks/index.js");
       let errorCalled = false;
 
@@ -631,7 +631,7 @@ describe("Bun Server", () => {
       expect(data.originalError).toBe("Test error");
     });
 
-    it("should register and run errorSent hook", async () => {
+    test("should register and run errorSent hook", async () => {
       const { hook } = await import("../hooks/index.js");
       let errorSentCalled = false;
 
@@ -649,7 +649,7 @@ describe("Bun Server", () => {
       expect(errorSentCalled).toBe(true);
     });
 
-    it("should register listen hook", async () => {
+    test("should register listen hook", async () => {
       const { hook } = await import("../hooks/index.js");
       let listenCalled = false;
       let serverObj: any = null;
@@ -669,7 +669,7 @@ describe("Bun Server", () => {
       await app.close();
     });
 
-    it("should register close hook", async () => {
+    test("should register close hook", async () => {
       const { hook } = await import("../hooks/index.js");
       let closeCalled = false;
 
@@ -685,7 +685,7 @@ describe("Bun Server", () => {
       (app as any) = null;
     });
 
-    it("should use hook.lifespan for setup and cleanup", async () => {
+    test("should use hook.lifespan for setup and cleanup", async () => {
       const { hook } = await import("../hooks/index.js");
       let setupCalled = false;
       let cleanupCalled = false;
@@ -708,7 +708,7 @@ describe("Bun Server", () => {
       (app as any) = null;
     });
 
-    it("should use hook.lifespan with async setup", async () => {
+    test("should use hook.lifespan with async setup", async () => {
       const { hook } = await import("../hooks/index.js");
       let setupCalled = false;
       let cleanupCalled = false;
@@ -732,7 +732,7 @@ describe("Bun Server", () => {
       (app as any) = null;
     });
 
-    it("should use hook.define to register multiple hooks", async () => {
+    test("should use hook.define to register multiple hooks", async () => {
       const { hook } = await import("../hooks/index.js");
       let requestCalled = false;
       let sendCalled = false;
@@ -755,7 +755,7 @@ describe("Bun Server", () => {
       expect(sendCalled).toBe(true);
     });
 
-    it("should handle error thrown in error hook", async () => {
+    test("should handle error thrown in error hook", async () => {
       const { hook } = await import("../hooks/index.js");
 
       app.register(
@@ -778,7 +778,7 @@ describe("Bun Server", () => {
       app = createApp({ logger: false });
     });
 
-    it("should set response headers in handler", async () => {
+    test("should set response headers in handler", async () => {
       const { context } = await import("../context.js");
 
       app.get("/headers", () => {
@@ -791,7 +791,7 @@ describe("Bun Server", () => {
       expect(response.headers.get("X-Custom-Header")).toBe("test-value");
     });
 
-    it("should set response status", async () => {
+    test("should set response status", async () => {
       const { context } = await import("../context.js");
 
       app.get("/status", () => {

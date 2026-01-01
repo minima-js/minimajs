@@ -1,29 +1,8 @@
-import { ValidationError as ValidationBaseError } from "yup";
+import { ZodError } from "zod";
 import { ValidationError as BaseError, type HttpErrorOptions } from "@minimajs/server/error";
 import { ok } from "assert";
 
-interface Params {
-  value: unknown;
-  originalValue: unknown;
-  label: string;
-  path: string;
-  spec: Spec;
-  disableStackTrace: boolean;
-}
-
-interface Spec {
-  strip: boolean;
-  strict: boolean;
-  abortEarly: boolean;
-  recursive: boolean;
-  disableStackTrace: boolean;
-  nullable: boolean;
-  optional: boolean;
-  coerce: boolean;
-}
-
 export interface ValidatorErrorOptions extends HttpErrorOptions {
-  params?: Params;
   value?: unknown;
   path?: string;
   type?: string;
@@ -34,14 +13,16 @@ export interface ValidatorErrorOptions extends HttpErrorOptions {
 export interface ValidationError extends ValidatorErrorOptions {}
 
 export class ValidationError extends BaseError {
-  static createFromYup(base: ValidationBaseError) {
+  static createFromZod(base: ZodError) {
     const error = new ValidationError(base.message, { base });
-    error.params = base.params as unknown as Params;
-    error.value = base.value;
-    error.path = base.path;
-    error.type = base.type;
-    error.errors = base.errors;
-    error.inner = base.inner.map((x) => ValidationError.createFromYup(x));
+    // Map Zod issues into a compact errors array and inner errors with path/type
+    error.errors = base.issues.map((i) => i.message);
+    error.inner = base.issues.map((i) => {
+      const ve = new ValidationError(i.message);
+      ve.path = Array.isArray(i.path) ? i.path.join(".") : String(i.path ?? "");
+      ve.type = (i.code as unknown as string) ?? "validation";
+      return ve;
+    });
     return error;
   }
 
@@ -60,8 +41,9 @@ export class ValidationError extends BaseError {
 
 ValidationError.toJSON = function toJSON(err: unknown) {
   ok(err instanceof ValidationError);
-  if (err.params?.spec.abortEarly) {
-    return { message: err.response };
+  const e = err as ValidationError;
+  if (e.errors && e.errors.length) {
+    return { message: e.response, errors: e.errors };
   }
-  return { message: err.response, errors: err.errors };
+  return { message: e.response };
 };

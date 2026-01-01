@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from "@jest/globals";
+import { describe, test, expect, beforeEach, afterEach, jest } from "@jest/globals";
 import { createApp } from "../bun/index.js";
 import type { App } from "../interfaces/app.js";
 import { routeLogger } from "./router.js";
@@ -21,7 +21,7 @@ describe("routeLogger", () => {
     await app.close();
   });
 
-  it("should log routes with default options using console.log and chalk", async () => {
+  test("should log routes with default options using console.log and chalk", async () => {
     const spy = jest.spyOn(console, "log").mockImplementation(() => {});
 
     app.register(routeLogger());
@@ -33,7 +33,7 @@ describe("routeLogger", () => {
     spy.mockRestore();
   });
 
-  it("should use custom logger when provided", async () => {
+  test("should use custom logger when provided", async () => {
     const mockLogger = jest.fn();
     await app.register(routeLogger({ logger: mockLogger }));
     await app.ready();
@@ -42,7 +42,7 @@ describe("routeLogger", () => {
     expect(mockLogger).toHaveBeenCalledWith(printedRoutes);
   });
 
-  it("should use custom formatter when provided", async () => {
+  test("should use custom formatter when provided", async () => {
     const mockLogger = jest.fn();
 
     await app.register(
@@ -56,7 +56,7 @@ describe("routeLogger", () => {
     expect(mockLogger).toHaveBeenCalledWith(`${printedRoutes}`);
   });
 
-  it("should respect commonPrefix option", async () => {
+  test("should respect commonPrefix option", async () => {
     const mockLogger = jest.fn();
 
     await app.register(
@@ -71,7 +71,7 @@ describe("routeLogger", () => {
     expect(mockLogger).toHaveBeenCalledWith(printedRoutes);
   });
 
-  it("should log routes only when app is ready", async () => {
+  test("should log routes only when app is ready", async () => {
     const mockLogger = jest.fn();
     app.register(routeLogger({ logger: mockLogger }));
     // Should not have been called yet
