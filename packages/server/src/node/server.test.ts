@@ -321,7 +321,7 @@ describe("Node Server", () => {
       app.get("/test", () => ({ running: true }));
 
       const addr = await app.listen({ port: 0 }); // Use random port
-      expect(addr).toMatch(/^http:\/\//);
+      expect(addr.address).toMatch(/^http:\/\//);
       expect(app.server).toBeDefined();
 
       await app.close();
@@ -332,7 +332,7 @@ describe("Node Server", () => {
       app = createApp({ logger: false });
 
       const addr = await app.listen({ port: 0, host: "127.0.0.1" });
-      expect(addr).toMatch(/^http:\/\/127\.0\.0\.1:/);
+      expect(addr.address).toMatch(/^http:\/\/127\.0\.0\.1:/);
 
       await app.close();
     });

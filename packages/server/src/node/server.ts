@@ -73,8 +73,9 @@ export class Server implements App<NodeServer> {
   }
 
   all(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
-    // Use wildcard '*' for all methods - find-my-way supports this
-    return this.route({ method: "*" as any, path }, ...args);
+    // Register route for all HTTP methods
+    const methods = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
+    return this.route({ method: methods as any, path }, ...args);
   }
 
   route(options: RouteOptions, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
