@@ -22,22 +22,31 @@ export interface App<T = unknown> {
 
   errorHandler: ErrorHandler;
 
+  get(path: string, handler: RouteHandler): this;
   get(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this;
 
+  post(path: string, handler: RouteHandler): this;
   post(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this;
 
+  put(path: string, handler: RouteHandler): this;
   put(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this;
 
+  delete(path: string, handler: RouteHandler): this;
   delete(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this;
 
+  patch(path: string, handler: RouteHandler): this;
   patch(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this;
 
+  head(path: string, handler: RouteHandler): this;
   head(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this;
 
+  options(path: string, handler: RouteHandler): this;
   options(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this;
 
+  all(path: string, handler: RouteHandler): this;
   all(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this;
 
+  route(options: RouteOptions, handler: RouteHandler): this;
   route(options: RouteOptions, ...args: [...RouteMetaDescriptor[], RouteHandler]): this;
 
   prefix(prefix: string, options?: PrefixOptions): this;

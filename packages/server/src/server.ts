@@ -44,40 +44,58 @@ export class Server<T = unknown> implements App<T> {
   }
 
   // HTTP methods
+  get(path: string, handler: RouteHandler): this;
+  get(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this;
   get(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
     return this.route({ method: "GET", path }, ...args);
   }
 
+  post(path: string, handler: RouteHandler): this;
+  post(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this;
   post(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
     return this.route({ method: "POST", path }, ...args);
   }
 
+  put(path: string, handler: RouteHandler): this;
+  put(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this;
   put(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
     return this.route({ method: "PUT", path }, ...args);
   }
 
+  delete(path: string, handler: RouteHandler): this;
+  delete(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this;
   delete(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
     return this.route({ method: "DELETE", path }, ...args);
   }
 
+  patch(path: string, handler: RouteHandler): this;
+  patch(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this;
   patch(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
     return this.route({ method: "PATCH", path }, ...args);
   }
 
+  head(path: string, handler: RouteHandler): this;
+  head(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this;
   head(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
     return this.route({ method: "HEAD", path }, ...args);
   }
 
+  options(path: string, handler: RouteHandler): this;
+  options(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this;
   options(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
     return this.route({ method: "OPTIONS", path }, ...args);
   }
 
+  all(path: string, handler: RouteHandler): this;
+  all(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this;
   all(path: string, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
     // Register route for all HTTP methods
     const methods = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
     return this.route({ method: methods as any, path }, ...args);
   }
 
+  route(options: RouteOptions, handler: RouteHandler): this;
+  route(options: RouteOptions, ...args: [...RouteMetaDescriptor[], RouteHandler]): this;
   route(options: RouteOptions, ...args: [...RouteMetaDescriptor[], RouteHandler]): this {
     const { method, path } = options;
     const handler = args[args.length - 1] as RouteHandler;
