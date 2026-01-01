@@ -1,4 +1,4 @@
-Schema, built on top of Yup, provides a comprehensive set of validation tools and exposes everything from `@minimajs/schema` to facilitate seamless validation in your applications.
+Schema, built on top of Zod, provides a comprehensive set of validation tools and exposes everything from `@minimajs/schema` to facilitate seamless validation in your applications.
 
 ### Installation
 
@@ -10,7 +10,7 @@ npm install @minimajs/schema
 
 ### Validating Request Body
 
-To validate request bodies, you can use the `createBody` function along with Yup schema definitions. Here's an example:
+To validate request bodies, you can use the `createBody` function along with Zod schema definitions. Here's an example:
 
 ```typescript
 import { createBody, string } from "@minimajs/schema";
@@ -33,7 +33,7 @@ In this example, we define a schema for validating user payloads with a required
 
 ### Custom Validation Type
 
-You can also create custom validation types using Yup's `test` function. Here's an example:
+You can also create custom validation types using Zod's `test` function. Here's an example:
 
 ```typescript
 const jamesSchema = string().test(

@@ -59,7 +59,7 @@ export default defineConfig({
           { text: "JWT Authentication", link: "/cookbook/jwt-authentication" },
           { text: "File Uploads", link: "/cookbook/file-uploads" },
           { text: "Database Integration", link: "/cookbook/database-integration" },
-          { text: "Data Validation with Yup", link: "/cookbook/data-validation" },
+          { text: "Data Validation with Zod", link: "/cookbook/data-validation" },
         ],
       },
       {

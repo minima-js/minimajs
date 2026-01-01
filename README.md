@@ -24,7 +24,7 @@ Minima.js is a cutting-edge TypeScript-first web framework built on Fastify, des
 - 🔐 **Authentication** - Session & token-based auth
 - 📁 **File Uploads** - Advanced multipart handling with validation
 - ☁️ **Cloud Storage** - Azure Blob, local disk drivers
-- ✅ **Validation** - Yup-based schema validation
+- ✅ **Validation** - zod-based schema validation
 - 🍪 **Cookies** - Type-safe cookie management
 - 🎨 **Templating** - Edge.js template engine
 - 🔧 **Utilities** - Common helpers and tools
