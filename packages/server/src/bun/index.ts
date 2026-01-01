@@ -5,8 +5,6 @@ import Router, { type HTTPVersion } from "find-my-way";
 import { Server, type BunServerOptions } from "./server.js";
 import { minimajs } from "../plugins/minimajs.js";
 
-export * from "../interfaces/index.js";
-
 const loggerOptions = {
   level: "info",
 };

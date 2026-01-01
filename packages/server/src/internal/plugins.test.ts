@@ -3,6 +3,7 @@ import { plugin } from "./plugins.js";
 import { createApp } from "../bun/index.js";
 import type { App } from "../interfaces/app.js";
 import { kPluginName, kPluginSkipOverride } from "../symbols.js";
+import { createRequest } from "../mock/request.js";
 
 describe("plugins", () => {
   describe("createPlugin", () => {
@@ -102,8 +103,8 @@ describe("plugins", () => {
 
       await app.ready();
 
-      const res1 = await app.inject("/route1");
-      const res2 = await app.inject("/route2");
+      const res1 = await app.inject(createRequest("/route1"));
+      const res2 = await app.inject(createRequest("/route2"));
 
       expect(await res1.text()).toBe("route1");
       expect(await res2.text()).toBe("route2");

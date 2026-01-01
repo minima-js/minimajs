@@ -16,7 +16,7 @@ describe("internal/response", () => {
       app.get("/", () => {
         return "hello world";
       });
-      const response = await app.inject("/");
+      const response = await app.inject(createRequest("/"));
       expect(await response.text()).toBe("hello world");
     });
 
@@ -24,7 +24,7 @@ describe("internal/response", () => {
       app.get("/", () => {
         return { message: "hello world" };
       });
-      const response = await app.inject("/");
+      const response = await app.inject(createRequest("/"));
       expect(await response.text()).toBe(JSON.stringify({ message: "hello world" }));
     });
 
@@ -32,7 +32,7 @@ describe("internal/response", () => {
       app.get("/", async () => {
         return { message: "hello world" };
       });
-      const response = await app.inject("/");
+      const response = await app.inject(createRequest("/"));
       expect(await response.text()).toBe(JSON.stringify({ message: "hello world" }));
     });
 
@@ -54,7 +54,7 @@ describe("internal/response", () => {
         return generator();
       });
       try {
-        await app.inject("/");
+        await app.inject(createRequest("/"));
       } catch (e) {
         expect(e).toBeInstanceOf(Error);
       }

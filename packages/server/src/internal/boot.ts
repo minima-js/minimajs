@@ -1,3 +1,4 @@
+import "./avvio-patch.js";
 import avvio, { type Avvio } from "avvio";
 import type { App } from "../interfaces/app.js";
 import { pluginOverride } from "./override.js";

@@ -1,4 +1,3 @@
-import "../internal/avvio-patch.js";
 import { type Server as BunServer } from "bun";
 import Router, { type HTTPVersion } from "find-my-way";
 import { type Avvio } from "avvio";
@@ -130,22 +129,9 @@ export class Server<T> implements App<BunServer<T>> {
   }
 
   // Testing utility
-  async inject(request: Request | string): Promise<Response> {
-    let req: Request;
-
-    if (typeof request === "string") {
-      // If it's a string, create a GET request
-      const url = request.startsWith("http")
-        ? request
-        : `http://localhost${request.startsWith("/") ? "" : "/"}${request}`;
-      req = new Request(url);
-    } else {
-      req = request;
-    }
-
-    // Ensure avvio is ready before handling the request
+  async inject(request: Request): Promise<Response> {
     await this.ready();
-    return handleRequest(this, this.router, req);
+    return handleRequest(this, this.router, request);
   }
 
   // Lifecycle

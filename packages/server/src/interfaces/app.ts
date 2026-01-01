@@ -64,7 +64,7 @@ export interface App<T = unknown> {
   // Register with plain function (prefix allowed in opts)
   register<T>(plugin: Register<RegisterOptions<T>>, opts?: T): this;
 
-  inject(request: Request | string): Promise<Response>;
+  inject(request: Request): Promise<Response>;
 
   ready(): Promise<void>;
 

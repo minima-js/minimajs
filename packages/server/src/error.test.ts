@@ -2,6 +2,7 @@ import { ForbiddenError, HttpError, NotFoundError, ValidationError } from "./err
 import { redirect } from "./index.js";
 import { createApp } from "./bun/index.js";
 import type { App } from "./interfaces/app.js";
+import { createRequest } from "./mock/request.js";
 
 let app: App;
 
@@ -14,7 +15,7 @@ afterEach(() => app.close());
 describe("error module", () => {
   describe("errorHandler", () => {
     it("should not found", async () => {
-      const response = await app.inject("/hello");
+      const response = await app.inject(createRequest("/hello"));
       expect(response.status).toBe(404);
       const body = await response.text();
       expect(body).toEqual(JSON.stringify({ message: "Route GET /hello not found" }));
@@ -24,7 +25,7 @@ describe("error module", () => {
       app.get("/", () => {
         throw new Error("Something went wrong");
       });
-      const response = await app.inject("/");
+      const response = await app.inject(createRequest("/"));
       expect(response.status).toBe(500);
       const body = await response.text();
       expect(body).toBe(JSON.stringify({ message: "Unable to process request" }));
@@ -74,7 +75,7 @@ describe("error module", () => {
         redirect("/world");
       });
 
-      const response = await app.inject("/hello");
+      const response = await app.inject(createRequest("/hello"));
       expect(response.status).toBe(302);
       expect(response.headers.get("location")).toBe("/world");
     });
@@ -83,7 +84,7 @@ describe("error module", () => {
       app.get("/hello", () => {
         redirect("/world", true);
       });
-      const response = await app.inject("/hello");
+      const response = await app.inject(createRequest("/hello"));
       expect(response.status).toBe(301);
       expect(response.headers.get("location")).toBe("/world");
     });
@@ -94,7 +95,7 @@ describe("error module", () => {
       app.get("/404", () => {
         throw new NotFoundError();
       });
-      const res = await app.inject("/404");
+      const res = await app.inject(createRequest("/404"));
       expect(res.status).toBe(404);
       const body = JSON.parse(await res.text());
       expect(body).toStrictEqual({ message: "Route GET /404 not found" });
@@ -104,7 +105,7 @@ describe("error module", () => {
       app.get("/404", () => {
         throw new NotFoundError("Custom not found message");
       });
-      const res = await app.inject("/404");
+      const res = await app.inject(createRequest("/404"));
       expect(res.status).toBe(404);
       const body = JSON.parse(await res.text());
       expect(body).toStrictEqual({
@@ -118,7 +119,7 @@ describe("error module", () => {
       app.get("/validation", () => {
         throw new ValidationError();
       });
-      const res = await app.inject("/validation");
+      const res = await app.inject(createRequest("/validation"));
       expect(res.status).toBe(422); // 422 Unprocessable Entity
       const body = JSON.parse(await res.text());
       expect(body).toStrictEqual({ message: "Validation failed" });
@@ -128,7 +129,7 @@ describe("error module", () => {
       app.get("/validation-custom", () => {
         throw new ValidationError("Custom validation message");
       });
-      const res = await app.inject("/validation-custom");
+      const res = await app.inject(createRequest("/validation-custom"));
       expect(res.status).toBe(422); // 422 Unprocessable Entity
       const body = JSON.parse(await res.text());
       expect(body).toStrictEqual({
@@ -142,7 +143,7 @@ describe("error module", () => {
       app.get("/forbidden", () => {
         throw new ForbiddenError();
       });
-      const res = await app.inject("/forbidden");
+      const res = await app.inject(createRequest("/forbidden"));
       expect(res.status).toBe(403);
       const body = JSON.parse(await res.text());
       expect(body).toStrictEqual({ message: "Forbidden" });
@@ -152,7 +153,7 @@ describe("error module", () => {
       app.get("/forbidden-custom", () => {
         throw new ForbiddenError("Custom forbidden message");
       });
-      const res = await app.inject("/forbidden-custom");
+      const res = await app.inject(createRequest("/forbidden-custom"));
       expect(res.status).toBe(403);
       const body = JSON.parse(await res.text());
       expect(body).toStrictEqual({

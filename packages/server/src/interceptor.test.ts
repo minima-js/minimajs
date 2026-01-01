@@ -2,6 +2,7 @@ import { describe, test, expect, beforeEach, afterEach, jest } from "@jest/globa
 import { abort, context, searchParams } from "./index.js";
 import { createApp } from "./bun/index.js";
 import { interceptor, type Interceptor } from "./interceptor.js";
+import { createRequest } from "./mock/request.js";
 import type { App } from "./interfaces/app.js";
 
 describe("middleware", () => {
@@ -20,11 +21,11 @@ describe("middleware", () => {
       })
     );
     app.get("/", () => "welcome home");
-    const response = await app.inject("/");
+    const response = await app.inject(createRequest("/"));
     const body = await response.text();
     expect(body).toBe("welcome home");
     expect(hello).not.toHaveBeenCalled();
-    const response2 = await app.inject("/hello");
+    const response2 = await app.inject(createRequest("/hello"));
     const body2 = await response2.text();
     expect(body2).toBe("hello");
     expect(hello).toHaveBeenCalled();
@@ -46,15 +47,15 @@ describe("middleware", () => {
       })
     );
     app.get("/", () => "welcome home");
-    const response = await app.inject("/");
+    const response = await app.inject(createRequest("/"));
     const body = await response.text();
     expect(body).toBe("welcome home");
     expect(hello).not.toHaveBeenCalled();
-    const response2 = await app.inject("/hello");
+    const response2 = await app.inject(createRequest("/hello"));
     const body2 = await response2.text();
     expect(body2).toBe("hello");
     expect(hello).not.toHaveBeenCalled();
-    const response3 = await app.inject("/hello?name=Adil");
+    const response3 = await app.inject(createRequest("/hello?name=Adil"));
     const body3 = await response3.text();
     expect(body3).toBe("hello");
     expect(hello).toHaveBeenCalled();
@@ -73,15 +74,15 @@ describe("middleware", () => {
       })
     );
     app.get("/", () => "welcome home");
-    const response = await app.inject("/");
+    const response = await app.inject(createRequest("/"));
     const body = await response.text();
     expect(body).toBe("welcome home");
     expect(hello).not.toHaveBeenCalled();
-    const response2 = await app.inject("/hello");
+    const response2 = await app.inject(createRequest("/hello"));
     const body2 = await response2.text();
     expect(body2).toBe("hello");
     expect(hello).not.toHaveBeenCalled();
-    const response3 = await app.inject("/hello?name=Adil");
+    const response3 = await app.inject(createRequest("/hello?name=Adil"));
     const body3 = await response3.text();
     expect(body3).toBe("hello");
     expect(hello).toHaveBeenCalled();
@@ -106,7 +107,7 @@ describe("interceptor.response", () => {
       );
       app.get("/", () => ({ message: "hello world" }));
       await app.ready();
-      const res = await app.inject("/");
+      const res = await app.inject(createRequest("/"));
       expect(await res.text()).toBe(
         JSON.stringify({
           decorated: true,
@@ -124,7 +125,7 @@ describe("interceptor.response", () => {
       );
       app.get("/", () => ({ message: "async test" }));
 
-      const res = await app.inject("/");
+      const res = await app.inject(createRequest("/"));
       expect(await res.text()).toBe(
         JSON.stringify({
           decorated: true,
@@ -146,7 +147,7 @@ describe("interceptor.response", () => {
       );
       app.get("/", () => ({ value: "original" }));
 
-      const res = await app.inject("/");
+      const res = await app.inject(createRequest("/"));
       expect(await res.text()).toBe(
         JSON.stringify({
           step2: true,
@@ -169,7 +170,7 @@ describe("interceptor.response", () => {
       app.register(interceptor.response((res) => ({ decorated: true, data: res })));
       app.register(helloModule);
 
-      const res = await app.inject("/hello");
+      const res = await app.inject(createRequest("/hello"));
       expect(await res.text()).toBe(
         JSON.stringify({
           decorator: "level1",
@@ -194,7 +195,7 @@ describe("interceptor.response", () => {
       app.register(moduleWithDecorator);
       app.register(moduleWithoutDecorator);
 
-      const decorated = await app.inject("/decorated");
+      const decorated = await app.inject(createRequest("/decorated"));
       expect(await decorated.text()).toBe(
         JSON.stringify({
           decorated: "YES",
@@ -202,7 +203,7 @@ describe("interceptor.response", () => {
         })
       );
 
-      const plain = await app.inject("/plain");
+      const plain = await app.inject(createRequest("/plain"));
       expect(await plain.text()).toBe(JSON.stringify({ text: "should be plain" }));
     });
 
@@ -228,19 +229,19 @@ describe("interceptor.response", () => {
       app.register(moduleB);
       app.register(moduleC);
 
-      const a1 = await app.inject("/module-a/route1");
+      const a1 = await app.inject(createRequest("/module-a/route1"));
       expect(await a1.text()).toBe(JSON.stringify({ source: "moduleA", data: { value: "A1" } }));
 
-      const a2 = await app.inject("/module-a/route2");
+      const a2 = await app.inject(createRequest("/module-a/route2"));
       expect(await a2.text()).toBe(JSON.stringify({ source: "moduleA", data: { value: "A2" } }));
 
-      const b1 = await app.inject("/module-b/route1");
+      const b1 = await app.inject(createRequest("/module-b/route1"));
       expect(await b1.text()).toBe(JSON.stringify({ source: "moduleB", data: { value: "B1" } }));
 
-      const b2 = await app.inject("/module-b/route2");
+      const b2 = await app.inject(createRequest("/module-b/route2"));
       expect(await b2.text()).toBe(JSON.stringify({ source: "moduleB", data: { value: "B2" } }));
 
-      const c1 = await app.inject("/module-c/route1");
+      const c1 = await app.inject(createRequest("/module-c/route1"));
       expect(await c1.text()).toBe(JSON.stringify({ source: "moduleC", data: { value: "C1" } }));
     });
 
@@ -253,7 +254,7 @@ describe("interceptor.response", () => {
       app.register(interceptor.response((res) => ({ app: true, data: res })));
       app.register(testModule);
 
-      const res = await app.inject("/test");
+      const res = await app.inject(createRequest("/test"));
       expect(await res.text()).toBe(
         JSON.stringify({
           module: true,
@@ -279,7 +280,7 @@ describe("interceptor.use", () => {
     app.get("/", () => {
       return "hello";
     });
-    await app.inject("/");
+    await app.inject(createRequest("/"));
     expect(hello).toHaveBeenCalled();
   });
 
@@ -295,9 +296,9 @@ describe("interceptor.use", () => {
     app.get("/hello", () => {
       return "hello";
     });
-    await app.inject("/");
+    await app.inject(createRequest("/"));
     expect(hello).not.toHaveBeenCalled();
-    await app.inject("/hello");
+    await app.inject(createRequest("/hello"));
     expect(hello).toHaveBeenCalled();
   });
 });
@@ -320,7 +321,7 @@ describe("interceptor.error", () => {
     );
     app.get("/", () => abort("Something went wrong"));
 
-    const res = await app.inject("/");
+    const res = await app.inject(createRequest("/"));
     expect(res.status).toBe(200);
     expect(await res.text()).toBe(
       JSON.stringify({
@@ -346,7 +347,7 @@ describe("interceptor.error", () => {
     );
     app.get("/", () => abort("Error message"));
 
-    const res = await app.inject("/");
+    const res = await app.inject(createRequest("/"));
     expect(await res.text()).toBe(
       JSON.stringify({
         step2: true,
@@ -379,10 +380,10 @@ describe("interceptor.error", () => {
     app.register(moduleA);
     app.register(moduleB);
 
-    const a = await app.inject("/a");
+    const a = await app.inject(createRequest("/a"));
     expect(await a.text()).toBe(JSON.stringify({ source: "moduleA", error: "A error" }));
 
-    const b = await app.inject("/b");
+    const b = await app.inject(createRequest("/b"));
     expect(await b.text()).toBe(JSON.stringify({ source: "moduleB", error: "B error" }));
   });
 
@@ -401,7 +402,7 @@ describe("interceptor.error", () => {
     );
     app.register(testModule);
 
-    const res = await app.inject("/test");
+    const res = await app.inject(createRequest("/test"));
     expect(await res.text()).toBe(
       JSON.stringify({
         module: true,
@@ -427,10 +428,10 @@ describe("interceptor.error", () => {
     app.get("/apply", () => abort("Apply error"));
     app.get("/skip", () => abort("Skip error"));
 
-    const apply = await app.inject("/apply");
+    const apply = await app.inject(createRequest("/apply"));
     expect(await apply.text()).toBe(JSON.stringify({ filtered: true, error: "Apply error" }));
 
-    const skip = await app.inject("/skip");
+    const skip = await app.inject(createRequest("/skip"));
     expect(await skip.text()).toBe(JSON.stringify({ message: "Skip error" }));
   });
 
@@ -447,7 +448,7 @@ describe("interceptor.error", () => {
 
     app.get("/", () => abort("Not found", 404));
 
-    const res = await app.inject("/");
+    const res = await app.inject(createRequest("/"));
     expect(res.status).toBe(404);
     expect(await res.text()).toBe(JSON.stringify({ custom: true, message: "Not found" }));
   });

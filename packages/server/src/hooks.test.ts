@@ -2,6 +2,7 @@ import { describe, test, beforeEach, afterEach, expect, jest } from "@jest/globa
 import { createApp } from "./bun/index.js";
 import { hook, defer, onError, plugin, type App, type OnReadyHook, type OnCloseHook } from "./index.js";
 import type { ErrorCallback } from "./plugins/minimajs.js";
+import { createRequest } from "./mock/request.js";
 
 describe("hooks", () => {
   let app: App;
@@ -23,7 +24,7 @@ describe("hooks", () => {
         return "Done";
       });
 
-      await app.inject("/");
+      await app.inject(createRequest("/"));
       expect(deferred).toHaveBeenCalled();
       expect(execution).toHaveBeenCalled();
       const firstCallIndex = (execution as jest.Mock).mock.invocationCallOrder[0];
@@ -39,7 +40,7 @@ describe("hooks", () => {
         onError(onErrorFn);
         throw new Error("test");
       });
-      await app.inject("/");
+      await app.inject(createRequest("/"));
       expect(onErrorFn).toHaveBeenCalled();
     });
   });

@@ -2,7 +2,14 @@ import { type Server as NodeServer, type IncomingMessage, type ServerResponse, c
 import Router, { type HTTPVersion } from "find-my-way";
 import { type Avvio } from "avvio";
 import type { Logger } from "pino";
-import type { App, RouteHandler, RouteOptions, RouteMetaDescriptor, PrefixOptions, Address } from "../interfaces/app.js";
+import type {
+  App,
+  RouteHandler,
+  RouteOptions,
+  RouteMetaDescriptor,
+  PrefixOptions,
+  Address,
+} from "../interfaces/app.js";
 import type { Plugin, PluginOptions, PluginSync, Register, RegisterOptions } from "../interfaces/plugin.js";
 import { createRouteMetadata, applyRoutePrefix } from "../internal/route.js";
 import { runHooks } from "../hooks/store.js";
@@ -14,6 +21,7 @@ import type { RouteFindResult } from "../interfaces/route.js";
 import { toWebRequest, fromWebResponse } from "./utils.js";
 import { createLogger } from "../logger.js";
 import { createBoot, wrapPlugin } from "../internal/boot.js";
+import type { AddressInfo } from "node:net";
 
 export interface NodeServerOptions {
   prefix?: string;
@@ -122,22 +130,9 @@ export class Server implements App<NodeServer> {
   }
 
   // Testing utility
-  async inject(request: Request | string): Promise<Response> {
-    let req: Request;
-
-    if (typeof request === "string") {
-      // If it's a string, create a GET request
-      const url = request.startsWith("http")
-        ? request
-        : `http://localhost${request.startsWith("/") ? "" : "/"}${request}`;
-      req = new Request(url);
-    } else {
-      req = request;
-    }
-
-    // Ensure avvio is ready before handling the request
+  async inject(request: Request): Promise<Response> {
     await this.ready();
-    return handleRequest(this, this.router, req);
+    return handleRequest(this, this.router, request);
   }
 
   // Lifecycle
@@ -158,31 +153,33 @@ export class Server implements App<NodeServer> {
       await fromWebResponse(response, res);
     }
 
-    const host = opts.host || "0.0.0.0";
+    const hostname = opts.host || "0.0.0.0";
     const port = opts.port;
+    const server = createServer(onRequest);
 
-    this.server = createServer(onRequest);
+    this.server = server;
 
     await new Promise<void>((resolve) => {
-      this.server!.listen(port, host, () => {
+      this.server!.listen(port, hostname, () => {
         resolve();
       });
     });
 
-    // Execute listen hook with address information
-    await runHooks(this, "listen", { host, port });
+    const addr = server.address() as AddressInfo;
 
-    const address = this.server!.address();
-    const hostname = opts.host || "localhost";
-    const protocol: "http" | "https" = "http";
-
-    return {
+    const address: Address = {
       hostname,
-      port,
-      family: typeof address === "object" && address !== null ? address.family : "IPv4",
-      protocol,
-      address: `${protocol}://${hostname}:${port}`,
+      port: addr.port,
+      family: addr.family,
+      protocol: "http",
+      address: `http://${hostname}:${addr.port}`,
     };
+
+    // Execute listen hook with address information
+    // TODO: decide weather to pass entire server or not
+    await runHooks(this, "listen", server);
+
+    return address;
   }
 
   async close(): Promise<void> {

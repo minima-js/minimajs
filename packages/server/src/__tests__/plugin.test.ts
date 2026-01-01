@@ -1,7 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach } from "@jest/globals";
+import { describe, test, expect, beforeEach, afterEach } from "@jest/globals";
 import { createApp } from "../bun/index.js";
 import type { Server } from "../bun/server.js";
 import { plugin } from "../internal/plugins.js";
+import { getBody, sleep } from "./helpers/index.js";
+import type { App } from "../interfaces/index.js";
+import { createRequest } from "../mock/request.js";
 
 describe("Plugin System", () => {
   let app: Server<any>;
@@ -16,40 +19,51 @@ describe("Plugin System", () => {
     }
   });
 
-  it("should register sync plugin", async () => {
+  test("should register sync plugin", async () => {
     let pluginCalled = false;
 
     app.register((instance) => {
       pluginCalled = true;
       instance.get("/plugin-route", () => ({ fromPlugin: true }));
+      expect(instance).not.toBe(app);
     });
 
     await app.ready();
     expect(pluginCalled).toBe(true);
 
-    const response = await app.inject("/plugin-route");
-    const data = (await response.json()) as any;
+    const response = await app.inject(createRequest("/plugin-route"));
+    const data = await getBody(response);
     expect(data.fromPlugin).toBe(true);
   });
 
-  it("should register async plugin", async () => {
+  test("should register async plugin", async () => {
     let pluginCalled = false;
+    let nestedCalled = false;
 
     app.register(async (instance) => {
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await sleep(1);
       pluginCalled = true;
       instance.get("/async-route", () => ({ async: true }));
+      instance.register(async (nested) => {
+        await sleep(1);
+        expect(nested).not.toBe(instance);
+        expect(nested).not.toBe(app);
+        nestedCalled = true;
+      });
+      expect(instance).not.toBe(app);
     });
 
     await app.ready();
-    expect(pluginCalled).toBe(true);
 
-    const response = await app.inject("/async-route");
+    expect(pluginCalled).toBe(true);
+    expect(nestedCalled).toBe(true);
+
+    const response = await app.inject(createRequest("/async-route"));
     const data = (await response.json()) as any;
     expect(data.async).toBe(true);
   });
 
-  it("should register plugin with options", async () => {
+  test("should register plugin with options", async () => {
     app.register<{ name: string }>(
       async (instance, opts) => {
         instance.get("/greeting", () => ({ message: `Hello ${opts.name}` }));
@@ -59,13 +73,13 @@ describe("Plugin System", () => {
 
     await app.ready();
 
-    const response = await app.inject("/greeting");
+    const response = await app.inject(createRequest("/greeting"));
     const data = (await response.json()) as any;
     expect(data.message).toBe("Hello World");
   });
 
   describe("Nested Plugins", () => {
-    it("should handle nested sync plugins", async () => {
+    test("should handle nested sync plugins", async () => {
       const order: string[] = [];
 
       const child = plugin((app) => {
@@ -84,12 +98,12 @@ describe("Plugin System", () => {
 
       expect(order).toEqual(["parent-start", "parent-end", "child"]);
 
-      const response = await app.inject("/child");
+      const response = await app.inject(createRequest("/child"));
       const data = (await response.json()) as any;
       expect(data.route).toBe("child");
     });
 
-    it("should handle nested async plugins with delays", async () => {
+    test("should handle nested async plugins with delays", async () => {
       const order: string[] = [];
       const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -111,12 +125,12 @@ describe("Plugin System", () => {
 
       expect(order).toEqual(["parent-start", "parent-end", "child"]);
 
-      const response = await app.inject("/async-child");
+      const response = await app.inject(createRequest("/async-child"));
       const data = (await response.json()) as any;
       expect(data.route).toBe("async-child");
     });
 
-    it("should handle mixed sync and async nested plugins", async () => {
+    test("should handle mixed sync and async nested plugins", async () => {
       const order: string[] = [];
       const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -142,27 +156,28 @@ describe("Plugin System", () => {
       expect(order).toEqual(["parent-start", "parent-end", "sync-child", "async-child"]);
     });
 
-    it("should handle deeply nested plugins (3 levels)", async () => {
+    test("should handle deeply nested plugins (3 levels)", async () => {
       const order: string[] = [];
-      const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-      const grandchild = plugin(async (app) => {
+      const grandchild = plugin(async (gc) => {
         await sleep(5);
         order.push("grandchild");
-        app.get("/deep", () => ({ level: 3 }));
+        gc.get("/deep", () => ({ level: 3 }));
+        expect(gc).toBe(app);
       });
 
-      const child = plugin(async (app) => {
+      const child = plugin(async (c) => {
         await sleep(5);
         order.push("child-start");
-        app.register(grandchild);
+        c.register(grandchild);
         order.push("child-end");
+        expect(c).toBe(app);
       });
-
-      const parent = plugin(async (app) => {
+      const parent = plugin(async (p) => {
         order.push("parent-start");
-        app.register(child);
+        p.register(child);
         order.push("parent-end");
+        expect(p).toBe(app);
       });
 
       app.register(parent);
@@ -170,57 +185,61 @@ describe("Plugin System", () => {
 
       expect(order).toEqual(["parent-start", "parent-end", "child-start", "child-end", "grandchild"]);
 
-      const response = await app.inject("/deep");
+      const response = await app.inject(createRequest("/deep"));
       const data = (await response.json()) as any;
       expect(data.level).toBe(3);
     });
 
-    it("should handle nested plugins with prefix override", async () => {
-      const child = plugin(async (app) => {
+    test("should handle nested plugins with prefix override", async () => {
+      const child = async (app: App) => {
         app.get("/route", () => ({ scope: "child" }));
-      });
+      };
 
-      const parent = plugin(async (app, _opts) => {
+      const parent = async (app: App) => {
         app.register(child, { prefix: "/child" });
         app.get("/route", () => ({ scope: "parent" }));
-      }, "parent");
+      };
 
       app.register(parent, { prefix: "/api" });
       await app.ready();
 
-      const parentRes = await app.inject("/api/route");
+      const parentRes = await app.inject(createRequest("/api/route"));
       const parentData = (await parentRes.json()) as any;
       expect(parentData.scope).toBe("parent");
 
-      const childRes = await app.inject("/api/child/route");
+      const childRes = await app.inject(createRequest("/api/child/route"));
       const childData = (await childRes.json()) as any;
       expect(childData.scope).toBe("child");
     });
 
-    it("should handle nested plugins without override (skip-override)", async () => {
-      const noOverrideChild = plugin(async (app) => {
-        app.get("/child", () => ({ override: false }));
+    test("should handle nested plugins without override (skip-override)", async () => {
+      let parentApp: App;
+      const noOverrideChild = plugin(async (noc) => {
+        noc.get("/child", () => ({ override: false }));
+        expect(noc).toBe(parentApp);
+        expect(noc).not.toBe(app);
       });
 
-      const parent = plugin(async (app) => {
-        app.register(noOverrideChild);
-        app.get("/parent", () => ({ route: "parent" }));
-      });
+      const parent = async (pa: App) => {
+        parentApp = pa;
+        pa.register(noOverrideChild);
+        pa.get("/parent", () => ({ route: "parent" }));
+      };
 
       app.register(parent, { prefix: "/v1" });
       await app.ready();
 
       // plugin() sets skip-override: true, so child inherits parent prefix
-      const childRes = await app.inject("/v1/child");
+      const childRes = await app.inject(createRequest("/v1/child"));
       const childData = (await childRes.json()) as any;
       expect(childData.override).toBe(false);
 
-      const parentRes = await app.inject("/v1/parent");
+      const parentRes = await app.inject(createRequest("/v1/parent"));
       const parentData = (await parentRes.json()) as any;
       expect(parentData.route).toBe("parent");
     });
 
-    it("should handle parallel nested async plugins", async () => {
+    test("should handle parallel nested async plugins", async () => {
       const order: string[] = [];
       const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 

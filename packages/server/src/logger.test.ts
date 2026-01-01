@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "@jest/globals";
 import { createApp } from "./bun/index.js";
 import type { App } from "./interfaces/app.js";
 import { mixin, createLogger } from "./logger.js";
+import { createRequest } from "./mock/request.js";
 
 describe("Logger", () => {
   let app: App;
@@ -18,7 +19,7 @@ describe("Logger", () => {
         expect(result).toEqual({ name: "fastify:homePage" });
         return "done";
       });
-      await app.inject("/");
+      await app.inject(createRequest("/"));
     });
 
     it("should not override existing name property", async () => {
@@ -27,7 +28,7 @@ describe("Logger", () => {
         expect(result).toEqual({ name: "custom-name" });
         return "done";
       });
-      await app.inject("/test");
+      await app.inject(createRequest("/test"));
     });
 
     it("should return data as-is when no context available", () => {
@@ -42,7 +43,7 @@ describe("Logger", () => {
         expect(result).toHaveProperty("name");
         return "done";
       });
-      await app.inject("/empty");
+      await app.inject(createRequest("/empty"));
     });
 
     it("should preserve other properties in data", async () => {
@@ -54,7 +55,7 @@ describe("Logger", () => {
         expect(result).toHaveProperty("timestamp");
         return "done";
       });
-      await app.inject("/props");
+      await app.inject(createRequest("/props"));
     });
 
     it("should handle routes without plugin chain (null/undefined)", async () => {
@@ -65,7 +66,7 @@ describe("Logger", () => {
         expect(result.name).toBe("");
         return "done";
       });
-      await currentApp.inject("/no-plugin-null");
+      await currentApp.inject(createRequest("/no-plugin-null"));
       await currentApp.close();
     });
 
@@ -77,7 +78,7 @@ describe("Logger", () => {
         expect(result.name).toBe("");
         return "done";
       });
-      await currentApp.inject("/no-plugin-empty");
+      await currentApp.inject(createRequest("/no-plugin-empty"));
       await currentApp.close();
     });
 
@@ -87,7 +88,7 @@ describe("Logger", () => {
         expect(result).toHaveProperty("name");
         return "done";
       });
-      await app.inject("/no-handler");
+      await app.inject(createRequest("/no-handler"));
     });
 
     it("should handle nested route handlers", async () => {
@@ -98,7 +99,7 @@ describe("Logger", () => {
           return "done";
         });
       });
-      await app.inject("/nested");
+      await app.inject(createRequest("/nested"));
     });
 
     it("should cache module name in local context", async () => {
@@ -110,7 +111,7 @@ describe("Logger", () => {
         expect(result1.name).toBe(result2.name);
         return "done";
       });
-      await app.inject("/cached");
+      await app.inject(createRequest("/cached"));
     });
   });
 
