@@ -55,7 +55,8 @@ describe("middleware", () => {
     expect(body2).toBe("hello");
     expect(hello).not.toHaveBeenCalled();
     const response3 = await app.inject("/hello?name=Adil");
-    expect(response3.body).toBe("hello");
+    const body3 = await response3.text();
+    expect(body3).toBe("hello");
     expect(hello).toHaveBeenCalled();
   });
 
@@ -81,7 +82,8 @@ describe("middleware", () => {
     expect(body2).toBe("hello");
     expect(hello).not.toHaveBeenCalled();
     const response3 = await app.inject("/hello?name=Adil");
-    expect(response3.body).toBe("hello");
+    const body3 = await response3.text();
+    expect(body3).toBe("hello");
     expect(hello).toHaveBeenCalled();
   });
 });
@@ -105,7 +107,7 @@ describe("interceptor.response", () => {
       app.get("/", () => ({ message: "hello world" }));
       await app.ready();
       const res = await app.inject("/");
-      expect(res.body).toBe(
+      expect(await res.text()).toBe(
         JSON.stringify({
           decorated: true,
           data: { message: "hello world" },
@@ -123,7 +125,7 @@ describe("interceptor.response", () => {
       app.get("/", () => ({ message: "async test" }));
 
       const res = await app.inject("/");
-      expect(res.body).toBe(
+      expect(await res.text()).toBe(
         JSON.stringify({
           decorated: true,
           data: { message: "async test" },
@@ -145,7 +147,7 @@ describe("interceptor.response", () => {
       app.get("/", () => ({ value: "original" }));
 
       const res = await app.inject("/");
-      expect(res.body).toBe(
+      expect(await res.text()).toBe(
         JSON.stringify({
           step2: true,
           data: {
@@ -168,7 +170,7 @@ describe("interceptor.response", () => {
       app.register(helloModule);
 
       const res = await app.inject("/hello");
-      expect(res.body).toBe(
+      expect(await res.text()).toBe(
         JSON.stringify({
           decorator: "level1",
           body: {
@@ -193,7 +195,7 @@ describe("interceptor.response", () => {
       app.register(moduleWithoutDecorator);
 
       const decorated = await app.inject("/decorated");
-      expect(decorated.body).toBe(
+      expect(await decorated.text()).toBe(
         JSON.stringify({
           decorated: "YES",
           data: { text: "should be decorated" },
@@ -201,7 +203,7 @@ describe("interceptor.response", () => {
       );
 
       const plain = await app.inject("/plain");
-      expect(plain.body).toBe(JSON.stringify({ text: "should be plain" }));
+      expect(await plain.text()).toBe(JSON.stringify({ text: "should be plain" }));
     });
 
     test("should ensure module decorators do not conflict across modules", async () => {
@@ -227,19 +229,19 @@ describe("interceptor.response", () => {
       app.register(moduleC);
 
       const a1 = await app.inject("/module-a/route1");
-      expect(a1.body).toBe(JSON.stringify({ source: "moduleA", data: { value: "A1" } }));
+      expect(await a1.text()).toBe(JSON.stringify({ source: "moduleA", data: { value: "A1" } }));
 
       const a2 = await app.inject("/module-a/route2");
-      expect(a2.body).toBe(JSON.stringify({ source: "moduleA", data: { value: "A2" } }));
+      expect(await a2.text()).toBe(JSON.stringify({ source: "moduleA", data: { value: "A2" } }));
 
       const b1 = await app.inject("/module-b/route1");
-      expect(b1.body).toBe(JSON.stringify({ source: "moduleB", data: { value: "B1" } }));
+      expect(await b1.text()).toBe(JSON.stringify({ source: "moduleB", data: { value: "B1" } }));
 
       const b2 = await app.inject("/module-b/route2");
-      expect(b2.body).toBe(JSON.stringify({ source: "moduleB", data: { value: "B2" } }));
+      expect(await b2.text()).toBe(JSON.stringify({ source: "moduleB", data: { value: "B2" } }));
 
       const c1 = await app.inject("/module-c/route1");
-      expect(c1.body).toBe(JSON.stringify({ source: "moduleC", data: { value: "C1" } }));
+      expect(await c1.text()).toBe(JSON.stringify({ source: "moduleC", data: { value: "C1" } }));
     });
 
     test("should handle multi-module scenario with nested decorators", async () => {
@@ -252,7 +254,7 @@ describe("interceptor.response", () => {
       app.register(testModule);
 
       const res = await app.inject("/test");
-      expect(res.body).toBe(
+      expect(await res.text()).toBe(
         JSON.stringify({
           module: true,
           data: {
@@ -320,7 +322,7 @@ describe("interceptor.error", () => {
 
     const res = await app.inject("/");
     expect(res.status).toBe(200);
-    expect(res.body).toBe(
+    expect(await res.text()).toBe(
       JSON.stringify({
         success: false,
         error: "Something went wrong",
@@ -343,7 +345,7 @@ describe("interceptor.error", () => {
     app.get("/", () => abort("Error message"));
 
     const res = await app.inject("/");
-    expect(res.body).toBe(
+    expect(await res.text()).toBe(
       JSON.stringify({
         step2: true,
         data: { step1: true, error: "Error message" },
@@ -376,10 +378,10 @@ describe("interceptor.error", () => {
     app.register(moduleB);
 
     const a = await app.inject("/a");
-    expect(a.body).toBe(JSON.stringify({ source: "moduleA", error: "A error" }));
+    expect(await a.text()).toBe(JSON.stringify({ source: "moduleA", error: "A error" }));
 
     const b = await app.inject("/b");
-    expect(b.body).toBe(JSON.stringify({ source: "moduleB", error: "B error" }));
+    expect(await b.text()).toBe(JSON.stringify({ source: "moduleB", error: "B error" }));
   });
 
   test("should merge app and module decorators in correct order", async () => {
@@ -397,7 +399,7 @@ describe("interceptor.error", () => {
     app.register(testModule);
 
     const res = await app.inject("/test");
-    expect(res.body).toBe(
+    expect(await res.text()).toBe(
       JSON.stringify({
         module: true,
         data: { app: true, error: "Test error" },
@@ -422,10 +424,10 @@ describe("interceptor.error", () => {
     app.get("/skip", () => abort("Skip error"));
 
     const apply = await app.inject("/apply");
-    expect(apply.body).toBe(JSON.stringify({ filtered: true, error: "Apply error" }));
+    expect(await apply.text()).toBe(JSON.stringify({ filtered: true, error: "Apply error" }));
 
     const skip = await app.inject("/skip");
-    expect(skip.body).toBe(JSON.stringify({ message: "Skip error" }));
+    expect(await skip.text()).toBe(JSON.stringify({ message: "Skip error" }));
   });
 
   test("should preserve status code from HttpError", async () => {
@@ -443,6 +445,6 @@ describe("interceptor.error", () => {
 
     const res = await app.inject("/");
     expect(res.status).toBe(404);
-    expect(res.body).toBe(JSON.stringify({ custom: true, message: "Not found" }));
+    expect(await res.text()).toBe(JSON.stringify({ custom: true, message: "Not found" }));
   });
 });

@@ -119,7 +119,7 @@ describe("error module", () => {
         throw new ValidationError();
       });
       const res = await app.inject("/validation");
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(422); // 422 Unprocessable Entity
       const body = JSON.parse(await res.text());
       expect(body).toStrictEqual({ message: "Validation failed" });
     });
@@ -129,7 +129,7 @@ describe("error module", () => {
         throw new ValidationError("Custom validation message");
       });
       const res = await app.inject("/validation-custom");
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(422); // 422 Unprocessable Entity
       const body = JSON.parse(await res.text());
       expect(body).toStrictEqual({
         message: "Custom validation message",

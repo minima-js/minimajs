@@ -21,6 +21,14 @@ export interface PrefixOptions {
   exclude?: string[];
 }
 
+export interface Address {
+  hostname: string;
+  port: number;
+  family: string;
+  protocol: "http" | "https";
+  address: string;
+}
+
 export interface App<T = unknown> {
   server?: T;
   readonly container: Container;

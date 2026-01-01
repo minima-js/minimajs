@@ -105,8 +105,8 @@ describe("plugins", () => {
       const res1 = await app.inject("/route1");
       const res2 = await app.inject("/route2");
 
-      expect(res1.body).toBe("route1");
-      expect(res2.body).toBe("route2");
+      expect(await res1.text()).toBe("route1");
+      expect(await res2.text()).toBe("route2");
     });
 
     test("should handle async plugin errors", async () => {

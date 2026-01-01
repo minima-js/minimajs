@@ -12,3 +12,5 @@ export const kPluginSync = Symbol.for("minimajs.plugin.sync");
 export const kContext = Symbol.for("minimajs.context");
 export const kHooks = Symbol.for("minimajs.hooks");
 export const kAppDescriptor = Symbol.for("minimajs.app.descriptor");
+
+export const kBody = Symbol.for("minimajs.body");

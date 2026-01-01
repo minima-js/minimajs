@@ -1,10 +1,9 @@
 import { type Server as NodeServer, type IncomingMessage, type ServerResponse, createServer } from "node:http";
 import Router, { type HTTPVersion } from "find-my-way";
-import avvio, { type Avvio } from "avvio";
+import { type Avvio } from "avvio";
 import type { Logger } from "pino";
-import type { App, RouteHandler, RouteOptions, RouteMetaDescriptor, PrefixOptions } from "../interfaces/app.js";
+import type { App, RouteHandler, RouteOptions, RouteMetaDescriptor, PrefixOptions, Address } from "../interfaces/app.js";
 import type { Plugin, PluginOptions, PluginSync, Register, RegisterOptions } from "../interfaces/plugin.js";
-import { pluginOverride } from "../internal/override.js";
 import { createRouteMetadata, applyRoutePrefix } from "../internal/route.js";
 import { runHooks } from "../hooks/store.js";
 import { serialize, errorHandler } from "../internal/default-handler.js";
@@ -14,6 +13,7 @@ import { plugin as p } from "../internal/plugins.js";
 import type { RouteFindResult } from "../interfaces/route.js";
 import { toWebRequest, fromWebResponse } from "./utils.js";
 import { createLogger } from "../logger.js";
+import { createBoot, wrapPlugin } from "../internal/boot.js";
 
 export interface NodeServerOptions {
   prefix?: string;
@@ -40,10 +40,7 @@ export class Server implements App<NodeServer> {
     this.$prefixExclude = [];
     this.router = opts.router || Router({ ignoreTrailingSlash: true });
 
-    this.boot = avvio<App>(this, {
-      expose: { close: "$close", ready: "$ready" },
-    });
-    this.boot.override = pluginOverride;
+    this.boot = createBoot(this);
   }
 
   // HTTP methods
@@ -119,12 +116,7 @@ export class Server implements App<NodeServer> {
       plugin(this, opts);
       return this;
     }
-    this.boot.use(async (instance, opts) => {
-      const pluginName = p.getName(plugin, opts);
-      const finalOpts = opts ? { ...opts, name: pluginName } : { name: pluginName };
-      await runHooks(instance, "register", plugin, finalOpts);
-      await plugin(instance, finalOpts);
-    }, opts);
+    this.boot.use(wrapPlugin(plugin), opts);
     return this;
   }
 
@@ -154,7 +146,7 @@ export class Server implements App<NodeServer> {
   }
 
   // Server lifecycle
-  async listen(opts: { port: number; host?: string }): Promise<string> {
+  async listen(opts: { port: number; host?: string }): Promise<Address> {
     await this.ready();
     const app = this;
     const router = this.router;
@@ -178,8 +170,18 @@ export class Server implements App<NodeServer> {
 
     // Execute listen hook with address information
     await runHooks(this, "listen", { host, port });
-    const addr = `http://${opts.host || "localhost"}:${port}`;
-    return addr;
+
+    const address = this.server!.address();
+    const hostname = opts.host || "localhost";
+    const protocol: "http" | "https" = "http";
+
+    return {
+      hostname,
+      port,
+      family: typeof address === "object" && address !== null ? address.family : "IPv4",
+      protocol,
+      address: `${protocol}://${hostname}:${port}`,
+    };
   }
 
   async close(): Promise<void> {

@@ -82,13 +82,17 @@ export async function runHooks(app: App, name: LifecycleHook, ...args: any[]): P
 }
 
 export namespace runHooks {
-  export function transform(app: App, data: unknown, ctx: Context) {
+  export async function transform(app: App, data: unknown, ctx: Context) {
     const store = app.container.get(kHooks) as HookStore;
-    const hook = store["transform"];
-    if (hook.size === 0) {
+    const hooks = store["transform"];
+    if (hooks.size === 0) {
       return data;
     }
-    return runHooks(app, "transform", data, ctx);
+    let result = data;
+    for (const hook of hooks) {
+      result = await hook(result, ctx);
+    }
+    return result;
   }
 
   export async function error(error: unknown, ctx: Context): Promise<any> {

@@ -17,7 +17,7 @@ describe("internal/response", () => {
         return "hello world";
       });
       const response = await app.inject("/");
-      expect(response.body).toBe("hello world");
+      expect(await response.text()).toBe("hello world");
     });
 
     test("plain object synchronous response", async () => {
@@ -25,7 +25,7 @@ describe("internal/response", () => {
         return { message: "hello world" };
       });
       const response = await app.inject("/");
-      expect(response.body).toBe(JSON.stringify({ message: "hello world" }));
+      expect(await response.text()).toBe(JSON.stringify({ message: "hello world" }));
     });
 
     test("plain object async  response", async () => {
@@ -33,7 +33,7 @@ describe("internal/response", () => {
         return { message: "hello world" };
       });
       const response = await app.inject("/");
-      expect(response.body).toBe(JSON.stringify({ message: "hello world" }));
+      expect(await response.text()).toBe(JSON.stringify({ message: "hello world" }));
     });
 
     test("plain object async synchronous response", async () => {
@@ -41,7 +41,7 @@ describe("internal/response", () => {
         return { message: "hello world" };
       });
       const response = await app.inject(createRequest("/"));
-      expect(response.body).toBe(JSON.stringify({ message: "hello world" }));
+      expect(await response.text()).toBe(JSON.stringify({ message: "hello world" }));
     });
 
     test("async iterator response with error", async () => {

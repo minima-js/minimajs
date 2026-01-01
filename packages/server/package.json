@@ -13,6 +13,7 @@
   "exports": {
     ".": "./lib/index.js",
     "./bun": "./lib/bun/index.js",
+    "./node": "./lib/node/index.js",
     "./plugins/shutdown": "./lib/plugins/shutdown.js",
     "./plugins/router": "./lib/plugins/router.js",
     "./error": "./lib/error.js",
@@ -23,9 +24,9 @@
   "scripts": {
     "dev": "tsc -w",
     "build": "bun run clean && tsc -p ./tsconfig.build.json",
-    "test": "bun test --timeout=2000 src/",
+    "test": "bun test --timeout=2000 '**/*.test.ts'",
     "test:jest": "node --no-warnings --experimental-vm-modules node_modules/.bin/jest --detectOpenHandles",
-    "coverage": "bun test --coverage --timeout=2000 src/",
+    "coverage": "bun test --coverage --timeout=2000 '**/*.test.ts'",
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "dependencies": {

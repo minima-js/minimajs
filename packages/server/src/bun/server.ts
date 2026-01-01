@@ -1,11 +1,17 @@
 import "../internal/avvio-patch.js";
 import { type Server as BunServer } from "bun";
 import Router, { type HTTPVersion } from "find-my-way";
-import avvio, { type Avvio } from "avvio";
+import { type Avvio } from "avvio";
 import type { Logger } from "pino";
-import type { App, RouteHandler, RouteOptions, RouteMetaDescriptor, PrefixOptions } from "../interfaces/app.js";
+import type {
+  App,
+  RouteHandler,
+  RouteOptions,
+  RouteMetaDescriptor,
+  PrefixOptions,
+  Address,
+} from "../interfaces/app.js";
 import type { Plugin, PluginOptions, PluginSync, Register, RegisterOptions } from "../interfaces/plugin.js";
-import { pluginOverride } from "../internal/override.js";
 import { createRouteMetadata, applyRoutePrefix } from "../internal/route.js";
 import { runHooks } from "../hooks/store.js";
 import { serialize, errorHandler } from "../internal/default-handler.js";
@@ -14,6 +20,7 @@ import type { ErrorHandler, Serializer } from "../interfaces/response.js";
 import { plugin as p } from "../internal/plugins.js";
 import type { RouteFindResult } from "../interfaces/route.js";
 import { createLogger } from "../logger.js";
+import { createBoot, wrapPlugin } from "../internal/boot.js";
 
 export interface BunServerOptions {
   prefix?: string;
@@ -40,11 +47,7 @@ export class Server<T> implements App<BunServer<T>> {
     this.$prefixExclude = [];
     this.router = opts.router || Router({ ignoreTrailingSlash: true });
     // Initialize hooks in container
-    this.boot = avvio<App>(this, {
-      autostart: false,
-      expose: { close: "$close", ready: "$ready" },
-    });
-    this.boot.override = pluginOverride;
+    this.boot = createBoot(this);
   }
 
   // HTTP methods
@@ -122,12 +125,7 @@ export class Server<T> implements App<BunServer<T>> {
       plugin(this, opts);
       return this;
     }
-    this.boot.use(async (instance, opts) => {
-      const pluginName = p.getName(plugin, opts);
-      const finalOpts = opts ? { ...opts, name: pluginName } : { name: pluginName };
-      await runHooks(instance, "register", plugin, finalOpts);
-      await plugin(instance, finalOpts);
-    }, opts);
+    this.boot.use(wrapPlugin(plugin), opts);
     return this;
   }
 
@@ -157,7 +155,7 @@ export class Server<T> implements App<BunServer<T>> {
   }
 
   // Server lifecycle
-  async listen(opts: { port: number; host?: string }): Promise<BunServer<T>> {
+  async listen(opts: { port: number; host?: string }): Promise<Address> {
     await this.ready();
     const app = this;
     const router = this.router;
@@ -177,7 +175,13 @@ export class Server<T> implements App<BunServer<T>> {
 
     // Execute listen hook with address information
     await runHooks(this, "listen", srv);
-    return srv;
+    return {
+      hostname: srv.hostname!,
+      port: srv.port!,
+      family: (srv as any).address?.family,
+      protocol: srv.protocol!,
+      address: srv.url.href,
+    };
   }
 
   async close(): Promise<void> {

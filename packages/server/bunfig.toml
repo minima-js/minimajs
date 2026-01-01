@@ -1,0 +1,18 @@
+[test]
+# Bun automatically discovers test files with these naming patterns:
+# - *.test.{ts,tsx,js,jsx}
+# - *_test.{ts,tsx,js,jsx}
+# - *.spec.{ts,tsx,js,jsx}
+# - *_spec.{ts,tsx,js,jsx}
+
+# Run tests in a smaller memory footprint
+smol = false
+
+# Exclude files from code coverage reports
+coveragePathIgnorePatterns = [
+  "**/*.d.ts",
+  "**/node_modules/**",
+  "**/lib/**",
+  "**/__tests__/helpers/**",
+  "**/__tests__/fixtures/**",
+]

@@ -3,6 +3,7 @@ import { HttpError, NotFoundError, RedirectError } from "./error.js";
 import { abort, body, headers, params, redirect, request, response, searchParams, setHeader } from "./http.js";
 import { mockContext } from "./mock/index.js";
 import { createApp } from "./bun/index.js";
+import { bodyParser } from "./plugins/body-parser.js";
 
 describe("Http", () => {
   describe("request", () => {
@@ -98,6 +99,7 @@ describe("Http", () => {
 
     test("should handle empty body", async () => {
       const app = createApp({ logger: false });
+      app.register(bodyParser());
       app.get("/test", () => {
         const reqBody = body();
         return { bodyIsNull: reqBody === null };

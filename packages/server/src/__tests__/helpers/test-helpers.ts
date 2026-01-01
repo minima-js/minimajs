@@ -1,5 +1,6 @@
 import { createApp } from "../../bun/index.js";
 import { createRequest, type MockRequestOptions } from "../../mock/request.js";
+import { bodyParser } from "../../plugins/body-parser.js";
 
 /**
  * Helper to reduce boilerplate when testing routes
@@ -14,6 +15,7 @@ export async function testRoute(
   { url = "/test", ...options }: MockRequestOptions & { url?: string } = {}
 ): Promise<Response> {
   const app = createApp({ logger: false });
+  app.register(bodyParser());
   const method = options.method || "GET";
 
   switch (method.toUpperCase()) {

@@ -1,4 +1,3 @@
-import { StatusCodes } from "http-status-codes";
 import { $context } from "./internal/context.js";
 
 import {
@@ -14,6 +13,7 @@ import type { Dict, HttpHeader, HttpHeaderIncoming, ResponseOptions } from "./in
 import { toStatusCode, type StatusCode } from "./internal/response.js";
 import { createResponse } from "./internal/response.js";
 import { isAbortError } from "./utils/errors.js";
+import { kBody } from "./symbols.js";
 
 // ============================================================================
 //  Response
@@ -297,16 +297,27 @@ export const getRequest = request;
 
 /**
  * Retrieves the request body.
+ * Requires bodyParser plugin to be registered.
  *
  * @example
  * ```ts
- * const data = body<{ name: string }>();
- * console.log(data.name);
+ * import { bodyParser } from '@minimajs/server/plugins/body-parser';
+ * app.register(bodyParser());
+ *
+ * app.post('/users', () => {
+ *   const data = body<{ name: string }>();
+ *   console.log(data.name);
+ *   return { received: data };
+ * });
  * ```
  * @since v0.2.0
  */
-export function body<T = unknown>() {
-  return getRequest().body as T;
+export function body<T = unknown>(): T | undefined {
+  const { locals } = $context();
+  if (!locals.has(kBody)) {
+    throw new Error("Body parser is not registered. Please register bodyParser plugin first.");
+  }
+  return locals.get(kBody) as T;
 }
 
 /**

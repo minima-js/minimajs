@@ -60,7 +60,7 @@ describe("HTTP Integration Tests", () => {
       );
 
       expect(response.status).toBe(200);
-      expect((response.body as any).pagination).toEqual({
+      expect(((await response.json()) as any).pagination).toEqual({
         page: 1,
         limit: 10,
       });
@@ -104,7 +104,7 @@ describe("HTTP Integration Tests", () => {
       );
 
       expectStatus(res, 400);
-      expect((res.body as any).error).toBe("Validation failed");
+      expect(((await res.json()) as any).error).toBe("Validation failed");
     });
 
     test("should handle unauthorized access", async () => {
@@ -145,7 +145,7 @@ describe("HTTP Integration Tests", () => {
         }
       );
 
-      const payload = response.body as any;
+      const payload = (await response.json()) as any;
       expect(payload.items).toHaveLength(2);
       expect(payload.items[0].status).toBe("active");
       expect(payload.items[0].category).toBe("tech");
@@ -176,7 +176,7 @@ describe("HTTP Integration Tests", () => {
 
       expectStatus(res, 201);
       expectHeader(res, "location", "/api/posts/123");
-      const payload = res.body as any;
+      const payload = (await res.json()) as any;
       expect(payload.id).toBe("123");
       expect(payload.title).toBe("New Post");
     });
@@ -189,7 +189,7 @@ describe("HTTP Integration Tests", () => {
       });
 
       expect(response.headers.get("content-type")).toContain("application/json");
-      expect(response.body).toEqual({ format: "json", data: [1, 2, 3] });
+      expect(await response.json()).toEqual({ format: "json", data: [1, 2, 3] });
     });
 
     test("should read request headers", async () => {
@@ -208,7 +208,7 @@ describe("HTTP Integration Tests", () => {
         }
       );
 
-      const body = response.body as any;
+      const body = (await response.json()) as any;
       expect(body.receivedContentType).toBe("application/json");
       expect(body.receivedCustom).toBe("value");
     });

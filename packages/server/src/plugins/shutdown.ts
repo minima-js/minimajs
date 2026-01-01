@@ -1,7 +1,7 @@
 import type { Signals } from "../interfaces/index.js";
 import { plugin } from "../internal/plugins.js";
 
-export interface GracefulShutdownOptions {
+export interface ShutdownOptions {
   /** Array of signals to listen for (e.g., ['SIGINT', 'SIGTERM']) */
   signals?: Signals[];
   /** Timeout in milliseconds before forcing process exit. Defaults to 30000ms (30 seconds) */
@@ -28,7 +28,7 @@ export interface GracefulShutdownOptions {
  * app.register(gracefulShutdown());
  * ```
  */
-export function gracefulShutdown({ signals = ["SIGINT", "SIGTERM"], timeout = 30_000 }: GracefulShutdownOptions = {}) {
+export function shutdown({ signals = ["SIGINT", "SIGTERM"], timeout = 30_000 }: ShutdownOptions = {}) {
   return plugin.sync((app) => {
     shutdownListener(() => app.close(), signals, timeout, process);
   });
