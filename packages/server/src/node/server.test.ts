@@ -321,7 +321,6 @@ describe("Node Server", () => {
       app.get("/test", () => ({ running: true }));
 
       const addr = await app.listen({ port: 0 }); // Use random port
-      console.log("app started", addr);
       expect(addr.address).toMatch(/^http:\/\//);
       expect(app.server).toBeDefined();
 

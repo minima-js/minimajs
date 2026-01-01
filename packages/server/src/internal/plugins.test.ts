@@ -156,12 +156,6 @@ describe("plugins", () => {
       expect(executionOrder).toEqual([1, 2, 3]);
     });
 
-    test.skip("should handle empty plugin list", async () => {
-      app.register(plugin.compose());
-
-      await expect(app.ready()).resolves.not.toThrow();
-    });
-
     test("should work with single plugin", async () => {
       const singleCalled = jest.fn();
 

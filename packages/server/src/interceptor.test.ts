@@ -4,6 +4,7 @@ import { createApp } from "./bun/index.js";
 import { interceptor, type Interceptor } from "./interceptor.js";
 import { createRequest } from "./mock/request.js";
 import type { App } from "./interfaces/app.js";
+import { HttpError } from "./error.js";
 
 describe("middleware", () => {
   let app: App;
@@ -331,7 +332,7 @@ describe("interceptor.error", () => {
     );
   });
 
-  test.skip("should chain multiple decorators", async () => {
+  test("should chain multiple decorators", async () => {
     // TODO: Error hooks receive (err, ctx) not (err, previousResult)
     // This test expects chaining like transform hooks but error hooks don't work that way
     app.register(
@@ -340,6 +341,7 @@ describe("interceptor.error", () => {
         return { step1: true, error: error.message };
       })
     );
+
     app.register(
       interceptor.error((_error, body) => {
         return { step2: true, data: body };
@@ -387,7 +389,7 @@ describe("interceptor.error", () => {
     expect(await b.text()).toBe(JSON.stringify({ source: "moduleB", error: "B error" }));
   });
 
-  test.skip("should merge app and module decorators in correct order", async () => {
+  test("should merge app and module decorators in correct order", async () => {
     // TODO: Error hooks signature issue - receives ctx not previousResult
     async function testModule(app: App) {
       app.register(interceptor.error((_error, body) => ({ module: true, data: body })));
@@ -411,16 +413,16 @@ describe("interceptor.error", () => {
     );
   });
 
-  test.skip("should handle decorator with filter option", async () => {
+  test("should handle decorator with filter option", async () => {
     // TODO: Filter logic issue
     app.register(
       interceptor.error((error) => {
-        if (!(error instanceof Error)) throw error;
-        return { filtered: true, error: error.message };
+        if (!(error instanceof HttpError)) throw error;
+        abort({ filtered: true, error: error.response });
       }),
       {
-        filter({ request: req }) {
-          return req.url !== "/skip";
+        filter({ url }) {
+          return url.pathname !== "/skip";
         },
       }
     );
@@ -429,9 +431,11 @@ describe("interceptor.error", () => {
     app.get("/skip", () => abort("Skip error"));
 
     const apply = await app.inject(createRequest("/apply"));
+    expect(apply.status).toBe(400);
     expect(await apply.text()).toBe(JSON.stringify({ filtered: true, error: "Apply error" }));
 
     const skip = await app.inject(createRequest("/skip"));
+    expect(apply.status).toBe(400);
     expect(await skip.text()).toBe(JSON.stringify({ message: "Skip error" }));
   });
 

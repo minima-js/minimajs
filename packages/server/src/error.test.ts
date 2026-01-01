@@ -1,4 +1,4 @@
-import { test, beforeEach, afterEach, describe } from "@jest/globals";
+import { test, beforeEach, afterEach, describe, expect } from "@jest/globals";
 import { ForbiddenError, HttpError, NotFoundError, ValidationError } from "./error.js";
 import { redirect } from "./index.js";
 import { createApp } from "./bun/index.js";
