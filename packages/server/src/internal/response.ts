@@ -27,13 +27,8 @@ export function createResponseFromState(data: ResponseBody, options: ResponseIni
   });
 }
 export async function createResponse(data: unknown, options: ResponseInit = {}, ctx: Context): Promise<Response> {
-  const { app, request: req, responseState: resInit } = ctx;
-  if (options.headers) {
-    mergeHeaders(resInit.headers, new Headers(options.headers as HeadersInit));
-  }
-  if (options.status) {
-    resInit.status = options.status;
-  }
+  const { app, request: req, responseState } = ctx;
+
   // If data is already a Response, return as-is (no header merging)
   if (data instanceof Response) {
     await runHooks(app, "sent", ctx);
@@ -53,10 +48,13 @@ export async function createResponse(data: unknown, options: ResponseInit = {}, 
   }
 
   // 5. Create response with merged headers
-  const response = new Response(body, resInit);
+  const { headers, ...responseInit } = options;
+  if (headers) {
+    mergeHeaders(responseState.headers, new Headers(headers as HeadersInit));
+  }
+  const response = new Response(body, { ...responseState, ...responseInit });
 
   // 6. sent hook
   await runHooks(app, "sent", req);
-
   return response;
 }
