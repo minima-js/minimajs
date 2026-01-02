@@ -38,7 +38,7 @@ export async function response(body: unknown, options: ResponseOptions = {}): Pr
   if (options.status) {
     status = toStatusCode(options.status);
   }
-  return await createResponse(body, { status, headers: options.headers });
+  return await createResponse(body, { status, headers: options.headers }, $context());
 }
 
 /**

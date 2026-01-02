@@ -41,6 +41,7 @@ export default defineConfig({
           { text: "Modules", link: "/guides/modules" },
           { text: "Middleware", link: "/guides/middleware" },
           { text: "Hooks", link: "/guides/hooks" },
+          { text: "Compose", link: "/guides/compose" },
           { text: "Error Handling", link: "/guides/error-handling" },
           { text: "Logger", link: "/guides/logger" },
           { text: "Third-Party Integration", link: "/guides/third-party-integration" },

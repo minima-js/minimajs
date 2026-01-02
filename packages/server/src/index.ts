@@ -29,5 +29,6 @@ export * from "./hooks/index.js";
 export { logger };
 
 export { plugin } from "./internal/plugins.js";
+export { compose } from "./compose.js";
 
 export { createApp } from "./node/index.js";

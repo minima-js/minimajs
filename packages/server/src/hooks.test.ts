@@ -1,6 +1,6 @@
 import { describe, test, beforeEach, afterEach, expect, jest } from "@jest/globals";
 import { createApp } from "./bun/index.js";
-import { hook, defer, onError, plugin, type App, type OnReadyHook, type OnCloseHook } from "./index.js";
+import { hook, defer, onError, compose, type App, type OnReadyHook, type OnCloseHook } from "./index.js";
 import type { ErrorCallback } from "./plugins/minimajs.js";
 import { createRequest } from "./mock/request.js";
 
@@ -212,7 +212,7 @@ describe("hooks", () => {
         dbConnected = true;
       });
 
-      app.register(plugin.compose(connectDBHook, closeDBHook));
+      app.register(compose(connectDBHook, closeDBHook));
 
       await app.ready();
       expect(dbConnected).toBe(true);

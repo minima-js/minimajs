@@ -6,13 +6,20 @@ import { runHooks } from "../hooks/store.js";
 import type { Plugin, Register, PluginOptions, RegisterOptions } from "../interfaces/plugin.js";
 import { kPluginName, kPluginSkipOverride } from "../symbols.js";
 
+export const METADATA_SYMBOLS = [kPluginName, kPluginSkipOverride];
 /**
- * Plugin wrapper function with metadata symbols
+ * Copies all registered metadata from source function to target function
+ *
+ * This ensures that when wrapping functions, all metadata symbols are preserved.
+ * The metadata symbols are defined in METADATA_SYMBOLS registry.
  */
-interface PluginWrapper {
-  (instance: App, opts: PluginOptions | RegisterOptions): void | Promise<void>;
-  [kPluginName]?: string;
-  [kPluginSkipOverride]?: boolean;
+function copyMetadata<T extends Function>(source: any, target: T): T {
+  for (const symbol of METADATA_SYMBOLS) {
+    if (symbol in source && source[symbol] !== undefined) {
+      (target as any)[symbol] = source[symbol];
+    }
+  }
+  return target;
 }
 
 /**
@@ -20,26 +27,14 @@ interface PluginWrapper {
  */
 export function wrapPlugin<T extends PluginOptions | RegisterOptions = PluginOptions>(
   plugin: Plugin<T> | Register<T>
-): PluginWrapper {
-  const pluginWithMeta = plugin as PluginWrapper;
-  const shouldSkip = pluginWithMeta[kPluginSkipOverride];
-  const nameOverride = pluginWithMeta[kPluginName];
-
+): Plugin<T> | Register<T> {
   async function wrapper(instance: App, wrapperOpts: T) {
     await runHooks(instance, "register", plugin, wrapperOpts);
     await plugin(instance, wrapperOpts);
   }
 
-  // Preserve metadata so pluginOverride function can see it
-  const wrappedWithMeta = wrapper as PluginWrapper;
-  if (nameOverride !== undefined) {
-    wrappedWithMeta[kPluginName] = nameOverride;
-  }
-  if (shouldSkip) {
-    wrappedWithMeta[kPluginSkipOverride] = true;
-  }
-
-  return wrappedWithMeta;
+  // Copy all metadata from original plugin to wrapper
+  return copyMetadata(plugin, wrapper);
 }
 
 /**

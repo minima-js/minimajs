@@ -39,27 +39,6 @@ export function setMeta(fn: Function, { name, skipOverride: shouldSkipOverride }
  * Plugin utilities namespace providing helper functions for creating and composing plugins.
  */
 export namespace plugin {
-  /**
-   * Composes multiple plugins into a single plugin that registers all of them.
-   *
-   * @example
-   * ```typescript
-   * const closeDB = hook("close", async () => await connection.close());
-   * const connectDB = hook("ready", async () => await connection.connect());
-   *
-   * app.register(plugin.compose(connectDB, closeDB));
-   * ```
-   */
-
-  export function compose<T extends PluginOptions = any>(...plugins: (Plugin<T> | PluginSync)[]) {
-    const composedName = `compose(${plugins.map((p) => p.name || "anonymous").join(",")})`;
-    return plugin<T>(async function composed(app, opts) {
-      for (const plg of plugins) {
-        await plg(app, opts);
-      }
-    }, composedName);
-  }
-
   export function isSync(fn: Function): fn is PluginSync {
     return kPluginSync in fn;
   }

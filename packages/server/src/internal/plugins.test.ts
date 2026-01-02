@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach, jest } from "@jest/globals";
 import { plugin } from "./plugins.js";
+import { compose } from "../compose.js";
 import { createApp } from "../bun/index.js";
 import type { App } from "../interfaces/app.js";
 import { kPluginName, kPluginSkipOverride } from "../symbols.js";
@@ -39,7 +40,7 @@ describe("plugins", () => {
         plugin2();
       });
 
-      app.register(plugin.compose(p1, p2));
+      app.register(compose(p1, p2));
 
       await app.ready();
 
@@ -61,7 +62,7 @@ describe("plugins", () => {
         plugin2Called();
       });
 
-      app.register(plugin.compose(p1, p2));
+      app.register(compose(p1, p2));
 
       await app.ready();
 
@@ -82,7 +83,7 @@ describe("plugins", () => {
         asyncCalled();
       });
 
-      app.register(plugin.compose(syncPlugin, asyncPlugin));
+      app.register(compose(syncPlugin, asyncPlugin));
 
       await app.ready();
 
@@ -99,7 +100,7 @@ describe("plugins", () => {
         app.get("/route2", () => "route2");
       });
 
-      app.register(plugin.compose(p1, p2));
+      app.register(compose(p1, p2));
 
       await app.ready();
 
@@ -117,7 +118,7 @@ describe("plugins", () => {
 
       const normalPlugin = plugin((_app) => {});
 
-      app.register(plugin.compose(normalPlugin, errorPlugin));
+      app.register(compose(normalPlugin, errorPlugin));
 
       await expect(app.ready()).rejects.toThrow("Plugin error");
     });
@@ -129,7 +130,7 @@ describe("plugins", () => {
 
       const normalPlugin = plugin((_app) => {});
 
-      app.register(plugin.compose(normalPlugin, errorPlugin));
+      app.register(compose(normalPlugin, errorPlugin));
 
       await expect(app.ready()).rejects.toThrow("Sync plugin error");
     });
@@ -149,7 +150,7 @@ describe("plugins", () => {
         executionOrder.push(3);
       });
 
-      app.register(plugin.compose(p1, p2, p3));
+      app.register(compose(p1, p2, p3));
 
       await app.ready();
 
@@ -163,7 +164,7 @@ describe("plugins", () => {
         singleCalled();
       });
 
-      app.register(plugin.compose(p1));
+      app.register(compose(p1));
 
       await app.ready();
 
@@ -187,8 +188,8 @@ describe("plugins", () => {
         plugin3();
       });
 
-      const composed1 = plugin.compose(p1, p2);
-      const composed2 = plugin.compose(composed1, p3);
+      const composed1 = compose(p1, p2);
+      const composed2 = compose(composed1, p3);
 
       app.register(composed2);
 
@@ -210,7 +211,7 @@ describe("plugins", () => {
         receivedOpts.push(opts);
       });
 
-      app.register(plugin.compose(p1, p2));
+      app.register(compose(p1, p2));
 
       await app.ready();
 
@@ -237,7 +238,7 @@ describe("plugins", () => {
         executionOrder.push("async2");
       });
 
-      app.register(plugin.compose(p1, p2, p3));
+      app.register(compose(p1, p2, p3));
 
       await app.ready();
 
