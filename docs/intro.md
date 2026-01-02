@@ -4,125 +4,153 @@ sidebar_position: 1
 title: "Introduction"
 ---
 
-# Minima\.js: Engineered from Scratch for the Modern Web
+# Introduction to Minima.js
 
-Minima.js is a high-performance web framework built entirely from the ground up—not a wrapper, not an abstraction layer, but a purpose-built solution for modern JavaScript runtimes.
+Minima.js is a high-performance web framework built from the ground up for modern JavaScript runtimes—no legacy dependencies, no framework wrappers, just pure, optimized code.
 
-## The Minima.js Difference
+## Core Philosophy
 
-Unlike frameworks that layer abstraction upon abstraction, Minima.js takes a fundamentally different approach: **built from scratch with zero legacy baggage**. This means every line of code serves a purpose, and nothing stands between you and peak performance.
+Built for developers who value **clean code, type safety, and zero magic**.
 
-**Core Philosophy:**
+### Context Functions
 
-- **Built from Scratch, Not a Wrapper:** Minima.js is engineered from first principles. No dependencies on Fastify, Express, or any legacy framework. Just pure, optimized code designed for modern runtimes.
-
-- **100% Bun-Native Support:** First-class support for Bun with dedicated `@minimajs/server/bun` imports that leverage Bun's native HTTP server for maximum performance. Node.js support via `@minimajs/server/node` ensures compatibility across all environments.
-
-- **Web API Standard at the Core:** Uses native `Request` and `Response` objects from the Web API standard. No custom wrappers, no proprietary abstractions—just standardized APIs that work everywhere.
-
-- **Revolutionary Hook System:** Control every aspect of the request lifecycle with an intuitive, function-based hook system. Intercept, transform, and manage requests at any stage with simple, composable functions.
-
-- **Context-Aware Architecture:** Say goodbye to prop drilling! AsyncLocalStorage-based context lets you access request data from anywhere in your code without passing `req` and `res` objects around.
-
-- **Function-First Philosophy:** Pure functional approach with minimal boilerplate. Build modular applications using plain async functions and composable plugins—no classes, no decorators, just functions.
-
-- **TypeScript First:** Built entirely in TypeScript, for TypeScript. Exceptional type safety, autocompletion, and developer experience out of the box.
-
-## Why Start from Scratch?
-
-Building from scratch wasn't a choice—it was a necessity. Existing frameworks carry decades of compatibility requirements, outdated patterns, and performance compromises. By starting fresh, Minima.js delivers:
-
-- **Zero Legacy Overhead:** No backward compatibility baggage. Every feature is designed for modern JavaScript.
-- **Native Runtime Integration:** Direct integration with Bun's native APIs and Node.js internals—no middleware layers slowing you down.
-- **Web Standards First:** By using standard Request/Response objects, your code is portable and future-proof.
-- **Surgical Performance:** Every millisecond matters. Built from scratch means optimized hot paths and zero unnecessary abstractions.
-
-## The Hook-Based Advantage
-
-Minima.js introduces a unique approach to request lifecycle management through **hooks**. Unlike traditional middleware that executes in a rigid chain, hooks give you fine-grained control:
+Access request data anywhere without passing context—powered by AsyncLocalStorage:
 
 ```typescript
-import { createApp } from '@minimajs/server/bun';
-import { hook } from '@minimajs/server';
+import { createApp } from "@minimajs/server/node";
+import { params, searchParams, headers, request } from "@minimajs/server";
 
 const app = createApp();
 
-// Hooks receive context - destructure what you need
-app.register(hook('request', ({ request }) => {
-  console.log(`${request.method} ${request.url}`);
-}));
-
-app.register(hook('error', (ctx) => {
-  // Custom error handling with full control
-  return { error: ctx.error.message, code: 500 };
-}));
-
-app.get('/', () => ({ message: 'Hello, World!' }));
-```
-
-**Two ways to access request data:**
-
-```typescript
-import { params, request } from '@minimajs/server';
-
-// 1. Via Context parameter (explicit)
-app.get('/:id', (ctx) => {
-  const id = ctx.route.params.id;
-  return { id };
+// Route params - no context needed
+app.get("/users/:id", () => {
+  const userId = params.get("id");
+  return { userId };
 });
 
-// 2. Via AsyncLocalStorage imports (recommended - cleaner)
-app.get('/:id', () => {
-  const id = params.get('id');
-  const url = request().url; // Native Web API Request
-  return { id, url };
+// Query params with transform function
+app.get("/search", () => {
+  const query = searchParams.get("q");
+  const page = searchParams.get("page", Number) ?? 1; // page type will be infereed as number
+  return { query, page };
+});
+
+// Native Web API Request object
+app.post("/upload", async () => {
+  const req = request();
+  const formData = await req.formData();
+  return { uploaded: true };
 });
 ```
 
-**Hook superpowers:**
+**Extract logic to pure functions:**
 
 ```typescript
-// Early return from hook - skip everything
-app.register(hook('request', ({ request }) => {
-  if (request.headers.get('authorization') !== 'secret') {
-    // Returning Response skips routing, handlers, and response hooks
-    return new Response('Unauthorized', { status: 401 });
+import { params, headers, abort } from "@minimajs/server";
+
+// Pure functions that use context
+function getUser() {
+  return User.findById(params.get("id", Number));
+}
+
+function isAuthenticated() {
+  return headers.get("authorization")?.startsWith("Bearer ");
+}
+
+// Compose them anywhere
+app.get("/users/:id/posts", async () => {
+  if (!isAuthenticated()) {
+    abort(401, "Unauthorized");
   }
-}));
-
-// Handler returns native Response - skip response hooks
-app.get('/stream', () => {
-  // Native Response bypasses response hooks and global headers
-  return new Response(stream, {
-    headers: { 'Content-Type': 'text/event-stream' }
-  });
-});
-
-// Handler returns object - goes through full pipeline
-app.get('/data', () => {
-  // Object goes through response hooks, global headers, serialization
-  return { data: 'processed' };
+  const user = await getUser();
+  return { user, posts: [] };
 });
 ```
 
-Hooks are just functions. Compose them, test them, reuse them. No magic, no complexity.
+### Hooks: Lifecycle Control
 
-## Choose Your Runtime, Keep Your Code
+Hooks intercept and transform requests at different lifecycle stages:
+
+```typescript
+import { hook } from "@minimajs/server";
+
+// Request hook - runs first, for all requests
+app.register(
+  hook("request", ({ request }) => {
+    console.log(`${request.method} ${request.url}`);
+
+    // Early abort
+    if (!request.headers.get("api-key")) {
+      abort("Missing API key", "UNAUTHORIZED"); // send 401 error
+    }
+  })
+);
+
+// Transform hook - modify handler response
+app.register(
+  hook("transform", (data) => {
+    if (typeof data === "object") {
+      return { ...data, timestamp: Date.now() };
+    }
+    return data;
+  })
+);
+```
+
+### Runtime-Native Support
+
+Switch runtimes by changing one import—same code, different performance:
 
 ::: code-group
 
-```typescript [Bun]
-import { createApp } from '@minimajs/server/bun';
+```typescript [Bun (Native)]
+import { createApp } from "@minimajs/server/bun"; // [!code highlight]
+import { params, headers } from "@minimajs/server";
+
+const app = createApp();
+
+app.get("/api/:resource", () => {
+  const resource = params.get("resource");
+  const apiKey = headers.get("x-api-key");
+
+  return { resource, apiKey };
+});
+
+await app.listen({ port: 3000 });
 ```
 
 ```typescript [Node.js]
-import { createApp } from '@minimajs/server/node';
+import { createApp } from "@minimajs/server/node"; // [!code highlight]
+import { params, headers } from "@minimajs/server";
+
+const app = createApp();
+
+app.get("/api/:resource", () => {
+  const resource = params.get("resource");
+  const apiKey = headers.get("x-api-key");
+
+  return { resource, apiKey };
+});
+
+await app.listen({ port: 3000 });
 ```
 
 :::
 
-Same API, same patterns, different runtimes. Switch between Bun and Node.js by changing a single import line.
+**Key Advantages:**
 
-**Embrace the Future of Web Development**
+- **Context functions work everywhere** - params, headers, searchParams, request are runtime-agnostic
+- **Module-scoped logic** - extract functions, test them independently
+- **Hooks are portable** - define once, works across all runtimes
+- **Web API standards** - native Request/Response objects, no custom wrappers
 
-Minima.js represents a clean break from the past and a bold step into the future. Built for modern runtimes, powered by Web standards, and controlled by simple functions—this is web development, reimagined.
+Benefits:
+
+- **Testable** - Extract logic to pure functions
+- **Composable** - Module functions work anywhere
+- **Type-safe** - Full TypeScript inference
+- **Standard** - Web API Request/Response
+
+---
+
+**Minima.js** is a composition-first backend framework where features are built by assembling primitives, not obeying patterns. Context, lifecycle, and schemas are explicit, reusable, and under your control—so your architecture stays intentional, not accidental.

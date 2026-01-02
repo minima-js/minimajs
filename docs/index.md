@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "Minima.js"
   text: "Built from Scratch for Modern Runtimes"
-  tagline: A high-performance web framework built from the ground up with 100% Bun-native support, Web API standards, and a revolutionary hook-based control system.
+  tagline: TypeScript-first with pure ESM, Web API standards, and 100% type safety—no false assertions, just real types.
   image:
     src: /logo.svg
     alt: Minima.js
@@ -17,52 +17,54 @@ hero:
       link: https://github.com/minima-js/minimajs
 
 features:
-  - icon: '⚡️'
-    title: 'Built from Scratch, Not a Wrapper'
-    details: 'Unlike other frameworks, Minima.js is engineered from the ground up with zero dependencies on legacy frameworks. Pure, efficient, and blazingly fast.'
-  - icon: '🦊'
-    title: '100% Bun-Native Compatible'
-    details: 'First-class support for Bun with dedicated native imports. Leverage Bun''s full performance potential while maintaining Node.js compatibility.'
-  - icon: '🌐'
-    title: 'Web API Standard'
-    details: 'Uses native Request/Response objects from the Web API standard. No wrappers, no abstractions—just pure, standardized web APIs.'
-  - icon: '🎣'
-    title: 'Revolutionary Hook System'
-    details: 'Control your application flow with an intuitive hook-based architecture. Intercept, transform, and manage requests at any lifecycle stage with simple functions.'
-  - icon: '✨'
-    title: 'Context-Aware Design'
-    details: 'Access request data from anywhere using AsyncLocalStorage-based context. No prop drilling, no passing req/res around—just clean, elegant code.'
-  - icon: '🎨'
-    title: 'Function-First Philosophy'
-    details: 'Pure functional approach with minimal boilerplate. Build modular applications using plain async functions and composable plugins.'
-
+  - icon:
+      src: /icon-lightning.svg
+    title: "Built from Scratch"
+    details: "Zero dependencies on legacy frameworks. Pure, optimized code designed for modern runtimes."
+  - icon:
+      src: /icon-bun.svg
+    title: "100% Bun-Native Compatible"
+    details: "First-class Bun support with dedicated imports. Full Node.js compatibility. Same code, different runtime."
+  - icon:
+      src: /icon-globe.svg
+    title: "Web Standards & ESM"
+    details: "Native Request/Response objects and pure ESM modules. No wrappers, no abstractions—just standardized, future-proof APIs."
+  - icon:
+      src: /icon-typescript.svg
+    title: "100% Type Safety"
+    details: "TypeScript-first with zero type assertions. Real generics, and full inference — no 'as any' shortcuts."
+  - icon:
+      src: /icon-context.svg
+    title: "Context-Aware Design"
+    details: "AsyncLocalStorage-based context. Access request data anywhere without prop drilling."
+  - icon:
+      src: /icon-function.svg
+    title: "Function-First Philosophy"
+    details: "Pure functional approach. Plain async functions, composable plugins, zero boilerplate."
 ---
-<div style="height: 1rem;"></div>
 
-## Choose Your Runtime
+## Quick Example
 
 ::: code-group
 
 ```typescript [Bun]
-import { createApp } from '@minimajs/server/bun';
-import { params } from '@minimajs/server';
+import { createApp } from "@minimajs/server/bun"; // [!code highlight]
+import { params } from "@minimajs/server";
 
 const app = createApp();
 
-// Access route params via AsyncLocalStorage - no prop drilling!
-app.get('/:name', () => `Hello, ${params.get('name')}!`);
+app.get("/:name", () => `Hello, ${params.get("name")}!`);
 
 await app.listen({ port: 3000 });
 ```
 
 ```typescript [Node.js]
-import { createApp } from '@minimajs/server/node';
-import { params } from '@minimajs/server';
+import { createApp } from "@minimajs/server/node"; // [!code highlight]
+import { params } from "@minimajs/server";
 
 const app = createApp();
 
-// Access route params via AsyncLocalStorage - no prop drilling!
-app.get('/:name', () => `Hello, ${params.get('name')}!`);
+app.get("/:name", () => `Hello, ${params.get("name")}!`);
 
 await app.listen({ port: 3000 });
 ```
@@ -81,10 +83,14 @@ await app.listen({ port: 3000 });
       <div class="item grid-1">
         <div class="VPLink no-arrow" href="#">
           <article class="VPFeature">
-            <h2 class="title">A Fresh Start for Web Frameworks</h2>
+            <h2 class="title">Why Minima.js?</h2>
             <p class="details">
-              Minima.js breaks free from the traditional approach of wrapping existing frameworks. Built entirely from scratch, it embraces modern runtime capabilities like Bun while maintaining backward compatibility with Node.js. By using standard Web APIs instead of creating custom abstractions, Minima.js delivers unparalleled performance and a development experience that feels native to the JavaScript ecosystem. The unique hook-based control system gives you fine-grained control over every aspect of the request lifecycle—without the complexity.
+              Traditional frameworks carry decades of compatibility baggage and outdated patterns. Minima.js takes a different path: built entirely from scratch for modern JavaScript runtimes, using Web API standards, with zero legacy overhead. The result? Blazing performance, exceptional developer experience, and code that's portable and future-proof.
             </p>
+            <div style="height: 1rem;"></div>
+            <a href="/intro" class="VPButton" role="button" style="background-color: var(--vp-c-brand-1); color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.25rem;">
+              Learn More
+            </a>
           </article>
         </div>
       </div>
@@ -106,7 +112,7 @@ await app.listen({ port: 3000 });
           <article class="VPFeature">
             <h2 class="title">Join the Community</h2>
             <p class="details">
-              Minima.js is an open-source project, and we welcome contributions from the community. Whether you want to report a bug, suggest a new feature, or contribute to the code, we would love to have you on board. Check out our GitHub repository to get started.
+              Open source and community-driven. Report bugs, suggest features, or contribute code. We'd love to have you on board.
             </p>
             <div style="height: 1rem;"></div>
             <a href="https://github.com/minima-js/minimajs" class="VPButton" role="button" style="background-color: var(--vp-c-brand-1); color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.25rem;">

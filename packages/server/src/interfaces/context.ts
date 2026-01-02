@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import type { Server as NodeServer } from "node:http";
+import type { Server as HttpServer } from "node:http";
+import type { Server as HttpsServer } from "node:https";
 import type { App, Container } from "./app.js";
 import type { ResponseState } from "./response.js";
 import type { Route } from "./route.js";
@@ -14,6 +15,6 @@ export interface Context<S = unknown> {
   readonly locals: Map<symbol, unknown>;
   readonly signal: AbortSignal;
   readonly route: Route<S> | null;
-  readonly incomingMessage: S extends NodeServer ? IncomingMessage : undefined;
-  readonly serverResponse: S extends NodeServer ? ServerResponse : undefined;
+  readonly incomingMessage: S extends HttpServer | HttpsServer ? IncomingMessage : undefined;
+  readonly serverResponse: S extends HttpServer | HttpsServer ? ServerResponse : undefined;
 }

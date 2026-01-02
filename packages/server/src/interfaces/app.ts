@@ -1,5 +1,4 @@
-import Router from "find-my-way";
-import type { HTTPVersion } from "find-my-way";
+import type { Instance as Router, HTTPVersion } from "find-my-way";
 import type { ErrorHandler, Serializer } from "./response.js";
 import type { Plugin, PluginOptions, PluginSync, Register, RegisterOptions } from "./plugin.js";
 import type { Context } from "./context.js";
@@ -14,7 +13,7 @@ export type RouteHandler<S = unknown> = (ctx: Context<S>) => unknown;
 export interface App<S = any> {
   server?: S;
   readonly container: Container;
-  readonly router: Router.Instance<HTTPVersion.V1>;
+  readonly router: Router<HTTPVersion.V1>;
 
   log: Logger;
 
