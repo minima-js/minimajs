@@ -27,11 +27,9 @@ describe("createAuth", () => {
       const mockUser: User = { id: 1, name: "John Doe", isAdmin: false };
       const [plugin, getUser] = createAuth(async () => mockUser);
       app.register(plugin);
-
       app.get("/", () => getUser() ?? "No User");
-
       const res = await app.inject(createRequest("/"));
-      expect(res.body).toBe(JSON.stringify(mockUser));
+      expect(await res.json()).toEqual(mockUser);
     });
 
     test("should return undefined when authentication callback throws BaseHttpError", async () => {
@@ -47,7 +45,7 @@ describe("createAuth", () => {
       });
 
       const res = await app.inject(createRequest("/"));
-      expect(res.body).toBe("No User");
+      expect(await res.text()).toBe("No User");
     });
 
     test("should throw non-BaseHttpError errors", async () => {
@@ -75,7 +73,7 @@ describe("createAuth", () => {
       });
 
       const res = await app.inject(createRequest("/"));
-      expect(res.body).toBe(JSON.stringify({ userName: "Jane Doe", isAdmin: true }));
+      expect(await res.text()).toBe(JSON.stringify({ userName: "Jane Doe", isAdmin: true }));
     });
 
     test("required() method should return user data when auth succeeds", async () => {
@@ -89,7 +87,7 @@ describe("createAuth", () => {
       });
 
       const res = await app.inject(createRequest("/"));
-      expect(res.body).toBe(JSON.stringify(mockUser));
+      expect(await res.text()).toBe(JSON.stringify(mockUser));
     });
 
     test("required() method should throw when authentication fails", async () => {
@@ -105,7 +103,7 @@ describe("createAuth", () => {
 
       const res = await app.inject(createRequest("/"));
       expect(res.status).toBe(401);
-      expect(res.body).toBe(JSON.stringify({ message: "Invalid token" }));
+      expect(await res.text()).toBe(JSON.stringify({ message: "Invalid token" }));
     });
 
     test("should support synchronous callbacks", async () => {
@@ -116,7 +114,7 @@ describe("createAuth", () => {
       app.get("/", () => getUser());
 
       const res = await app.inject(createRequest("/"));
-      expect(res.body).toBe(JSON.stringify(mockUser));
+      expect(await res.text()).toBe(JSON.stringify(mockUser));
     });
   });
 
@@ -131,7 +129,7 @@ describe("createAuth", () => {
       app.get("/", () => getUser());
 
       const res = await app.inject(createRequest("/"));
-      expect(res.body).toBe(JSON.stringify(mockUser));
+      expect(await res.text()).toBe(JSON.stringify(mockUser));
     });
 
     test("should throw error immediately when authentication fails", async () => {
@@ -148,7 +146,7 @@ describe("createAuth", () => {
 
       const res = await app.inject(createRequest("/"));
       expect(res.status).toBe(401);
-      expect(res.body).toBe(JSON.stringify({ message: "Unauthorized" }));
+      expect(await res.text()).toBe(JSON.stringify({ message: "Unauthorized" }));
     });
 
     test("should throw non-BaseHttpError errors", async () => {
@@ -200,7 +198,7 @@ describe("createAuth", () => {
       });
 
       const res = await app.inject(createRequest("/"));
-      expect(res.body).toBe(JSON.stringify({ name: "Diana", id: 5 }));
+      expect(await res.text()).toBe(JSON.stringify({ name: "Diana", id: 5 }));
     });
   });
 
@@ -254,7 +252,7 @@ describe("createAuth", () => {
 
       const res = await app.inject(createRequest("/"));
       expect(res.status).toBe(403);
-      expect(res.body).toBe(JSON.stringify({ message: "Forbidden" }));
+      expect(await res.text()).toBe(JSON.stringify({ message: "Forbidden" }));
     });
 
     test("should preserve error message and status", async () => {
@@ -268,7 +266,7 @@ describe("createAuth", () => {
 
       const res = await app.inject(createRequest("/"));
       expect(res.status).toBe(418);
-      expect(res.body).toBe(JSON.stringify({ message: "Custom auth error" }));
+      expect(await res.text()).toBe(JSON.stringify({ message: "Custom auth error" }));
     });
   });
 
