@@ -89,7 +89,7 @@ export namespace runHooks {
     }
 
     for (const hook of hooks) {
-      const response = hook(ctx);
+      const response = await hook(ctx);
       if (response instanceof Response) {
         return response;
       }
