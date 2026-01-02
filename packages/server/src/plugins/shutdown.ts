@@ -39,12 +39,7 @@ export type QuitHandler = () => Promise<void>;
  * Registers shutdown signal handlers for graceful server termination.
  * Listens for specified kill signals and executes cleanup before process exit.
  */
-export function shutdownListener(
-  quitHandler: QuitHandler,
-  killSignal: Signals[],
-  timeout: number,
-  process: NodeJS.Process
-) {
+export function shutdownListener(quitHandler: QuitHandler, killSignal: Signals[], timeout: number, process: NodeJS.Process) {
   let isShuttingDown = false;
 
   async function quit(sig: Signals) {

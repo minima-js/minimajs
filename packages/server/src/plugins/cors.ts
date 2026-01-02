@@ -55,9 +55,7 @@ function buildCorsHeaders(
     headers["Access-Control-Allow-Methods"] = methods;
 
     if (config.allowedHeaders) {
-      const allowedHeaders = Array.isArray(config.allowedHeaders)
-        ? config.allowedHeaders.join(",")
-        : config.allowedHeaders;
+      const allowedHeaders = Array.isArray(config.allowedHeaders) ? config.allowedHeaders.join(",") : config.allowedHeaders;
       headers["Access-Control-Allow-Headers"] = allowedHeaders;
     }
 
@@ -67,9 +65,7 @@ function buildCorsHeaders(
   } else {
     // Regular response headers
     if (config.exposedHeaders) {
-      const exposedHeaders = Array.isArray(config.exposedHeaders)
-        ? config.exposedHeaders.join(",")
-        : config.exposedHeaders;
+      const exposedHeaders = Array.isArray(config.exposedHeaders) ? config.exposedHeaders.join(",") : config.exposedHeaders;
       if (exposedHeaders) {
         headers["Access-Control-Expose-Headers"] = exposedHeaders;
       }

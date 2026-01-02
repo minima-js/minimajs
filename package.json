@@ -17,6 +17,7 @@
     "dev": "bun run --filter '*' dev --pretty",
     "build": "bun run --filter '*' build",
     "test": "bun run --filter '*' test",
+    "lint": "bun eslint .",
     "coverage": "bun run --filter '*' coverage",
     "clean": "bun run --filter '*' clean",
     "release": "bun run build && changeset publish",
@@ -26,11 +27,16 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
+    "@eslint/js": "^9.39.2",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
     "jest": "^30.2.0",
     "rimraf": "^6.1.2",
     "typedoc": "^0.28.15",
     "typedoc-plugin-markdown": "^4.9.0",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.51.0",
     "vitepress": "^1.6.4",
     "vue": "^3.5.26"
   }

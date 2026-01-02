@@ -81,4 +81,3 @@ export namespace compose {
     };
   }
 }
-
