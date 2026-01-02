@@ -127,7 +127,11 @@ export namespace runHooks {
     let err = error;
     for (const hook of hooks) {
       try {
-        return await hook(err, ctx);
+        const response = await hook(err, ctx);
+        if (typeof response === "undefined") {
+          continue;
+        }
+        return response;
       } catch (e) {
         err = e;
       }

@@ -43,6 +43,150 @@ describe("hooks", () => {
       await app.inject(createRequest("/"));
       expect(onErrorFn).toHaveBeenCalled();
     });
+
+    test("should return hook response as proper response when hook returns data", async () => {
+      const errorResponse = { error: "Custom error response", code: 400 };
+
+      app.register(hook("error", () => {
+        return errorResponse;
+      }));
+
+      app.get("/", () => {
+        throw new Error("Original error");
+      });
+
+      const response = await app.inject(createRequest("/"));
+      const body = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(body).toEqual(errorResponse);
+    });
+
+    test("should chain to next handler when hook returns undefined", async () => {
+      const firstHook = jest.fn(() => {
+        return { error: "Handled by first hook" };
+      });
+      const secondHook = jest.fn(() => {
+        return undefined; // Explicitly return undefined to continue chain
+      });
+
+      app.register(hook("error", firstHook));
+      app.register(hook("error", secondHook));
+
+      app.get("/", () => {
+        throw new Error("Test error");
+      });
+
+      const response = await app.inject(createRequest("/"));
+      const body = await response.json();
+
+      expect(secondHook).toHaveBeenCalled();
+      expect(firstHook).toHaveBeenCalled();
+      expect(body).toEqual({ error: "Handled by first hook" });
+    });
+
+    test("should catch new error thrown by hook and pass to next handler", async () => {
+      const firstHook = jest.fn(() => {
+        return { error: "Handled by first hook" };
+      });
+      const secondHook = jest.fn((err) => {
+        // Should receive the error thrown by first hook
+        expect(err).toBeInstanceOf(Error);
+        expect((err as Error).message).toBe("Error from second hook");
+        throw new Error("Error from second hook");
+      });
+
+      app.register(hook("error", firstHook));
+      app.register(hook("error", secondHook));
+
+      app.get("/", () => {
+        throw new Error("Original error");
+      });
+
+      const response = await app.inject(createRequest("/"));
+      const body = await response.json();
+
+      expect(secondHook).toHaveBeenCalled();
+      expect(firstHook).toHaveBeenCalled();
+      expect(body).toEqual({ error: "Handled by first hook" });
+    });
+
+    test("should throw final error when no hook handles it", async () => {
+      const hook1 = jest.fn(() => undefined);
+      const hook2 = jest.fn(() => undefined);
+
+      app.register(hook("error", hook1));
+      app.register(hook("error", hook2));
+
+      app.get("/", () => {
+        throw new Error("Unhandled error");
+      });
+
+      const response = await app.inject(createRequest("/"));
+
+      expect(hook2).toHaveBeenCalled();
+      expect(hook1).toHaveBeenCalled();
+      expect(response.status).toBe(500);
+    });
+
+    test("should handle async error hooks", async () => {
+      const asyncHook = jest.fn(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        return { error: "Async handled" };
+      });
+
+      app.register(hook("error", asyncHook));
+
+      app.get("/", () => {
+        throw new Error("Test error");
+      });
+
+      const response = await app.inject(createRequest("/"));
+      const body = await response.json();
+
+      expect(asyncHook).toHaveBeenCalled();
+      expect(body).toEqual({ error: "Async handled" });
+    });
+
+    test("should properly chain multiple error hooks with mixed return types", async () => {
+      const callOrder: string[] = [];
+
+      // Hook 1 returns a value - should be the final response
+      app.register(hook("error", () => {
+        callOrder.push("hook1");
+        return { success: true, message: "Finally handled" };
+      }));
+
+      // Hook 2 returns undefined - should continue to hook 1
+      app.register(hook("error", (err) => {
+        callOrder.push("hook2");
+        // This should receive the error from hook3
+        expect((err as Error).message).toBe("Hook 3 throws");
+        // Returns undefined, continues chain
+      }));
+
+      // Hook 3 throws a new error - should be caught by hook 2
+      app.register(hook("error", () => {
+        callOrder.push("hook3");
+        throw new Error("Hook 3 throws");
+      }));
+
+      // Hook 4 runs first (hooks are reversed), returns undefined
+      app.register(hook("error", () => {
+        callOrder.push("hook4");
+        // Returns undefined, should continue to next hook
+      }));
+
+      app.get("/", () => {
+        throw new Error("Original error");
+      });
+
+      const response = await app.inject(createRequest("/"));
+      const body = await response.json();
+
+      expect(callOrder).toEqual(["hook4", "hook3", "hook2", "hook1"]);
+      expect(body).toEqual({ success: true, message: "Finally handled" });
+    });
   });
 
   describe("hook", () => {
