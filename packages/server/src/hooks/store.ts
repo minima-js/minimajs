@@ -1,7 +1,8 @@
 import { type HookStore, type GenericHookCallback } from "../interfaces/hooks.js";
 import type { App } from "../interfaces/app.js";
 import { kHooks } from "../symbols.js";
-import type { Context } from "../interfaces/index.js";
+import type { Context, OnErrorHook, OnRequestHook, OnSendHook, OnTransformHook } from "../interfaces/index.js";
+import type { ResponseBody } from "../interfaces/response.js";
 
 const SERVER_HOOKS = ["close", "listen", "ready", "register"] as const;
 const LIFECYCLE_HOOKS = ["request", "transform", "send", "error", "errorSent", "sent", "timeout"] as const;
@@ -65,27 +66,53 @@ export function addHook(app: App, name: LifecycleHook, callback: GenericHookCall
 // Run Hooks
 // ============================================================================
 
+function findHookToRun<T = GenericHookCallback>(app: App, name: LifecycleHook) {
+  const store = app.container.get(kHooks) as HookStore;
+  return [...store[name]].reverse() as T[];
+}
+
 /**
  * Runs all hooks for a given lifecycle event
  */
-export async function runHooks(app: App, name: LifecycleHook, ...args: any[]): Promise<any> {
-  const store = app.container.get(kHooks) as HookStore;
-  const hooks = store[name];
-  let result: any;
+export async function runHooks(app: App, name: LifecycleHook, ...args: any[]): Promise<void> {
+  const hooks = findHookToRun(app, name);
   for (const hook of hooks) {
-    const hookResult = await hook(...args);
-    if (hookResult !== undefined) {
-      result = hookResult;
-    }
+    await hook(...args);
   }
-  return result;
 }
 
 export namespace runHooks {
+  export async function request(app: App, ctx: Context): Promise<void | Response> {
+    const hooks = findHookToRun<OnRequestHook>(app, "request");
+    if (hooks.length === 0) {
+      return;
+    }
+
+    for (const hook of hooks) {
+      const response = hook(ctx);
+      if (response instanceof Response) {
+        return response;
+      }
+    }
+  }
+
+  export async function send(app: App, serialized: ResponseBody, ctx: Context): Promise<void | Response> {
+    const hooks = findHookToRun<OnSendHook>(app, "send");
+    if (hooks.length === 0) {
+      return;
+    }
+
+    for (const hook of hooks) {
+      const response = hook(serialized, ctx);
+      if (response instanceof Response) {
+        return response;
+      }
+    }
+  }
+
   export async function transform(app: App, data: unknown, ctx: Context) {
-    const store = app.container.get(kHooks) as HookStore;
-    const hooks = store["transform"];
-    if (hooks.size === 0) {
+    const hooks = findHookToRun<OnTransformHook>(app, "transform");
+    if (hooks.length === 0) {
       return data;
     }
     let result = data;
@@ -95,22 +122,16 @@ export namespace runHooks {
     return result;
   }
 
-  export async function error(error: unknown, ctx: Context): Promise<any> {
-    const store = ctx.app.container.get(kHooks) as HookStore;
-    const hooks = store["error"];
-    let result: any;
+  export async function error(app: App, error: unknown, ctx: Context): Promise<any> {
+    const hooks = findHookToRun<OnErrorHook>(app, "error");
     let err = error;
     for (const hook of hooks) {
       try {
-        result = await hook(err, ctx);
+        return await hook(err, ctx);
       } catch (e) {
         err = e;
-        result = undefined;
       }
     }
-    if (result === undefined) {
-      throw err;
-    }
-    return result;
+    throw err;
   }
 }

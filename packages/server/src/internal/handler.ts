@@ -41,7 +41,7 @@ export async function handleRequest<T>(
     try {
       {
         // 1. request hook (runs for all requests, even not-found routes)
-        const response = await runHooks(app, "request", ctx);
+        const response = await runHooks.request(app, ctx);
         if (response instanceof Response) {
           return response;
         }
@@ -63,7 +63,7 @@ async function processRequest(handler: RouteHandler, ctx: Context): Promise<Resp
   const data = await handler(ctx);
 
   // Create and return response (handles all hooks and serialization)
-  return await createResponse(data);
+  return await createResponse(data, {}, ctx);
 }
 
 async function handleError(err: unknown, ctx: Context): Promise<Response> {
@@ -80,7 +80,7 @@ async function handleError(err: unknown, ctx: Context): Promise<Response> {
   let response: Response;
   try {
     // Create error response (handles transform, serialize, send, and sent hooks)
-    response = await createResponse(await runHooks.error(err, ctx));
+    response = await createResponse(await runHooks.error(ctx.app, err, ctx), {}, ctx);
   } catch (e) {
     response = await ctx.app.errorHandler(e, ctx);
   }

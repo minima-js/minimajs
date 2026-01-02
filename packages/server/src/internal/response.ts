@@ -3,6 +3,7 @@ import type { HeadersInit, ResponseBody } from "../interfaces/response.js";
 import { $context } from "./context.js";
 import { mergeHeaders } from "../utils/headers.js";
 import { runHooks } from "../hooks/store.js";
+import type { Context } from "../interfaces/index.js";
 
 export type StatusCode = keyof typeof StatusCodes | number;
 
@@ -25,8 +26,7 @@ export function createResponseFromState(data: ResponseBody, options: ResponseIni
       : resInit.headers,
   });
 }
-export async function createResponse(data: unknown, options: ResponseInit = {}): Promise<Response> {
-  const ctx = $context();
+export async function createResponse(data: unknown, options: ResponseInit = {}, ctx: Context): Promise<Response> {
   const { app, request: req, responseState: resInit } = ctx;
   if (options.headers) {
     mergeHeaders(resInit.headers, new Headers(options.headers as HeadersInit));
@@ -48,7 +48,7 @@ export async function createResponse(data: unknown, options: ResponseInit = {}):
 
   {
     // 3. send hook
-    const response = await runHooks(app, "send", body, req);
+    const response = await runHooks.send(app, body, ctx);
     if (response instanceof Response) return response;
   }
 
