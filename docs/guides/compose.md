@@ -36,8 +36,13 @@ A single plugin that registers all provided plugins in order.
 
 ### Basic Usage
 
-```typescript
+::: code-group
+
+```typescript [Bun]
+import { createApp } from "@minimajs/server/bun";
 import { compose, hook, plugin } from "@minimajs/server";
+
+const app = createApp();
 
 // Compose lifecycle hooks
 const dbPlugin = compose(
@@ -48,10 +53,32 @@ const dbPlugin = compose(
 app.register(dbPlugin);
 ```
 
+```typescript [Node.js]
+import { createApp } from "@minimajs/server/node";
+import { compose, hook, plugin } from "@minimajs/server";
+
+const app = createApp();
+
+// Compose lifecycle hooks
+const dbPlugin = compose(
+  hook("ready", async () => await db.connect()),
+  hook("close", async () => await db.close())
+);
+
+app.register(dbPlugin);
+```
+
+:::
+
 ### Composing Feature Modules
 
-```typescript
+::: code-group
+
+```typescript [Bun]
+import { createApp } from "@minimajs/server/bun";
 import { compose, type App } from "@minimajs/server";
+
+const app = createApp();
 
 // Individual feature modules (plain async functions)
 async function authModule(app: App) {
@@ -74,6 +101,36 @@ const apiModule = compose(authModule, usersModule, postsModule);
 
 app.register(apiModule);
 ```
+
+```typescript [Node.js]
+import { createApp } from "@minimajs/server/node";
+import { compose, type App } from "@minimajs/server";
+
+const app = createApp();
+
+// Individual feature modules (plain async functions)
+async function authModule(app: App) {
+  app.post("/login", loginHandler);
+  app.post("/logout", logoutHandler);
+}
+
+async function usersModule(app: App) {
+  app.get("/users", getUsersHandler);
+  app.post("/users", createUserHandler);
+}
+
+async function postsModule(app: App) {
+  app.get("/posts", getPostsHandler);
+  app.post("/posts", createPostHandler);
+}
+
+// Combine all modules into one API plugin
+const apiModule = compose(authModule, usersModule, postsModule);
+
+app.register(apiModule);
+```
+
+:::
 
 ### Execution Order
 
@@ -183,8 +240,13 @@ A function that takes a module and returns a new composed plugin with all plugin
 
 ### Basic Usage
 
-```typescript
+::: code-group
+
+```typescript [Bun]
+import { createApp } from "@minimajs/server/bun";
 import { compose, type App } from "@minimajs/server";
+
+const app = createApp();
 
 // Create a composer with common plugins
 const withAuth = compose.create(authPlugin, loggingPlugin);
@@ -202,6 +264,31 @@ async function postsModule(app: App) {
 app.register(withAuth(usersModule));
 app.register(withAuth(postsModule));
 ```
+
+```typescript [Node.js]
+import { createApp } from "@minimajs/server/node";
+import { compose, type App } from "@minimajs/server";
+
+const app = createApp();
+
+// Create a composer with common plugins
+const withAuth = compose.create(authPlugin, loggingPlugin);
+
+// Define modules as plain async functions
+async function usersModule(app: App) {
+  app.get("/users", () => ({ users: [] }));
+}
+
+async function postsModule(app: App) {
+  app.get("/posts", () => ({ posts: [] }));
+}
+
+// Both modules will have auth and logging
+app.register(withAuth(usersModule));
+app.register(withAuth(postsModule));
+```
+
+:::
 
 ### Execution Order
 

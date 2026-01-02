@@ -4,32 +4,125 @@ sidebar_position: 1
 title: "Introduction"
 ---
 
-# Minima\.js: Where Efficiency Meets Elegance
+# Minima\.js: Engineered from Scratch for the Modern Web
 
-Minima.js is a cutting-edge Node.js framework meticulously designed to empower developers to construct contemporary web applications with exceptional efficiency and elegance.
+Minima.js is a high-performance web framework built entirely from the ground up—not a wrapper, not an abstraction layer, but a purpose-built solution for modern JavaScript runtimes.
 
-**Key Features:**
+## The Minima.js Difference
 
-- **TypeScript First:** Minima.js is built entirely in TypeScript, for TypeScript. This means you get a top-tier developer experience with excellent type safety, autocompletion, and a significant reduction in runtime errors.
+Unlike frameworks that layer abstraction upon abstraction, Minima.js takes a fundamentally different approach: **built from scratch with zero legacy baggage**. This means every line of code serves a purpose, and nothing stands between you and peak performance.
 
-- **Context over `req`/`res`:** Say goodbye to prop drilling! Minima.js uses modern `AsyncLocalStorage` to provide a global context for each request. You can access request data, headers, and more from anywhere in your code without passing `req` and `res` objects around.
+**Core Philosophy:**
 
-- **Modern JavaScript, Today:** Minima.js is built for the future. It exclusively uses modern ECMAScript Modules (ESM) and the latest JavaScript features, without being held back by backward compatibility concerns.
+- **Built from Scratch, Not a Wrapper:** Minima.js is engineered from first principles. No dependencies on Fastify, Express, or any legacy framework. Just pure, optimized code designed for modern runtimes.
 
-- **Effortless Third-Party Integration:** Integrating third-party libraries is a breeze. Since you can access the request context from anywhere, you can easily integrate libraries that don't have direct access to the `req`/`res` objects.
+- **100% Bun-Native Support:** First-class support for Bun with dedicated `@minimajs/server/bun` imports that leverage Bun's native HTTP server for maximum performance. Node.js support via `@minimajs/server/node` ensures compatibility across all environments.
 
-- **Best-in-class Multipart and Schema Support:** Minima.js comes with robust, built-in support for multipart form data and data validation. The `@minimajs/multipart` and `@minimajs/schema` packages provide a seamless experience for handling file uploads and validating data.
+- **Web API Standard at the Core:** Uses native `Request` and `Response` objects from the Web API standard. No custom wrappers, no proprietary abstractions—just standardized APIs that work everywhere.
 
-- **Minimalist and Opinionated:** Minima.js follows a "one-rule of doing things" philosophy, which results in a consistent and predictable codebase. The minimalist API and lack of boilerplate allow you to focus on writing your application's logic.
+- **Revolutionary Hook System:** Control every aspect of the request lifecycle with an intuitive, function-based hook system. Intercept, transform, and manage requests at any stage with simple, composable functions.
 
-- **Functional and Modular:** The framework encourages a functional and modular approach to building applications. This leads to cleaner, more maintainable, and scalable code.
+- **Context-Aware Architecture:** Say goodbye to prop drilling! AsyncLocalStorage-based context lets you access request data from anywhere in your code without passing `req` and `res` objects around.
 
-**Unparalleled Development Experience:**
+- **Function-First Philosophy:** Pure functional approach with minimal boilerplate. Build modular applications using plain async functions and composable plugins—no classes, no decorators, just functions.
 
-- **Blazing-Fast Builds:** Bundled with Esbuild, Minima.js ensures exceptional build times, enabling rapid development iteration and deployment.
-- **Straightforward Learning:** Designed with simplicity in mind, Minima.js offers an intuitive API and comprehensive documentation, making it easy for developers to get started quickly.
-- **Circular Dependency Management:** Minima.js provides a clever solution to circular dependencies, promoting cleaner code architecture and smoother development workflows.
+- **TypeScript First:** Built entirely in TypeScript, for TypeScript. Exceptional type safety, autocompletion, and developer experience out of the box.
 
-**Embrace the Future of Node.js Development**
+## Why Start from Scratch?
 
-Minima.js represents a paradigm shift in web development, offering a powerful combination of modern JavaScript, functional programming, and developer-friendly features. Empower yourself to build exceptional Node.js applications with unparalleled speed, efficiency, and elegance – regardless of project size or complexity.
+Building from scratch wasn't a choice—it was a necessity. Existing frameworks carry decades of compatibility requirements, outdated patterns, and performance compromises. By starting fresh, Minima.js delivers:
+
+- **Zero Legacy Overhead:** No backward compatibility baggage. Every feature is designed for modern JavaScript.
+- **Native Runtime Integration:** Direct integration with Bun's native APIs and Node.js internals—no middleware layers slowing you down.
+- **Web Standards First:** By using standard Request/Response objects, your code is portable and future-proof.
+- **Surgical Performance:** Every millisecond matters. Built from scratch means optimized hot paths and zero unnecessary abstractions.
+
+## The Hook-Based Advantage
+
+Minima.js introduces a unique approach to request lifecycle management through **hooks**. Unlike traditional middleware that executes in a rigid chain, hooks give you fine-grained control:
+
+```typescript
+import { createApp } from '@minimajs/server/bun';
+import { hook } from '@minimajs/server';
+
+const app = createApp();
+
+// Hooks receive context - destructure what you need
+app.register(hook('request', ({ request }) => {
+  console.log(`${request.method} ${request.url}`);
+}));
+
+app.register(hook('error', (ctx) => {
+  // Custom error handling with full control
+  return { error: ctx.error.message, code: 500 };
+}));
+
+app.get('/', () => ({ message: 'Hello, World!' }));
+```
+
+**Two ways to access request data:**
+
+```typescript
+import { params, request } from '@minimajs/server';
+
+// 1. Via Context parameter (explicit)
+app.get('/:id', (ctx) => {
+  const id = ctx.route.params.id;
+  return { id };
+});
+
+// 2. Via AsyncLocalStorage imports (recommended - cleaner)
+app.get('/:id', () => {
+  const id = params.get('id');
+  const url = request().url; // Native Web API Request
+  return { id, url };
+});
+```
+
+**Hook superpowers:**
+
+```typescript
+// Early return from hook - skip everything
+app.register(hook('request', ({ request }) => {
+  if (request.headers.get('authorization') !== 'secret') {
+    // Returning Response skips routing, handlers, and response hooks
+    return new Response('Unauthorized', { status: 401 });
+  }
+}));
+
+// Handler returns native Response - skip response hooks
+app.get('/stream', () => {
+  // Native Response bypasses response hooks and global headers
+  return new Response(stream, {
+    headers: { 'Content-Type': 'text/event-stream' }
+  });
+});
+
+// Handler returns object - goes through full pipeline
+app.get('/data', () => {
+  // Object goes through response hooks, global headers, serialization
+  return { data: 'processed' };
+});
+```
+
+Hooks are just functions. Compose them, test them, reuse them. No magic, no complexity.
+
+## Choose Your Runtime, Keep Your Code
+
+::: code-group
+
+```typescript [Bun]
+import { createApp } from '@minimajs/server/bun';
+```
+
+```typescript [Node.js]
+import { createApp } from '@minimajs/server/node';
+```
+
+:::
+
+Same API, same patterns, different runtimes. Switch between Bun and Node.js by changing a single import line.
+
+**Embrace the Future of Web Development**
+
+Minima.js represents a clean break from the past and a bold step into the future. Built for modern runtimes, powered by Web standards, and controlled by simple functions—this is web development, reimagined.

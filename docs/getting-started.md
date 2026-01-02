@@ -13,37 +13,46 @@ Welcome to Minima.js! This guide will walk you through the process of building a
 
 ## Prerequisites
 
-Before you start, make sure you have the following installed on your machine:
+Before you start, choose your runtime and make sure you have it installed:
 
+**Option 1: Bun (Recommended for Maximum Performance)**
+*   [Bun](https://bun.sh/) (v1.0 or higher) - Fast, modern JavaScript runtime
+*   A text editor (we recommend [VS Code](https://code.visualstudio.com/))
+*   A command-line interface (CLI) like Terminal or Command Prompt
+
+**Option 2: Node.js (For Compatibility)**
 *   [Node.js](https://nodejs.org/) (v18 or higher)
 *   A text editor (we recommend [VS Code](https://code.visualstudio.com/))
 *   A command-line interface (CLI) like Terminal or Command Prompt
 
 ## 1. Project Setup
 
-First, let's create a new directory for our project and initialize a new Node.js project.
+First, let's create a new directory for our project and initialize it.
 
+**For Bun:**
+```bash
+mkdir minimajs-todo-app
+cd minimajs-todo-app
+bun init -y
+```
+
+**For Node.js:**
 ```bash
 mkdir minimajs-todo-app
 cd minimajs-todo-app
 npm init -y
 ```
 
-Next, we need to tell Node.js that we are using ECMAScript Modules (ESM). Open your `package.json` file and add the following line:
+If using Node.js, we need to tell it that we are using ECMAScript Modules (ESM). Open your `package.json` file and add `"type": "module"`:
 
 ```json
 {
   "name": "minimajs-todo-app",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
-    "start": "node src/index.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "module"
+    "dev": "bun run src/index.ts"
+  }
 }
 ```
 
@@ -51,6 +60,12 @@ Next, we need to tell Node.js that we are using ECMAScript Modules (ESM). Open y
 
 Now, let's install `@minimajs/server`, the core package for building Minima.js applications.
 
+**For Bun:**
+```bash
+bun add @minimajs/server
+```
+
+**For Node.js:**
 ```bash
 npm install @minimajs/server
 ```
@@ -66,8 +81,10 @@ touch src/index.ts
 
 Now, let's create a basic server. Open `src/index.ts` and add the following code:
 
-```typescript title="src/index.ts"
-import { createApp } from '@minimajs/server';
+::: code-group
+
+```typescript [Bun]
+import { createApp } from '@minimajs/server/bun';
 
 const app = createApp();
 
@@ -78,7 +95,21 @@ await app.listen({ port: 3000 });
 console.log('Server listening on http://localhost:3000');
 ```
 
-This code creates a new Minima.js application, defines a single route for the root URL (`/`), and starts the server on port 3000.
+```typescript [Node.js]
+import { createApp } from '@minimajs/server/node';
+
+const app = createApp();
+
+app.get('/', () => 'Hello, World!');
+
+await app.listen({ port: 3000 });
+
+console.log('Server listening on http://localhost:3000');
+```
+
+:::
+
+Notice the import path difference: `@minimajs/server/bun` for Bun and `@minimajs/server/node` for Node.js. This gives you native runtime integration with zero overhead.
 
 ## 4. Building the Todo App
 
@@ -86,8 +117,11 @@ Now, let's build the Todo application. We will create a simple in-memory "databa
 
 Replace the content of `src/index.ts` with the following code:
 
-```typescript title="src/index.ts"
-import { createApp, body, params } from '@minimajs/server';
+::: code-group
+
+```typescript [Bun]
+import { createApp } from '@minimajs/server/bun';
+import { body, params } from '@minimajs/server';
 
 const app = createApp();
 
@@ -102,14 +136,14 @@ app.get('/todos', () => todos);
 
 // GET /todos/:id - Get a single todo
 app.get('/todos/:id', () => {
-  const { id } = params<{ id: string }>();
-  const todo = todos.find(t => t.id === parseInt(id));
+  const id = params.get('id', Number); // Parse with optional callback
+  const todo = todos.find(t => t.id === id);
   return todo || { message: 'Todo not found' };
 });
 
 // POST /todos - Create a new todo
 app.post('/todos', () => {
-  const { text } = body<{ text: string }>();
+  const { text } = body<{ text: string }>(); // Parse request body
   const newTodo = {
     id: todos.length + 1,
     text,
@@ -121,9 +155,9 @@ app.post('/todos', () => {
 
 // PUT /todos/:id - Update a todo
 app.put('/todos/:id', () => {
-  const { id } = params<{ id: string }>();
+  const id = params.get('id', Number);
   const { text, completed } = body<{ text?: string; completed?: boolean }>();
-  const todo = todos.find(t => t.id === parseInt(id));
+  const todo = todos.find(t => t.id === id);
 
   if (!todo) {
     return { message: 'Todo not found' };
@@ -142,8 +176,8 @@ app.put('/todos/:id', () => {
 
 // DELETE /todos/:id - Delete a todo
 app.delete('/todos/:id', () => {
-  const { id } = params<{ id: string }>();
-  const index = todos.findIndex(t => t.id === parseInt(id));
+  const id = params.get('id');
+  const index = todos.findIndex(t => t.id === id);
 
   if (index === -1) {
     return { message: 'Todo not found' };
@@ -159,30 +193,99 @@ await app.listen({ port: 3000 });
 console.log('Server listening on http://localhost:3000');
 ```
 
+```typescript [Node.js]
+import { createApp } from '@minimajs/server/node';
+import { body, params } from '@minimajs/server';
+
+const app = createApp();
+
+// In-memory "database" for todos
+let todos = [
+  { id: 1, text: 'Learn Minima.js', completed: false },
+  { id: 2, text: 'Build a Todo app', completed: false },
+];
+
+// GET /todos - Get all todos
+app.get('/todos', () => todos);
+
+// GET /todos/:id - Get a single todo
+app.get('/todos/:id', () => {
+  const id = params.get('id', Number); // Parse with optional callback
+  const todo = todos.find(t => t.id === id);
+  return todo || { message: 'Todo not found' };
+});
+
+// POST /todos - Create a new todo
+app.post('/todos', () => {
+  const { text } = body<{ text: string }>(); // Parse request body
+  const newTodo = {
+    id: todos.length + 1,
+    text,
+    completed: false,
+  };
+  todos.push(newTodo);
+  return newTodo;
+});
+
+// PUT /todos/:id - Update a todo
+app.put('/todos/:id', () => {
+  const id = params.get('id', Number);
+  const { text, completed } = body<{ text?: string; completed?: boolean }>();
+  const todo = todos.find(t => t.id === id);
+
+  if (!todo) {
+    return { message: 'Todo not found' };
+  }
+
+  if (text !== undefined) {
+    todo.text = text;
+  }
+
+  if (completed !== undefined) {
+    todo.completed = completed;
+  }
+
+  return todo;
+});
+
+// DELETE /todos/:id - Delete a todo
+app.delete('/todos/:id', () => {
+  const id = params.get('id');
+  const index = todos.findIndex(t => t.id === id);
+
+  if (index === -1) {
+    return { message: 'Todo not found' };
+  }
+
+  todos.splice(index, 1);
+  return { message: 'Todo deleted' };
+});
+
+
+await app.listen({ port: 3000 });
+
+console.log('Server listening on http://localhost:3000');
+```
+
+:::
+
 ## 5. Running the Application
 
-To run the application, you need a TypeScript runtime like `tsx`. Let's install it.
+::: code-group
 
-```bash
+```bash [Bun]
+bun run src/index.ts
+```
+
+```bash [Node.js]
+# Install tsx for TypeScript support
 npm install -D tsx
+
+# Run the application
+npx tsx src/index.ts
 ```
 
-Now add a `dev` script to your `package.json`.
-
-```json
-{
-  "scripts": {
-    "start": "node dist/index.js",
-    "dev": "tsx src/index.ts"
-  }
-}
-```
-
-Now you can run the application in development mode:
-
-```bash
-npm run dev
-```
+:::
 
 You should see the message `Server listening on http://localhost:3000` in your console.
 
@@ -192,6 +295,69 @@ You can now use a tool like `curl` or Postman to interact with your Todo API:
 *   **`POST http://localhost:3000/todos`** with body `{"text": "My new todo"}`: Create a new todo.
 *   **`PUT http://localhost:3000/todos/1`** with body `{"completed": true}`: Update a todo.
 *   **`DELETE http://localhost:3000/todos/1`**: Delete a todo.
+
+## Understanding Context Access
+
+In the examples above, we used `params.get('id', Number)` and `body()` to access request data. Minima.js provides **two ways** to access context:
+
+### 1. Via AsyncLocalStorage (Recommended)
+
+Import context utilities from `@minimajs/server` and use them anywhere:
+
+```typescript
+import { params, body, request } from '@minimajs/server';
+
+app.get('/users/:id', () => {
+  const id = params.get('id', Number); // With parser callback
+  const user = getUserById(id);
+  return user;
+});
+
+app.post('/users', () => {
+  const userData = body<{ name: string; email: string }>();
+  return createUser(userData);
+});
+
+// Access native Web API Request
+app.get('/info', () => {
+  const req = request();
+  return {
+    url: req.url,
+    method: req.method,
+    userAgent: req.headers.get('user-agent')
+  };
+});
+```
+
+**Available context functions:**
+- `params()` - Get all route params as object
+- `params.get(key, parser?)` - Get single param with optional parser
+- `body()` - Parse request body (supports types)
+- `request()` - Get native Web API Request object
+- `headers` - Access request headers
+
+### 2. Via Context Parameter (Explicit)
+
+Every handler receives a `Context` object as parameter:
+
+```typescript
+app.get('/users/:id', (ctx) => {
+  const id = ctx.route.params.id;
+  const user = getUserById(parseInt(id));
+  return user;
+});
+
+app.post('/users', (ctx) => {
+  const userData = ctx.body;
+  return createUser(userData);
+});
+```
+
+**Why AsyncLocalStorage is recommended:**
+- Cleaner code - no need to pass context through helper functions
+- Works in deeply nested function calls
+- Native Web API Request object accessible via `request()`
+- Type-safe with generics
 
 ## Next Steps
 
