@@ -3,9 +3,8 @@ import { compose } from "./compose.js";
 import { plugin } from "./internal/plugins.js";
 import { hook } from "./hooks/index.js";
 import { createApp } from "./bun/index.js";
-import type { App } from "./interfaces/app.js";
 import { createRequest } from "./mock/request.js";
-import type { PluginOptions } from "./interfaces/index.js";
+import type { App, PluginOptions } from "./interfaces/index.js";
 
 describe("compose", () => {
   let app: App;

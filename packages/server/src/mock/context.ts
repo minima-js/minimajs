@@ -26,7 +26,7 @@ export type MockContextCallback<T> = (request: Request) => T;
  *
  * @since v0.2.0
  */
-export function mockContext<T>(
+export function mockContext<S = unknown, T = void>(
   callback: MockContextCallback<T>,
   options: MockRequestOptions & { url?: string; params?: Record<string, string> } = {}
 ): T {
@@ -36,7 +36,8 @@ export function mockContext<T>(
   const urlObj = new URL(request.url);
 
   // Create mock context
-  const context: Context = {
+  const context: Context<S> = {
+    server: null as any,
     app: {} as any, // Mock app - users should use app.inject for full integration tests
     url: urlObj,
     request: request,
@@ -45,6 +46,8 @@ export function mockContext<T>(
     locals: new Map(),
     signal: new AbortController().signal,
     route: (Object.keys(params).length > 0 ? { params, store: { handler: () => {} } } : null) as any,
+    incomingMessage: undefined as any,
+    serverResponse: undefined as any,
   };
   return wrap(context, () => callback(request));
 }

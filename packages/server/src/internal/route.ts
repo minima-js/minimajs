@@ -6,13 +6,13 @@ import { getDescriptorsAll } from "./descriptor.js";
  * Creates a RouteMetadata map from route descriptors
  */
 export function createRouteMetadata<T>(
-  descriptors: RouteMetaDescriptor[],
+  descriptors: RouteMetaDescriptor<T>[],
   path: string,
-  handler: RouteHandler,
+  handler: RouteHandler<T>,
   app: App<T>
 ): RouteMetadata {
   const routeContainer: RouteMetadata = new Map();
-  for (const descriptor of [...getDescriptorsAll(app.container), ...descriptors]) {
+  for (const descriptor of [...getDescriptorsAll<T>(app.container), ...descriptors]) {
     const [name, value] = typeof descriptor === "function" ? descriptor(path, handler, app) : descriptor;
     if (!routeContainer.has(name)) {
       routeContainer.set(name, new Set());
@@ -30,12 +30,12 @@ export function applyRoutePrefix(path: string, prefix: string, excludeList: stri
   return shouldExclude ? path : prefix + path;
 }
 
-export function result2route(route: RouteFindResult<unknown>): Route {
+export function result2route<T>(route: RouteFindResult<T>): Route<T> {
   return {
     params: route.params,
     methods: route.store.methods,
     handler: route.store.handler,
     path: route.store.path,
     metadata: route.store.metadata,
-  } satisfies Route;
+  } satisfies Route<T>;
 }

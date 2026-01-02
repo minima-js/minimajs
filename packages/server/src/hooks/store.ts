@@ -46,7 +46,7 @@ export function createHooksStore(): HookStore {
 /**
  * Gets the HookStore from the app's container
  */
-export function getHooks(app: App): HookStore {
+export function getHooks<S = unknown>(app: App<S>): HookStore {
   const hooks = app.container.get(kHooks) as HookStore;
   if (!hooks) {
     throw new Error("HookStore not found in container");
@@ -57,7 +57,7 @@ export function getHooks(app: App): HookStore {
 /**
  * Adds a hook to the app
  */
-export function addHook(app: App, name: LifecycleHook, callback: GenericHookCallback): void {
+export function addHook<S = unknown>(app: App<S>, name: LifecycleHook, callback: GenericHookCallback): void {
   const hooks = getHooks(app);
   hooks[name].add(callback);
 }
@@ -66,7 +66,7 @@ export function addHook(app: App, name: LifecycleHook, callback: GenericHookCall
 // Run Hooks
 // ============================================================================
 
-function findHookToRun<T = GenericHookCallback>(app: App, name: LifecycleHook) {
+function findHookToRun<T = GenericHookCallback, S = unknown>(app: App<S>, name: LifecycleHook) {
   const store = app.container.get(kHooks) as HookStore;
   return [...store[name]].reverse() as T[];
 }
@@ -74,7 +74,7 @@ function findHookToRun<T = GenericHookCallback>(app: App, name: LifecycleHook) {
 /**
  * Runs all hooks for a given lifecycle event
  */
-export async function runHooks(app: App, name: LifecycleHook, ...args: any[]): Promise<void> {
+export async function runHooks<S = unknown>(app: App<S>, name: LifecycleHook, ...args: any[]): Promise<void> {
   const hooks = findHookToRun(app, name);
   for (const hook of hooks) {
     await hook(...args);
@@ -82,8 +82,8 @@ export async function runHooks(app: App, name: LifecycleHook, ...args: any[]): P
 }
 
 export namespace runHooks {
-  export async function request(app: App, ctx: Context): Promise<void | Response> {
-    const hooks = findHookToRun<OnRequestHook>(app, "request");
+  export async function request<S = unknown>(app: App<S>, ctx: Context<S>): Promise<void | Response> {
+    const hooks = findHookToRun<OnRequestHook<S>, S>(app, "request");
     if (hooks.length === 0) {
       return;
     }
@@ -96,8 +96,8 @@ export namespace runHooks {
     }
   }
 
-  export async function send(app: App, serialized: ResponseBody, ctx: Context): Promise<void | Response> {
-    const hooks = findHookToRun<OnSendHook>(app, "send");
+  export async function send<S = unknown>(app: App<S>, serialized: ResponseBody, ctx: Context<S>): Promise<void | Response> {
+    const hooks = findHookToRun<OnSendHook<S>, S>(app, "send");
     if (hooks.length === 0) {
       return;
     }
@@ -110,8 +110,8 @@ export namespace runHooks {
     }
   }
 
-  export async function transform(app: App, data: unknown, ctx: Context) {
-    const hooks = findHookToRun<OnTransformHook>(app, "transform");
+  export async function transform<S = unknown>(app: App<S>, data: unknown, ctx: Context<S>) {
+    const hooks = findHookToRun<OnTransformHook<S>, S>(app, "transform");
     if (hooks.length === 0) {
       return data;
     }
@@ -122,8 +122,8 @@ export namespace runHooks {
     return result;
   }
 
-  export async function error(app: App, error: unknown, ctx: Context): Promise<any> {
-    const hooks = findHookToRun<OnErrorHook>(app, "error");
+  export async function error<S = unknown>(app: App<S>, error: unknown, ctx: Context<S>): Promise<any> {
+    const hooks = findHookToRun<OnErrorHook<S>, S>(app, "error");
     let err = error;
     for (const hook of hooks) {
       try {

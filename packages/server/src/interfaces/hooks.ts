@@ -7,13 +7,13 @@ export type { LifecycleHook };
 // Derive the union type from the constant array
 
 // Hook callback types with specific signatures for each lifecycle event
-export type OnRequestHook = (ctx: Context) => void | Response | Promise<void | Response>;
-export type OnTransformHook = (data: unknown, ctx: Context) => unknown | Promise<unknown>;
-export type OnSendHook = (serialized: ResponseBody, ctx: Context) => void | Response | Promise<void | Response>;
-export type OnErrorHook = (err: unknown, ctx: Context) => unknown | Promise<unknown>;
-export type OnErrorSentHook = (err: unknown, ctx: Context) => void | Promise<void>;
-export type OnSentHook = (ctx: Context) => void | Promise<void>;
-export type OnTimeoutHook = (ctx: Context) => void | Promise<void>;
+export type OnRequestHook<S = unknown> = (ctx: Context<S>) => void | Response | Promise<void | Response>;
+export type OnTransformHook<S = unknown> = (data: unknown, ctx: Context<S>) => unknown | Promise<unknown>;
+export type OnSendHook<S = unknown> = (serialized: ResponseBody, ctx: Context<S>) => void | Response | Promise<void | Response>;
+export type OnErrorHook<S = unknown> = (err: unknown, ctx: Context<S>) => unknown | Promise<unknown>;
+export type OnErrorSentHook<S = unknown> = (err: unknown, ctx: Context<S>) => void | Promise<void>;
+export type OnSentHook<S = unknown> = (ctx: Context<S>) => void | Promise<void>;
+export type OnTimeoutHook<S = unknown> = (ctx: Context<S>) => void | Promise<void>;
 
 // Server Hooks
 export type OnCloseHook = () => void | Promise<void>;

@@ -9,13 +9,9 @@ import { createResponse } from "./response.js";
 import { result2route } from "./route.js";
 import type { RouteFindResult } from "../interfaces/route.js";
 
-export async function handleRequest<T>(
-  server: App<T>,
-  router: Instance<HTTPVersion.V1>,
-  req: Request
-): Promise<Response> {
+export async function handleRequest(server: App, router: Instance<HTTPVersion.V1>, req: Request): Promise<Response> {
   const url = new URL(req.url);
-  const result: RouteFindResult<T> | null = router.find(req.method as HTTPMethod, url.pathname);
+  const result: RouteFindResult<any> | null = router.find(req.method as HTTPMethod, url.pathname);
   let route: Route | null = null;
   let app = server;
 
@@ -28,6 +24,7 @@ export async function handleRequest<T>(
 
   const ctx: Context = {
     app,
+    server: app.server!,
     url,
     route,
     locals,
@@ -35,6 +32,8 @@ export async function handleRequest<T>(
     request: req,
     signal: req.signal,
     responseState: { headers: new Headers() }, // Initialize mutable response headers
+    incomingMessage: undefined as any,
+    serverResponse: undefined as any,
   };
 
   return wrap(ctx, async () => {

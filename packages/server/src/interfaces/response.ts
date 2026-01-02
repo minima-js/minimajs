@@ -3,8 +3,8 @@ import type { IncomingHttpHeaders } from "node:http";
 import type { Context } from "../interfaces/index.js";
 
 export type ResponseBody = string | ReadableStream | ArrayBuffer | Blob | null;
-export type Serializer = (body: unknown, ctx: Context) => ResponseBody | Promise<ResponseBody>;
-export type ErrorHandler = (error: unknown, ctx: Context) => Response | Promise<Response>;
+export type Serializer<S = unknown> = (body: unknown, ctx: Context<S>) => ResponseBody | Promise<ResponseBody>;
+export type ErrorHandler<S = unknown> = (error: unknown, ctx: Context<S>) => Response | Promise<Response>;
 
 export type HeadersInit = Record<string, string> | Headers | [string, string][];
 

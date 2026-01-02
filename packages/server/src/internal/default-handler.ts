@@ -4,7 +4,7 @@ import type { ErrorHandler, Serializer } from "../interfaces/response.js";
 import { $context } from "./context.js";
 import { createResponseFromState } from "./response.js";
 
-export const serialize: Serializer = (body: unknown, _req) => {
+export const serialize: Serializer<any> = (body: unknown, _req) => {
   if (body instanceof ReadableStream) return body;
   if (typeof body === "string") return body;
   const { responseState: response } = $context();
@@ -12,7 +12,7 @@ export const serialize: Serializer = (body: unknown, _req) => {
   return JSON.stringify(body);
 };
 
-export const errorHandler: ErrorHandler = async (error: unknown, ctx: Context) => {
+export const errorHandler: ErrorHandler<any> = async (error: unknown, ctx: Context<any>) => {
   if (error instanceof BaseHttpError) {
     return error.render(ctx);
   }
