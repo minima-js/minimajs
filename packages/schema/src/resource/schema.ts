@@ -1,11 +1,4 @@
-import {
-  hook,
-  type App,
-  type Context,
-  type PluginSync,
-  type RouteHandler,
-  type RouteMetaDescriptor,
-} from "@minimajs/server";
+import { hook, type App, type Context, type PluginSync, type RouteHandler } from "@minimajs/server";
 import { kSchema } from "./symbols.js";
 import { getSchemaMetadata, type SchemaMetadata } from "./validation.js";
 
@@ -31,14 +24,14 @@ export function configureSchema(): PluginSync {
   return hook("request", handleRequest);
 }
 
-export function schema(...schemas: Function[]): RouteMetaDescriptor {
-  return function descriptor(path, handler, app) {
+export function schema(...schemas: Function[]) {
+  return function descriptor(path: string, handler: RouteHandler, app: App) {
     const values: SchemaStore = {
       path,
       handler,
       app,
       schemas: schemas.map((x) => getSchemaMetadata(x)),
     } as SchemaStore;
-    return [kSchema, values];
+    return [kSchema, values] as [symbol, unknown];
   };
 }

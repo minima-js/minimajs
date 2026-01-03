@@ -14,14 +14,14 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "bun run --filter '*' dev --pretty",
-    "build": "bun run --filter '*' build",
-    "test": "bun run --filter '*' test",
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "test": "turbo test",
     "lint": "bun eslint .",
     "format": "prettier --write --cache .",
-    "coverage": "bun run --filter '*' coverage",
-    "clean": "bun run --filter '*' clean",
-    "release": "bun run build && changeset publish",
+    "coverage": "turbo coverage",
+    "clean": "turbo clean",
+    "release": "turbo build && changeset publish",
     "docs": "vitepress dev",
     "docs:build": "vitepress build",
     "docs:api": "typedoc"
@@ -35,6 +35,7 @@
     "jest": "^30.2.0",
     "prettier": "^3.7.4",
     "rimraf": "^6.1.2",
+    "turbo": "^2.7.2",
     "typedoc": "^0.28.15",
     "typedoc-plugin-markdown": "^4.9.0",
     "typescript": "^5.9.3",

@@ -1,5 +1,5 @@
 import { type Server as BunServer, type Serve } from "bun";
-import type { Address, ServerAdapter, ListenOptions, RequestHandler, ListenResult } from "../interfaces/server.js";
+import type { AddressInfo, ServerAdapter, ListenOptions, RequestHandler, ListenResult } from "../interfaces/server.js";
 
 export type BunServeOptions<T = unknown> = Omit<Serve.Options<T>, "fetch" | "port" | "hostname">;
 
@@ -18,7 +18,7 @@ export class BunServerAdapter<T = unknown> implements ServerAdapter<BunServer<T>
       fetch: requestHandler,
     });
 
-    const address: Address = {
+    const address: AddressInfo = {
       hostname: server.hostname!,
       port: server.port!,
       family: (server as any).address?.family,

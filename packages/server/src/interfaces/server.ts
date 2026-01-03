@@ -1,7 +1,7 @@
 import type { Config as RouterConfig, HTTPVersion } from "find-my-way";
 import type { Logger } from "pino";
 
-export interface Address {
+export interface AddressInfo {
   hostname: string;
   port: number;
   family: string;
@@ -18,7 +18,7 @@ export type RequestHandler = (request: Request) => Promise<Response>;
 
 export interface ListenResult<T> {
   server: T;
-  address: Address;
+  address: AddressInfo;
 }
 
 export interface ServerAdapter<T> {

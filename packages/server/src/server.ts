@@ -11,7 +11,7 @@ import type { ErrorHandler, Serializer } from "./interfaces/response.js";
 import { plugin as p } from "./internal/plugins.js";
 import type { PrefixOptions, RouteFindResult, RouteMetaDescriptor, RouteOptions } from "./interfaces/route.js";
 import { createBoot, wrapPlugin } from "./internal/boot.js";
-import type { Address, ServerAdapter, ListenOptions, CreateBaseSeverOptions } from "./interfaces/server.js";
+import type { AddressInfo, ServerAdapter, ListenOptions, CreateBaseSeverOptions } from "./interfaces/server.js";
 import { minimajs } from "./plugins/minimajs.js";
 import { logger } from "./logger.js";
 
@@ -154,7 +154,7 @@ export class Server<T = any> implements App<T> {
   }
 
   // Server lifecycle
-  async listen(opts: ListenOptions): Promise<Address> {
+  async listen(opts: ListenOptions): Promise<AddressInfo> {
     if (!this.adapter) {
       throw new Error("No adapter provided. Please provide an adapter in the constructor.");
     }

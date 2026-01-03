@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import { plugin } from "../internal/plugins.js";
 import { addHook } from "../hooks/index.js";
 
@@ -7,10 +6,6 @@ export interface RouteLoggerOptions {
   logger?: (message: string) => void;
   /** Whether to print routes with common prefix removed for cleaner output. Defaults to false */
   commonPrefix?: boolean;
-}
-
-function defaultLogger(routes: string) {
-  console.log(chalk.magenta(routes));
 }
 
 /**
@@ -44,9 +39,17 @@ function defaultLogger(routes: string) {
  * app.register(routeLogger({ commonPrefix: false  }));
  * ```
  */
-export function routeLogger({ commonPrefix = false, logger = defaultLogger }: RouteLoggerOptions = {}) {
+export function routeLogger({ commonPrefix = false, logger }: RouteLoggerOptions = {}) {
   return plugin.sync(function logRoute(app) {
-    addHook(app, "ready", () => {
+    addHook(app, "ready", async () => {
+      if (!logger) {
+        try {
+          const chalk = await import("chalk").then((m) => m.default);
+          logger = (routes) => app.log.info(chalk.magenta(routes));
+        } catch {
+          logger = (routes) => app.log.info(routes);
+        }
+      }
       logger(app.router.prettyPrint({ commonPrefix }));
     });
   });

@@ -10,7 +10,8 @@ export interface SchemaMetadata<T = unknown> {
   schema: z.ZodTypeAny;
   callback: () => Promise<T> | T;
 }
-export function setScehmaMetadata(cb: any, metadata: SchemaMetadata) {
+
+export function setSchemaMetadata(cb: any, metadata: SchemaMetadata) {
   cb[kSchemaMetadata] = metadata;
 }
 export function getSchemaMetadata(cb: any): SchemaMetadata {
@@ -38,10 +39,10 @@ export function validatorAsync<T extends z.ZodTypeAny>(
     if (!locals.has(symbol)) {
       throw new SchemaError("Schema not register");
     }
-    return locals.get(symbol)!;
+    return locals.get(symbol) as z.infer<T>;
   }
 
-  setScehmaMetadata(getData, {
+  setSchemaMetadata(getData, {
     schema,
     type,
     callback: async () => {
@@ -58,8 +59,8 @@ async function validateObjectAsync(schema: z.ZodTypeAny, data: unknown, option?:
   try {
     // If passthrough is true, allow unknown properties
     let finalSchema = schema;
-    if (option?.stripUnknown === false && schema._def?.typeName === "ZodObject") {
-      finalSchema = (schema as any).passthrough();
+    if (option?.stripUnknown === false && schema instanceof z.ZodObject) {
+      finalSchema = schema.passthrough();
     }
 
     return await finalSchema.parseAsync(data);

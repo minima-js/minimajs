@@ -19,25 +19,29 @@ export function validatorAsync<T extends z.ZodTypeAny>(schema: T, data: DataCall
   };
 }
 
-function validateSchema(schema: z.ZodTypeAny, data: unknown, option?: ValidationOptions) {
+function validateSchema<T extends z.ZodTypeAny>(schema: T, data: unknown, option?: ValidationOptions): z.infer<T> {
   try {
-    let finalSchema = schema;
+    let finalSchema: z.ZodTypeAny = schema;
     if (option?.stripUnknown === false && schema instanceof z.ZodObject) {
-      finalSchema = schema.passthrough();
+      finalSchema = schema.loose();
     }
-    return finalSchema.parse(data);
+    return finalSchema.parse(data) as z.infer<T>;
   } catch (err) {
     dealWithException(err);
   }
 }
 
-async function validateSchemaAsync(schema: z.ZodTypeAny, data: unknown, option?: ValidationOptions) {
+async function validateSchemaAsync<T extends z.ZodTypeAny>(
+  schema: T,
+  data: unknown,
+  option?: ValidationOptions
+): Promise<z.infer<T>> {
   try {
-    let finalSchema = schema;
+    let finalSchema: z.ZodTypeAny = schema;
     if (option?.stripUnknown === false && schema instanceof z.ZodObject) {
-      finalSchema = schema.passthrough();
+      finalSchema = schema.loose();
     }
-    return await finalSchema.parseAsync(data);
+    return (await finalSchema.parseAsync(data)) as z.infer<T>;
   } catch (err) {
     dealWithException(err);
   }

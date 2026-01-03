@@ -1,6 +1,5 @@
 import { type z } from "zod";
 import { HttpError as BaseError, type HttpErrorOptions } from "@minimajs/server/error";
-import { ok } from "assert";
 
 type ZodIssue = z.core.$ZodIssue;
 type ZodError<T = unknown> = z.core.$ZodError<T>;
@@ -11,43 +10,24 @@ type ZodErrorMap = z.core.$ZodErrorMap;
  * Extends HTTP error options with validation-specific properties.
  */
 export interface ValidatorErrorOptions extends Omit<HttpErrorOptions, "base"> {
-  /** The value that failed validation */
-  value?: unknown;
-  /** Dot-notation path to the field that failed validation */
-  path?: string | (string | number)[];
-  /** The type of validation error (e.g., 'required', 'min', 'max') */
-  type?: string;
-  /** Array of error messages for all validation failures */
-  errors?: string[];
   /** Array of zod issues */
   issues?: ZodIssue[];
-  /** Nested validation errors for complex object validation */
-  inner?: ValidationError[];
   /** The base error */
-  base?: Error;
+  base?: unknown;
 }
 
-/**
- * Validation error interface.
- * Combines ValidatorErrorOptions with ValidationError class properties.
- */
-export interface ValidationError extends ValidatorErrorOptions {}
+function formatValidationMessage({ issues }: ZodError): string {
+  const fields = issues
+    .map((issue) => issue.path.join("."))
+    .filter(Boolean)
+    .slice(0, 3);
 
-export const defaultErrorMap: ZodErrorMap = (issue) => {
-  const code = (issue as any).code;
-  const received = (issue as any).received;
-  const expected = (issue as any).expected;
+  if (!fields.length) return "Validation failed";
 
-  switch (code) {
-    case "invalid_type":
-      if (received === "undefined") {
-        return "Required";
-      }
-      return `Expected ${expected}, received ${received}`;
-    default:
-      return undefined;
-  }
-};
+  const fieldList = `'${fields.join("', '")}'`;
+  const moreCount = issues.length > 3 ? ` and ${issues.length - 3} more` : "";
+  return `Validation failed for ${fieldList}${moreCount}`;
+}
 
 /**
  * Custom validation error class for schema validation failures.
@@ -55,6 +35,8 @@ export const defaultErrorMap: ZodErrorMap = (issue) => {
  * Provides integration with Zod validation errors and enhanced error reporting.
  */
 export class ValidationError extends BaseError {
+  /** Array of zod issues */
+  issues?: ZodIssue[];
   /**
    * Creates a ValidationError from a ZodError.
    * Recursively converts nested validation errors.
@@ -71,15 +53,8 @@ export class ValidationError extends BaseError {
    * }
    * ```
    */
-  static createFromZodError(base: ZodError) {
-    const error = new ValidationError(base.message, { base });
-    error.issues = base.issues;
-    error.inner = base.issues.map((x) => {
-      const issueError = new ValidationError(x.message);
-      issueError.path = x.path;
-      return issueError;
-    });
-    return error;
+  static createFromZodError(error: ZodError) {
+    return new ValidationError(formatValidationMessage(error), { base: error, issues: error.issues });
   }
 
   /**
@@ -89,20 +64,15 @@ export class ValidationError extends BaseError {
    *
    * @example
    * ```ts
-   * const error = new ValidationError('Validation failed', {
-   *   errors: ['Email is required', 'Password too short']
-   * });
    * const json = ValidationError.toJSON(error);
    * // {
-   * //   "message": "Validation failed",
+   * //   "message": "Validation failed for 'email'",
    * //   "issues": [
    * //     {
    * //       "code": "invalid_type",
    * //       "expected": "string",
    * //       "received": "undefined",
-   * //       "path": [
-   * //         "name"
-   * //       ],
+   * //       "path": ["email"],
    * //       "message": "Required"
    * //     }
    * //   ]
@@ -110,12 +80,9 @@ export class ValidationError extends BaseError {
    * ```
    */
   static toJSON(err: unknown) {
-    ok(err instanceof ValidationError);
-    return { message: err.message, issues: err.issues };
+    if (err instanceof ValidationError) return { message: err.message, issues: err.issues };
+    throw err;
   }
-
-  /** Array of nested validation errors for complex object validation */
-  inner: ValidationError[] = [];
 
   /** The name of this error class */
   name = ValidationError.name;
@@ -125,18 +92,14 @@ export class ValidationError extends BaseError {
    *
    * @example
    * ```ts
-   * const error = new ValidationError('Validation failed', {
-   *   path: 'user.email',
-   *   type: 'email',
-   *   errors: ['Invalid email format']
-   * });
+   * const error = new ValidationError('Validation failed');
    * ```
    */
   constructor(
     public message: string,
     extend: ValidatorErrorOptions = {}
   ) {
-    super(message);
+    super(message, 422, extend);
     Object.assign(this, extend);
     const { base } = extend;
     if (base && base instanceof Error) {

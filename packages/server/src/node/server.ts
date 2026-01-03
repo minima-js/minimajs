@@ -5,9 +5,9 @@ import {
   createServer,
   type ServerOptions,
 } from "node:http";
-import type { AddressInfo } from "node:net";
+import type { AddressInfo as NodeAddr } from "node:net";
 import { toWebRequest, fromWebResponse } from "./utils.js";
-import type { Address, ServerAdapter, ListenOptions, RequestHandler, ListenResult } from "../interfaces/server.js";
+import type { AddressInfo, ServerAdapter, ListenOptions, RequestHandler, ListenResult } from "../interfaces/server.js";
 
 export type NodeServerOptions = ServerOptions<typeof IncomingMessage, typeof ServerResponse>;
 
@@ -31,14 +31,14 @@ export class NodeServerAdapter implements ServerAdapter<NodeServer> {
       });
     });
 
-    const addr = server.address() as AddressInfo;
+    const addr = server.address() as NodeAddr;
 
-    const address: Address = {
+    const address: AddressInfo = {
       hostname,
       port: addr.port,
       family: addr.family,
       protocol: "http",
-      address: `http://${hostname}:${addr.port}`,
+      address: `http://${hostname}:${addr.port}/`,
     };
 
     return { server, address };
