@@ -18,7 +18,8 @@
     "./error": "./lib/error.js",
     "./utils": "./lib/utils/index.js",
     "./logger": "./lib/logger.js",
-    "./mock": "./lib/mock/index.js"
+    "./mock": "./lib/mock/index.js",
+    "./symbols": "./lib/symbols.js"
   },
   "scripts": {
     "dev": "tsc -w",

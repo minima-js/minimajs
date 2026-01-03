@@ -1,5 +1,7 @@
 import type { FindResult, HTTPMethod } from "find-my-way";
-import type { App, RouteHandler, RouteMetadata } from "./app.js";
+import type { App, RouteHandler } from "./app.js";
+
+export type RouteMetadata = Map<symbol, unknown>;
 
 export interface Route<S = unknown> {
   methods: HTTPMethod[];
@@ -9,9 +11,11 @@ export interface Route<S = unknown> {
   metadata: RouteMetadata;
 }
 
-export type RouteMetaDescriptor<S = unknown> =
-  | [symbol: symbol, value: unknown]
-  | ((path: string, handler: RouteHandler<S>, app: App<S>) => [symbol: symbol, value: unknown]);
+export interface RouteConfig<S = unknown> extends Omit<Route<S>, "params"> {
+  app: App<S>;
+}
+
+export type RouteMetaDescriptor<S = unknown> = [symbol: symbol, value: unknown] | ((config: RouteConfig<S>) => void);
 
 export interface RouteOptions {
   method: HTTPMethod | HTTPMethod[];
@@ -23,5 +27,5 @@ export interface PrefixOptions {
 }
 
 export interface RouteFindResult<T> extends FindResult<any> {
-  store: Omit<Route<T>, "params"> & { server: App<T> };
+  store: RouteConfig<T>;
 }

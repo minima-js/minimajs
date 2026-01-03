@@ -6,7 +6,6 @@ import type { PrefixOptions, RouteMetaDescriptor, RouteOptions } from "./route.j
 import type { Logger } from "pino";
 
 export type Container = Map<symbol, unknown>;
-export type RouteMetadata = Map<symbol, Set<unknown>>;
 
 export type RouteHandler<S = unknown> = (ctx: Context<S>) => unknown;
 
