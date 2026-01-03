@@ -28,6 +28,7 @@ app.listen({ port: 3000 });
 ```
 
 **Output:**
+
 ```
 └── /
     └── users (GET)
@@ -44,15 +45,17 @@ Replace the default console output with your own logging function:
 ```typescript
 import { routeLogger } from "@minimajs/server/plugins";
 
-app.register(routeLogger({
-  logger: (routes) => {
-    // Log to a file
-    fs.appendFileSync("routes.log", routes);
+app.register(
+  routeLogger({
+    logger: (routes) => {
+      // Log to a file
+      fs.appendFileSync("routes.log", routes);
 
-    // Or use your custom logger
-    myLogger.info("Application routes:", routes);
-  }
-}));
+      // Or use your custom logger
+      myLogger.info("Application routes:", routes);
+    },
+  })
+);
 ```
 
 ### Common Prefix
@@ -60,14 +63,17 @@ app.register(routeLogger({
 When all your routes share a common prefix, you can remove it for cleaner output:
 
 ```typescript
-app.register(routeLogger({
-  commonPrefix: true
-}));
+app.register(
+  routeLogger({
+    commonPrefix: true,
+  })
+);
 ```
 
 **Example:**
 
 Without `commonPrefix`:
+
 ```
 └── /api/v1
     └── users (GET)
@@ -75,6 +81,7 @@ Without `commonPrefix`:
 ```
 
 With `commonPrefix: true`:
+
 ```
 └── /
     └── users (GET)
@@ -102,13 +109,15 @@ if (process.env.NODE_ENV === "development") {
 Create a custom formatted output:
 
 ```typescript
-app.register(routeLogger({
-  logger: (routes) => {
-    console.log("\n=== Application Routes ===");
-    console.log(routes);
-    console.log("=========================\n");
-  }
-}));
+app.register(
+  routeLogger({
+    logger: (routes) => {
+      console.log("\n=== Application Routes ===");
+      console.log(routes);
+      console.log("=========================\n");
+    },
+  })
+);
 ```
 
 ### Logging with Timestamps
@@ -116,13 +125,15 @@ app.register(routeLogger({
 Add timestamps to route logs:
 
 ```typescript
-app.register(routeLogger({
-  logger: (routes) => {
-    const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] Routes registered:`);
-    console.log(routes);
-  }
-}));
+app.register(
+  routeLogger({
+    logger: (routes) => {
+      const timestamp = new Date().toISOString();
+      console.log(`[${timestamp}] Routes registered:`);
+      console.log(routes);
+    },
+  })
+);
 ```
 
 ## How It Works
@@ -137,12 +148,14 @@ The `routeLogger` plugin:
 ## When to Use
 
 **Good use cases:**
+
 - ✅ Development and debugging
 - ✅ Documenting API endpoints
 - ✅ Verifying route registration
 - ✅ Startup diagnostics
 
 **Avoid in:**
+
 - ❌ Production (unless logging to files/monitoring)
 - ❌ High-security environments (may expose internal structure)
 

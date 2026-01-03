@@ -29,7 +29,10 @@ export class ValidationError extends BaseError {
   inner: ValidationError[] = [];
   name = ValidationError.name;
 
-  constructor(public message: string, extend: ValidatorErrorOptions = {}) {
+  constructor(
+    public message: string,
+    extend: ValidatorErrorOptions = {}
+  ) {
     super(message);
     Object.assign(this, extend);
     const { base } = extend;

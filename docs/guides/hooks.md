@@ -18,9 +18,9 @@ Request/response hooks are executed within the context of a specific request. Th
 
 The `defer` hook registers a callback that is executed **after** the response has been sent to the client. This is useful for tasks that don't need to block the response, such as:
 
-*   Sending analytics events
-*   Logging request-specific information
-*   Cleaning up resources used during the request
+- Sending analytics events
+- Logging request-specific information
+- Cleaning up resources used during the request
 
 ```typescript
 import { createApp, defer } from "@minimajs/server";
@@ -66,9 +66,9 @@ app.get("/risky-operation", (req, res) => {
 
 Application lifecycle hooks allow you to tie into the lifecycle of the Minima.js application itself. They are useful for tasks like:
 
-*   Setting up and tearing down database connections
-*   Starting and stopping background services
-*   Loading configuration
+- Setting up and tearing down database connections
+- Starting and stopping background services
+- Loading configuration
 
 ### `hook.define()`
 

@@ -90,7 +90,6 @@ async function handleFileUpload() {
   This class encapsulates the information and functionality related to uploaded files.
 
 - **Properties:**
-
   - `field`: The name of the form field associated with the uploaded file. (Readonly)
   - `filename`: The original filename of the uploaded file. (Readonly)
   - `encoding`: The character encoding of the file content. (Readonly)
@@ -99,7 +98,6 @@ async function handleFileUpload() {
   - `ext`: Getter property that retrieves the file extension from the filename.
 
 - **Methods:**
-
   - `get stream()`: Ensures the existence of the stream before returning it. (Readonly)
   - `buffer()`: Reads the entire file content into a buffer.
   - `async move(dir = process.cwd(), filename?: string)`: Moves the uploaded file to the specified directory with an optional new filename.

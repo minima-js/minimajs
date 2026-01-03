@@ -194,12 +194,7 @@ export function createMultipartUpload(obj: any, option: UploadOption = {}) {
   };
 }
 
-async function uploadTmpFile(
-  file: File,
-  signal: AbortSignal,
-  tests: ExtractTest = {},
-  { tmpDir = tmpdir() }: UploadOption
-) {
+async function uploadTmpFile(file: File, signal: AbortSignal, tests: ExtractTest = {}, { tmpDir = tmpdir() }: UploadOption) {
   await testMimeType(file, tests.accept);
   const meter = new StreamMeter(getTestMaxSize(tests));
   const filename = join(await ensurePath(tmpDir, pkg.name), uuid());

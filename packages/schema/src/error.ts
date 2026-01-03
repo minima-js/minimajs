@@ -10,7 +10,7 @@ type ZodErrorMap = z.core.$ZodErrorMap;
  * Options for creating a validation error.
  * Extends HTTP error options with validation-specific properties.
  */
-export interface ValidatorErrorOptions extends Omit<HttpErrorOptions, 'base'> {
+export interface ValidatorErrorOptions extends Omit<HttpErrorOptions, "base"> {
   /** The value that failed validation */
   value?: unknown;
   /** Dot-notation path to the field that failed validation */
@@ -132,7 +132,10 @@ export class ValidationError extends BaseError {
    * });
    * ```
    */
-  constructor(public message: string, extend: ValidatorErrorOptions = {}) {
+  constructor(
+    public message: string,
+    extend: ValidatorErrorOptions = {}
+  ) {
     super(message);
     Object.assign(this, extend);
     const { base } = extend;

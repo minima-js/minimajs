@@ -70,7 +70,7 @@ describe("validator", () => {
     test("should validate multiple accept types", () => {
       const file = createFile("image.jpg", "image/jpeg");
       const accept = ["video/*", ".jpg", "text/plain"];
-      expect(validateFileType(file, accept)).toBeTruthy;
+      expect(validateFileType(file, accept)).toBeTruthy();
     });
 
     test("should throw an error if both MIME type and extension do not match", () => {

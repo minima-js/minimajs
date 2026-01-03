@@ -1,4 +1,4 @@
---- 
+---
 title: File Uploads
 sidebar_position: 2
 ---
@@ -22,16 +22,16 @@ npm install @minimajs/multipart
 To handle a single file upload, you can use the `file()` helper from `@minimajs/multipart`.
 
 ```typescript
-import { createApp } from '@minimajs/server';
-import { multipart } from '@minimajs/multipart';
-import * as fs from 'fs';
-import * as util from 'util';
+import { createApp } from "@minimajs/server";
+import { multipart } from "@minimajs/multipart";
+import * as fs from "fs";
+import * as util from "util";
 
-const pump = util.promisify(require('stream').pipeline);
+const pump = util.promisify(require("stream").pipeline);
 
 const app = createApp();
 
-app.post('/upload/single', async (request, reply) => {
+app.post("/upload/single", async (request, reply) => {
   const data = await multipart.file(request.raw);
 
   // data.file is a stream of the uploaded file
@@ -40,16 +40,17 @@ app.post('/upload/single', async (request, reply) => {
 
   await pump(data.file, fs.createWriteStream(`./uploads/${data.filename}`));
 
-  reply.send({ message: 'File uploaded successfully' });
+  reply.send({ message: "File uploaded successfully" });
 });
 
 await app.listen({ port: 3000 });
 ```
 
 In this example:
-*   We use `multipart.file()` to get the uploaded file from the request.
-*   The `multipart.file()` function returns an object containing the file stream, filename, and mimetype.
-*   We then use `stream.pipeline` to save the file to the `uploads` directory.
+
+- We use `multipart.file()` to get the uploaded file from the request.
+- The `multipart.file()` function returns an object containing the file stream, filename, and mimetype.
+- We then use `stream.pipeline` to save the file to the `uploads` directory.
 
 You can test this route using `curl`:
 
@@ -62,23 +63,23 @@ curl -X POST -F "file=@/path/to/your/file.txt" http://localhost:3000/upload/sing
 To handle multiple file uploads, you can use the `multipart.files()` helper. This helper returns an async iterator that you can use to iterate over the uploaded files.
 
 ```typescript
-import { createApp } from '@minimajs/server';
-import { multipart } from '@minimajs/multipart';
-import * as fs from 'fs';
-import * as util from 'util';
+import { createApp } from "@minimajs/server";
+import { multipart } from "@minimajs/multipart";
+import * as fs from "fs";
+import * as util from "util";
 
-const pump = util.promisify(require('stream').pipeline);
+const pump = util.promisify(require("stream").pipeline);
 
 const app = createApp();
 
-app.post('/upload/multiple', async (request, reply) => {
+app.post("/upload/multiple", async (request, reply) => {
   const parts = multipart.files(request.raw);
 
   for await (const part of parts) {
     await pump(part.file, fs.createWriteStream(`./uploads/${part.filename}`));
   }
 
-  reply.send({ message: 'Files uploaded successfully' });
+  reply.send({ message: "Files uploaded successfully" });
 });
 
 await app.listen({ port: 3000 });
@@ -98,19 +99,19 @@ curl -X POST \
 You can also access other form fields that are sent along with the file uploads. The `part` object in the async iterator contains a `fields` property, which is a map of the other form fields.
 
 ```typescript
-app.post('/upload/with-fields', async (request, reply) => {
+app.post("/upload/with-fields", async (request, reply) => {
   const parts = multipart.files(request.raw);
 
   for await (const part of parts) {
-    console.log('Fieldname:', part.fieldname);
-    console.log('Filename:', part.filename);
-    console.log('Mimetype:', part.mimetype);
-    console.log('Fields:', part.fields); // Access other form fields
+    console.log("Fieldname:", part.fieldname);
+    console.log("Filename:", part.filename);
+    console.log("Mimetype:", part.mimetype);
+    console.log("Fields:", part.fields); // Access other form fields
 
     await pump(part.file, fs.createWriteStream(`./uploads/${part.filename}`));
   }
 
-  reply.send({ message: 'Files uploaded successfully' });
+  reply.send({ message: "Files uploaded successfully" });
 });
 ```
 

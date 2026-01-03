@@ -17,9 +17,9 @@ By default, Minima.js catches any uncaught exceptions in your route handlers and
 For handling HTTP-specific errors, Minima.js provides a custom `HttpError` class. You can use this class to create errors with a specific status code and message.
 
 ```typescript
-import { HttpError } from '@minimajs/server/error';
+import { HttpError } from "@minimajs/server/error";
 
-throw new HttpError('This is a custom error message', 400);
+throw new HttpError("This is a custom error message", 400);
 ```
 
 When you throw an `HttpError`, Minima.js will automatically use the status code and message to generate the error response.
@@ -29,14 +29,14 @@ When you throw an `HttpError`, Minima.js will automatically use the status code 
 To make it even easier to throw HTTP errors, Minima.js provides an `abort` helper function. This function is a shorthand for throwing an `HttpError`.
 
 ```typescript
-import { abort } from '@minimajs/server';
+import { abort } from "@minimajs/server";
 
-app.get('/users/:id', () => {
+app.get("/users/:id", () => {
   const { id } = params<{ id: string }>();
   const user = findUserById(id);
 
   if (!user) {
-    abort('User not found', 404);
+    abort("User not found", 404);
   }
 
   return user;
@@ -60,7 +60,7 @@ app.setErrorHandler((error, request, reply) => {
   reply.status(error.statusCode || 500).send({
     error: {
       message: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
     },
   });
 });
@@ -71,8 +71,8 @@ app.setErrorHandler((error, request, reply) => {
 You can also define an error handler for a specific module using `interceptor.error`.
 
 ```typescript
-import { interceptor } from '@minimajs/server';
-import { HttpError } from '@minimajs/server/error';
+import { interceptor } from "@minimajs/server";
+import { HttpError } from "@minimajs/server/error";
 
 const errorDecorator = interceptor.error((err) => {
   if (err instanceof HttpError) {
@@ -109,7 +109,7 @@ The global error handler does not catch "Not Found" (404) errors. To handle thes
 
 ```typescript
 app.setNotFoundHandler((request, reply) => {
-  reply.status(404).send({ error: 'Not Found' });
+  reply.status(404).send({ error: "Not Found" });
 });
 ```
 

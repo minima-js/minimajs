@@ -15,16 +15,16 @@ Most Node.js frameworks are built on top of other frameworks, creating layers of
 
 While Minima.js shares goals with other frameworks, its from-scratch architecture leads to fundamental differences in developer experience, performance, and capabilities.
 
-| Feature | Minima.js | Express | Fastify | NestJS |
-|---|---|---|---|---|
-| **Architecture** | **Built from scratch** | Legacy (2010) | Modern Node core | Wrapper (Express/Fastify) |
-| **Runtime Support** | **Bun** + Node.js | Node.js only | Node.js only | Node.js only |
-| **Request/Response** | **Web API Standard** | Node.js specific | Node.js wrapper | Inherited (Node.js) |
-| **Paradigm** | Functional, Hooks | Middleware chain | Plugins, Encapsulation | OOP, Decorators, DI |
-| **TypeScript** | First-class, built-in | Community types | Schema-driven | First-class, integral |
-| **Async Context** | **Built-in (`AsyncLocalStorage`)** | Manual prop-drilling | Request decorators | DI / Providers |
-| **Performance** | **Highest** (Bun-native) | Moderate | High | High (with Fastify) |
-| **Learning Curve** | Minimal | Low | Moderate | Steep |
+| Feature              | Minima.js                          | Express              | Fastify                | NestJS                    |
+| -------------------- | ---------------------------------- | -------------------- | ---------------------- | ------------------------- |
+| **Architecture**     | **Built from scratch**             | Legacy (2010)        | Modern Node core       | Wrapper (Express/Fastify) |
+| **Runtime Support**  | **Bun** + Node.js                  | Node.js only         | Node.js only           | Node.js only              |
+| **Request/Response** | **Web API Standard**               | Node.js specific     | Node.js wrapper        | Inherited (Node.js)       |
+| **Paradigm**         | Functional, Hooks                  | Middleware chain     | Plugins, Encapsulation | OOP, Decorators, DI       |
+| **TypeScript**       | First-class, built-in              | Community types      | Schema-driven          | First-class, integral     |
+| **Async Context**    | **Built-in (`AsyncLocalStorage`)** | Manual prop-drilling | Request decorators     | DI / Providers            |
+| **Performance**      | **Highest** (Bun-native)           | Moderate             | High                   | High (with Fastify)       |
+| **Learning Curve**   | Minimal                            | Low                  | Moderate               | Steep                     |
 
 **Key Takeaways:**
 

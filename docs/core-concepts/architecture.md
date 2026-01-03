@@ -13,12 +13,12 @@ Minima.js provides platform-specific imports that leverage native APIs:
 ::: code-group
 
 ```typescript [Bun]
-import { createApp } from '@minimajs/server/bun';
+import { createApp } from "@minimajs/server/bun";
 // Uses Bun's native HTTP server for maximum performance
 ```
 
 ```typescript [Node.js]
-import { createApp } from '@minimajs/server/node';
+import { createApp } from "@minimajs/server/node";
 // Uses Node.js native HTTP server
 ```
 
@@ -34,6 +34,7 @@ Instead of wrapping Node.js `req`/`res` objects or creating proprietary abstract
 - **Response**: Native `Response` object from the Web API
 
 This means:
+
 - Your code is portable across runtimes
 - No learning curve if you know Web APIs
 - Future-proof as standards evolve
@@ -48,20 +49,20 @@ Minima.js gives you full control over how responses are handled:
 Return any JavaScript value and Minima.js will serialize it, apply response hooks, and add global headers:
 
 ```typescript
-import { createApp } from '@minimajs/server/bun';
-import { headers } from '@minimajs/server';
+import { createApp } from "@minimajs/server/bun";
+import { headers } from "@minimajs/server";
 
 const app = createApp();
 
-app.get('/data', () => {
+app.get("/data", () => {
   // Set global headers
-  headers.set('X-Custom-Header', 'value');
+  headers.set("X-Custom-Header", "value");
 
   // Return plain objects - they go through:
   // 1. Response transformation hooks
   // 2. Global header injection
   // 3. Automatic JSON serialization
-  return { message: 'Hello, World!', timestamp: Date.now() };
+  return { message: "Hello, World!", timestamp: Date.now() };
 });
 ```
 
@@ -70,19 +71,20 @@ app.get('/data', () => {
 Return a native `Response` object to **skip all hooks and global headers**:
 
 ```typescript
-app.get('/direct', () => {
+app.get("/direct", () => {
   // Return native Response - bypasses:
   // ❌ Response transformation hooks
   // ❌ Global headers (immutable Response)
   // ❌ Automatic serialization
-  return new Response('Raw response', {
+  return new Response("Raw response", {
     status: 200,
-    headers: { 'Content-Type': 'text/plain' }
+    headers: { "Content-Type": "text/plain" },
   });
 });
 ```
 
 **Why bypass hooks with native Response?**
+
 - **Performance**: Skip all middleware for critical paths
 - **Control**: Full control over headers and body
 - **Streaming**: Send streaming responses directly
@@ -90,19 +92,20 @@ app.get('/direct', () => {
 
 **Comparison:**
 
-| Feature | Return Object | Return `new Response()` |
-|---------|--------------|------------------------|
-| Response Hooks | ✅ Applied | ❌ Skipped |
-| Global Headers | ✅ Added | ❌ Immutable |
-| Auto Serialization | ✅ JSON | ❌ Raw |
-| Streaming | ❌ Not supported | ✅ Supported |
-| Performance | Fast | Fastest |
-| Use Case | 95% of routes | Streaming, optimization |
+| Feature            | Return Object    | Return `new Response()` |
+| ------------------ | ---------------- | ----------------------- |
+| Response Hooks     | ✅ Applied       | ❌ Skipped              |
+| Global Headers     | ✅ Added         | ❌ Immutable            |
+| Auto Serialization | ✅ JSON          | ❌ Raw                  |
+| Streaming          | ❌ Not supported | ✅ Supported            |
+| Performance        | Fast             | Fastest                 |
+| Use Case           | 95% of routes    | Streaming, optimization |
 
 ::: tip When to use each mode
+
 - Use **automatic serialization** for most routes (hooks, global headers, transforms)
 - Use **native Response** when you need complete control or streaming
-:::
+  :::
 
 ### 3. Hook-Based Control System
 
@@ -150,27 +153,33 @@ Outgoing Response (Web API Response)
 Hooks are simple functions that execute at specific lifecycle points:
 
 ```typescript
-import { createApp } from '@minimajs/server/bun';
-import { hook } from '@minimajs/server';
+import { createApp } from "@minimajs/server/bun";
+import { hook } from "@minimajs/server";
 
 const app = createApp();
 
 // Request hook - runs before routing
-app.register(hook('request', ({ request }) => {
-  console.log(`${request.method} ${request.url}`);
-}));
+app.register(
+  hook("request", ({ request }) => {
+    console.log(`${request.method} ${request.url}`);
+  })
+);
 
 // Response hook - transforms responses
-app.register(hook('response', ({ response }) => {
-  response.headers.set('X-Powered-By', 'Minima.js');
-  return response;
-}));
+app.register(
+  hook("response", ({ response }) => {
+    response.headers.set("X-Powered-By", "Minima.js");
+    return response;
+  })
+);
 
 // Error hook - custom error handling
-app.register(hook('error', (ctx) => {
-  console.error(ctx.error);
-  return { error: ctx.error.message, code: 500 };
-}));
+app.register(
+  hook("error", (ctx) => {
+    console.error(ctx.error);
+    return { error: ctx.error.message, code: 500 };
+  })
+);
 ```
 
 #### Early Returns: Short-Circuit the Lifecycle
@@ -178,31 +187,34 @@ app.register(hook('error', (ctx) => {
 Hooks can **return a Response** to short-circuit the entire request lifecycle:
 
 ```typescript
-import { createApp } from '@minimajs/server/bun';
-import { hook } from '@minimajs/server';
+import { createApp } from "@minimajs/server/bun";
+import { hook } from "@minimajs/server";
 
 const app = createApp();
 
 // Request hook that short-circuits
-app.register(hook('request', ({ request }) => {
-  // Return Response from request hook - SKIPS EVERYTHING:
-  // ❌ Router matching
-  // ❌ Route handler execution
-  // ❌ Response hooks
-  // ❌ Error handling
-  if (request.headers.get('x-maintenance') === 'true') {
-    return new Response('Maintenance mode', { status: 503 });
-  }
-  // Return nothing - continue to next hook/handler
-}));
+app.register(
+  hook("request", ({ request }) => {
+    // Return Response from request hook - SKIPS EVERYTHING:
+    // ❌ Router matching
+    // ❌ Route handler execution
+    // ❌ Response hooks
+    // ❌ Error handling
+    if (request.headers.get("x-maintenance") === "true") {
+      return new Response("Maintenance mode", { status: 503 });
+    }
+    // Return nothing - continue to next hook/handler
+  })
+);
 
-app.get('/api/data', () => {
+app.get("/api/data", () => {
   // This handler is SKIPPED if request hook returns Response
-  return { data: 'Hello' };
+  return { data: "Hello" };
 });
 ```
 
 **Use cases for early returns:**
+
 - **Rate limiting**: Block requests before routing
 - **Authentication**: Reject unauthorized requests immediately
 - **Maintenance mode**: Return 503 without touching handlers
@@ -218,39 +230,43 @@ When a hook returns a `Response`, the entire request lifecycle is bypassed. Use 
 Understanding the full request lifecycle with early returns and response modes:
 
 ```typescript
-import { createApp } from '@minimajs/server/bun';
-import { hook, headers } from '@minimajs/server';
+import { createApp } from "@minimajs/server/bun";
+import { hook, headers } from "@minimajs/server";
 
 const app = createApp();
 
 // 1. Request Hook (can short-circuit)
-app.register(hook('request', ({ request }) => {
-  console.log('1. Request hook');
+app.register(
+  hook("request", ({ request }) => {
+    console.log("1. Request hook");
 
-  if (request.url.includes('/health')) {
-    // Early return - skips steps 2-6
-    return new Response('OK', { status: 200 });
-  }
-  // Continue to step 2
-}));
+    if (request.url.includes("/health")) {
+      // Early return - skips steps 2-6
+      return new Response("OK", { status: 200 });
+    }
+    // Continue to step 2
+  })
+);
 
 // 2. Router matches URL to handler
 // 3. Handler executes
-app.get('/data', () => {
-  console.log('3. Handler executed');
+app.get("/data", () => {
+  console.log("3. Handler executed");
 
   // Option A: Return object (continues to step 4-6)
-  return { data: 'processed' };
+  return { data: "processed" };
 
   // Option B: Return Response (skips step 4-6)
   // return new Response(JSON.stringify({ data: 'raw' }));
 });
 
 // 4. Response Hook (only if handler returned non-Response)
-app.register(hook('response', (ctx) => {
-  console.log('4. Response hook - transform response');
-  return ctx.response;
-}));
+app.register(
+  hook("response", (ctx) => {
+    console.log("4. Response hook - transform response");
+    return ctx.response;
+  })
+);
 
 // 5. Global Headers Applied (only for non-Response returns)
 // 6. Serialization (only for non-Response returns)
@@ -269,21 +285,21 @@ This gives you maximum flexibility: use automatic pipeline for convenience, or b
 Every route handler and hook receives a `Context` object with request data. But Minima.js goes further—you can access context from **anywhere** using AsyncLocalStorage:
 
 ```typescript
-import { createApp } from '@minimajs/server/bun';
-import { params, body, request } from '@minimajs/server';
+import { createApp } from "@minimajs/server/bun";
+import { params, body, request } from "@minimajs/server";
 
 const app = createApp();
 
 // Approach 1: Via Context parameter
-app.post('/users/:id', (ctx) => {
+app.post("/users/:id", (ctx) => {
   const id = ctx.route.params.id;
   const userData = ctx.body;
   return { id, userData };
 });
 
 // Approach 2: Via AsyncLocalStorage (recommended)
-app.post('/users/:id', () => {
-  const id = params.get('id');
+app.post("/users/:id", () => {
+  const id = params.get("id");
   const userData = body(); // Automatically typed
   const url = request().url; // Native Web API Request
 
@@ -296,7 +312,7 @@ app.post('/users/:id', () => {
 ```typescript
 // Define helper functions that access context
 function getCurrentUser() {
-  const token = request().headers.get('authorization');
+  const token = request().headers.get("authorization");
   return decodeToken(token);
 }
 
@@ -306,7 +322,7 @@ function logRequest() {
 }
 
 // Use them in handlers without passing context around
-app.get('/profile', () => {
+app.get("/profile", () => {
   logRequest(); // No parameters needed!
   const user = getCurrentUser(); // Context accessed internally
   return { user };

@@ -1,11 +1,4 @@
-import {
-  Transform,
-  Writable,
-  PassThrough,
-  type Readable,
-  type TransformCallback,
-  type TransformOptions,
-} from "node:stream";
+import { Transform, Writable, PassThrough, type Readable, type TransformCallback, type TransformOptions } from "node:stream";
 
 class IteratorStream<T> extends PassThrough {
   constructor(opt: TransformOptions = {}) {

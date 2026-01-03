@@ -44,6 +44,7 @@ npx prisma migrate dev --name init
 ```
 
 This command will:
+
 1.  Create your SQLite database file.
 2.  Create the `User` table in your database.
 3.  Generate the Prisma Client library in `node_modules/@prisma/client`.
@@ -55,18 +56,18 @@ We need to connect to the database when the application starts and disconnect wh
 Let's create a `database.ts` file to manage the Prisma Client instance.
 
 ```typescript title="src/database.ts"
-import { PrismaClient } from '@prisma/client';
-import { hook } from '@minimajs/server';
+import { PrismaClient } from "@prisma/client";
+import { hook } from "@minimajs/server";
 
 export const prisma = new PrismaClient();
 
 export const dbLifespan = hook.lifespan(async () => {
   await prisma.$connect();
-  console.log('Database connected');
+  console.log("Database connected");
 
   return async () => {
     await prisma.$disconnect();
-    console.log('Database disconnected');
+    console.log("Database disconnected");
   };
 });
 ```
@@ -74,8 +75,8 @@ export const dbLifespan = hook.lifespan(async () => {
 Now, we can register this `dbLifespan` hook in our main application file.
 
 ```typescript title="src/index.ts"
-import { createApp } from '@minimajs/server';
-import { dbLifespan } from './database';
+import { createApp } from "@minimajs/server";
+import { dbLifespan } from "./database";
 
 const app = createApp();
 
@@ -95,14 +96,14 @@ Now that we have connected to the database, we can use the Prisma Client in our 
 Let's create a route to get all users.
 
 ```typescript title="src/index.ts"
-import { createApp } from '@minimajs/server';
-import { dbLifespan, prisma } from './database';
+import { createApp } from "@minimajs/server";
+import { dbLifespan, prisma } from "./database";
 
 const app = createApp();
 
 app.register(dbLifespan);
 
-app.get('/users', async () => {
+app.get("/users", async () => {
   const users = await prisma.user.findMany();
   return users;
 });
@@ -113,9 +114,9 @@ await app.listen({ port: 3000 });
 And a route to create a new user:
 
 ```typescript
-import { body } from '@minimajs/server';
+import { body } from "@minimajs/server";
 
-app.post('/users', async () => {
+app.post("/users", async () => {
   const { name, email } = body<{ name: string; email: string }>();
   const newUser = await prisma.user.create({
     data: {
@@ -132,16 +133,16 @@ app.post('/users', async () => {
 To keep our code organized, we can encapsulate the database-related logic in a module.
 
 ```typescript title="src/user/module.ts"
-import { type App, body } from '@minimajs/server';
-import { prisma } from '../database';
+import { type App, body } from "@minimajs/server";
+import { prisma } from "../database";
 
 export async function userModule(app: App) {
-  app.get('/users', async () => {
+  app.get("/users", async () => {
     const users = await prisma.user.findMany();
     return users;
   });
 
-  app.post('/users', async () => {
+  app.post("/users", async () => {
     const { name, email } = body<{ name: string; email: string }>();
     const newUser = await prisma.user.create({
       data: {
@@ -157,9 +158,9 @@ export async function userModule(app: App) {
 And then register the module in our main application file:
 
 ```typescript title="src/index.ts"
-import { createApp } from '@minimajs/server';
-import { dbLifespan } from './database';
-import { userModule } from './user/module';
+import { createApp } from "@minimajs/server";
+import { dbLifespan } from "./database";
+import { userModule } from "./user/module";
 
 const app = createApp();
 

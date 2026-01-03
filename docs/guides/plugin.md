@@ -402,7 +402,6 @@ app.register(dbPlugin, {
    ```
 
 3. **Keep plugins focused** - Each plugin should have a single, clear responsibility
-
    - ✅ Good: `authPlugin`, `loggingPlugin`, `corsPlugin`
    - ❌ Bad: `everythingPlugin` that does auth + logging + CORS
 

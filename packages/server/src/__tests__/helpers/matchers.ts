@@ -28,35 +28,23 @@ declare global {
 
 export function setupCustomMatchers() {
   expect.extend({
-    toHaveStatusCode(
-      response: Response,
-      expected: number
-    ) {
+    toHaveStatusCode(response: Response, expected: number) {
       const pass = response.status === expected;
       return {
         pass,
         message: () =>
-          pass
-            ? `expected status code not to be ${expected}`
-            : `expected status code ${response.status} to be ${expected}`,
+          pass ? `expected status code not to be ${expected}` : `expected status code ${response.status} to be ${expected}`,
       };
     },
 
-    toHaveHeader(
-      response: Response,
-      name: string,
-      value?: string
-    ) {
+    toHaveHeader(response: Response, name: string, value?: string) {
       const headerValue = response.headers.get(name);
       const exists = headerValue !== null;
 
       if (value === undefined) {
         return {
           pass: exists,
-          message: () =>
-            exists
-              ? `expected header "${name}" not to exist`
-              : `expected header "${name}" to exist`,
+          message: () => (exists ? `expected header "${name}" not to exist` : `expected header "${name}" to exist`),
         };
       }
 

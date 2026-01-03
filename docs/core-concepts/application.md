@@ -7,7 +7,7 @@ The core of a Minima.js application is the application instance, which is create
 To create a new Minima.js application, you first need to import the `createApp` function and call it:
 
 ```typescript
-import { createApp } from '@minimajs/server';
+import { createApp } from "@minimajs/server";
 
 const app = createApp();
 ```
@@ -21,15 +21,15 @@ The `createApp` function accepts an optional `options` object that allows you to
 For example, you can set a custom logger for your application:
 
 ```typescript
-import { createApp } from '@minimajs/server';
+import { createApp } from "@minimajs/server";
 
 const app = createApp({
   logger: {
-    level: 'info',
+    level: "info",
     transport: {
-      target: 'pino-pretty'
-    }
-  }
+      target: "pino-pretty",
+    },
+  },
 });
 ```
 
@@ -49,13 +49,13 @@ The `listen` method starts the server and makes it listen for incoming requests 
 
 The application instance provides a set of methods for defining routes, registering plugins, and managing your application. Here are some of the most commonly used methods:
 
-*   **`app.get(path, handler)`**: Defines a route that responds to GET requests.
-*   **`app.post(path, handler)`**: Defines a route that responds to POST requests.
-*   **`app.put(path, handler)`**: Defines a route that responds to PUT requests.
-*   **`app.delete(path, handler)`**: Defines a route that responds to DELETE requests.
-*   **`app.route(options)`**: A generic method for defining routes with more advanced options.
-*   **`app.register(plugin)`**: Registers a plugin, which can be a module or a third-party plugin.
-*   **`app.listen(options)`**: Starts the server.
-*   **`app.close()`**: Stops the server.
+- **`app.get(path, handler)`**: Defines a route that responds to GET requests.
+- **`app.post(path, handler)`**: Defines a route that responds to POST requests.
+- **`app.put(path, handler)`**: Defines a route that responds to PUT requests.
+- **`app.delete(path, handler)`**: Defines a route that responds to DELETE requests.
+- **`app.route(options)`**: A generic method for defining routes with more advanced options.
+- **`app.register(plugin)`**: Registers a plugin, which can be a module or a third-party plugin.
+- **`app.listen(options)`**: Starts the server.
+- **`app.close()`**: Stops the server.
 
 In the next sections, we will explore these methods in more detail.

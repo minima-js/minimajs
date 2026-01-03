@@ -1,11 +1,5 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import path from "node:path";
-import {
-  type BlobHTTPHeaders,
-  BlobServiceClient,
-  BlockBlobClient,
-  ContainerClient,
-} from "@azure/storage-blob";
+import { type BlobHTTPHeaders, BlobServiceClient, BlockBlobClient, ContainerClient } from "@azure/storage-blob";
 import { v4 as uuid } from "uuid";
 import type { BlobUploadCommonResponse } from "@azure/storage-blob";
 import type { Readable } from "node:stream";
@@ -70,10 +64,7 @@ export class AzureBlob {
     return this;
   }
 
-  async putStream(
-    file: FileInfo,
-    headers?: BlobHTTPHeaders
-  ): Promise<StorageUploadResponse> {
+  async putStream(file: FileInfo, headers?: BlobHTTPHeaders): Promise<StorageUploadResponse> {
     const { stream, filename, mimetype } = file;
     const name = this.#getFilename(filename);
     const blob = this.#container.getBlockBlobClient(name);
@@ -86,10 +77,7 @@ export class AzureBlob {
     return { response, filename: name, url: this.#getURL(blob) };
   }
 
-  async put(
-    { buffer, originalname, mimetype }: FileType,
-    headers?: BlobHTTPHeaders
-  ): Promise<StorageUploadResponse> {
+  async put({ buffer, originalname, mimetype }: FileType, headers?: BlobHTTPHeaders): Promise<StorageUploadResponse> {
     const name = this.#getFilename(originalname);
     const blob = this.#getBlob(name);
     const response = await blob.upload(buffer, buffer.length, {
@@ -106,11 +94,7 @@ export class AzureBlob {
     return blob.exists();
   }
 
-  async putBase64(
-    content: string,
-    originalname: string,
-    mimetype = "application/octet-stream"
-  ) {
+  async putBase64(content: string, originalname: string, mimetype = "application/octet-stream") {
     return this.put({
       buffer: Buffer.from(content, "base64"),
       originalname,
@@ -123,8 +107,7 @@ export class AzureBlob {
   }
 
   #getBlobName(url: string) {
-    const [, matched = url] =
-      url.match(new RegExp(`\/${this.#container.containerName}\/(.+)`)) ?? [];
+    const [, matched = url] = url.match(new RegExp(`/${this.#container.containerName}/(.+)`)) ?? [];
     return matched;
   }
 

@@ -34,7 +34,10 @@ export class Server<T = any> implements App<T> {
   public serialize: Serializer<T> = serialize;
   public errorHandler: ErrorHandler<T> = errorHandler;
 
-  constructor(public readonly adapter: ServerAdapter<T>, opts: ServerOptions) {
+  constructor(
+    public readonly adapter: ServerAdapter<T>,
+    opts: ServerOptions
+  ) {
     this.log = opts.logger;
     this.$prefix = opts.prefix || "";
     this.$prefixExclude = [];

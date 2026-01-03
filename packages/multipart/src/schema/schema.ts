@@ -27,6 +27,7 @@ function file(): FileBuilder {
   let schema: z.ZodTypeAny = z.instanceof(UploadedFile).optional();
 
   // we'll create a builder object that wraps the zod schema and stores metadata
+  // eslint-disable-next-line prefer-const
   let builder!: FileBuilder;
 
   const max = (size: number, message?: string) => {

@@ -65,7 +65,11 @@ export class HttpError extends BaseHttpError {
   public base?: unknown;
   public headers?: HeadersInit;
   declare ["constructor"]: typeof HttpError;
-  constructor(public response: ErrorResponse, statusCode: StatusCode, options?: HttpErrorOptions) {
+  constructor(
+    public response: ErrorResponse,
+    statusCode: StatusCode,
+    options?: HttpErrorOptions
+  ) {
     super(typeof response === "string" ? response : "Unknown error");
     Object.assign(this, options);
     this.statusCode = toStatusCode(statusCode);
@@ -98,7 +102,11 @@ export class NotFoundError extends HttpError {
 export class RedirectError extends BaseHttpError {
   public statusCode: number;
   public headers?: HeadersInit;
-  constructor(public readonly url: string, isPermanent = false, options?: HttpErrorOptions) {
+  constructor(
+    public readonly url: string,
+    isPermanent = false,
+    options?: HttpErrorOptions
+  ) {
     super();
     this.statusCode = isPermanent ? 301 : 302;
     Object.assign(this, options);

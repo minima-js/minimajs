@@ -34,7 +34,6 @@ function createAuth<T>(
 ### Parameters
 
 - **`callback`**: An async or sync function that performs your authentication logic
-
   - Should return the authenticated data (e.g., user object)
   - Should throw a `BaseHttpError` (like `UnauthorizedError`) if authentication fails
   - Executed once per request before route handlers run
@@ -389,7 +388,6 @@ export const [authPlugin, getUser] = createAuth(async () => {
 The `createAuth` function handles errors intelligently:
 
 - **`BaseHttpError`** (and subclasses like `UnauthorizedError`):
-
   - In **optional mode**: Error is stored, `resource()` returns `undefined`
   - In **required mode**: Error is thrown immediately when accessing the resource
   - `resource.required()` always throws the error

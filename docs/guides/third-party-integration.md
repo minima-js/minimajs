@@ -22,8 +22,8 @@ We want to create a request-specific logger that automatically includes a `trace
 First, we'll create a context to hold our request-specific logger instance.
 
 ```typescript title="src/logger.ts"
-import { createContext } from '@minimajs/server';
-import pino, { type Logger } from 'pino';
+import { createContext } from "@minimajs/server";
+import pino, { type Logger } from "pino";
 
 // Create a base logger
 const baseLogger = pino();
@@ -35,13 +35,14 @@ export const [getLogger, setLogger] = createContext<Logger>(baseLogger);
 **2. Create a Middleware to Set Up the Logger**
 
 Next, we'll create a middleware that runs for every request. This middleware will:
+
 1.  Generate a unique `traceId`.
 2.  Create a child logger from our base logger, binding the `traceId` to it.
 3.  Set this new request-specific logger in the context.
 
 ```typescript title="src/middleware/logger.ts"
-import { getLogger, setLogger } from '../logger';
-import { randomUUID } from 'crypto';
+import { getLogger, setLogger } from "../logger";
+import { randomUUID } from "crypto";
 
 export async function loggerMiddleware() {
   const traceId = randomUUID();
@@ -57,14 +58,14 @@ Now, any function called during the request can get the logger from the context 
 Let's create a service that does some work and logs its progress.
 
 ```typescript title="src/service.ts"
-import { getLogger } from './logger';
+import { getLogger } from "./logger";
 
 export function doSomethingImportant() {
   const logger = getLogger(); // Get the request-specific logger
 
-  logger.info('Starting important work...');
+  logger.info("Starting important work...");
   // ... do some work ...
-  logger.info('Finished important work.');
+  logger.info("Finished important work.");
 }
 ```
 
@@ -75,17 +76,17 @@ Notice how `doSomethingImportant` has no idea it's running inside a web request.
 Finally, let's wire everything up in our main application file.
 
 ```typescript title="src/index.ts"
-import { createApp, interceptor } from '@minimajs/server';
-import { loggerMiddleware } from './middleware/logger';
-import { doSomethingImportant } from './service';
-import { getLogger } from './logger';
+import { createApp, interceptor } from "@minimajs/server";
+import { loggerMiddleware } from "./middleware/logger";
+import { doSomethingImportant } from "./service";
+import { getLogger } from "./logger";
 
 async function mainModule(app) {
-  app.get('/', () => {
+  app.get("/", () => {
     const logger = getLogger();
-    logger.info('Handling request for /');
+    logger.info("Handling request for /");
     doSomethingImportant();
-    return { message: 'Hello, World!' };
+    return { message: "Hello, World!" };
   });
 }
 

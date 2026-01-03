@@ -47,26 +47,32 @@ app.listen({ port: 3000 });
 ### Custom Signals
 
 ```typescript
-app.register(gracefulShutdown({
-  signals: ["SIGINT", "SIGTERM", "SIGUSR2"]
-}));
+app.register(
+  gracefulShutdown({
+    signals: ["SIGINT", "SIGTERM", "SIGUSR2"],
+  })
+);
 ```
 
 ### Custom Timeout
 
 ```typescript
-app.register(gracefulShutdown({
-  timeout: 10000  // 10 seconds
-}));
+app.register(
+  gracefulShutdown({
+    timeout: 10000, // 10 seconds
+  })
+);
 ```
 
 ### Full Configuration
 
 ```typescript
-app.register(gracefulShutdown({
-  signals: ["SIGINT", "SIGTERM"],
-  timeout: 15000  // 15 seconds
-}));
+app.register(
+  gracefulShutdown({
+    signals: ["SIGINT", "SIGTERM"],
+    timeout: 15000, // 15 seconds
+  })
+);
 ```
 
 ## Cleanup with Lifecycle Hooks
@@ -80,15 +86,19 @@ import { gracefulShutdown } from "@minimajs/server/plugins";
 const app = createApp();
 
 // Register cleanup hooks
-app.register(hook("close", async () => {
-  await database.disconnect();
-  console.log("Database disconnected");
-}));
+app.register(
+  hook("close", async () => {
+    await database.disconnect();
+    console.log("Database disconnected");
+  })
+);
 
-app.register(hook("close", async () => {
-  await cache.clear();
-  console.log("Cache cleared");
-}));
+app.register(
+  hook("close", async () => {
+    await cache.clear();
+    console.log("Cache cleared");
+  })
+);
 
 // Register graceful shutdown
 app.register(gracefulShutdown());

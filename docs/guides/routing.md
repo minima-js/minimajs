@@ -18,19 +18,19 @@ The most basic way to define a route is to use the `app.get()`, `app.post()`, `a
 
 ```typescript
 // GET /
-app.get('/', () => 'Hello, World!');
+app.get("/", () => "Hello, World!");
 
 // POST /users
-app.post('/users', () => ({ message: 'User created' }));
+app.post("/users", () => ({ message: "User created" }));
 ```
 
 You can also use the `app.route()` method to define routes with more advanced options:
 
 ```typescript
 app.route({
-  method: 'GET',
-  url: '/',
-  handler: () => 'Hello, World!',
+  method: "GET",
+  url: "/",
+  handler: () => "Hello, World!",
 });
 ```
 
@@ -38,24 +38,24 @@ app.route({
 
 Minima.js supports all the standard HTTP methods:
 
-*   `app.get(path, handler)`
-*   `app.post(path, handler)`
-*   `app.put(path, handler)`
-*   `app.patch(path, handler)`
-*   `app.delete(path, handler)`
-*   `app.head(path, handler)`
-*   `app.options(path, handler)`
-*   `app.all(path, handler)` (matches all methods)
+- `app.get(path, handler)`
+- `app.post(path, handler)`
+- `app.put(path, handler)`
+- `app.patch(path, handler)`
+- `app.delete(path, handler)`
+- `app.head(path, handler)`
+- `app.options(path, handler)`
+- `app.all(path, handler)` (matches all methods)
 
 ## Route Parameters
 
 Route parameters are named URL segments that are used to capture the values specified at their position in the URL. The captured values are populated in the `params` object, which can be accessed from the `@minimajs/server` package.
 
 ```typescript
-import { params } from '@minimajs/server';
+import { params } from "@minimajs/server";
 
 // GET /users/123
-app.get('/users/:id', () => {
+app.get("/users/:id", () => {
   const { id } = params<{ id: string }>();
   return { id };
 });
@@ -65,7 +65,7 @@ You can define multiple parameters in a single route:
 
 ```typescript
 // GET /users/123/posts/456
-app.get('/users/:userId/posts/:postId', () => {
+app.get("/users/:userId/posts/:postId", () => {
   const { userId, postId } = params<{ userId: string; postId: string }>();
   return { userId, postId };
 });
@@ -77,9 +77,9 @@ You can make a route parameter optional by adding a question mark (`?`) to the e
 
 ```typescript
 // GET /users/123 or /users
-app.get('/users/:id?', () => {
+app.get("/users/:id?", () => {
   const { id } = params<{ id?: string }>();
-  return { id: id || 'No ID provided' };
+  return { id: id || "No ID provided" };
 });
 ```
 
@@ -89,8 +89,8 @@ Wildcards (`*`) can be used to match any character in a URL segment.
 
 ```typescript
 // Matches /posts/foo, /posts/bar, etc.
-app.get('/posts/*', () => {
-  const wildcard = params.get('*');
+app.get("/posts/*", () => {
+  const wildcard = params.get("*");
   return { wildcard };
 });
 ```
@@ -101,7 +101,7 @@ You can also use regular expressions to define routes. This is useful for more a
 
 ```typescript
 // Matches /files/123.png
-app.get('/files/:file(^\\d+).png', () => {
+app.get("/files/:file(^\\d+).png", () => {
   const { file } = params<{ file: string }>();
   return { file }; // { file: '123' }
 });
@@ -112,14 +112,14 @@ app.get('/files/:file(^\\d+).png', () => {
 When defining a route, you can also pass an `options` object to customize its behavior.
 
 ```typescript
-app.post('/users', { bodyLimit: 1024 * 1024 * 10 }, () => {
+app.post("/users", { bodyLimit: 1024 * 1024 * 10 }, () => {
   // ...
 });
 ```
 
 The following options are available:
 
-*   `bodyLimit`: The maximum size of the request body in bytes.
+- `bodyLimit`: The maximum size of the request body in bytes.
 
 ## Structuring Routes with Modules
 

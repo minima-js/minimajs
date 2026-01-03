@@ -47,9 +47,11 @@ describe("hooks", () => {
     test("should return hook response as proper response when hook returns data", async () => {
       const errorResponse = { error: "Custom error response", code: 400 };
 
-      app.register(hook("error", () => {
-        return errorResponse;
-      }));
+      app.register(
+        hook("error", () => {
+          return errorResponse;
+        })
+      );
 
       app.get("/", () => {
         throw new Error("Original error");
@@ -152,30 +154,38 @@ describe("hooks", () => {
       const callOrder: string[] = [];
 
       // Hook 1 returns a value - should be the final response
-      app.register(hook("error", () => {
-        callOrder.push("hook1");
-        return { success: true, message: "Finally handled" };
-      }));
+      app.register(
+        hook("error", () => {
+          callOrder.push("hook1");
+          return { success: true, message: "Finally handled" };
+        })
+      );
 
       // Hook 2 returns undefined - should continue to hook 1
-      app.register(hook("error", (err) => {
-        callOrder.push("hook2");
-        // This should receive the error from hook3
-        expect((err as Error).message).toBe("Hook 3 throws");
-        // Returns undefined, continues chain
-      }));
+      app.register(
+        hook("error", (err) => {
+          callOrder.push("hook2");
+          // This should receive the error from hook3
+          expect((err as Error).message).toBe("Hook 3 throws");
+          // Returns undefined, continues chain
+        })
+      );
 
       // Hook 3 throws a new error - should be caught by hook 2
-      app.register(hook("error", () => {
-        callOrder.push("hook3");
-        throw new Error("Hook 3 throws");
-      }));
+      app.register(
+        hook("error", () => {
+          callOrder.push("hook3");
+          throw new Error("Hook 3 throws");
+        })
+      );
 
       // Hook 4 runs first (hooks are reversed), returns undefined
-      app.register(hook("error", () => {
-        callOrder.push("hook4");
-        // Returns undefined, should continue to next hook
-      }));
+      app.register(
+        hook("error", () => {
+          callOrder.push("hook4");
+          // Returns undefined, should continue to next hook
+        })
+      );
 
       app.get("/", () => {
         throw new Error("Original error");
