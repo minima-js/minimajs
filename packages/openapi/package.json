@@ -1,0 +1,45 @@
+{
+  "name": "@minimajs/openapi",
+  "version": "0.1.0",
+  "description": "OpenAPI 3.1 specification generator for MinimaJS with Zod schema integration",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://minima-js.github.io/",
+  "repository": {
+    "type": "github",
+    "directory": "packages/openapi",
+    "url": "https://github.com/minima-js/minimajs"
+  },
+  "exports": {
+    ".": "./lib/index.js"
+  },
+  "scripts": {
+    "dev": "tsc -w",
+    "build": "bun run clean && tsc --build",
+    "clean": "rimraf -g '*.tsbuildinfo' lib"
+  },
+  "peerDependencies": {
+    "@minimajs/server": ">=0.3.0",
+    "zod": "^4.3.2"
+  },
+  "dependencies": {
+    "zod-to-json-schema": "^3.24.1"
+  },
+  "devDependencies": {
+    "@minimajs/server": "workspace:*",
+    "@types/node": "^25.0.3",
+    "zod": "^4.3.2"
+  },
+  "files": [
+    "lib"
+  ],
+  "keywords": [
+    "openapi",
+    "swagger",
+    "api",
+    "documentation",
+    "zod",
+    "schema",
+    "validation"
+  ]
+}
