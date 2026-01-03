@@ -52,7 +52,7 @@ export function schema<T>(...schemas: CallableFunction[]): RouteMetaDescriptor<T
       path: config.path,
       handler: config.handler,
       app: config.app,
-      schemas: schemas.map((x) => getSchemaMetadata(x)),
+      schemas: schemas.map(getSchemaMetadata),
     };
     metadata.set(kBodySkip, true);
     addSchemaToMetadataSet(metadata, values);
