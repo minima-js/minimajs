@@ -1,5 +1,4 @@
-import { plugin } from "../internal/plugins.js";
-import { addHook } from "../hooks/index.js";
+import { hook } from "../hooks/index.js";
 
 export interface RouteLoggerOptions {
   /** Custom logger function to output routes. Defaults to console.log with magenta color */
@@ -40,17 +39,15 @@ export interface RouteLoggerOptions {
  * ```
  */
 export function routeLogger({ commonPrefix = false, logger }: RouteLoggerOptions = {}) {
-  return plugin.sync(function logRoute(app) {
-    addHook(app, "ready", async () => {
-      if (!logger) {
-        try {
-          const chalk = await import("chalk").then((m) => m.default);
-          logger = (routes) => app.log.info(chalk.magenta(routes));
-        } catch {
-          logger = (routes) => app.log.info(routes);
-        }
+  return hook("ready", async (app) => {
+    if (!logger) {
+      try {
+        const { default: chalk } = await import("chalk");
+        logger = (routes) => app.log.info(chalk.magenta(routes));
+      } catch {
+        logger = (routes) => app.log.info(routes);
       }
-      logger(app.router.prettyPrint({ commonPrefix }));
-    });
+    }
+    logger(app.router.prettyPrint({ commonPrefix }));
   });
 }
