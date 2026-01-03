@@ -19,6 +19,40 @@ describe("plugins", () => {
     });
   });
 
+  describe("plugin.getName", () => {
+    test("should return opts.name when provided", () => {
+      const fn = plugin(async () => {});
+      const name = plugin.getName(fn, { name: "custom-name" });
+      expect(name).toBe("custom-name");
+    });
+
+    test("should return fn[kPluginName] when set", () => {
+      const fn: any = plugin(async () => {}, "plugin-name");
+      const name = plugin.getName(fn);
+      expect(name).toBe("plugin-name");
+    });
+
+    test("should return fn.name when available", () => {
+      function namedFunction() {}
+      const name = plugin.getName(namedFunction as any);
+      expect(name).toBe("namedFunction");
+    });
+
+    test("should return 'anonymous' for functions without name", () => {
+      const fn = (() => {}) as any;
+      // Remove the name property to simulate truly anonymous function
+      Object.defineProperty(fn, 'name', { value: '', writable: false });
+      const name = plugin.getName(fn);
+      expect(name).toBe("anonymous");
+    });
+
+    test("should prioritize opts.name over fn[kPluginName]", () => {
+      const fn: any = plugin(async () => {}, "original-name");
+      const name = plugin.getName(fn, { name: "override-name" });
+      expect(name).toBe("override-name");
+    });
+  });
+
   describe("compose", () => {
     let app: App;
 

@@ -1,6 +1,10 @@
-import type { App, RouteHandler, RouteMetadata } from "../interfaces/app.js";
+import type { App, Container, RouteHandler, RouteMetadata } from "../interfaces/app.js";
 import type { Route, RouteFindResult, RouteMetaDescriptor } from "../interfaces/route.js";
-import { getDescriptorsAll } from "./descriptor.js";
+import { kAppDescriptor } from "../symbols.js";
+
+export function getDescriptorsAll<S = unknown>(container: Container) {
+  return container.get(kAppDescriptor) as RouteMetaDescriptor<S>[];
+}
 
 /**
  * Creates a RouteMetadata map from route descriptors

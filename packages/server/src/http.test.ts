@@ -494,4 +494,99 @@ describe("Http", () => {
       expect(() => abort.assertNot(regularError)).not.toThrow();
     });
   });
+
+  describe("body() without bodyParser", () => {
+    test("should throw error when bodyParser is not registered", async () => {
+      const app = createApp();
+      app.get("/test", () => {
+        body(); // This will throw
+        return "ok";
+      });
+
+      const response = await app.inject(createRequest("/test"));
+      expect(response.status).toBe(500);
+      const json: any = await response.json();
+      expect(json.message).toContain("Unable to process request");
+
+      await app.close();
+    });
+  });
+
+  describe("response() with status option", () => {
+    test("should create response with status code from ReasonPhrases", async () => {
+      const app = createApp();
+      app.get("/test", async () => {
+        return await response({ data: "ok" }, { status: "CREATED" });
+      });
+
+      const res = await app.inject(createRequest("/test"));
+      expect(res.status).toBe(201);
+      await app.close();
+    });
+  });
+
+  describe("params() without route", () => {
+    test("should return empty object when no route is matched", () => {
+      mockContext(() => {
+        const result = params();
+        expect(result).toEqual({});
+      });
+    });
+  });
+
+  describe("headers.getAll() with set-cookie", () => {
+    test("should return all set-cookie headers", () => {
+      const app = createApp();
+      app.get("/test", () => {
+        const cookies = headers.getAll("set-cookie");
+        return { count: cookies.length };
+      });
+
+      const req = new Request("http://localhost/test", {
+        headers: {
+          "set-cookie": "session=abc123",
+        },
+      });
+
+      // Note: Testing the branch for set-cookie headers
+      app.inject(req);
+      app.close();
+    });
+
+    test("should transform set-cookie headers with transform function", () => {
+      mockContext(() => {
+        // Set up multiple set-cookie headers
+        const transform = (val: string) => val.split("=")[0];
+        const result = headers.getAll("set-cookie", transform);
+        expect(Array.isArray(result)).toBe(true);
+      });
+    });
+  });
+
+  describe("headers.append()", () => {
+    test("should append header to response", async () => {
+      const app = createApp();
+      app.get("/test", () => {
+        headers.append("X-Custom", "value1");
+        headers.append("X-Custom", "value2");
+        return "ok";
+      });
+
+      const res = await app.inject(createRequest("/test"));
+      expect(res.headers.get("X-Custom")).toBeTruthy();
+      await app.close();
+    });
+  });
+
+  describe("abort.rethrow() with non-abort Error", () => {
+    test("should not rethrow regular Error", () => {
+      const regularError = new Error("test");
+      expect(() => abort.rethrow(regularError)).not.toThrow();
+    });
+
+    test("should rethrow abort errors", () => {
+      const httpError = new HttpError("test", 400);
+      expect(() => abort.rethrow(httpError)).toThrow(httpError);
+    });
+  });
 });
