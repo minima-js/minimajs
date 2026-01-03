@@ -5,6 +5,8 @@ type ZodIssue = z.core.$ZodIssue;
 type ZodError<T = unknown> = z.core.$ZodError<T>;
 type ZodErrorMap = z.core.$ZodErrorMap;
 
+export class SchemaError extends Error {}
+
 /**
  * Options for creating a validation error.
  * Extends HTTP error options with validation-specific properties.

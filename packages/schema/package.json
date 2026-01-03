@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./lib/index.js",
+    "./resource": "./lib/resource/index.js",
     "./validation": "./lib/validation.js"
   },
   "scripts": {

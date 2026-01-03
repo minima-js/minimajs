@@ -1,5 +1,5 @@
 import { z, ZodError } from "zod";
-import { SchemaError, ValidationError } from "./error.js";
+import { SchemaError, ValidationError } from "../error.js";
 import { context } from "@minimajs/server";
 import type { SchemaLifecycleTypes } from "./schema.js";
 

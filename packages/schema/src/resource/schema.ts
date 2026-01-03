@@ -14,7 +14,8 @@ interface SchemaStore {
 export function configureSchema(): PluginSync {
   async function handleRequest({ route }: Context) {
     if (!route) return;
-    const schemaStore = route.metadata.get(kSchema) as Set<SchemaStore>;
+    const schemaStore = route.metadata.get(kSchema) as Set<SchemaStore> | undefined;
+    if (!schemaStore) return;
     for (const store of schemaStore) {
       for (const schema of store.schemas) {
         await schema.callback();
@@ -24,8 +25,8 @@ export function configureSchema(): PluginSync {
   return hook("request", handleRequest);
 }
 
-export function schema(...schemas: Function[]) {
-  return function descriptor(path: string, handler: RouteHandler, app: App) {
+export function schema<T>(...schemas: CallableFunction[]) {
+  return function descriptor(path: string, handler: RouteHandler<T>, app: App) {
     const values: SchemaStore = {
       path,
       handler,
