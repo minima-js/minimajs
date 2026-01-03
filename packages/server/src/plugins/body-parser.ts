@@ -1,6 +1,6 @@
 import { hook } from "../hooks/index.js";
 import type { Context } from "../interfaces/index.js";
-import { kBody } from "../symbols.js";
+import { kBody, kBodySkip } from "../symbols.js";
 
 export type BodyParserType = "json" | "text" | "form" | "arrayBuffer" | "blob";
 
@@ -100,7 +100,8 @@ export function bodyParser(opts: BodyParserOptions = { type: ["json"] }) {
     );
   }
 
-  async function onRequest({ request, locals }: Context) {
+  async function onRequest({ request, app, route, locals }: Context) {
+    if (route?.metadata.has(kBodySkip)) return;
     // Mark that body parser is registered, even if no body is parsed
     locals.set(kBody, null);
 
@@ -141,6 +142,7 @@ export function bodyParser(opts: BodyParserOptions = { type: ["json"] }) {
       locals.set(kBody, parsed);
     } catch {
       // Parse error - keep null value
+      app.log.error("body already parsed!");
       // The body() function will return null
     }
   }

@@ -3,13 +3,13 @@ import { type Avvio } from "avvio";
 import { type Logger, pino } from "pino";
 import type { App, RouteHandler } from "./interfaces/app.js";
 import type { Plugin, PluginOptions, PluginSync, Register, RegisterOptions } from "./interfaces/plugin.js";
-import { createRouteMetadata, applyRoutePrefix } from "./internal/route.js";
+import { applyRouteMetadata, applyRoutePrefix } from "./internal/route.js";
 import { runHooks } from "./hooks/store.js";
 import { serialize, errorHandler } from "./internal/default-handler.js";
 import { handleRequest } from "./internal/handler.js";
 import type { ErrorHandler, Serializer } from "./interfaces/response.js";
 import { plugin as p } from "./internal/plugins.js";
-import type { PrefixOptions, RouteFindResult, RouteMetaDescriptor, RouteOptions } from "./interfaces/route.js";
+import type { PrefixOptions, RouteConfig, RouteMetaDescriptor, RouteOptions } from "./interfaces/route.js";
 import { createBoot, wrapPlugin } from "./internal/boot.js";
 import type { AddressInfo, ServerAdapter, ListenOptions, CreateBaseSeverOptions } from "./interfaces/server.js";
 import { minimajs } from "./plugins/minimajs.js";
@@ -47,8 +47,8 @@ export class Server<T = any> implements App<T> {
 
   // HTTP methods
   get(path: string, handler: RouteHandler<T>): this;
-  get(path: string, ...args: [...RouteMetaDescriptor<T>[], RouteHandler<T>]): this;
-  get(path: string, ...args: [...RouteMetaDescriptor<T>[], RouteHandler<T>]): this {
+  get(path: string, ...args: [...descriptors: RouteMetaDescriptor<T>[], handler: RouteHandler<T>]): this;
+  get(path: string, ...args: [...descriptors: RouteMetaDescriptor<T>[], handler: RouteHandler<T>]): this {
     return this.route({ method: "GET", path }, ...args);
   }
 
@@ -104,18 +104,19 @@ export class Server<T = any> implements App<T> {
     const descriptors = args.slice(0, -1) as RouteMetaDescriptor<T>[];
     const fullPath = applyRoutePrefix(path, this.$prefix, this.$prefixExclude);
 
-    // find-my-way supports '*' wildcard for all HTTP methods
+    const store: RouteConfig<T> = {
+      app: this,
+      path: fullPath,
+      methods: Array.isArray(method) ? method : [method],
+      handler,
+      metadata: new Map(),
+    };
+    applyRouteMetadata(store, descriptors);
     this.router.on(
       method,
       fullPath,
       () => {}, // Dummy handler - actual handler is in store
-      {
-        server: this,
-        path: fullPath,
-        methods: Array.isArray(method) ? method : [method],
-        handler,
-        metadata: createRouteMetadata(descriptors, fullPath, handler, this),
-      } satisfies RouteFindResult<T>["store"]
+      store
     );
     return this;
   }

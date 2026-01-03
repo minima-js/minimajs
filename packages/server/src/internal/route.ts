@@ -1,5 +1,5 @@
-import type { App, Container, RouteHandler, RouteMetadata } from "../interfaces/app.js";
-import type { Route, RouteFindResult, RouteMetaDescriptor } from "../interfaces/route.js";
+import type { Route, RouteConfig, RouteFindResult, RouteMetaDescriptor } from "../interfaces/route.js";
+import type { Container } from "../interfaces/app.js";
 import { kAppDescriptor } from "../symbols.js";
 
 export function getDescriptorsAll<S = unknown>(container: Container) {
@@ -9,21 +9,16 @@ export function getDescriptorsAll<S = unknown>(container: Container) {
 /**
  * Creates a RouteMetadata map from route descriptors
  */
-export function createRouteMetadata<T>(
-  descriptors: RouteMetaDescriptor<T>[],
-  path: string,
-  handler: RouteHandler<T>,
-  app: App<T>
-): RouteMetadata {
-  const routeContainer: RouteMetadata = new Map();
+export function applyRouteMetadata<T>(route: RouteConfig<T>, descriptors: RouteMetaDescriptor<T>[]): void {
+  const { app, metadata } = route;
   for (const descriptor of [...getDescriptorsAll<T>(app.container), ...descriptors]) {
-    const [name, value] = typeof descriptor === "function" ? descriptor(path, handler, app) : descriptor;
-    if (!routeContainer.has(name)) {
-      routeContainer.set(name, new Set());
+    if (Array.isArray(descriptor)) {
+      const [name, value] = descriptor;
+      metadata.set(name, value);
+      continue;
     }
-    routeContainer.get(name)!.add(value);
+    descriptor(route);
   }
-  return routeContainer;
 }
 
 /**

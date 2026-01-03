@@ -19,7 +19,7 @@ export async function handleRequest(server: App, router: Instance<HTTPVersion.V1
 
   if (result) {
     route = result2route(result);
-    app = result.store.server;
+    app = result.store.app;
   }
 
   const ctx: Context = {

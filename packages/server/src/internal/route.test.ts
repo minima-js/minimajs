@@ -1,102 +1,8 @@
 import { describe, test, expect } from "@jest/globals";
-import { createRouteMetadata, applyRoutePrefix, result2route } from "./route.js";
-import { createApp } from "../bun/index.js";
-import type { RouteFindResult, RouteMetaDescriptor } from "../interfaces/route.js";
-import type { App, RouteHandler } from "../interfaces/app.js";
+import { applyRoutePrefix, result2route } from "./route.js";
+import type { RouteFindResult } from "../interfaces/route.js";
 describe("internal/route", () => {
   const tag = Symbol("tag");
-  const version = Symbol("version");
-  const path = Symbol("path");
-  const method = Symbol("method");
-  const route = Symbol("route");
-  const publicKey = Symbol("public");
-  describe("createRouteMetadata", () => {
-    test("should create metadata from array descriptors", () => {
-      const app = createApp();
-      const handler: RouteHandler = () => "test";
-      const descriptors: RouteMetaDescriptor[] = [
-        [tag, "api"],
-        [tag, "public"],
-        [version, "v1"],
-      ];
-
-      const metadata = createRouteMetadata<any>(descriptors, "/test", handler, app);
-
-      expect(metadata.has(tag)).toBe(true);
-      expect(metadata.has(version)).toBe(true);
-      expect(metadata.get(tag)?.has("api")).toBe(true);
-      expect(metadata.get(tag)?.has("public")).toBe(true);
-      expect(metadata.get(version)?.has("v1")).toBe(true);
-
-      app.close();
-    });
-
-    test("should create metadata from function descriptors", () => {
-      const app = createApp();
-      const handler: RouteHandler = () => "test";
-      const descriptors: RouteMetaDescriptor[] = [
-        (pathStr: string, _handler: RouteHandler, _app: App) => [path, pathStr],
-        (_pathStr: string) => [method, "GET"],
-      ];
-
-      const metadata = createRouteMetadata<any>(descriptors, "/users", handler, app);
-
-      expect(metadata.has(path)).toBe(true);
-      expect(metadata.has(method)).toBe(true);
-      expect(metadata.get(path)?.has("/users")).toBe(true);
-      expect(metadata.get(method)?.has("GET")).toBe(true);
-
-      app.close();
-    });
-
-    test("should handle mixed array and function descriptors", () => {
-      const app = createApp();
-      const handler: RouteHandler = () => "test";
-      const descriptors: RouteMetaDescriptor[] = [[tag, "api"], (pathStr: string) => [route, pathStr], [publicKey, true]];
-
-      const metadata = createRouteMetadata<any>(descriptors, "/mixed", handler, app);
-
-      expect(metadata.has(tag)).toBe(true);
-      expect(metadata.has(route)).toBe(true);
-      expect(metadata.has(publicKey)).toBe(true);
-      expect(metadata.get(tag)?.has("api")).toBe(true);
-      expect(metadata.get(route)?.has("/mixed")).toBe(true);
-      expect(metadata.get(publicKey)?.has(true)).toBe(true);
-
-      app.close();
-    });
-
-    test("should merge values for same metadata key", () => {
-      const app = createApp();
-      const handler: RouteHandler = () => "test";
-      const descriptors: RouteMetaDescriptor[] = [
-        [tag, "api"],
-        [tag, "v1"],
-        [tag, "public"],
-      ];
-
-      const metadata = createRouteMetadata<any>(descriptors, "/test", handler, app);
-
-      expect(metadata.get(tag)?.size).toBe(3);
-      expect(metadata.get(tag)?.has("api")).toBe(true);
-      expect(metadata.get(tag)?.has("v1")).toBe(true);
-      expect(metadata.get(tag)?.has("public")).toBe(true);
-
-      app.close();
-    });
-
-    test("should handle empty descriptors", () => {
-      const app = createApp();
-      const handler: RouteHandler = () => "test";
-      const descriptors: RouteMetaDescriptor[] = [];
-
-      const metadata = createRouteMetadata<any>(descriptors, "/test", handler, app);
-
-      expect(metadata.size).toBeGreaterThanOrEqual(0);
-
-      app.close();
-    });
-  });
 
   describe("applyRoutePrefix", () => {
     test("should apply prefix to path", () => {
@@ -153,7 +59,7 @@ describe("internal/route", () => {
         store: {
           methods: ["GET"],
           handler,
-          server: {} as any,
+          app: {} as any,
           path: "/users/:id",
           metadata,
         },
