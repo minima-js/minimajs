@@ -1,6 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach, jest } from "@jest/globals";
-import { shutdownListener, type QuitHandler } from "./shutdown.js";
+import { shutdownListener, shutdown, type QuitHandler } from "./shutdown.js";
 import type { Signals } from "../interfaces/index.js";
+import { createApp } from "../bun/index.js";
 
 describe("shutdownListener", () => {
   let quitHandler: QuitHandler;
@@ -104,5 +105,44 @@ describe("shutdownListener", () => {
     expect(mockProcess.exit).not.toHaveBeenCalled();
 
     clearTimeoutSpy.mockRestore();
+  });
+});
+
+describe("shutdown plugin", () => {
+  test("should create shutdown plugin with default options", () => {
+    const app = createApp({ logger: false });
+    const plugin = shutdown();
+
+    expect(plugin).toBeDefined();
+    expect(typeof plugin).toBe("function");
+
+    app.close();
+  });
+
+  test("should create shutdown plugin with custom signals", () => {
+    const app = createApp({ logger: false });
+    const plugin = shutdown({ signals: ["SIGINT"] });
+
+    expect(plugin).toBeDefined();
+
+    app.close();
+  });
+
+  test("should create shutdown plugin with custom timeout", () => {
+    const app = createApp({ logger: false });
+    const plugin = shutdown({ timeout: 10000 });
+
+    expect(plugin).toBeDefined();
+
+    app.close();
+  });
+
+  test("should register shutdown plugin successfully", async () => {
+    const app = createApp({ logger: false });
+    app.register(shutdown());
+
+    await app.ready();
+
+    await app.close();
   });
 });

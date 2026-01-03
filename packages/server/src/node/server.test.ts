@@ -338,6 +338,23 @@ describe("Node Server", () => {
       await app.close();
       app = null as any;
     });
+
+    test("should handle real HTTP requests through Node.js server", async () => {
+      app = createApp({ logger: false });
+      app.get("/real-request", () => ({ real: true }));
+
+      const addr = await app.listen({ port: 0 });
+      const port = addr.port;
+
+      // Make a real HTTP request
+      const response = await fetch(`http://localhost:${port}/real-request`);
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data).toEqual({ real: true });
+
+      await app.close();
+      app = null as any;
+    });
   });
 
   describe("Error Handling", () => {

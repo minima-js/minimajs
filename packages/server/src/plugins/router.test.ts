@@ -21,8 +21,8 @@ describe("routeLogger", () => {
     await app.close();
   });
 
-  test("should log routes with default options using console.log and chalk", async () => {
-    const spy = jest.spyOn(console, "log").mockImplementation(() => {});
+  test("should log routes with default options using app.log.info and chalk", async () => {
+    const spy = jest.spyOn(app.log, "info").mockImplementation(() => {});
 
     app.register(routeLogger());
     await app.ready();

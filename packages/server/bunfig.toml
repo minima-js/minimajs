@@ -15,4 +15,6 @@ coveragePathIgnorePatterns = [
   "**/lib/**",
   "**/__tests__/helpers/**",
   "**/__tests__/fixtures/**",
+  "**/mock/**",
+  "src/mock/**",
 ]

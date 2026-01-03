@@ -26,7 +26,7 @@
     "build": "bun run clean && tsc -p ./tsconfig.build.json",
     "test": "bun test --timeout=2000 '**/*.test.ts'",
     "test:jest": "node --no-warnings --experimental-vm-modules node_modules/.bin/jest --detectOpenHandles",
-    "coverage": "bun test --coverage --timeout=2000 '**/*.test.ts'",
+    "coverage": "bun test --coverage --timeout=2000 src/",
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "dependencies": {
