@@ -47,7 +47,7 @@ export async function handleRequest(server: App, router: Instance<HTTPVersion.V1
       }
       // Route not found
       if (!route) {
-        return await handleError(new NotFoundError(`Route ${req.method} ${url.pathname} not found`), ctx);
+        return await handleError(new NotFoundError(), ctx);
       }
       const data = await route.handler(ctx);
       // Create and return response (handles all hooks and serialization)

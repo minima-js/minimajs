@@ -136,39 +136,28 @@ async function resolveOrigin(
  */
 export function cors(options: CorsOptions = {}) {
   const config = { ...defaultOptions, ...options };
-  return hook.define({
-    async request({ request: req }): Promise<void | Response> {
-      if (req.method !== "OPTIONS") {
-        return;
-      }
-      const origin = req.headers.get("origin") || "";
-      const allowOrigin = await resolveOrigin(config.origin, origin);
+  return hook("request", async ({ request: req, responseState: res }): Promise<void | Response> => {
+    const origin = req.headers.get("origin") || "";
 
-      if (!allowOrigin) {
-        return; // Origin not allowed, let it continue to return 404 or custom handler
-      }
-      // Build preflight CORS headers
-      const headers = buildCorsHeaders(allowOrigin, config, true);
-      // If preflightContinue is false, return early with OPTIONS response
-      if (!config.preflightContinue) {
-        return response(null, {
-          status: config.optionsSuccessStatus,
-          headers,
-        });
-      }
-    },
+    const allowOrigin = await resolveOrigin(config.origin, origin);
+    if (!allowOrigin) {
+      return; // Origin not allowed, let it continue to return 404 or custom handler
+    }
 
-    async send(_body, { request: req, responseState: res }) {
-      const origin = req.headers.get("origin") || "";
-      const allowOrigin = await resolveOrigin(config.origin, origin);
-      if (!allowOrigin) {
-        return; // Origin not allowed, don't add CORS headers
-      }
-      const headers = buildCorsHeaders(allowOrigin, config, false);
-      // Write CORS headers to context response
-      for (const [key, value] of Object.entries(headers)) {
-        res.headers.set(key, value);
-      }
-    },
+    for (const [key, value] of Object.entries(buildCorsHeaders(allowOrigin, config, true))) {
+      res.headers.set(key, value);
+    }
+
+    if (req.method !== "OPTIONS") {
+      return;
+    }
+
+    // Build preflight CORS headers
+    // If preflightContinue is false, return early with OPTIONS response
+    if (!config.preflightContinue) {
+      return response(null, {
+        status: config.optionsSuccessStatus,
+      });
+    }
   });
 }

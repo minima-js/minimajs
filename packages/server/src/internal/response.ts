@@ -21,9 +21,7 @@ export function createResponseFromState(data: ResponseBody, options: ResponseIni
   return new Response(data, {
     ...resInit,
     ...options,
-    headers: options.headers
-      ? mergeHeaders(resInit.headers, new Headers(options.headers as HeadersInit))
-      : resInit.headers,
+    headers: options.headers ? mergeHeaders(resInit.headers, new Headers(options.headers as HeadersInit)) : resInit.headers,
   });
 }
 export async function createResponse(data: unknown, options: ResponseInit = {}, ctx: Context): Promise<Response> {
