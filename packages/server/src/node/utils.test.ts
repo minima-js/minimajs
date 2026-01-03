@@ -263,12 +263,6 @@ describe("node/utils", () => {
         },
       });
 
-      let responseBody = "";
-      mockRes.end = function (chunk?: any) {
-        if (chunk) responseBody = chunk.toString();
-        return this;
-      };
-
       await fromWebResponse(webResponse, mockRes);
 
       expect(mockRes.getHeader("content-type")).toBe("text/html");

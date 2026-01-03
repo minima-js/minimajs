@@ -17,10 +17,22 @@ export function toWebHeaders(nodeHeaders: IncomingMessage["headers"]): Headers {
 
 export function toWebRequest(req: IncomingMessage): Request {
   const url = `http://${req.headers.host || "localhost"}${req.url}`;
+
+  // Create AbortController to handle request abortion
+  const controller = new AbortController();
+
+  // Listen for client disconnect
+  req.on("close", () => {
+    if (!req.complete) {
+      controller.abort();
+    }
+  });
+
   const request = new Request(url, {
     method: req.method,
     headers: toWebHeaders(req.headers),
     body: req.method !== "GET" && req.method !== "HEAD" ? req : undefined,
+    signal: controller.signal,
   });
   return request;
 }
