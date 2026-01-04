@@ -68,8 +68,11 @@ const config = defineConfig({
       {
         text: "Plugins",
         items: [
-          { text: "Route Logger", link: "/guides/route-logger" },
-          { text: "Graceful Shutdown", link: "/guides/graceful-shutdown" },
+          { text: "Introduction", link: "/plugins/index" },
+          { text: "Body Parser", link: "/plugins/body-parser" },
+          { text: "CORS", link: "/plugins/cors" },
+          { text: "Route Logger", link: "/plugins/route-logger" },
+          { text: "Graceful Shutdown", link: "/plugins/shutdown" },
         ],
       },
       {

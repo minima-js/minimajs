@@ -30,5 +30,6 @@ export { logger };
 
 export { plugin } from "./internal/plugins.js";
 export { compose } from "./compose.js";
+export { route } from "./route.js";
 
 export { createApp } from "./node/index.js";

@@ -2,7 +2,7 @@ import type { Route, RouteConfig, RouteFindResult, RouteMetaDescriptor } from ".
 import type { Container } from "../interfaces/app.js";
 import { kAppDescriptor } from "../symbols.js";
 
-export function getDescriptorsAll<S = unknown>(container: Container) {
+export function getAppRouteDescriptors<S = unknown>(container: Container) {
   return container.get(kAppDescriptor) as RouteMetaDescriptor<S>[];
 }
 
@@ -11,7 +11,7 @@ export function getDescriptorsAll<S = unknown>(container: Container) {
  */
 export function applyRouteMetadata<T>(route: RouteConfig<T>, descriptors: RouteMetaDescriptor<T>[]): void {
   const { app, metadata } = route;
-  for (const descriptor of [...getDescriptorsAll<T>(app.container), ...descriptors]) {
+  for (const descriptor of [...getAppRouteDescriptors<T>(app.container), ...descriptors]) {
     if (Array.isArray(descriptor)) {
       const [name, value] = descriptor;
       metadata.set(name, value);

@@ -1,5 +1,5 @@
 import { hook } from "../hooks/index.js";
-import type { Context } from "../interfaces/index.js";
+import type { Context, RouteMetaDescriptor } from "../interfaces/index.js";
 import { kBody, kBodySkip } from "../symbols.js";
 
 export type BodyParserType = "json" | "text" | "form" | "arrayBuffer" | "blob";
@@ -148,4 +148,10 @@ export function bodyParser(opts: BodyParserOptions = { type: ["json"] }) {
   }
 
   return hook("request", onRequest);
+}
+
+export namespace bodyParser {
+  export function skip(): RouteMetaDescriptor {
+    return [kBodySkip, true];
+  }
 }

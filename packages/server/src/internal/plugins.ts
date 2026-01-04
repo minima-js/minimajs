@@ -43,7 +43,7 @@ export namespace plugin {
     return kPluginSync in fn;
   }
 
-  export function sync(synced: (app: App) => void) {
+  export function sync<T>(synced: (app: App<T>) => void) {
     (synced as unknown as PluginSync)[kPluginSync] = true;
     return synced;
   }
