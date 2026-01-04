@@ -15,12 +15,14 @@ export function toWebHeaders(nodeHeaders: IncomingMessage["headers"]): Headers {
   return headers;
 }
 
-export function toWebRequest(req: IncomingMessage): Request {
-  const url = `http://${req.headers.host || "localhost"}${req.url}`;
-
+export function toWebRequest(req: IncomingMessage, domain: string = "http://localhost"): Request {
+  const { headers } = req;
+  if (headers.host) {
+    domain = `http://${headers.host}`;
+  }
+  const url = domain + req.url;
   // Create AbortController to handle request abortion
   const controller = new AbortController();
-
   // Listen for client disconnect
   req.on("close", () => {
     if (!req.complete) {

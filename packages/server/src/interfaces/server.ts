@@ -4,7 +4,7 @@ import type { Logger } from "pino";
 export interface AddressInfo {
   hostname: string;
   port: number;
-  family: string;
+  family: "IPv4" | "IPv6" | "unix";
   protocol: "http" | "https";
   address: string;
 }
