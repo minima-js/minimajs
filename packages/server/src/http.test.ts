@@ -15,14 +15,6 @@ describe("Http", () => {
     });
   });
 
-  describe("request.signal", () => {
-    test("should return an AbortSignal instance", () => {
-      mockContext(() => {
-        expect(request.signal()).toBeInstanceOf(AbortSignal);
-      });
-    });
-  });
-
   describe("response", () => {
     test("should create response from data", async () => {
       const app = createApp({ logger: false });

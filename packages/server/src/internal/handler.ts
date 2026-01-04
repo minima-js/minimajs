@@ -30,7 +30,6 @@ export async function handleRequest(server: App, router: Instance<HTTPVersion.V1
     locals,
     container: app.container,
     request: req,
-    signal: req.signal,
     responseState: { headers: new Headers() }, // Initialize mutable response headers
     incomingMessage: undefined as any,
     serverResponse: undefined as any,

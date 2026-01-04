@@ -2,6 +2,207 @@
 
 Minima.js is designed with a modular and scalable architecture that allows developers to build modern web applications with ease. Unlike most frameworks, **Minima.js is built entirely from scratch**—not layered on top of Express, Fastify, or any other framework. This ground-up approach enables native integration with modern runtimes like Bun while maintaining Node.js compatibility, with zero legacy overhead.
 
+## Complete Lifecycle Flow
+
+Understanding the full lifecycle of a Minima.js application is crucial for building robust applications. The lifecycle consists of two interconnected flows: **Application Lifecycle** and **Request Lifecycle**.
+
+### Application Lifecycle
+
+The application goes through four key phases:
+
+<!--@include: ./diagrams/application-lifecycle.md-->
+
+### Request Lifecycle
+
+Each incoming request flows through multiple stages with three main execution paths:
+
+<!--@include: ./diagrams/request-lifecycle.md-->
+
+### Flow Execution Paths
+
+There are **four main execution paths** for a request:
+
+<!--@include: ./diagrams/flow-execution-paths.md-->
+
+#### 1. Normal Flow (Automatic Serialization)
+
+```
+REQUEST → Route Match → Handler (returns data) → TRANSFORM →
+Serialize → SEND → Response → SENT → defer()
+```
+
+**Example:**
+
+```typescript
+app.get("/users", () => {
+  return { users: ["Alice", "Bob"] };
+});
+// Returns data → transformed → serialized → sent
+```
+
+#### 2. Direct Response Flow (Bypass Hooks)
+
+```
+REQUEST → Route Match → Handler (returns Response) → SEND → SENT
+```
+
+**Example:**
+
+```typescript
+app.get("/stream", () => {
+  return new Response("Direct", { status: 200 });
+});
+// Skips: TRANSFORM, serialization
+```
+
+#### 3. Early Return Flow (Short-Circuit)
+
+```
+REQUEST → (returns Response) → SEND → SENT
+```
+
+**Example:**
+
+```typescript
+app.register(
+  hook("request", ({ request }) => {
+    if (request.headers.get("x-maintenance") === "true") {
+      return new Response("Maintenance", { status: 503 });
+    }
+  })
+);
+// Skips: routing, handler, all other hooks
+```
+
+#### 4. Error Flow
+
+```
+Any Stage → (error) → ERROR → Serialize Error → Send → ERROR_SENT → onError()
+```
+
+**Example:**
+
+```typescript
+app.get("/error", () => {
+  throw new Error("Something broke");
+});
+// Goes to ERROR hook → error response → ERROR_SENT
+```
+
+### Hook Execution Order
+
+Hooks execute in **LIFO** (Last-In-First-Out) order within the same scope:
+
+```typescript
+app.register(hook("request", () => console.log("First registered")));
+app.register(hook("request", () => console.log("Second registered")));
+
+// Execution order:
+// 1. "Second registered"  (last registered, runs first)
+// 2. "First registered"   (first registered, runs last)
+```
+
+### Encapsulation and Scope Isolation
+
+Each `app.register()` creates an **isolated scope**. Hooks and routes only affect their own scope and child scopes:
+
+<!--@include: ./diagrams/encapsulation.md-->
+
+**Example Code:**
+
+```typescript
+const app = createApp();
+
+// Root scope
+app.register(hook("request", () => console.log("Root hook")));
+
+app.register(async (app) => {
+  // Child scope 1
+  app.register(hook("request", () => console.log("Child 1 hook")));
+  app.get("/users", () => "users");
+  // Executes: Root hook → Child 1 hook
+});
+
+app.register(async (app) => {
+  // Child scope 2 (isolated from Child 1)
+  app.register(hook("request", () => console.log("Child 2 hook")));
+  app.get("/admin", () => "admin");
+  // Executes: Root hook → Child 2 hook (NOT Child 1 hook)
+});
+```
+
+### Lifecycle Hook Summary
+
+#### Application Lifecycle Hooks
+
+| Hook       | When                           | Use Case                            |
+| ---------- | ------------------------------ | ----------------------------------- |
+| `register` | Plugin/module registered       | Track plugin loading                |
+| `ready`    | App initialized, before listen | Database connection, config loading |
+| `listen`   | Server started listening       | Log server start, notify services   |
+| `close`    | Server shutting down           | Cleanup, close DB, flush logs       |
+
+**Special:** `hook.lifespan(fn)` - Combines `ready` (setup) and `close` (cleanup):
+
+```typescript
+app.register(
+  hook.lifespan(async () => {
+    await db.connect(); // Runs on ready
+    return async () => {
+      await db.disconnect(); // Runs on close
+    };
+  })
+);
+```
+
+#### Request Lifecycle Hooks
+
+| Hook        | When                   | Use Case                     | Can Return Response |
+| ----------- | ---------------------- | ---------------------------- | ------------------- |
+| `request`   | Before route matching  | Auth, logging, rate limiting | ✅ Yes              |
+| `transform` | After handler, if data | Transform response data      | ❌ No               |
+| `send`      | Before sending         | Add headers, log response    | ❌ No               |
+| `sent`      | After response sent    | Cleanup, metrics             | ❌ No               |
+| `error`     | On error               | Error formatting, logging    | ✅ Yes              |
+| `errorSent` | After error sent       | Report to monitoring         | ❌ No               |
+| `timeout`   | Request timeout        | Handle timeout               | ✅ Yes              |
+
+**Special Request Hooks:**
+
+- `defer(callback)` - Execute after response sent
+- `onError(callback)` - Request-specific error handler
+
+### Performance Considerations
+
+**Fastest to Slowest:**
+
+1. **Direct Response in REQUEST hook** (bypasses everything)
+2. **Direct Response in handler** (bypasses transform/serialize)
+3. **Return data in handler** (goes through full pipeline)
+
+**Example Performance Optimization:**
+
+```typescript
+// Ultra-fast health check (bypasses all processing)
+app.register(
+  hook("request", ({ request, url }) => {
+    if (url.pathname === "/health") {
+      return new Response("OK", { status: 200 });
+    }
+  })
+);
+
+// Fast static response (bypasses transform)
+app.get("/ping", () => {
+  return new Response("pong", { status: 200 });
+});
+
+// Normal response (full pipeline)
+app.get("/data", () => {
+  return { data: "value" }; // Transform → Serialize → Send
+});
+```
+
 ## Core Architecture
 
 Minima.js is built on three fundamental pillars:

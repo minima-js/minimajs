@@ -44,7 +44,6 @@ export function mockContext<S = unknown, T = void>(
     responseState: resInit,
     container: new Map(),
     locals: new Map(),
-    signal: new AbortController().signal,
     route: (Object.keys(params).length > 0 ? { params, store: { handler: () => {} } } : null) as any,
     incomingMessage: undefined as any,
     serverResponse: undefined as any,

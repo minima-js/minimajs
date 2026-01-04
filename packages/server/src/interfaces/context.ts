@@ -13,7 +13,6 @@ export interface Context<S = unknown> {
   readonly responseState: ResponseState; // Mutable response headers/status
   readonly container: Container; // app.container
   readonly locals: Map<symbol, unknown>;
-  readonly signal: AbortSignal;
   readonly route: Route<S> | null;
   readonly incomingMessage: S extends HttpServer | HttpsServer ? IncomingMessage : undefined;
   readonly serverResponse: S extends HttpServer | HttpsServer ? ServerResponse : undefined;

@@ -1,11 +1,29 @@
 import { defineConfig } from "vitepress";
+import { withMermaid } from "vitepress-plugin-mermaid";
 
-export default defineConfig({
+const config = defineConfig({
   title: "Minima.js",
   description: "A cutting-edge Node.js framework for modern web applications",
   base: "/",
   srcDir: "docs",
   cleanUrls: true,
+
+  // Vite configuration for Mermaid compatibility
+  vite: {
+    optimizeDeps: {
+      include: ["@braintree/sanitize-url", "dayjs", "mermaid"],
+    },
+  },
+
+  // Mermaid configuration
+  mermaid: {
+    theme: "default",
+  },
+
+  // Mermaid plugin configuration
+  mermaidPlugin: {
+    class: "mermaid",
+  },
   themeConfig: {
     logo: "/logo.svg",
     nav: [
@@ -83,3 +101,5 @@ export default defineConfig({
     },
   },
 });
+
+export default withMermaid(config);

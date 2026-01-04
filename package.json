@@ -33,6 +33,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
     "jest": "^30.2.0",
+    "mermaid": "^11.12.2",
     "prettier": "^3.7.4",
     "rimraf": "^6.1.2",
     "turbo": "^2.7.2",
@@ -41,6 +42,7 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.51.0",
     "vitepress": "^1.6.4",
+    "vitepress-plugin-mermaid": "^2.0.17",
     "vue": "^3.5.26"
   }
 }

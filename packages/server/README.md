@@ -144,33 +144,78 @@ app.post("/users/:id", () => {
 
 <!-- TODO: Update the example -->
 
-### 3. Powerful Plugin System
+### 3. Modular Architecture with Encapsulation
 
-Build modular applications with encapsulated plugins:
+Build modular applications with powerful encapsulation - each registered function creates an isolated scope:
 
 ```typescript
-import { createApp, plugin, hook } from "@minimajs/server";
+import { createApp, hook, type App } from "@minimajs/server";
 
-// Define a plugin
-const databasePlugin = plugin(async function (app, opts) {
-  await db.connect(opts.connectionString);
+// User module - encapsulated scope
+async function userModule(app: App) {
+  // This hook only affects routes in THIS module
+  app.register(
+    hook("request", () => {
+      console.log("User module request");
+    })
+  );
 
-  app.addHook("onClose", async () => {
-    await db.disconnect();
-  });
+  app.get("/users", () => getUsers());
+  app.get("/users/:id", () => getUser(params.get("id")));
+}
 
-  app.get("/health/db", () => ({ status: "connected" }));
-}, "database");
+// Admin module - separate encapsulated scope
+async function adminModule(app: App) {
+  // Different hooks - completely isolated from user module
+  app.register(
+    hook("request", () => {
+      console.log("Admin module request");
+    })
+  );
 
-// Use the plugin
-app.register(databasePlugin, {
-  connectionString: process.env.DATABASE_URL,
-});
+  app.get("/admin", () => getAdminData());
+  app.get("/admin/users", () => getAllUsers());
+}
+
+const app = createApp();
+
+// Register modules - each gets its own isolated scope
+app.register(userModule);
+app.register(adminModule);
+
+// Register with prefix for API versioning
+app.register(userModule, { prefix: "/api/v1" });
+// Routes: /api/v1/users, /api/v1/users/:id
 ```
 
 ### 4. Comprehensive Lifecycle Hooks
 
 Control every stage of the request/response lifecycle:
+
+**Manage Resource Lifecycle with `hook.lifespan`:**
+
+```typescript
+import { createApp, hook } from "@minimajs/server";
+
+const app = createApp();
+
+// Manage database connection lifecycle
+app.register(
+  hook.lifespan(async () => {
+    // Runs when server starts
+    await db.connect();
+    console.log("Database connected");
+
+    // Return cleanup function that runs when server stops
+    return async () => {
+      await db.disconnect();
+      console.log("Database disconnected");
+    };
+  })
+);
+```
+
+**Request/Response Hooks:**
 
 ```typescript
 import { createApp, hook } from "@minimajs/server";
@@ -199,8 +244,11 @@ app.register(
     throw error;
   })
 );
+```
 
-// Application lifecycle hooks
+**Application lifecycle hooks:**
+
+```ts
 app.register(
   hook("ready", async () => {
     console.log("Server is ready!");
@@ -219,7 +267,7 @@ app.register(
 - **Request Lifecycle**: `request`, `transform`, `send`, `error`, `errorSent`, `sent`, `timeout`
 - **Application Lifecycle**: `ready`, `listen`, `close`, `register`
 
-### 6. Custom Context Values
+### 5. Custom Context Values
 
 Create and share request-scoped data:
 
@@ -292,26 +340,6 @@ app.get("/stream", () => {
     headers: { "Content-Type": "text/plain" },
   });
 });
-```
-
-### Modular Architecture
-
-Organize your application into feature modules:
-
-```typescript
-// user/routes.ts
-export async function userModule(app: App) {
-  app.get("/users", () => getUsers());
-  app.post("/users", () => createUser(body()));
-}
-
-// index.ts
-import { createApp } from "@minimajs/server/bun";
-import { userModule } from "./user/routes";
-
-const app = createApp();
-app.register(userModule, { prefix: "/api" });
-// Routes available at: /api/users
 ```
 
 ## 🔌 Built-in Plugins

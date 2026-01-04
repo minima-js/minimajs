@@ -25,7 +25,7 @@ describe("Request Abortion Integration Tests", () => {
 
     app.get("/test", () => {
       const ctx = context();
-      signalInHandler = ctx.signal;
+      signalInHandler = ctx.request.signal;
       return { success: true };
     });
 
@@ -40,7 +40,7 @@ describe("Request Abortion Integration Tests", () => {
 
     app.get("/test", () => {
       const ctx = context();
-      wasAborted = ctx.signal.aborted;
+      wasAborted = ctx.request.signal.aborted;
       return { aborted: wasAborted };
     });
 
@@ -58,7 +58,7 @@ describe("Request Abortion Integration Tests", () => {
     app.get("/slow", async () => {
       const ctx = context();
 
-      ctx.signal.addEventListener("abort", () => {
+      ctx.request.signal.addEventListener("abort", () => {
         abortEventFired = true;
       });
 
@@ -102,11 +102,11 @@ describe("Request Abortion Integration Tests", () => {
         disconnectDetected = true;
       };
 
-      ctx.signal.addEventListener("abort", abortHandler);
+      ctx.request.signal.addEventListener("abort", abortHandler);
 
       // Simulate long operation with periodic checks
       for (let i = 0; i < 50; i++) {
-        if (ctx.signal.aborted) {
+        if (ctx.request.signal.aborted) {
           return { error: "Request aborted", disconnectDetected };
         }
         await new Promise((resolve) => setTimeout(resolve, 100));
@@ -148,7 +148,7 @@ describe("Request Abortion Integration Tests", () => {
         resourcesReleased = true;
       };
 
-      ctx.signal.addEventListener("abort", cleanup);
+      ctx.request.signal.addEventListener("abort", cleanup);
 
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -185,14 +185,14 @@ describe("Request Abortion Integration Tests", () => {
         // This would normally call an external API
         // For testing, we'll just check if we can pass the signal
         await new Promise((resolve, reject) => {
-          if (ctx.signal.aborted) {
+          if (ctx.request.signal.aborted) {
             nestedFetchAborted = true;
             reject(new Error("Aborted"));
           }
 
           const timeout = setTimeout(resolve, 2000);
 
-          ctx.signal.addEventListener("abort", () => {
+          ctx.request.signal.addEventListener("abort", () => {
             clearTimeout(timeout);
             nestedFetchAborted = true;
             reject(new Error("Aborted"));
@@ -232,15 +232,15 @@ describe("Request Abortion Integration Tests", () => {
     app.get("/multi-listener", async () => {
       const ctx = context();
 
-      ctx.signal.addEventListener("abort", () => {
+      ctx.request.signal.addEventListener("abort", () => {
         listener1Called = true;
       });
 
-      ctx.signal.addEventListener("abort", () => {
+      ctx.request.signal.addEventListener("abort", () => {
         listener2Called = true;
       });
 
-      ctx.signal.addEventListener("abort", () => {
+      ctx.request.signal.addEventListener("abort", () => {
         listener3Called = true;
       });
 
@@ -278,16 +278,16 @@ describe("Request Abortion Integration Tests", () => {
     app.get("/quick", async () => {
       const ctx = context();
 
-      ctx.signal.addEventListener("abort", () => {
+      ctx.request.signal.addEventListener("abort", () => {
         abortEventFired = true;
       });
 
-      signalAbortedDuringRequest = ctx.signal.aborted;
+      signalAbortedDuringRequest = ctx.request.signal.aborted;
 
       // Quick operation
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      signalAbortedAfterRequest = ctx.signal.aborted;
+      signalAbortedAfterRequest = ctx.request.signal.aborted;
 
       return {
         abortedDuring: signalAbortedDuringRequest,
