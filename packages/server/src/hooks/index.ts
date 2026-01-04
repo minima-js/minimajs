@@ -24,17 +24,17 @@ import { addHook } from "./store.js";
 /**
  * Creates a plugin that registers a lifecycle hook
  */
-export function hook(name: "request", callback: OnRequestHook): PluginSync;
-export function hook(name: "transform", callback: OnTransformHook): PluginSync;
-export function hook(name: "send", callback: OnSendHook): PluginSync;
-export function hook(name: "error", callback: OnErrorHook): PluginSync;
-export function hook(name: "errorSent", callback: OnErrorSentHook): PluginSync;
-export function hook(name: "sent", callback: OnSentHook): PluginSync;
-export function hook(name: "timeout", callback: OnTimeoutHook): PluginSync;
-export function hook(name: "close", callback: OnCloseHook): PluginSync;
-export function hook(name: "listen", callback: OnListenHook): PluginSync;
-export function hook(name: "ready", callback: OnReadyHook): PluginSync;
-export function hook(name: "register", callback: OnRegisterHook): PluginSync;
+export function hook<S>(name: "request", callback: OnRequestHook<S>): PluginSync<S>;
+export function hook<S>(name: "transform", callback: OnTransformHook<S>): PluginSync<S>;
+export function hook<S>(name: "send", callback: OnSendHook<S>): PluginSync<S>;
+export function hook<S>(name: "error", callback: OnErrorHook<S>): PluginSync<S>;
+export function hook<S>(name: "errorSent", callback: OnErrorSentHook<S>): PluginSync<S>;
+export function hook<S>(name: "sent", callback: OnSentHook<S>): PluginSync<S>;
+export function hook<S>(name: "timeout", callback: OnTimeoutHook<S>): PluginSync<S>;
+export function hook<S>(name: "close", callback: OnCloseHook): PluginSync<S>;
+export function hook<S>(name: "listen", callback: OnListenHook): PluginSync<S>;
+export function hook<S>(name: "ready", callback: OnReadyHook<S>): PluginSync<S>;
+export function hook<S>(name: "register", callback: OnRegisterHook): PluginSync<S>;
 export function hook(name: LifecycleHook, callback: GenericHookCallback): PluginSync {
   return factory(function hookPlugin(hooks) {
     hooks[name].add(callback);

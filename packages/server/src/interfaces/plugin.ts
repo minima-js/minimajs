@@ -2,7 +2,7 @@ import type { App } from "./app.js";
 import type { kPluginSync, kPluginName, kPluginSkipOverride } from "../symbols.js";
 
 // Options for register callbacks with prefix support
-export type PluginCallback<T extends PluginOptions> = (app: App, opts: T) => void | Promise<void>;
+export type PluginCallback<T extends PluginOptions, S> = (app: App<S>, opts: T) => void | Promise<void>;
 
 export type RegisterOptions<T = {}> = T & {
   prefix?: string;

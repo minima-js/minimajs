@@ -1,4 +1,4 @@
-import { createContext, interceptor, type Plugin, type InterceptorRegisterOptions } from "@minimajs/server";
+import { createContext, hook, type PluginSync } from "@minimajs/server";
 import { BaseHttpError } from "@minimajs/server/error";
 
 interface AuthResource<T> {
@@ -108,13 +108,13 @@ export interface AuthResourceOptional<T> {
 export function createAuth<T>(
   callback: AuthCallback<T>,
   option: { required: true }
-): [Plugin<InterceptorRegisterOptions>, AuthResourceWithRequired<T>];
-export function createAuth<T>(callback: AuthCallback<T>): [Plugin<InterceptorRegisterOptions>, AuthResourceOptional<T>];
+): [PluginSync, AuthResourceWithRequired<T>];
+export function createAuth<T>(callback: AuthCallback<T>): [PluginSync, AuthResourceOptional<T>];
 
 export function createAuth<T>(
   callback: AuthCallback<T>,
   option?: AuthOption
-): [Plugin<InterceptorRegisterOptions>, AuthResourceWithRequired<T> | AuthResourceOptional<T>] {
+): [PluginSync, AuthResourceWithRequired<T> | AuthResourceOptional<T>] {
   const [getAuth, setAuth] = createContext<AuthResource<T>>({});
   function resource() {
     if (option?.required) {
@@ -129,7 +129,7 @@ export function createAuth<T>(
     return data!;
   };
 
-  const plugin = interceptor.use(async function middleware() {
+  const plugin = hook("request", async function middleware() {
     try {
       const data = await callback();
       setAuth({ data });

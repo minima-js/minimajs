@@ -124,7 +124,7 @@ export function createMultipartUpload(obj: any, option: UploadOption = {}) {
     }
     defer(cleanup);
     try {
-      const signal = request.signal();
+      const signal = request().signal;
       const existingBody = getMultipartMeta();
       if (existingBody) {
         return existingBody as any;

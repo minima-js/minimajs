@@ -104,7 +104,7 @@ export async function getUploadedBody<T extends UploadedBody = UploadedBody>(): 
   if (body) {
     return body;
   }
-  const signal = request.signal();
+  const signal = request().signal;
   const newBody = {} as any;
   for await (const [name, value] of multipart.body()) {
     if (isFile(value)) {

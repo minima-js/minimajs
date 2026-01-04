@@ -21,7 +21,7 @@ export function setName(fn: any, name: string) {
  * Wraps a plain function into a Plugin with automatic kPluginSkipOverride
  * This prevents the plugin from being encapsulated and allows direct registration
  */
-export function plugin<T extends PluginOptions>(fn: PluginCallback<T>, name?: string): Plugin<T> {
+export function plugin<T extends PluginOptions, S = unknown>(fn: PluginCallback<T, S>, name?: string): Plugin<T> {
   setMeta(fn, { name, skipOverride: true });
   return fn as Plugin<T>;
 }
