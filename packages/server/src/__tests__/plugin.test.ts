@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach } from "@jest/globals";
 import { createApp } from "../bun/index.js";
-import type { Server } from "../server.js";
+import type { Server } from "../core/index.js";
 import { plugin } from "../internal/plugins.js";
 import { getBody, sleep } from "./helpers/index.js";
 import type { App } from "../interfaces/index.js";

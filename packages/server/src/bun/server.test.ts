@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach } from "@jest/globals";
 import { createApp } from "./index.js";
-import type { Server } from "../server.js";
+import type { Server } from "../core/index.js";
 import { createRequest } from "../mock/request.js";
 describe("Bun Server", () => {
   let app: Server<any>;

@@ -12,13 +12,14 @@
   },
   "exports": {
     ".": "./lib/index.js",
+    "./core": "./lib/core/index.js",
     "./bun": "./lib/bun/index.js",
     "./node": "./lib/node/index.js",
     "./plugins": "./lib/plugins/index.js",
     "./error": "./lib/error.js",
     "./logger": "./lib/logger.js",
-    "./mock": "./lib/mock/index.js",
-    "./symbols": "./lib/symbols.js"
+    "./symbols": "./lib/symbols.js",
+    "./mock": "./lib/mock/index.js"
   },
   "scripts": {
     "dev": "tsc -w",

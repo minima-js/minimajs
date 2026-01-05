@@ -1,19 +1,17 @@
 import Router, { type HTTPVersion } from "find-my-way";
 import { type Avvio } from "avvio";
-import { type Logger, pino } from "pino";
-import type { App, RouteHandler } from "./interfaces/app.js";
-import type { Plugin, PluginOptions, PluginSync, Register, RegisterOptions } from "./interfaces/plugin.js";
-import { applyRouteMetadata, applyRoutePrefix } from "./internal/route.js";
-import { runHooks } from "./hooks/store.js";
-import { serialize, errorHandler } from "./internal/default-handler.js";
-import { handleRequest } from "./internal/handler.js";
-import type { ErrorHandler, Serializer } from "./interfaces/response.js";
-import { plugin as p } from "./internal/plugins.js";
-import type { PrefixOptions, RouteConfig, RouteMetaDescriptor, RouteOptions } from "./interfaces/route.js";
-import { createBoot, wrapPlugin } from "./internal/boot.js";
-import type { AddressInfo, ServerAdapter, ListenOptions, CreateBaseSeverOptions } from "./interfaces/server.js";
-import { minimajs } from "./plugins/minimajs.js";
-import { logger } from "./logger.js";
+import { type Logger } from "pino";
+import type { App, RouteHandler } from "../interfaces/app.js";
+import type { Plugin, PluginOptions, PluginSync, Register, RegisterOptions } from "../interfaces/plugin.js";
+import { applyRouteMetadata, applyRoutePrefix } from "../internal/route.js";
+import { runHooks } from "../hooks/store.js";
+import { serialize, errorHandler } from "../internal/default-handler.js";
+import { handleRequest } from "../internal/handler.js";
+import type { ErrorHandler, Serializer } from "../interfaces/response.js";
+import { plugin as p } from "../internal/plugins.js";
+import type { PrefixOptions, RouteConfig, RouteMetaDescriptor, RouteOptions } from "../interfaces/route.js";
+import { createBoot, wrapPlugin } from "../internal/boot.js";
+import type { AddressInfo, ServerAdapter, ListenOptions } from "../interfaces/server.js";
 
 export interface ServerOptions {
   prefix: string;
@@ -190,14 +188,4 @@ export class Server<T = any> implements App<T> {
       })
     );
   }
-}
-
-export function createBaseServer<T>(server: ServerAdapter<T>, options: CreateBaseSeverOptions) {
-  const srv = new Server(server, {
-    prefix: options.prefix ?? "",
-    logger: options.logger === false ? pino({ enabled: false }) : logger,
-    router: Router(options.router),
-  });
-  srv.register(minimajs());
-  return srv;
 }

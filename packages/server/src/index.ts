@@ -13,7 +13,8 @@
  * ```
  */
 
-export * from "./server.js";
+// Re-export core for backwards compatibility (App interface, types, etc.)
+export type { Server, ServerOptions } from "./core/server.js";
 
 import { logger } from "./logger.js";
 

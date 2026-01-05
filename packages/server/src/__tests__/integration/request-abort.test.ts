@@ -4,7 +4,7 @@
 import { describe, test, expect, beforeEach, afterEach } from "@jest/globals";
 import { createApp } from "../../node/index.js";
 import { context } from "../../context.js";
-import type { Server } from "../../server.js";
+import type { Server } from "../../core/index.js";
 
 describe("Request Abortion Integration Tests", () => {
   let app: Server;
