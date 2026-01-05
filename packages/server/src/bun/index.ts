@@ -19,7 +19,7 @@
  * app.listen({ port: 1234 })
  * ```
  */
-
+import type { Server } from "bun";
 import type { CreateBaseSeverOptions } from "../interfaces/server.js";
 import { BunServerAdapter, type BunServeOptions } from "./server.js";
 import { createBaseServer } from "../server.js";
@@ -60,5 +60,5 @@ export interface BunAppOptions<T> extends CreateBaseSeverOptions {
  * ```
  */
 export function createApp<T = unknown>({ server, ...options }: BunAppOptions<T> = {}) {
-  return createBaseServer(new BunServerAdapter<T>(server), options);
+  return createBaseServer<Server<T>>(new BunServerAdapter<T>(server), options);
 }

@@ -5,7 +5,10 @@ export interface ValidationOptions {
   stripUnknown?: boolean;
 }
 
-type DataCallback = () => unknown;
+/**
+ * @internal
+ */
+export type DataCallback = () => unknown;
 
 export function validator<T extends z.ZodTypeAny>(schema: T, data: DataCallback, option?: ValidationOptions) {
   return function getData(): z.infer<T> {

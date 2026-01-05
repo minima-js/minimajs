@@ -11,7 +11,10 @@ const config = defineConfig({
   // Vite configuration for Mermaid compatibility
   vite: {
     optimizeDeps: {
-      include: ["@braintree/sanitize-url", "dayjs", "mermaid"],
+      include: ["mermaid", "dayjs", "@braintree/sanitize-url"],
+    },
+    ssr: {
+      noExternal: ["mermaid"],
     },
   },
 

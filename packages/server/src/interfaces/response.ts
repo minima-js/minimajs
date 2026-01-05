@@ -24,9 +24,10 @@ export interface ResponseOptions {
 // ============================================================================
 
 /**
+ * Utility type that removes index signatures from a type.
  * @internal
  */
-type OmitIndexSignature<T> = {
+export type OmitIndexSignature<T> = {
   [K in keyof T as string extends K ? never : number extends K ? never : symbol extends K ? never : K]: T[K];
 };
 

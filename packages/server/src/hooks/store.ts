@@ -7,12 +7,12 @@ import type { ResponseBody } from "../interfaces/response.js";
 /**
  * @internal
  */
-const SERVER_HOOKS = ["close", "listen", "ready", "register"] as const;
+export const SERVER_HOOKS = ["close", "listen", "ready", "register"] as const;
 
 /**
  * @internal
  */
-const LIFECYCLE_HOOKS = ["request", "transform", "send", "error", "errorSent", "sent", "timeout"] as const;
+export const LIFECYCLE_HOOKS = ["request", "transform", "send", "error", "errorSent", "sent", "timeout"] as const;
 
 export type LifecycleHook = (typeof SERVER_HOOKS)[number] | (typeof LIFECYCLE_HOOKS)[number];
 

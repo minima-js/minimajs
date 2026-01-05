@@ -2,7 +2,10 @@ import { type z } from "zod";
 import { HttpError as BaseError, type HttpErrorOptions } from "@minimajs/server/error";
 
 type ZodIssue = z.core.$ZodIssue;
-type ZodError<T = unknown> = z.core.$ZodError<T>;
+/**
+ * @internal
+ */
+export type ZodError<T = unknown> = z.core.$ZodError<T>;
 type ZodErrorMap = z.core.$ZodErrorMap;
 
 export class SchemaError extends Error {}

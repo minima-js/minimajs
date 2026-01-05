@@ -90,7 +90,7 @@ export namespace hook {
 // Re-exports
 // ============================================================================
 
-export { createHooksStore, getHooks, addHook, runHooks } from "./store.js";
+export { createHooksStore, getHooks, addHook, runHooks, SERVER_HOOKS, LIFECYCLE_HOOKS } from "./store.js";
 
 export type {
   LifecycleHook,

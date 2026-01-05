@@ -19,21 +19,6 @@
  *
  * app.listen({ port: 3000 });
  * ```
- *
- * @example
- * ```typescript
- * // With custom Node.js server options
- * import { createApp } from '@minimajs/server/node';
- *
- * const app = createApp({
- *   server: {
- *     https: {
- *       key: fs.readFileSync('key.pem'),
- *       cert: fs.readFileSync('cert.pem')
- *     }
- *   }
- * });
- * ```
  */
 
 import type { Server } from "node:http";
