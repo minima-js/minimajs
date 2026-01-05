@@ -22,7 +22,7 @@
  */
 
 import type { Server } from "node:http";
-import type { CreateBaseSeverOptions } from "../interfaces/server.js";
+import type { CreateBaseSeverOptions } from "../core/index.js";
 import { createBaseServer } from "../core/index.js";
 import { NodeServerAdapter, type NodeServerOptions } from "./server.js";
 

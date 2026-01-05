@@ -20,7 +20,7 @@
  * ```
  */
 import type { Server } from "bun";
-import type { CreateBaseSeverOptions } from "../interfaces/server.js";
+import type { CreateBaseSeverOptions } from "../core/index.js";
 import { BunServerAdapter, type BunServeOptions } from "./server.js";
 import { createBaseServer } from "../core/index.js";
 

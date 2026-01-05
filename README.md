@@ -36,7 +36,7 @@ Minima.js is a cutting-edge TypeScript-first web framework built on Fastify, des
 | **[@minimajs/server](./packages/server)**         | Core HTTP framework with context-aware APIs | ✅ Stable      |
 | **[@minimajs/auth](./packages/auth)**             | Authentication system                       | ✅ Stable      |
 | **[@minimajs/multipart](./packages/multipart)**   | File upload & multipart handling            | ✅ Stable      |
-| **[@minimajs/schema](./packages/schema)**         | Yup-based validation                        | ✅ Stable      |
+| **[@minimajs/schema](./packages/schema)**         | Zod-based validation                        | ✅ Stable      |
 | **[@minimajs/cookie](./packages/cookie)**         | Type-safe cookie management                 | ✅ Stable      |
 | **[@minimajs/edge](./packages/edge)**             | Edge.js template engine                     | ✅ Stable      |
 | **[@minimajs/utility](./packages/utility)**       | Common utilities                            | ✅ Stable      |

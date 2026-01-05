@@ -42,23 +42,23 @@ export interface UploadOption {
 }
 
 /**
- * Creates a multipart upload handler with Yup schema validation.
+ * Creates a multipart upload handler with Zod schema validation.
  * Files are validated against the schema and saved to temporary storage.
  * Temporary files are automatically cleaned up when the request completes.
  *
  * @example
  * ```ts
  * import { createMultipartUpload, file } from '@minimajs/multipart/schema';
- * import { string, array } from 'yup';
+ * import { z } from 'zod';
  *
  * const upload = createMultipartUpload({
- *   name: string().required(),
- *   email: string().email().required(),
+ *   name: z.string(),
+ *   email: z.string().email(),
  *   avatar: file()
  *     .required()
  *     .max(5 * 1024 * 1024)
  *     .accept(['image/png', 'image/jpeg']),
- *   documents: array(
+ *   documents: z.array(
  *     file()
  *       .max(10 * 1024 * 1024)
  *       .accept(['application/pdf'])

@@ -21,7 +21,7 @@ export function getSchemaMetadata(cb: any): SchemaMetadata {
 /**
  * Callback function that returns data to be validated.
  */
-export type DataCallback = (ctx: Context<any>) => unknown;
+export type DataCallback = () => unknown;
 
 export interface ValidationOptions {
   stripUnknown?: boolean;
@@ -45,9 +45,8 @@ export function validatorAsync<T extends z.ZodTypeAny>(
   setSchemaMetadata(getData, {
     schema,
     type,
-    callback: async (ctx) => {
-      const { locals } = context();
-      const val = await validateObjectAsync(schema, await data(ctx), option);
+    callback: async ({ locals }) => {
+      const val = await validateObjectAsync(schema, await data(), option);
       locals.set(symbol, val);
     },
   });

@@ -1,12 +1,5 @@
-import { type z } from "zod";
+import { type z, ZodError } from "zod";
 import { HttpError as BaseError, type HttpErrorOptions } from "@minimajs/server/error";
-
-type ZodIssue = z.core.$ZodIssue;
-/**
- * @internal
- */
-export type ZodError<T = unknown> = z.core.$ZodError<T>;
-type ZodErrorMap = z.core.$ZodErrorMap;
 
 export class SchemaError extends Error {}
 
@@ -16,7 +9,7 @@ export class SchemaError extends Error {}
  */
 export interface ValidatorErrorOptions extends Omit<HttpErrorOptions, "base"> {
   /** Array of zod issues */
-  issues?: ZodIssue[];
+  issues?: z.core.$ZodIssue[];
   /** The base error */
   base?: unknown;
 }
@@ -41,7 +34,7 @@ function formatValidationMessage({ issues }: ZodError): string {
  */
 export class ValidationError extends BaseError {
   /** Array of zod issues */
-  issues?: ZodIssue[];
+  issues?: z.core.$ZodIssue[];
   /**
    * Creates a ValidationError from a ZodError.
    * Recursively converts nested validation errors.
@@ -112,5 +105,3 @@ export class ValidationError extends BaseError {
     }
   }
 }
-
-export type { ZodErrorMap };

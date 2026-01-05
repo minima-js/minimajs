@@ -14,14 +14,26 @@
  * const server = new Server(adapter, options);
  * ```
  */
-import Router from "find-my-way";
-import { pino } from "pino";
-import type { ServerAdapter, CreateBaseSeverOptions } from "../interfaces/server.js";
+import Router, { type HTTPVersion, type Config as RouterConfig } from "find-my-way";
+import { pino, type Logger } from "pino";
+import type { ServerAdapter } from "../interfaces/server.js";
 import { logger } from "../logger.js";
 import { minimajs } from "../plugins/minimajs.js";
 import { Server } from "./server.js";
 
 export * from "./server.js";
+
+/**
+ * Configuration options for creating a base server instance.
+ */
+export interface CreateBaseSeverOptions {
+  /** Router configuration from find-my-way */
+  router?: RouterConfig<HTTPVersion>;
+  /** URL prefix for all routes */
+  prefix?: string;
+  /** Pino logger instance, or false to disable logging */
+  logger?: Logger | false;
+}
 
 export function createBaseServer<T>(server: ServerAdapter<T>, options: CreateBaseSeverOptions) {
   const srv = new Server(server, {

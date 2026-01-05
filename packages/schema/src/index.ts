@@ -26,5 +26,5 @@ export function createSearchParamsAsync<T extends z.ZodRawShape>(obj: T, option?
   return validatorAsync(z.object(obj), searchParams, option);
 }
 
-export { ValidationError, type ValidatorErrorOptions, type ZodErrorMap } from "./error.js";
+export { ValidationError, type ValidatorErrorOptions } from "./error.js";
 export { type ValidationOptions } from "./validation.js";

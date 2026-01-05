@@ -7,7 +7,6 @@ import {
   type RouteMetaDescriptor,
   type RouteMetadata,
 } from "@minimajs/server";
-import { kBodySkip } from "@minimajs/server/symbols";
 import { kSchema } from "./symbols.js";
 import { getSchemaMetadata, type SchemaMetadata } from "./validation.js";
 
@@ -54,7 +53,6 @@ export function schema<T>(...schemas: CallableFunction[]): RouteMetaDescriptor<T
       app: config.app,
       schemas: schemas.map(getSchemaMetadata),
     };
-    metadata.set(kBodySkip, true);
     addSchemaToMetadataSet(metadata, values);
   };
 }
