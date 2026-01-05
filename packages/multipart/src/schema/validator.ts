@@ -71,7 +71,19 @@ export function validateFileType(file: File, accept: string[]) {
 export function testMimeType(file: File, accept: string[] | undefined) {
   if (!accept || !accept.length) return;
   if (!validateFileType(file, accept)) {
-    throw new ValidationError(`Invalid file type: ${file.filename}`, { path: file.field });
+    const acceptedTypes = accept.join(", ");
+    throw new ValidationError(`Invalid file type for "${file.field}". Expected: ${acceptedTypes}`, {
+      issues: [
+        {
+          code: "invalid_format",
+          format: "mime_type",
+          pattern: acceptedTypes,
+          input: file.mimeType,
+          path: [file.field],
+          message: `Invalid file type. Expected: ${acceptedTypes}, received: ${file.mimeType}`,
+        },
+      ],
+    });
   }
 }
 
@@ -79,10 +91,19 @@ export async function testMaxSize(max: number | undefined, file: File, size: num
   if (!max) return;
   if (size > max) {
     throw new ValidationError(
-      `The file ${file.field} is too large. Maximum size: ${humanFileSize(max)} bytes, actual size: ${humanFileSize(
-        size
-      )} bytes`,
-      { path: file.field }
+      `File "${file.field}" is too large. Maximum: ${humanFileSize(max)}, actual: ${humanFileSize(size)}`,
+      {
+        issues: [
+          {
+            code: "too_big",
+            origin: "file",
+            maximum: max,
+            input: size,
+            path: [file.field],
+            message: `File size exceeds maximum. Expected: ${humanFileSize(max)}, received: ${humanFileSize(size)}`,
+          },
+        ],
+      }
     );
   }
 }

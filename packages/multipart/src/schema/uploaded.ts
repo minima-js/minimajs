@@ -3,7 +3,6 @@ import { z } from "zod";
 import { extractTests, getTestMaxSize, type ExtractTest } from "./schema.js";
 import { multipart } from "../multipart.js";
 import { isFile, type File } from "../file.js";
-import { createContext } from "@minimajs/server";
 import { defer, headers, request } from "@minimajs/server";
 import { v4 as uuid } from "uuid";
 import { tmpdir } from "node:os";
@@ -103,12 +102,7 @@ export function createMultipartUpload(obj: any, option: UploadOption = {}) {
   }
   const resolvedShape =
     zodSchema && typeof zodSchema._def?.shape === "function" ? zodSchema._def.shape() : resolveShape(shape || {});
-  const [getMultipartMeta, setMultipartMeta] = createContext<Record<string, GenericValue>>();
-  async function cleanup() {
-    const body = getMultipartMeta();
-    if (!body) {
-      return;
-    }
+  async function cleanup(body: any) {
     try {
       await deleteUploadedFiles(Object.values(body));
     } catch (err) {
@@ -122,15 +116,10 @@ export function createMultipartUpload(obj: any, option: UploadOption = {}) {
       const contentLength = headers.get("content-length", Number) ?? 0;
       validateContentSize(contentLength, option.maxSize);
     }
-    defer(cleanup);
+    const data: any = {};
+    defer(() => cleanup(data));
     try {
       const signal = request().signal;
-      const existingBody = getMultipartMeta();
-      if (existingBody) {
-        return existingBody as any;
-      }
-      const data: any = {};
-      setMultipartMeta(data);
       for await (const [name, body] of multipart.body()) {
         const singleSchema = resolvedShape ? resolvedShape[name] : undefined;
         if (isFile(body)) {
