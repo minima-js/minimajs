@@ -1,5 +1,6 @@
 import { hook } from "../hooks/index.js";
 import { response } from "../http.js";
+import { isCallable } from "../utils/callable.js";
 
 export interface CorsOptions {
   /** Configures the Access-Control-Allow-Origin header. Default: '*' */
@@ -96,7 +97,7 @@ async function resolveOrigin(
   }
 
   // Function: dynamic validation
-  if (typeof configOrigin === "function") {
+  if (isCallable<(origin: string) => boolean | Promise<boolean>>(configOrigin)) {
     const result = await configOrigin(requestOrigin);
     return result ? requestOrigin : false;
   }

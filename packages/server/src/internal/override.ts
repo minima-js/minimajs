@@ -1,11 +1,12 @@
 import { type App, type Container } from "../interfaces/app.js";
 import { kPluginSkipOverride } from "../symbols.js";
+import { isCallable } from "../utils/callable.js";
 
 /**
  * Checks if a value has a clone method
  */
 function isClonable(value: unknown): value is { clone(): unknown } {
-  return value !== null && typeof value === "object" && "clone" in value && typeof (value as any).clone === "function";
+  return value !== null && typeof value === "object" && "clone" in value && isCallable((value as any).clone);
 }
 
 /**

@@ -1,9 +1,10 @@
 /**
  * Integration tests demonstrating complete HTTP request/response flows
  */
-import { body, headers, response, searchParams, setHeader } from "../../http.js";
+import { body, headers, response, searchParams } from "../../http.js";
 import { testRoute, expectStatus, expectHeader, expectBodyToMatch } from "../helpers/test-helpers.js";
 import { testFixtures, createTestUser } from "../helpers/fixtures.js";
+const setHeader = headers.set;
 
 describe("HTTP Integration Tests", () => {
   describe("Complete request lifecycle", () => {

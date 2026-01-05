@@ -1,4 +1,6 @@
 import { $context } from "./internal/context.js";
+import type { Context } from "./interfaces/context.js";
+import { extractIpAddress } from "./internal/request.js";
 
 import {
   RedirectError,
@@ -8,12 +10,15 @@ import {
   type ErrorResponse,
   type HttpErrorOptions,
 } from "./error.js";
-import type { Dict, HttpHeader, HttpHeaderIncoming, ResponseOptions } from "./interfaces/response.js";
+import type { Dict, HeadersInit, HttpHeader, HttpHeaderIncoming, ResponseOptions } from "./interfaces/response.js";
 
 import { toStatusCode, type StatusCode } from "./internal/response.js";
 import { createResponse } from "./internal/response.js";
 import { isAbortError } from "./utils/errors.js";
+import { isCallable } from "./utils/callable.js";
+import { mergeHeaders } from "./utils/headers.js";
 import { kBody } from "./symbols.js";
+import { hook } from "./hooks/index.js";
 
 // ============================================================================
 //  Response
@@ -258,21 +263,122 @@ export namespace request {
     const { url } = $context();
     return url;
   }
-}
 
-/**
- * Retrieves the HTTP request object.
- *
- * @example
- * ```ts
- * const req = getRequest();
- * console.log(req.url);
- * ```
- * @see {@link request}
- * @since v0.1.0
- * @internal
- */
-export const getRequest = request;
+  const kIp = Symbol("ipAddr");
+
+  /**
+   * Retrieves the client IP address from the request.
+   * Requires IP address configuration via request.ip.configure().
+   *
+   * @returns The client IP address as a string
+   * @throws Error if IP address plugin is not configured
+   *
+   * @example
+   * ```ts
+   * import { request } from '@minimajs/server';
+   *
+   * // Configure the IP plugin first
+   * app.register(request.ip.configure({ trustProxy: true }));
+   *
+   * // Then use it in handlers
+   * app.get('/api/info', () => {
+   *   const clientIp = request.ip();
+   *   return { ip: clientIp };
+   * });
+   * ```
+   */
+  export function ip(): string | null {
+    const { locals } = $context();
+    if (!locals.has(kIp)) {
+      throw new Error("Ip Address Plugin is not configured, please configure using request.ip.configure()");
+    }
+    return locals.get(kIp) as string | null;
+  }
+
+  export namespace ip {
+    /**
+     * Configuration options for IP address extraction
+     */
+    export interface Settings {
+      /**
+       * Trust proxy headers (X-Forwarded-For, X-Real-IP, etc.)
+       * Default: false
+       */
+      trustProxy?: boolean;
+
+      /**
+       * Custom header to read IP from
+       * Default: tries X-Forwarded-For, X-Real-IP, then falls back to socket address
+       */
+      header?: string;
+
+      /**
+       * Number of proxy hops to trust when using X-Forwarded-For
+       * Default: 1 (trust the last proxy)
+       */
+      proxyDepth?: number;
+    }
+
+    /**
+     * Callback function type for custom IP extraction
+     */
+    export type IpCallback<S = unknown> = (ctx: Context<S>) => string | null;
+
+    /**
+     * Configures IP address extraction from requests.
+     * Returns a hook that extracts and stores the client IP address.
+     *
+     * @param options - Configuration options for IP extraction, or a callback function for custom extraction
+     * @returns A request hook that populates the IP address in locals
+     *
+     * @example
+     * ```ts
+     * // Basic usage - trust proxy headers
+     * app.register(request.ip.configure({ trustProxy: true }));
+     *
+     * // Custom header
+     * app.register(request.ip.configure({
+     *   trustProxy: true,
+     *   header: 'CF-Connecting-IP' // Cloudflare
+     * }));
+     *
+     * // Multiple proxies
+     * app.register(request.ip.configure({
+     *   trustProxy: true,
+     *   proxyDepth: 2 // trust 2 proxy hops
+     * }));
+     *
+     * // Custom callback with full context access
+     * app.register(request.ip.configure((ctx) => {
+     *   // Custom logic to extract IP
+     *   const customHeader = ctx.request.headers.get('x-custom-ip');
+     *   if (customHeader) return customHeader;
+     *
+     *   // Access socket directly
+     *   if (ctx.incomingMessage) {
+     *     return ctx.incomingMessage.socket.remoteAddress || null;
+     *   }
+     *   return null;
+     * }));
+     * ```
+     */
+    export function configure<S = unknown>(options: Settings | IpCallback<S> = {}) {
+      // If options is a function, use it as the callback
+      if (isCallable<IpCallback<S>>(options)) {
+        return hook<S>("request", (ctx) => {
+          const ipAddress = options(ctx);
+          ctx.locals.set(kIp, ipAddress);
+        });
+      }
+
+      // Otherwise, use the settings-based approach
+      return hook("request", (ctx) => {
+        const ipAddress = extractIpAddress(ctx, options);
+        ctx.locals.set(kIp, ipAddress);
+      });
+    }
+  }
+}
 
 // ============================================================================
 // Body
@@ -397,37 +503,6 @@ export namespace params {
   }
 }
 
-/**
- * Retrieves the request params.
- *
- * @example
- * ```ts
- * const p = getParams<{ id: string }>();
- * console.log(p.id);
- * ```
- * @see {@link params}
- * @since v0.1.0
- * @internal
- */
-export const getParams = params;
-
-/**
- * Retrieves parameters from the current request context.
- *
- * @see {@link params.get}
- * @example
- * ```ts
- * const id = getParam('id')                              // string | undefined
- * const page = getParam('page', (val) => parseInt(val))  // number | undefined
- * const age = getParam('age', (val) => {
- *   const num = parseInt(val);
- *   if (num < 0) throw new Error('must be positive');
- *   return num;
- * });                                                     // number | undefined
- * ```
- */
-export const getParam = params.get;
-
 // ============================================================================
 // Headers
 // ============================================================================
@@ -452,7 +527,7 @@ export const getParam = params.get;
  * @since v0.2.0
  */
 export function headers() {
-  return getRequest().headers;
+  return request().headers;
 }
 
 /**
@@ -515,7 +590,7 @@ export namespace headers {
   }
 
   /**
-   * Sets a response header.
+   * Sets a single response header.
    *
    * @param name - The header name to set
    * @param value - The header value
@@ -524,9 +599,39 @@ export namespace headers {
    * headers.set('x-custom-header', 'value');
    * ```
    */
-  export function set(name: HttpHeader, value: string): void {
+  export function set(name: HttpHeader, value: string): void;
+  /**
+   * Sets multiple response headers from a HeadersInit object.
+   *
+   * @param headers - Headers to set (object, array of tuples, or Headers instance)
+   * @example
+   * ```ts
+   * // Object
+   * headers.set({ 'x-custom': 'value', 'x-another': 'value2' });
+   *
+   * // Array of tuples
+   * headers.set([['x-custom', 'value'], ['x-another', 'value2']]);
+   *
+   * // Headers instance
+   * headers.set(new Headers({ 'x-custom': 'value' }));
+   * ```
+   */
+  export function set(headers: HeadersInit): void;
+  export function set(headers: HttpHeader, value: string): void;
+  export function set(name: HttpHeader | HeadersInit, value?: string): void {
     const { responseState: res } = $context();
-    res.headers.set(name, value);
+
+    // If name is a string, set single header
+    if (typeof name === "string") {
+      if (value === undefined) {
+        throw new Error("Value is required when setting a single header");
+      }
+      res.headers.set(name, value);
+      return;
+    }
+
+    // Otherwise, handle HeadersInit (object, array, or Headers instance)
+    mergeHeaders(res.headers, new Headers(name));
   }
 
   /**
@@ -545,48 +650,6 @@ export namespace headers {
     resInit.headers.append(name, value);
   }
 }
-
-/**
- * Retrieves the request headers.
- *
- * @example
- * ```ts
- * const h = getHeaders();
- * console.log(h['content-type']);
- * ```
- * @see {@link headers}
- * @since v0.1.0
- * @internal
- */
-export const getHeaders = headers;
-
-/**
- * Sets a response header.
- *
- * @param name - The header name to set
- * @param value - The header value
- * @example
- * ```ts
- * setHeader('x-custom-header', 'value');
- * ```
- * @see {@link headers.set}
- * @since v0.1.0
- * @internal
- */
-export const setHeader = headers.set;
-
-/**
- * Retrieves a header from the current request context.
- *
- * @see {@link headers.get}
- * @example
- * ```ts
- * const auth = getHeader('authorization')                              // string
- * const token = getHeader('authorization', (val) => val.split(' ')[1]) // string
- * ```
- * @internal
- */
-export const getHeader = headers.get;
 
 // ============================================================================
 // Search Params / Queries
@@ -658,32 +721,3 @@ export namespace searchParams {
     return values.map(transform);
   }
 }
-
-/**
- * Retrieves the search params (query string).
- *
- * @example
- * ```ts
- * const query = getSearchParams<{ page: string }>();
- * console.log(query.page);
- * ```
- * @see {@link searchParams}
- * @since v0.1.0
- * @internal
- */
-export const getSearchParams = searchParams;
-/**
- * Retrieves a search param from the current request context.
- *
- * @see {@link searchParams.get}
- * @example
- * ```ts
- * const page = getSearchParam('page')                    // string
- * const pageNum = getSearchParam('page', (val) => {
- *   const num = parseInt(val);
- *   if (num < 1) throw new Error('must be >= 1');
- *   return num;
- * });                                                     // number
- * ```
- */
-export const getSearchParam = searchParams.get;

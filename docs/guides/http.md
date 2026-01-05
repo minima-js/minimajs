@@ -65,6 +65,99 @@ console.log(url.pathname);
 console.log(url.searchParams.get("page"));
 ```
 
+#### request.ip
+
+```ts
+request.ip(): string
+```
+
+Retrieves the client IP address from the request. Requires configuration via `request.ip.configure()`.
+
+**Configuration:**
+
+Before using `request.ip()`, you must register the IP configuration plugin:
+
+```typescript
+import { request } from "@minimajs/server";
+
+// Basic usage - trust proxy headers
+app.register(request.ip.configure({ trustProxy: true }));
+
+// Custom header (e.g., Cloudflare)
+app.register(
+  request.ip.configure({
+    header: "CF-Connecting-IP",
+  })
+);
+
+// Multiple proxies
+app.register(
+  request.ip.configure({
+    trustProxy: true,
+    proxyDepth: 2, // trust 2 proxy hops
+  })
+);
+
+// Custom callback with full context access
+app.register(
+  request.ip.configure((ctx) => {
+    // Custom logic to extract IP
+    const customHeader = ctx.request.headers.get("x-custom-ip");
+    if (customHeader) return customHeader;
+
+    // Access socket directly
+    if (ctx.incomingMessage) {
+      return ctx.incomingMessage.socket.remoteAddress || null;
+    }
+    return null;
+  })
+);
+```
+
+**Configuration Options:**
+
+You can pass either a Settings object or a callback function:
+
+**Settings object:**
+
+- `trustProxy` (boolean): Trust proxy headers (X-Forwarded-For, X-Real-IP, etc.). Default: `false`
+- `header` (string): Custom header to read IP from. If not specified, tries X-Forwarded-For, X-Real-IP, CF-Connecting-IP, then falls back to socket address
+- `proxyDepth` (number): Number of proxy hops to trust when using X-Forwarded-For. Default: `1` (trust the last proxy)
+
+**Callback function:**
+
+- `(ctx: Context) => string | null`: Custom function that receives the full request context and returns the IP address or null
+
+**Examples:**
+
+```typescript
+const clientIp = request.ip();
+console.log(clientIp); // "192.168.1.100"
+
+// Use in route handlers
+app.get("/api/info", () => {
+  const ip = request.ip();
+  return { clientIp: ip };
+});
+
+// Rate limiting by IP
+app.post("/api/login", async () => {
+  const ip = request.ip();
+  await checkRateLimit(ip);
+  // ... handle login
+});
+```
+
+**How it works:**
+
+1. If custom `header` is specified: Always tries this header first (regardless of `trustProxy`)
+2. If `trustProxy` is `true`: Tries standard proxy headers in order:
+   - `X-Forwarded-For` (respects `proxyDepth`)
+   - `X-Real-IP`
+   - `CF-Connecting-IP` (Cloudflare)
+3. Fallback: Uses direct socket connection address
+4. Returns `null` if no IP can be determined
+
 #### request.route
 
 ```ts
@@ -126,15 +219,34 @@ const parsed = headers.getAll("cookie", (val) => val.split("=")); // string[][]
 #### headers.set
 
 ```typescript
-headers.set(name: string, value: string): Response
+headers.set(name: string, value: string): void
+headers.set(headers: HeadersInit): void
 ```
 
-Sets a response header.
+Sets response header(s). Can set a single header or multiple headers at once.
 
 **Examples:**
 
 ```typescript
+// Single header
 headers.set("x-custom-header", "value");
+
+// Multiple headers with object
+headers.set({
+  "x-custom-header": "value",
+  "x-another-header": "another-value",
+});
+
+// Multiple headers with array
+headers.set([
+  ["x-custom-header", "value"],
+  ["x-another-header", "another-value"],
+]);
+
+// Using Headers object
+const customHeaders = new Headers();
+customHeaders.set("x-custom", "value");
+headers.set(customHeaders);
 ```
 
 ### searchParams
