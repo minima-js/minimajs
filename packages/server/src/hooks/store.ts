@@ -4,7 +4,14 @@ import { kHooks } from "../symbols.js";
 import type { Context, OnErrorHook, OnRequestHook, OnSendHook, OnTransformHook } from "../interfaces/index.js";
 import type { ResponseBody } from "../interfaces/response.js";
 
+/**
+ * @internal
+ */
 const SERVER_HOOKS = ["close", "listen", "ready", "register"] as const;
+
+/**
+ * @internal
+ */
 const LIFECYCLE_HOOKS = ["request", "transform", "send", "error", "errorSent", "sent", "timeout"] as const;
 
 export type LifecycleHook = (typeof SERVER_HOOKS)[number] | (typeof LIFECYCLE_HOOKS)[number];

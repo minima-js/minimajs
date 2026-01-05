@@ -4,7 +4,7 @@ import { plugin } from "../internal/plugins.js";
 import { kAppDescriptor, kHooks } from "../symbols.js";
 
 export type ErrorCallback = OnErrorSentHook;
-type DeferCallback = () => void | Promise<void>;
+export type DeferCallback = () => void | Promise<void>;
 
 // Create context for storing deferred callbacks
 const [getDeferredCallbacks] = createContext<Set<DeferCallback>>(() => new Set());

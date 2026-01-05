@@ -24,6 +24,8 @@ import type { CreateBaseSeverOptions } from "../interfaces/server.js";
 import { BunServerAdapter, type BunServeOptions } from "./server.js";
 import { createBaseServer } from "../server.js";
 
+export type { BunServeOptions };
+
 /**
  * Configuration options for creating a Bun-based MinimaJS application.
  *

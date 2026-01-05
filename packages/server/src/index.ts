@@ -28,6 +28,8 @@ export * from "./http.js";
 export * from "./hooks/index.js";
 export { logger };
 
+export type { StatusCode } from "./internal/response.js";
+
 export { plugin } from "./internal/plugins.js";
 export { compose } from "./compose.js";
 export { route } from "./route.js";

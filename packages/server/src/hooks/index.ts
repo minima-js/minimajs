@@ -90,7 +90,6 @@ export namespace hook {
 // Re-exports
 // ============================================================================
 
-export { defer, onError } from "../plugins/minimajs.js";
 export { createHooksStore, getHooks, addHook, runHooks } from "./store.js";
 
 export type {
