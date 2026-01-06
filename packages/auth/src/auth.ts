@@ -105,16 +105,17 @@ export interface AuthResourceOptional<T> {
  * });
  * ```
  */
-export function createAuth<T>(
+export function createAuth<T, S = any>(
   callback: AuthCallback<T>,
   option: { required: true }
-): [PluginSync, AuthResourceWithRequired<T>];
-export function createAuth<T>(callback: AuthCallback<T>): [PluginSync, AuthResourceOptional<T>];
+): [PluginSync<S>, AuthResourceWithRequired<T>];
 
-export function createAuth<T>(
+export function createAuth<T, S = any>(callback: AuthCallback<T>): [PluginSync<S>, AuthResourceOptional<T>];
+
+export function createAuth<T, S = any>(
   callback: AuthCallback<T>,
   option?: AuthOption
-): [PluginSync, AuthResourceWithRequired<T> | AuthResourceOptional<T>] {
+): [PluginSync<S>, AuthResourceWithRequired<T> | AuthResourceOptional<T>] {
   const [getAuth, setAuth] = createContext<AuthResource<T>>({});
   function resource() {
     if (option?.required) {
