@@ -1,36 +1,9 @@
-import { ZodError } from "zod";
+import { z } from "zod";
 import { ValidationError } from "./error.js";
 import { humanFileSize } from "../helpers.js";
 import type { File } from "../file.js";
 
-export async function validateField(_name: string, value: unknown, schema: any) {
-  try {
-    // Use Zod parseAsync to validate value for the provided schema
-    if (typeof schema?.parseAsync === "function") {
-      return await schema.parseAsync(value);
-    }
-    // fallback: assume it's a plain validator function
-    return await (schema as any)(value);
-  } catch (err) {
-    if (err instanceof ZodError) {
-      throw ValidationError.createFromZod(err);
-    }
-    throw err;
-  }
-}
-
-export function validateContentSize(contentSize: number, maxSize: number) {
-  if (contentSize > maxSize) {
-    throw new ValidationError(
-      `Request content length exceeds the limit of ${humanFileSize(maxSize)} bytes. Actual size: ${humanFileSize(
-        contentSize
-      )} bytes.`,
-      { code: "MAX_LENGTH_EXCEEDED" }
-    );
-  }
-}
-
-export function validateFileType(file: File, accept: string[]) {
+function validateFileType(file: File, accept: string[]) {
   if (!accept.length) return true;
 
   const fileExtension = String(file.ext).toLowerCase();
@@ -106,4 +79,9 @@ export async function testMaxSize(max: number | undefined, file: File, size: num
       }
     );
   }
+}
+
+export function required(value: unknown, path: string, message: string) {
+  if (value !== undefined) return;
+  throw new z.ZodError([{ code: "invalid_value", path: [path], message, values: [undefined] }]);
 }

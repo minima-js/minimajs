@@ -16,6 +16,26 @@
  * await data.avatar.move("/uploads/avatars");
  * ```
  */
-export { createMultipartUpload, type UploadOption } from "./uploaded.js";
+
+import { context } from "@minimajs/server";
+import { z } from "zod";
+import { getUploadedBody, type UploadOption } from "./uploaded.js";
+import { ValidationError } from "./error.js";
+
+export { type UploadOption } from "./uploaded.js";
 export * from "./uploaded-file.js";
 export * from "./schema.js";
+
+export function createMultipartUpload<T extends z.ZodRawShape>(obj: T, option: UploadOption = {}) {
+  const [$body] = context.create(() => getUploadedBody(obj, context(), option));
+  return async function getData(): Promise<z.infer<z.ZodObject<T>>> {
+    try {
+      return await $body();
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        throw ValidationError.createFromZod(err);
+      }
+      throw err;
+    }
+  };
+}
