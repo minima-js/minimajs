@@ -13,21 +13,17 @@ graph TD
 
     Choice -->|2️⃣ Direct Response| D1[Route Match]
     D1 --> D2[Handler returns Response]
-    D2 --> D3[SEND Hook]
-    D3 --> D4[Send Response]
-    D4 --> D5[SENT Hook]
+    D2 --> D5[SENT Hook] --> N8
 
     Choice -->|3️⃣ Early Return| E1[REQUEST Hook]
     E1 --> E2[Returns Response]
-    E2 --> E3[SEND Hook]
-    E3 --> E4[Send Response]
-    E4 --> E5[SENT Hook]
+    E2 --> E5[SENT Hook] --> N8
 
     Choice -.->|4️⃣ Error at Any Stage| R1[ERROR Hook]
     R1 --> R2[Serialize Error]
     R2 --> R3[Send Error Response]
     R3 --> R4[ERROR_SENT Hook]
-    R4 --> R5[onError callbacks]
+    R4 --> R5[onError callbacks] --> N8
 
     style N2 fill:#e7f9e7
     style N3 fill:#e7f9e7

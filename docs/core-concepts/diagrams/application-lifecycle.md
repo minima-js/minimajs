@@ -1,12 +1,12 @@
 ```mermaid
 graph TD
     Start([createApp]) --> Register
-    Register[REGISTER Phase<br/>Plugins & modules<br/>app.register] --> Ready
-    Ready[READY Phase<br/>Initialization complete<br/>hook'ready'] --> Listen
-    Listen[LISTEN Phase<br/>Server started<br/>hook'listen'] --> Serving{Server Running}
+    Register[hook:*register*<br/><small>Plugins & modules] --> Ready
+    Ready[hook:ready<br/>Initialization complete] --> Listen
+    Listen[hook:listen<br/>Server started] --> Serving{Server Running}
     Serving -->|Incoming Requests| RequestCycle[REQUEST LIFECYCLE<br/>see below]
     RequestCycle --> Serving
-    Serving -->|app.close| Close[CLOSE Phase<br/>Cleanup & shutdown<br/>hook'close']
+    Serving -->|app.close| Close[hook:*close*<br/><small>Cleanup & shutdown</small>]
     Close --> End([Application Stopped])
 
     style Register fill:#e1f5ff

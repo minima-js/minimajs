@@ -1,6 +1,6 @@
 [test]
 root = "src"
-smol = false
+smol = true
 
 # Exclude files from code coverage reports
 coveragePathIgnorePatterns = [
