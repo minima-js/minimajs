@@ -41,7 +41,7 @@ describe("plugins", () => {
     test("should return 'anonymous' for functions without name", () => {
       const fn = (() => {}) as any;
       // Remove the name property to simulate truly anonymous function
-      Object.defineProperty(fn, 'name', { value: '', writable: false });
+      Object.defineProperty(fn, "name", { value: "", writable: false });
       const name = plugin.getName(fn);
       expect(name).toBe("anonymous");
     });
