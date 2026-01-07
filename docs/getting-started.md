@@ -11,7 +11,7 @@ tags:
 
 This guide introduces the core concepts of Minima.js to get you up and running quickly. We'll start with a minimal application and then explore the key features that make the framework powerful and elegant.
 
-## 1. Setup
+## Setup
 
 First, choose your runtime and create a new project directory.
 
@@ -35,7 +35,7 @@ npm install @minimajs/server
 
 If using Node.js, add `"type": "module"` to your `package.json`.
 
-## 2. A Minimal Application
+## A Minimal Application
 
 Create a `src/index.ts` file. Here is a very basic Minima.js application:
 
@@ -200,7 +200,7 @@ app.get("/trace-info", () => {
 Centralized error handling can be achieved with an `error` hook. This keeps your route handlers clean and focused on the happy path. For a comprehensive guide, see the [Error Handling Guide](/guides/error-handling).
 
 ```ts
-import { hook } from "@minimajs/server";
+import { hook }s from "@minimajs/server";
 
 app.register(
   hook("error", (error) => {

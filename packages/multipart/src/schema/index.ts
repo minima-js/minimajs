@@ -17,7 +17,7 @@
  * ```
  */
 
-import { context } from "@minimajs/server";
+import { context, createContext } from "@minimajs/server";
 import { z } from "zod";
 import { getUploadedBody, type UploadOption } from "./uploaded.js";
 import { ValidationError } from "./error.js";
@@ -27,7 +27,7 @@ export * from "./uploaded-file.js";
 export * from "./schema.js";
 
 export function createMultipartUpload<T extends z.ZodRawShape>(obj: T, option: UploadOption = {}) {
-  const [$body] = context.create(() => getUploadedBody(obj, context(), option));
+  const [$body] = createContext(() => getUploadedBody(obj, context(), option));
   return async function getData(): Promise<z.infer<z.ZodObject<T>>> {
     try {
       return await $body();
