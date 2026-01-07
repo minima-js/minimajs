@@ -30,11 +30,11 @@ const config = defineConfig({
   themeConfig: {
     logo: "/logo.svg",
     nav: [
-      { text: "Home", link: "/" },
       { text: "Guide", link: "/intro" },
+      { text: "Architecture", link: "/core-concepts/architecture" },
       { text: "Cookbook", link: "/cookbook/jwt-authentication" },
-      { text: "Packages", link: "/packages/auth" },
       { text: "API Reference", link: "/api/README" },
+      { text: "Packages", link: "/packages/auth" },
     ],
 
     sidebar: [
@@ -51,6 +51,8 @@ const config = defineConfig({
         items: [
           { text: "Architecture", link: "/core-concepts/architecture" },
           { text: "Application", link: "/core-concepts/application" },
+          { text: "Plugins", link: "/core-concepts/plugins" }, // Updated link
+          { text: "Modules", link: "/core-concepts/modules" }, // Updated link
           { text: "Context", link: "/core-concepts/context" },
         ],
       },
@@ -59,13 +61,10 @@ const config = defineConfig({
         items: [
           { text: "Routing", link: "/guides/routing" },
           { text: "HTTP", link: "/guides/http" },
-          { text: "Modules", link: "/guides/modules" },
-          { text: "Middleware", link: "/guides/middleware" },
+          { text: "Middleware", link: "/guides/middleware" }, // Updated link
           { text: "Hooks", link: "/guides/hooks" },
-          { text: "Compose", link: "/guides/compose" },
           { text: "Error Handling", link: "/guides/error-handling" },
           { text: "Logger", link: "/guides/logger" },
-          { text: "Third-Party Integration", link: "/guides/third-party-integration" },
         ],
       },
       {
@@ -101,7 +100,10 @@ const config = defineConfig({
         link: "/api/README",
       },
     ],
-    socialLinks: [{ icon: "github", link: "https://github.com/minima-js/minimajs" }],
+    socialLinks: [
+      { icon: "github", link: "https://github.com/minima-js/minimajs" },
+      { icon: "npm", link: "https://www.npmjs.com/package/@minimajs/server" },
+    ],
     search: {
       provider: "local",
     },

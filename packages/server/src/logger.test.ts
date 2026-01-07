@@ -16,7 +16,7 @@ describe("Logger", () => {
     test("should return data with module name if present", async () => {
       app.get("/", function homePage() {
         const result = mixin({});
-        expect(result).toEqual({ name: "fastify:homePage" });
+        expect(result).toEqual({ name: "homePage" });
         return "done";
       });
       await app.inject(createRequest("/"));
@@ -60,7 +60,6 @@ describe("Logger", () => {
 
     test("should handle routes without plugin chain (null/undefined)", async () => {
       const currentApp = createApp({ logger: false });
-      (currentApp as any)[Symbol.for("fastify.plugin.nameChain")] = null;
       currentApp.get("/no-plugin-null", function noPluginRouteNull() {
         const result = mixin({});
         expect(result.name).toBe("");
@@ -72,7 +71,6 @@ describe("Logger", () => {
 
     test("should handle routes without plugin chain (empty array)", async () => {
       const currentApp = createApp({ logger: false });
-      (currentApp as any)[Symbol.for("fastify.plugin.nameChain")] = [];
       currentApp.get("/no-plugin-empty", function noPluginRouteEmpty() {
         const result = mixin({});
         expect(result.name).toBe("");

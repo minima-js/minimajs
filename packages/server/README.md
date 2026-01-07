@@ -349,10 +349,12 @@ app.get("/stream", () => {
 ```typescript
 import { bodyParser } from "@minimajs/server/plugins";
 
-app.register(bodyParser, {
-  types: ["json", "text", "form"],
-  clone: false,
-});
+app.register(
+  bodyParser({
+    types: ["json", "text", "form"],
+    clone: false,
+  })
+);
 ```
 
 ### Router Logger

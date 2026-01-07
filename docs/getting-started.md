@@ -102,6 +102,7 @@ Notice we imported `params` and used it directly in the route handler without it
 It allows you to access request-specific data from anywhere in your application's call stack, leading to cleaner, more readable code. You no longer need to pass `req` or `ctx` objects through layers of functions.
 
 Key context functions include: `request`, `response`, `params`, `body`, `headers`, and `searchParams`.
+For more details, see the [Http Helpers Guide](/guides/http).
 
 ### Web-Native APIs (Request, Response)
 
@@ -131,12 +132,12 @@ app.get("/fast", () => {
 });
 ```
 
-### Encapsulation and Modules
+### Encapsulation with Modules and Plugins
 
-Minima.js allows you to structure your application into encapsulated modules. When you register a module with `app.register()`, it creates an isolated scope. Hooks and plugins registered inside a module only affect that module and its children.
+Minima.js allows you to structure your application into encapsulated [modules](/core-concepts/modules) and [plugins](/core-concepts/plugins). When you register a module with `app.register()`, it creates an isolated scope. Hooks and plugins registered inside a module only affect that module and its children, ensuring clear boundaries and predictable behavior.
 
 ```ts
-import { type App } from "@minimajs/server";
+import { type App, hook } from "@minimajs/server";
 
 async function userModule(app: App) {
   // This hook is local to userModule ONLY
@@ -153,7 +154,7 @@ app.register(userModule, { prefix: "/api/v1" });
 
 ### Lifecycle Hooks
 
-Hooks allow you to tap into any stage of the application or request lifecycle. This is perfect for middleware, logging, authentication, and error handling.
+Hooks allow you to tap into any stage of the application or request lifecycle. This is perfect for middleware, logging, authentication, and error handling. For a full overview, see the [Hooks Guide](/guides/hooks).
 
 This example uses a `request` hook to log every incoming request:
 
@@ -169,42 +170,43 @@ app.register(
 
 ### Custom Request-Scoped Data (`createContext`)
 
-For advanced use cases, you can create your own request-scoped context to share data. This is ideal for storing user authentication status or other per-request data.
+For advanced use cases, you can create your own request-scoped context to share data. This is ideal for storing per-request data like trace IDs or user authentication status. For a detailed guide and practical examples, see the [Context Guide](/core-concepts/context).
+
+Here's a basic example:
 
 ```ts
-import { createContext, hook } from "@minimajs/server";
+import { createContext } from "@minimajs/server";
+import { randomUUID } from "crypto";
 
 // 1. Create a context with a getter and setter
-const [getUser, setUser] = createContext<User | null>(null);
+const [getTraceId, setTraceId] = createContext<string>("");
 
 // 2. Use a hook to set the context for each request
 app.register(
   hook("request", async () => {
-    const user = await getUserFromToken(headers.get("authorization"));
-    setUser(user);
+    setTraceId(randomUUID());
   })
 );
 
 // 3. Access the data anywhere in your application
-app.get("/profile", () => {
-  const user = getUser(); // Returns the user for the current request
-  if (!user) throw new Error("Unauthorized");
-  return { user };
+app.get("/trace-info", () => {
+  const traceId = getTraceId();
+  return { traceId };
 });
 ```
 
 ### Error Handling
 
-Centralized error handling can be achieved with an `error` hook. This keeps your route handlers clean and focused on the happy path.
+Centralized error handling can be achieved with an `error` hook. This keeps your route handlers clean and focused on the happy path. For a comprehensive guide, see the [Error Handling Guide](/guides/error-handling).
 
 ```ts
-import { hook, abort } from "@minimajs/server";
+import { hook } from "@minimajs/server";
 
 app.register(
-  hook("error", (error, _ctx) => {
+  hook("error", (error) => {
     console.error("Caught error:", error.message);
-    // Standardize error responses
-    abort({ code: "INTERNAL_ERROR", message: error.message }, 500);
+    // You can return a custom Response or re-throw an HttpError here
+    return new Response("Something went wrong!", { status: 500 });
   })
 );
 ```

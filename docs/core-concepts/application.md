@@ -50,11 +50,11 @@ console.log(`Server running at ${address}`);
 The `.register()` method is the primary way to add functionality to your application. You can use it to register:
 
 -   Route handlers
--   Lifecycle hooks
--   Plugins (which are just encapsulated functions)
--   Sub-modules
+-   [Lifecycle hooks](/guides/hooks)
+-   [Plugins](/core-concepts/plugins) (reusable components that extend the current scope)
+-   [Modules](/core-concepts/modules) (encapsulated functions that create isolated scopes)
 
-This method is fundamental to Minima.js's principle of **encapsulation**. When you register a function, it creates an isolated scope, meaning any hooks or plugins registered inside it will not affect the rest of your application.
+This method is fundamental to Minima.js's principle of **encapsulation**. When you register a module, it creates an isolated scope, meaning any hooks or plugins registered inside it will not affect the rest of your application, ensuring clear boundaries and predictable behavior.
 
 ```typescript
 import { type App, hook } from "@minimajs/server";

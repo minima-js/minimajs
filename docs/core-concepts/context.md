@@ -8,15 +8,13 @@ tags:
 
 # Context: Access Data from Anywhere
 
-In many Node.js frameworks, you need to pass the `request` and `response` objects down through your application's layers to access request-specific data. This "prop drilling" can lead to cluttered code and tight coupling.
+In many Node.js frameworks, you need to pass `request` and `response` objects down through your application's layers. This "prop drilling" can lead to cluttered code and tight coupling.
 
-Minima.js solves this problem with a powerful **Context** system.
-
-At the heart of this system is Node.js's native `AsyncLocalStorage` API. This allows Minima.js to create a unique "storage" for each incoming request. Any data stored in this context is accessible from **anywhere** within the code that is executed during that specific request's lifecycle—without needing to pass `req` or `res` objects around.
+Minima.js solves this with a powerful **Context** system, powered by Node.js's native `AsyncLocalStorage` API. This creates a unique "storage" for each request, making request-specific data accessible from **anywhere** in your code without passing `req` or `res` objects around.
 
 ## Creating and Using a Context
 
-To create a context, you use the `createContext` function from `@minimajs/server`.
+To create a context, use the `createContext` function from `@minimajs/server`.
 
 ```typescript
 import { createContext } from "@minimajs/server";
@@ -25,25 +23,24 @@ import { createContext } from "@minimajs/server";
 const [getTraceId, setTraceId] = createContext<string>("");
 ```
 
-The `createContext` function returns a tuple with two functions:
+This returns a tuple with a **getter** (`getTraceId`) and a **setter** (`setTraceId`).
 
-- A **getter** (`getTraceId`) to retrieve the value from the context.
-- A **setter** (`setTraceId`) to set the value in the context.
-
-Here's how you might use it:
+Here's how you might use it to apply a `traceId` to every request using a middleware plugin.
 
 ```typescript
-import { createApp, interceptor } from "@minimajs/server";
+import { createApp, compose, plugin, hook } from "@minimajs/server";
 import { randomUUID } from "crypto";
 
-// A middleware to set the trace ID for each request
-async function traceIdMiddleware() {
-  const traceId = randomUUID();
-  setTraceId(traceId);
-}
+// 1. Define the middleware as a plugin that registers a 'request' hook.
+const traceIdPlugin = plugin(async (app) => {
+  app.register(hook('request', () => {
+    const traceId = randomUUID();
+    setTraceId(traceId);
+  }));
+});
 
 function someDeeplyNestedFunction() {
-  // We can access the trace ID here without any prop drilling!
+  // 3. We can access the trace ID here without any prop drilling!
   const traceId = getTraceId();
   console.log(`Trace ID: ${traceId}`);
 }
@@ -56,75 +53,108 @@ async function mainModule(app) {
 }
 
 const app = createApp();
-const appModule = interceptor([traceIdMiddleware], mainModule);
+
+// 2. Apply the middleware plugin to your module.
+const withTraceId = compose.create(traceIdPlugin);
+const appModule = withTraceId(mainModule);
 app.register(appModule);
 
 await app.listen({ port: 3000 });
 ```
 
-As you can see, `someDeeplyNestedFunction` can access the `traceId` without having it passed as a parameter. This makes your code cleaner, more decoupled, and easier to reason about.
+As you can see, `someDeeplyNestedFunction` can access the `traceId` without having it passed as a parameter.
 
-## A Practical Example: Authentication
+## Practical Example: Request-Scoped Logger with Pino
 
-The context is perfect for handling authentication. You can create a middleware that authenticates the user and stores the user object in the context. Then, any route handler or service can access the authenticated user directly.
+The context system is perfect for integrating third-party libraries. Let's create a request-specific logger with `pino` that automatically includes a `traceId` in every log message.
 
-**1. Create the User Context**
+### Prerequisites
 
-```typescript title="src/auth/context.ts"
-import { createContext } from "@minimajs/server";
-
-export interface User {
-  id: number;
-  username: string;
-}
-
-export const [getUser, setUser] = createContext<User | null>(null);
+First, install `pino`:
+```bash
+npm install pino
 ```
 
-**2. Create the Authentication Middleware**
+### 1. Create a Context for the Logger
 
-```typescript title="src/auth/middleware.ts"
-import { createAuth, UnauthorizedError } from "@minimajs/auth";
-import { headers } from "@minimajs/server";
-import { setUser, User } from "./context";
-import { findUserByToken } from "./service"; // Your user service
+```typescript title="src/logger.ts"
+import { createContext } from "@minimajs/server";
+import pino, { type Logger } from "pino";
 
-export const [authMiddleware, guard] = createAuth(async (): Promise<User> => {
-  const token = headers.get("authorization")?.split(" ")[1];
-  const user = await findUserByToken(token);
+// Create a base logger
+const baseLogger = pino();
 
-  if (!user) {
-    throw new UnauthorizedError("Invalid token");
-  }
+// Create a context to hold the request-specific logger
+export const [getLogger, setLogger] = createContext<Logger>(baseLogger);
+```
 
-  // Set the user in the context
-  setUser(user);
+### 2. Create a Middleware Plugin
 
-  return user;
+Next, we'll create a middleware plugin that runs for every request.
+
+```typescript title="src/middleware/logger.ts"
+import { getLogger, setLogger } from "../logger";
+import { randomUUID } from "crypto";
+import { plugin, hook } from "@minimajs/server";
+
+export const loggerPlugin = plugin(async (app) => {
+  app.register(hook('request', () => {
+    const traceId = randomUUID();
+    const requestLogger = getLogger().child({ traceId });
+    setLogger(requestLogger);
+  }));
 });
 ```
 
-**3. Access the User in a Route Handler**
+### 3. Use the Logger Anywhere
 
-```typescript title="src/profile/routes.ts"
-import { type App } from "@minimajs/server";
-import { getUser } from "../auth/context";
+Now, any function called during the request can get the logger from the context.
 
-export async function profileRoutes(app: App) {
-  app.get("/profile", () => {
-    const user = getUser(); // Easily access the user from the context
-    if (!user) {
-      // This should ideally not happen if the guard is used
-      throw new UnauthorizedError("Not authenticated");
-    }
-    return { id: user.id, username: user.username };
-  });
+```typescript title="src/service.ts"
+import { getLogger } from "./logger";
+
+export function doSomethingImportant() {
+  const logger = getLogger(); // Get the request-specific logger
+  logger.info("Starting important work...");
+  // ... do some work ...
+  logger.info("Finished important work.");
 }
 ```
+
+### 4. Put It All Together
+
+Finally, let's wire everything up in our main application file.
+
+```typescript title="src/index.ts"
+import { createApp, compose } from "@minimajs/server";
+import { loggerPlugin } from "./middleware/logger";
+import { doSomethingImportant } from "./service";
+import { getLogger } from "./logger";
+
+async function mainModule(app) {
+  app.get("/", () => {
+    const logger = getLogger();
+    logger.info("Handling request for /");
+    doSomethingImportant();
+    return { message: "Hello, World!" };
+  });
+}
+
+const app = createApp();
+
+// Apply the logger plugin to the main module
+const withLogger = compose.create(loggerPlugin);
+const appModule = withLogger(mainModule);
+app.register(appModule);
+
+await app.listen({ port: 3000 });
+```
+
+When you run this and hit the `/` endpoint, your console output will include the `traceId` in all log messages for that request.
 
 ## Benefits of Using Context
 
 - **Cleaner Code:** Eliminates the need to pass `req` and `res` everywhere.
 - **Decoupling:** Your business logic doesn't need to be aware of the underlying HTTP framework.
-- **Easier Third-Party Integration:** Integrate libraries that don't have direct access to `req`/`res` objects by simply calling them from within your request lifecycle code.
-- **Improved Testability:** Your functions become easier to test in isolation as they have fewer dependencies.
+- **Easier Third-Party Integration:** Integrate libraries that don't have direct access to `req`/`res` objects.
+- **Improved Testability:** Your functions become easier to test in isolation.

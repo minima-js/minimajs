@@ -8,8 +8,6 @@ export interface RouteLoggerOptions {
 }
 
 /**
- * Creates a Fastify plugin that logs all registered routes when the server is ready.
- *
  * Displays a formatted tree of all routes with their HTTP methods and paths.
  * Useful for debugging and understanding the application's route structure during development.
  *
@@ -17,7 +15,6 @@ export interface RouteLoggerOptions {
  * @param options.logger - Custom logger function (default: console.log with magenta color)
  * @param options.commonPrefix - Whether to remove common prefix from routes (default: false)
  *
- * @returns A Fastify plugin that logs routes on server ready
  *
  * @example
  * ```typescript

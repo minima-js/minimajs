@@ -227,4 +227,4 @@ By leveraging route metadata, you can create highly configurable and modular app
 
 As your application grows, it's a good practice to organize your routes into modules. This helps you keep your code organized and maintainable.
 
-To learn more about how to structure your application with modules, please refer to the [Modules](/guides/modules) guide.
+To learn more about how to structure your application with modules, please refer to the [Modules](/core-concepts/modules) guide.

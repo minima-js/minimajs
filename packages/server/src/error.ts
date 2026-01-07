@@ -133,9 +133,3 @@ export class ValidationError extends HttpError {
     this.statusCode = (this.constructor as typeof ValidationError).getStatusCode(this);
   }
 }
-
-export class ForbiddenError extends HttpError {
-  constructor(response: ErrorResponse = "Forbidden", options?: HttpErrorOptions) {
-    super(response, 403, options);
-  }
-}
