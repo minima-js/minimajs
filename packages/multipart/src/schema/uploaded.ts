@@ -9,7 +9,7 @@ import { createWriteStream } from "node:fs";
 import { StreamMeter } from "../stream.js";
 import { pipeline } from "node:stream/promises";
 import { ensurePath } from "../helpers.js";
-import * as validator from "./validator.js";
+import * as validate from "./validate.js";
 import { isUploadedFile, UploadedFile } from "./uploaded-file.js";
 import { pkg } from "../pkg.js";
 import { join } from "node:path";
@@ -33,19 +33,25 @@ export async function getUploadedBody<T extends z.ZodRawShape>(
   defer(() => deleteUploadedFiles(Object.values(result)));
   for await (const [field, data] of multipart.body()) {
     const schema = shape[field];
+
     if (schema instanceof FileSchema && isFile(data)) {
       result[field] = await validateAndUpload(data, ctx.request.signal, schema._zod.def, option);
       continue;
     }
+
     if (schema instanceof ZodArray && schema.element instanceof FileSchema && isFile(data)) {
       result[field] ??= [];
-      (result[field] as UploadedFile[]).push(await validateAndUpload(data, ctx.request.signal, schema._zod.def, option));
+      const files = result[field] as UploadedFile[];
+      validate.maximum(schema, files.length, field);
+      files.push(await validateAndUpload(data, ctx.request.signal, schema._zod.def, option));
       continue;
     }
+
     if (isFile(data)) {
       await data.flush();
       continue;
     }
+
     if (schema instanceof ZodArray) {
       result[field] ??= [];
       (result[field] as string[]).push(data);
@@ -74,17 +80,19 @@ async function validateAndUpload(
   schemaDef: FileBuilderDef,
   { tmpDir = tmpdir() }: UploadOption
 ) {
-  validator.testMimeType(file, schemaDef.types);
+  validate.mimeType(file, schemaDef.types);
   const maxSize = schemaDef.max ?? Infinity;
+  const minSize = schemaDef.min ?? 0;
   const meter = new StreamMeter(maxSize);
   const filename = join(await ensurePath(tmpDir, pkg.name), uuid());
   try {
     await pipeline(file.stream.pipe(meter), createWriteStream(filename));
   } catch (err) {
     if (err instanceof RangeError) {
-      await validator.testMaxSize(maxSize, file, meter.bytes);
+      await validate.maxSize(maxSize, file, meter.bytes);
       throw err;
     }
   }
+  validate.minSize(minSize, file, meter.bytes);
   return new UploadedFile(file, filename, meter.bytes, signal);
 }

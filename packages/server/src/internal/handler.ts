@@ -37,48 +37,46 @@ export async function handleRequest(server: App, router: Instance<HTTPVersion.V1
 
   return wrap(ctx, async () => {
     try {
-      {
-        // 1. request hook (runs for all requests, even not-found routes)
-        const response = await runHooks.request(app, ctx);
-        if (response instanceof Response) {
-          return response;
-        }
-      }
-      // Route not found
-      if (!route) {
-        return await handleError(new NotFoundError(), ctx);
-      }
-      const data = await route.handler(ctx);
-      // Create and return response (handles all hooks and serialization)
-      return await createResponse(data, {}, ctx);
+      const response = await prepare(route, ctx);
+      await runHooks.safe(ctx.app, "sent", ctx);
+      return response;
       // Route found - process request
     } catch (err) {
-      return await handleError(err, ctx);
+      const response = await handleError(err, ctx);
+      await runHooks.safe(ctx.app, "errorSent");
+      return response;
     }
   });
 }
 
+async function prepare(route: Route | null, ctx: Context): Promise<Response> {
+  {
+    // 1. request hook (runs for all requests, even not-found routes)
+    const response = await runHooks.request(ctx.app, ctx);
+    if (response instanceof Response) {
+      return response;
+    }
+  }
+  // 2. Route not found
+  if (!route) {
+    throw new NotFoundError();
+  }
+  // 3. Create and return response (handles all hooks and serialization)
+  return createResponse(await route.handler(ctx), {}, ctx);
+}
+
 async function handleError(err: unknown, ctx: Context): Promise<Response> {
   const hooks = getHooks(ctx.app);
-
   // No app-level error hooks - use default error handler
   if (hooks.error.size === 0) {
-    const response = await ctx.app.errorHandler(err, ctx);
-    await runHooks(ctx.app, "errorSent", ctx);
-    return response;
+    return ctx.app.errorHandler(err, ctx);
   }
 
   // App-level error hook
-  let response: Response;
   try {
     // Create error response (handles transform, serialize, send, and sent hooks)
-    response = await createResponse(await runHooks.error(ctx.app, err, ctx), {}, ctx);
+    return await createResponse(await runHooks.error(ctx.app, err, ctx), {}, ctx);
   } catch (e) {
-    response = await ctx.app.errorHandler(e, ctx);
+    return ctx.app.errorHandler(e, ctx);
   }
-
-  // Run errorSent hook after error response is created
-  await runHooks(ctx.app, "errorSent", ctx);
-
-  return response;
 }

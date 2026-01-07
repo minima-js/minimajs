@@ -32,19 +32,6 @@ export const loggerOptions: LoggerOptions = {
   },
 };
 
-/**
- * Mixin function for Pino logger that enriches log data with module name context.
- * Automatically adds the current module name to log entries if not already present.
- */
-export function mixin(data: Dict<unknown>) {
-  const name = getModuleName();
-  if (!name || data.name) {
-    return data;
-  }
-  data.name = name;
-  return data;
-}
-
 function getPluginNames(_server: App): string {
   return "";
 }
@@ -67,6 +54,18 @@ function getModuleName() {
   }
   return locals.get(kModuleName);
 }
+/**
+ * Mixin function for Pino logger that enriches log data with module name context.
+ * Automatically adds the current module name to log entries if not already present.
+ */
+export function mixin(data: Dict<unknown>) {
+  const name = getModuleName();
+  if (!name || data.name) {
+    return data;
+  }
+  data.name = name;
+  return data;
+}
 
 /**
  * Creates a Pino logger instance with merged default options and mixin support.
@@ -75,5 +74,3 @@ function getModuleName() {
 export function createLogger(option: LoggerOptions) {
   return pino(merge({ ...loggerOptions, mixin }, option));
 }
-
-export const logger = createLogger({});

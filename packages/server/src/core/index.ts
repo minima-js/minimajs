@@ -15,11 +15,11 @@
  * ```
  */
 import Router, { type HTTPVersion, type Config as RouterConfig } from "find-my-way";
-import { pino, type Logger } from "pino";
+import { type Logger } from "pino";
 import type { ServerAdapter } from "../interfaces/server.js";
-import { logger } from "../logger.js";
 import { minimajs } from "../plugins/minimajs.js";
 import { Server } from "./server.js";
+import { createLogger } from "../logger.js";
 
 export * from "./server.js";
 
@@ -36,9 +36,11 @@ export interface CreateBaseSeverOptions {
 }
 
 export function createBaseServer<T>(server: ServerAdapter<T>, options: CreateBaseSeverOptions) {
+  let logger: Logger | undefined = options.logger === false ? createLogger({ enabled: false }) : options.logger;
+  logger ??= createLogger({});
   const srv = new Server(server, {
     prefix: options.prefix ?? "",
-    logger: options.logger === false ? pino({ enabled: false }) : logger,
+    logger,
     router: Router(options.router),
   });
   srv.register(minimajs());

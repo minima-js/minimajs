@@ -16,7 +16,7 @@
 // Re-export core for backwards compatibility (App interface, types, etc.)
 export type { Server, ServerOptions } from "./core/server.js";
 
-import { logger } from "./logger.js";
+export * from "./logger.js";
 
 // Exporting all types
 export * from "./interfaces/index.js";
@@ -29,7 +29,6 @@ export * from "./interceptor.js";
 
 export * from "./http.js";
 export * from "./hooks/index.js";
-export { logger };
 
 export type { StatusCode } from "./internal/response.js";
 export { defer, onError, type DeferCallback, type ErrorCallback } from "./plugins/minimajs.js";

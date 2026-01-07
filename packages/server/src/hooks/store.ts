@@ -89,6 +89,16 @@ export async function runHooks<S = unknown>(app: App<S>, name: LifecycleHook, ..
 }
 
 export namespace runHooks {
+  export async function safe<S = unknown>(app: App<S>, name: LifecycleHook, ...args: any[]): Promise<void> {
+    const hooks = findHookToRun(app, name);
+    for (const hook of hooks) {
+      try {
+        await hook(...args);
+      } catch (e) {
+        app.log.child({ hook: name, handler: hook.name || undefined }).error(e);
+      }
+    }
+  }
   export async function request<S = unknown>(app: App<S>, ctx: Context<S>): Promise<void | Response> {
     const hooks = findHookToRun<OnRequestHook<S>, S>(app, "request");
     if (hooks.length === 0) {
