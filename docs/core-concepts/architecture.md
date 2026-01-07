@@ -1,26 +1,35 @@
 # Architecture
 
-Minima.js is designed with a modular and scalable architecture that allows developers to build modern web applications with ease. Unlike most frameworks, **Minima.js is built entirely from scratch**—not layered on top of Express, Fastify, or any other framework. This ground-up approach enables native integration with modern runtimes like Bun while maintaining Node.js compatibility, with zero legacy overhead.
+Minima.js is designed with a **modular, scalable, and runtime-native architecture**, enabling developers to build modern web applications with ease. Unlike most frameworks, **Minima.js is built entirely from scratch**—it does not rely on Express, Fastify, or any other framework. This ground-up approach allows **native integration with modern runtimes like Bun** while maintaining full **Node.js compatibility**, with zero legacy overhead.
+
+---
 
 ## Complete Lifecycle Flow
 
-Understanding the full lifecycle of a Minima.js application is crucial for building robust applications. The lifecycle consists of two interconnected flows: **Application Lifecycle** and **Request Lifecycle**.
+Understanding Minima.js’s lifecycle is key to building robust applications. It consists of **two interconnected flows**:
+
+1. **Application Lifecycle** – Global phases of the application.
+2. **Request Lifecycle** – Per-request processing stages.
 
 ### Application Lifecycle
 
-The application goes through four key phases:
+The application passes through **four key phases**:
 
 <!--@include: ./diagrams/application-lifecycle.md-->
 
+---
+
 ### Request Lifecycle
 
-Each incoming request flows through multiple stages with three main execution paths:
+Each incoming request flows through multiple stages with **three main execution paths**:
 
 <!--@include: ./diagrams/request-lifecycle.md-->
 
+---
+
 ### Flow Execution Paths
 
-There are **four main execution paths** for a request:
+There are **four primary execution paths** for a request:
 
 <!--@include: ./diagrams/flow-execution-paths.md-->
 
@@ -33,37 +42,41 @@ Serialize → SEND → Response → SENT → defer()
 
 **Example:**
 
-```typescript
+```ts
 app.get("/users", () => {
   return { users: ["Alice", "Bob"] };
 });
-// Returns data → transformed → serialized → sent -> defer()
+// Full pipeline: transformed → serialized → sent → deferred
 ```
+
+---
 
 #### 2. Direct Response Flow (Bypass Hooks)
 
 ```
-REQUEST → Route Match → Handler (returns Response) → Hook:sent -> defer()
+REQUEST → Route Match → Handler (returns Response) → Hook:sent → defer()
 ```
 
 **Example:**
 
-```typescript
+```ts
 app.get("/stream", () => {
   return new Response("Direct", { status: 200 });
 });
 // Skips: TRANSFORM, serialization
 ```
 
+---
+
 #### 3. Early Return Flow (Short-Circuit)
 
 ```
-REQUEST → (returns Response) → SENT -> defer()
+REQUEST → (returns Response) → SENT → defer()
 ```
 
 **Example:**
 
-```typescript
+```ts
 app.register(
   hook("request", ({ request }) => {
     if (request.headers.get("x-maintenance") === "true") {
@@ -74,43 +87,49 @@ app.register(
 // Skips: routing, handler, all other hooks
 ```
 
+---
+
 #### 4. Error Flow
 
 ```
-Any Stage → (error) → ERROR → Serialize Error → Hook:errorSent → onError() -> defer()
+Any Stage → (error) → ERROR → Serialize Error → Hook:errorSent → onError() → defer()
 ```
 
 **Example:**
 
-```typescript
+```ts
 app.get("/error", () => {
   throw new Error("Something broke");
 });
-// Goes to ERROR hook → error response → ERROR_SENT
+// Goes to ERROR hook → serialized error → errorSent → onError
 ```
+
+---
 
 ### Hook Execution Order
 
-Hooks execute in **LIFO** (Last-In-First-Out) order within the same scope:
+Hooks within the same scope execute in **LIFO** (Last-In-First-Out) order:
 
-```typescript
+```ts
 app.register(hook("request", () => console.log("First registered")));
 app.register(hook("request", () => console.log("Second registered")));
 
-// Execution order:
-// 1. "Second registered"  (last registered, runs first)
-// 2. "First registered"   (first registered, runs last)
+// Execution:
+// 1. "Second registered" → runs first
+// 2. "First registered" → runs last
 ```
+
+---
 
 ### Encapsulation and Scope Isolation
 
-Each `app.register()` creates an **isolated scope**. Hooks and routes only affect their own scope and child scopes:
+Each `app.register()` creates an **isolated scope**. Hooks and routes only affect their own scope and **child scopes**:
 
 <!--@include: ./diagrams/encapsulation.md-->
 
-**Example Code:**
+**Example:**
 
-```typescript
+```ts
 const app = createApp();
 
 // Root scope
@@ -131,20 +150,22 @@ app.register(async (app) => {
 });
 ```
 
+---
+
 ### Lifecycle Hook Summary
 
 #### Application Lifecycle Hooks
 
-| Hook       | When                           | Use Case                            |
-| ---------- | ------------------------------ | ----------------------------------- |
-| `register` | Plugin/module registered       | Track plugin loading                |
-| `ready`    | App initialized, before listen | Database connection, config loading |
-| `listen`   | Server started listening       | Log server start, notify services   |
-| `close`    | Server shutting down           | Cleanup, close DB, flush logs       |
+| Hook       | When                           | Use Case                      |
+| ---------- | ------------------------------ | ----------------------------- |
+| `register` | Plugin/module registration     | Track plugin loading          |
+| `ready`    | App initialized, before listen | Connect to DB, load config    |
+| `listen`   | Server starts listening        | Log startup, notify services  |
+| `close`    | Server shutdown                | Cleanup resources, flush logs |
 
-**Special:** `hook.lifespan(fn)` - Combines `ready` (setup) and `close` (cleanup):
+**Special:** `hook.lifespan(fn)` combines **setup** (`ready`) and **cleanup** (`close`):
 
-```typescript
+```ts
 app.register(
   hook.lifespan(async () => {
     await db.connect(); // Runs on ready
@@ -155,6 +176,8 @@ app.register(
 );
 ```
 
+---
+
 #### Request Lifecycle Hooks
 
 | Hook        | When                   | Use Case                     | Can Return Response |
@@ -163,147 +186,92 @@ app.register(
 | `transform` | After handler, if data | Transform response data      | ❌ No               |
 | `send`      | Before sending         | Add headers, log response    | ✅ Yes              |
 | `sent`      | After response sent    | Cleanup, metrics             | ❌ No               |
-| `error`     | On error               | Error formatting, logging    | ✅ Yes              |
+| `error`     | On error               | Format/log errors            | ✅ Yes              |
 | `errorSent` | After error sent       | Report to monitoring         | ❌ No               |
-| `timeout`   | Request timeout        | Handle timeout               | ✅ Yes              |
+| `timeout`   | Request timeout        | Handle request timeouts      | ✅ Yes              |
 
 **Special Request Hooks:**
 
-- `defer(callback)` - Execute after response sent
-- `onError(callback)` - Request-specific error handler
+- `defer(callback)` – Run **after response** is sent
+- `onError(callback)` – Request-specific error handling
+
+---
 
 ### Performance Considerations
 
-**Fastest to Slowest:**
+**Fastest to Slowest Execution Paths:**
 
-1. **Direct Response in REQUEST hook** (bypasses everything)
-2. **Direct Response in handler** (bypasses transform/serialize)
-3. **Return data in handler** (goes through full pipeline)
+1. **Direct Response in `request` hook** → bypasses everything
+2. **Direct Response in handler** → bypasses transform & serialize
+3. **Returning data in handler** → full pipeline
 
-**Example Performance Optimization:**
+**Examples:**
 
-```typescript
-// Ultra-fast health check (bypasses all processing)
+```ts
+// Ultra-fast health check
 app.register(
-  hook("request", ({ request, url }) => {
+  hook("request", ({ url }) => {
     if (url.pathname === "/health") {
       return new Response("OK", { status: 200 });
     }
   })
 );
 
-// Fast static response (bypasses transform)
-app.get("/ping", () => {
-  return new Response("pong", { status: 200 });
-});
+// Fast static response
+app.get("/ping", () => new Response("pong", { status: 200 }));
 
-// Normal response (full pipeline)
-app.get("/data", () => {
-  return { data: "value" }; // Transform → Serialize → Send
-});
+// Full pipeline
+app.get("/data", () => ({ data: "value" })); // Transform → Serialize → Send
 ```
+
+---
 
 ## Core Architecture
 
-Minima.js is built on three fundamental pillars:
+Minima.js is built on **three pillars**:
 
 ### 1. Native Runtime Integration
 
-Minima.js provides platform-specific imports that leverage native APIs:
+Minima.js provides platform-specific imports leveraging **native APIs**:
 
 ::: code-group
 
-```typescript [Bun]
+```ts [Bun]
 import { createApp } from "@minimajs/server/bun";
 // Uses Bun's native HTTP server for maximum performance
 ```
 
-```typescript [Node.js]
+```ts [Node.js]
 import { createApp } from "@minimajs/server/node";
 // Uses Node.js native HTTP server
 ```
 
 :::
 
-This approach eliminates abstraction layers and delivers peak performance on each platform.
+This eliminates abstraction layers and delivers **peak runtime performance**.
+
+---
 
 ### 2. Web API Standard
 
-Instead of wrapping Node.js `req`/`res` objects or creating proprietary abstractions, Minima.js uses **native Web API Request/Response**:
+Minima.js uses **native Web API `Request` and `Response` objects**:
 
-- **Request**: Native `Request` object from the Web API
-- **Response**: Native `Response` object from the Web API
+- **Request**: Native Web API `Request`
+- **Response**: Native Web API `Response`
 
-This means:
+Benefits:
 
-- Your code is portable across runtimes
-- No learning curve if you know Web APIs
-- Future-proof as standards evolve
-- Zero overhead from wrapper objects
+- Portable across runtimes
+- Familiar API for Web developers
+- Future-proof and standard-compliant
+- Zero wrapper overhead
 
-#### Two Response Modes
+---
 
-Minima.js gives you full control over how responses are handled:
+### 3. Modular, Scope-Isolated Design
 
-**1. Automatic Serialization (Default)**
+- **Scoped `app.register()`** allows isolated routes and hooks
+- **LIFO hook execution** ensures predictable order
+- **Child scopes inherit parent hooks** but remain isolated from sibling scopes
 
-Return any JavaScript value and Minima.js will serialize it, apply response hooks, and add global headers:
-
-```typescript
-import { createApp } from "@minimajs/server/bun";
-import { headers } from "@minimajs/server";
-
-const app = createApp();
-
-app.get("/data", () => {
-  // Set global headers
-  headers.set("X-Custom-Header", "value");
-
-  // Return plain objects - they go through:
-  // 1. Response transformation hooks
-  // 2. Global header injection
-  // 3. Automatic JSON serialization
-  return { message: "Hello, World!", timestamp: Date.now() };
-});
-```
-
-**2. Direct Response (Bypass Everything)**
-
-Return a native `Response` object to **skip all hooks and global headers**:
-
-```typescript
-app.get("/direct", () => {
-  // Return native Response - bypasses:
-  // ❌ Response transformation hooks
-  // ❌ Global headers (immutable Response)
-  // ❌ Automatic serialization
-  return new Response("Raw response", {
-    status: 200,
-    headers: { "Content-Type": "text/plain" },
-  });
-});
-```
-
-**Why bypass hooks with native Response?**
-
-- **Performance**: Skip all middleware for critical paths
-- **Control**: Full control over headers and body
-- **Streaming**: Send streaming responses directly
-- **Immutability**: Response objects are immutable - no post-processing
-
-**Comparison:**
-
-| Feature            | Return Object    | Return `new Response()` |
-| ------------------ | ---------------- | ----------------------- |
-| Response Hooks     | ✅ Applied       | ❌ Skipped              |
-| Global Headers     | ✅ Added         | ❌ Immutable            |
-| Auto Serialization | ✅ JSON          | ❌ Raw                  |
-| Streaming          | ❌ Not supported | ✅ Supported            |
-| Performance        | Fast             | Fastest                 |
-| Use Case           | 95% of routes    | Streaming, optimization |
-
-::: tip When to use each mode
-
-- Use **automatic serialization** for most routes (hooks, global headers, transforms)
-- Use **native Response** when you need complete control or streaming
-  :::
+This modular design enables **scalable, composable applications** with clear lifecycle guarantees.

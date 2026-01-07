@@ -1,40 +1,45 @@
 ```mermaid
 graph TD
-    Start([Incoming HTTP Request]) --> CreateCtx[Create Context <br/> <small>params, body, headers</small>]
-    CreateCtx --> ReqHook{"hook:*request*"}
+    Start([Incoming HTTP Request])
+    Start --> CreateCtx["Create Context<br/><small>params · body · headers</small>"]
 
-    ReqHook --> |Return Response<br/><small>Short-circuit</small>| SentHook
-    ReqHook --> |Continue| RouteMatch[Route Matching]
+    CreateCtx --> ReqHook{"hook:request"}
 
-    RouteMatch --> Handler[Route Handler<br/>Execution]
+    ReqHook -->|Returns Response<br/><small>short-circuit</small>| FinalResponse
+    ReqHook -->|Continue| RouteMatch["Route Matching"]
 
-    Handler -->|Returns Data| Transform(hook:*transform*<br/><small>Transform the data</small>)
-    Handler -->|Returns Response<br/>Bypass hooks| SendResp
+    RouteMatch --> Handler["Route Handler<br/>Execution"]
 
-    Transform --> Serialize[Serialize Data<br/>JSON/text]
-    Serialize --> SendHook[hook:*send*<br/><small>Pre-send</small>]
+    Handler -->|Returns data| Transform["hook:transform<br/><small>pure data</small>"]
+    Handler -->|Returns Response| FinalResponse
 
-    CreateResp[Create Response with Headers] --> SendResp
+    Transform --> Serialize["Serialize body<br/><small>JSON · text · stream</small>"]
 
-    SendHook --> CreateResp
+    Serialize --> SendHook["hook:send<br/><small>final response decision</small>"]
 
-    SendHook --> |returns Response <br/> <small>Bypass Headers</small>| SendResp[Send to Client]
+    SendHook -->|Returns Response<br/><small>override</small>| FinalResponse
+    SendHook -->|No return| CreateResp["Create Response<br/><small>merge headers · status</small>"]
 
-    SendResp --> SentHook[hook:*sent*<br/><small>Cleanup, Logging</small>]
-    SentHook --> Defer["defer()"<br/><small>Post-response tasks</small>]
+    CreateResp --> FinalResponse["Dispatch Response"]
+
+    FinalResponse --> SentHook["hook:sent<br/><small>cleanup · logging</small>"]
+    SentHook --> Defer["defer()<br/><small>post-response tasks</small>"]
     Defer --> Complete([Request Complete])
 
-    %% Error Path
-    ReqHook -.->|Error thrown| ErrorHook
-    RouteMatch -.->|Error thrown| ErrorHook
-    Handler -.->|Error thrown| ErrorHook
-    Transform -.->|Error thrown| ErrorHook
+    %% Error Flow
+    ReqHook -.->|throws| ErrorHook
+    RouteMatch -.->|throws| ErrorHook
+    Handler -.->|throws| ErrorHook
+    Transform -.->|throws| ErrorHook
 
-    ErrorHook[hook:*error*<br/><small>Transform error</small>] --> SerializeErr[Serialize Error<br/>Create Response]
-    SerializeErr --> SendErr[Send Error Response]
-    SendErr --> ErrorSent[hook:*errorSent*<br/><small>Report to monitoring</small>]
-    ErrorSent --> OnError["onError()"<br/><small>Request-specific error / cleanup</small>] --> Defer
+    ErrorHook["hook:error<br/><small>transform error</small>"]
+        --> SerializeErr["Serialize error"]
+        --> DispatchErr["Dispatch error response"]
+        --> ErrorSent["hook:errorSent<br/><small>report · metrics</small>"]
+        --> OnError["onError()<br/><small>request cleanup</small>"]
+        --> Defer
 
+    %% Styling
     style CreateCtx fill:#e1f5ff
     style ReqHook fill:#fff4e1
     style RouteMatch fill:#e7f9e7
@@ -42,12 +47,15 @@ graph TD
     style Transform fill:#ffe7f0
     style Serialize fill:#ffe7f0
     style SendHook fill:#e7f9e7
-    style SendResp fill:#e1f5ff
+    style CreateResp fill:#e1f5ff
+    style FinalResponse fill:#e1f5ff
     style SentHook fill:#fff4e1
     style Defer fill:#f0f0f0
+
     style ErrorHook fill:#ffe1e1
     style SerializeErr fill:#ffe1e1
-    style SendErr fill:#ffe1e1
+    style DispatchErr fill:#ffe1e1
     style ErrorSent fill:#ffe1e1
     style OnError fill:#ffe1e1
+
 ```
