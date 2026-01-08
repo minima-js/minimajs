@@ -4,8 +4,8 @@ import { $context as context, safe } from "./context.js";
 describe("Context", () => {
   describe("getContext", () => {
     test("should be same request", () => {
-      mockContext((req) => {
-        expect(context().request).toBe(req);
+      mockContext((ctx) => {
+        expect(context()).toBe(ctx);
       });
     });
   });

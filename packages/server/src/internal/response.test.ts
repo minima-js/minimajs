@@ -60,4 +60,55 @@ describe("internal/response", () => {
       }
     });
   });
+
+  describe("createResponse", () => {
+    test("should return data as-is if it's already a Response object", async () => {
+      app.get("/response-obj", () => {
+        return new Response("Hello from Response object");
+      });
+
+      const res = await app.inject(createRequest("/response-obj"));
+      expect(await res.text()).toBe("Hello from Response object");
+      expect(res.status).toBe(200);
+    });
+
+    test("should use Response from send hook if provided", async () => {
+      const { hook } = await import("../hooks/index.js");
+
+      const originalBody = "Original body content";
+      const customResponse = new Response("Intercepted by send hook", { status: 202 });
+
+      app.register(
+        hook("send", async (_body, _ctx) => {
+          return customResponse;
+        })
+      );
+
+      app.get("/test-path", () => originalBody);
+
+      // Mock a context to call createResponse directly
+      const response = await app.inject(createRequest("/test-path"));
+
+      // After context is mocked and createResponse is called, assert on the response
+      expect(response).toEqual(customResponse); // Expect the send hook's response
+      expect(await response?.text()).toBe("Intercepted by send hook");
+      expect(response?.status).toBe(202);
+    });
+
+    test("should merge headers from options", async () => {
+      // Import createResponse directly
+      const { createResponse } = await import("./response.js");
+      app.get("/test-headers", (ctx) => {
+        return createResponse(
+          "OK",
+          {
+            headers: { "X-Custom-Header": "TestValue" },
+          },
+          ctx
+        );
+      });
+      const response = await app.inject(createRequest("/test-headers"));
+      expect(response?.headers.get("X-Custom-Header")).toBe("TestValue");
+    });
+  });
 });

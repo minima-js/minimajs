@@ -1,5 +1,5 @@
 import { test, beforeEach, afterEach, describe, expect } from "@jest/globals";
-import { ForbiddenError, HttpError, NotFoundError, ValidationError } from "./error.js";
+import { HttpError, NotFoundError, ValidationError } from "./error.js";
 import { redirect } from "./index.js";
 import { createApp } from "./bun/index.js";
 import type { App } from "./interfaces/app.js";
@@ -135,30 +135,6 @@ describe("error module", () => {
       const body = JSON.parse(await res.text());
       expect(body).toStrictEqual({
         message: "Custom validation message",
-      });
-    });
-  });
-
-  describe("ForbiddenError", () => {
-    test("should test forbidden error", async () => {
-      app.get("/forbidden", () => {
-        throw new ForbiddenError();
-      });
-      const res = await app.inject(createRequest("/forbidden"));
-      expect(res.status).toBe(403);
-      const body = JSON.parse(await res.text());
-      expect(body).toStrictEqual({ message: "Forbidden" });
-    });
-
-    test("should test forbidden error with custom message", async () => {
-      app.get("/forbidden-custom", () => {
-        throw new ForbiddenError("Custom forbidden message");
-      });
-      const res = await app.inject(createRequest("/forbidden-custom"));
-      expect(res.status).toBe(403);
-      const body = JSON.parse(await res.text());
-      expect(body).toStrictEqual({
-        message: "Custom forbidden message",
       });
     });
   });

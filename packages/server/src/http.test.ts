@@ -11,8 +11,8 @@ const setHeader = headers.set;
 describe("Http", () => {
   describe("request", () => {
     test("should retrieve request object", () => {
-      mockContext((req) => {
-        expect(request()).toBe(req);
+      mockContext((ctx) => {
+        expect(request()).toBe(ctx.request);
       });
     });
   });
@@ -124,8 +124,9 @@ describe("Http", () => {
           expect(headers.get("authorization")).toBe("Bearer token");
           expect(headers.get("x-custom")).toBe("value");
           expect(headers.get("x-missing")).toBeNull();
+          expect(headers.get("x-empty-header")).toBe("");
         },
-        { headers: { authorization: "Bearer token", "x-custom": "value" } }
+        { headers: { authorization: "Bearer token", "x-custom": "value", "x-empty-header": "" } }
       );
     });
 
@@ -189,9 +190,11 @@ describe("Http", () => {
         () => {
           expect(searchParams.get("name")).toBe("John Doe");
           expect(searchParams.get("page")).toBe("2");
+          expect(searchParams.get("empty-param")).toBe("");
           expect(searchParams.get("missing")).toBeNull();
+          expect(searchParams.get("another-empty")).toBe("");
         },
-        { url: "/?name=John Doe&page=2" }
+        { url: "/?name=John Doe&page=2&empty-param=&another-empty=" }
       );
     });
 
@@ -228,11 +231,17 @@ describe("Http", () => {
     });
 
     test("searchParams.getAll should return empty array for missing param", () => {
-      mockContext(() => {
-        const result = searchParams.getAll("missing");
-        expect(result).toEqual([]);
-        expect(Array.isArray(result)).toBe(true);
-      });
+      mockContext(
+        () => {
+          let result = searchParams.getAll("missing");
+          expect(result).toEqual([]);
+          expect(Array.isArray(result)).toBe(true);
+
+          result = searchParams.getAll("empty-param");
+          expect(result).toEqual([""]);
+        },
+        { url: "/?empty-param=" }
+      );
     });
 
     test("searchParams.getAll with transform should transform each value", () => {
@@ -409,6 +418,12 @@ describe("Http", () => {
       expect(response.headers.get("x-custom")).toBe("value");
       await app.close();
     });
+
+    test("should throw error when value is undefined for single header", () => {
+      mockContext(() => {
+        expect(() => headers.set("x-test", undefined as any)).toThrow("Value is required when setting a single header");
+      });
+    });
   });
 
   describe("redirect", () => {
@@ -581,6 +596,59 @@ describe("Http", () => {
     test("should rethrow abort errors", () => {
       const httpError = new HttpError("test", 400);
       expect(() => abort.rethrow(httpError)).toThrow(httpError);
+    });
+
+    test("should rethrow non-BaseHttpError errors", () => {
+      const error = "just a string error";
+      expect(() => abort.rethrow(error)).toThrow(error);
+    });
+  });
+
+  describe("request.ip.configure", () => {
+    test("should configure with a callback function", () => {
+      const app = createApp();
+      const ipPlugin = request.ip.configure((ctx) => {
+        return ctx.request.headers.get("x-real-ip");
+      });
+      app.register(ipPlugin);
+      app.get("/", () => {
+        return request.ip();
+      });
+
+      const req = new Request("http://localhost/", {
+        headers: {
+          "x-real-ip": "123.123.123.123",
+        },
+      });
+
+      app.inject(req).then((res) => {
+        res.text().then((text) => {
+          expect(text).toBe("123.123.123.123");
+        });
+      });
+      app.close();
+    });
+  });
+
+  describe("searchParams.get with various types", () => {
+    test("should handle various data types", () => {
+      mockContext(
+        () => {
+          expect(searchParams.get("string", (v) => v)).toBe("text");
+          expect(searchParams.get("number", (v) => parseInt(v))).toBe(123);
+          expect(searchParams.get("boolean", (v) => v === "true")).toBe(true);
+        },
+        { url: "/?string=text&number=123&boolean=true" }
+      );
+    });
+
+    test("should return value directly when no transform is provided", () => {
+      mockContext(
+        () => {
+          expect(searchParams.get("foo")).toBe("bar");
+        },
+        { url: "/?foo=bar" }
+      );
     });
   });
 });

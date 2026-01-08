@@ -36,6 +36,7 @@ export default defineConfig(
       "@typescript-eslint/no-empty-object-type": "off",
       "@typescript-eslint/no-unsafe-declaration-merging": "off",
       "@typescript-eslint/no-unused-expressions": "off",
+      "@typescript-eslint/ban-ts-comment": "off",
     },
   },
   // Prettier

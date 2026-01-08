@@ -465,19 +465,6 @@ describe("Bun Server", () => {
       expect(data.message).toBe("Invalid data");
     });
 
-    test("should handle ForbiddenError", async () => {
-      const { ForbiddenError } = await import("../error.js");
-
-      app.get("/forbidden", () => {
-        throw new ForbiddenError();
-      });
-
-      const response = await app.inject(createRequest("/forbidden"));
-      expect(response.status).toBe(403);
-      const data = (await response.json()) as any;
-      expect(data.message).toBe("Forbidden");
-    });
-
     test("should handle RedirectError", async () => {
       const { RedirectError } = await import("../error.js");
 

@@ -120,7 +120,7 @@ export namespace runHooks {
     }
 
     for (const hook of hooks) {
-      const response = hook(serialized, ctx);
+      const response = await hook(serialized, ctx);
       if (response instanceof Response) {
         return response;
       }

@@ -2,7 +2,7 @@ import { wrap } from "../internal/context.js";
 import { type Context } from "../interfaces/context.js";
 import { createRequest, type MockRequestOptions } from "./request.js";
 
-export type MockContextCallback<T> = (request: Request) => T;
+export type MockContextCallback<T, S> = (ctx: Context<S>) => T;
 
 /**
  * Creates a mock context for testing context-based functions.
@@ -27,7 +27,7 @@ export type MockContextCallback<T> = (request: Request) => T;
  * @since v0.2.0
  */
 export function mockContext<S = unknown, T = void>(
-  callback: MockContextCallback<T>,
+  callback: MockContextCallback<T, S>,
   options: MockRequestOptions & { url?: string; params?: Record<string, string> } = {}
 ): T {
   const { params = {}, url = "/", ...reqOptions } = options;
@@ -38,7 +38,7 @@ export function mockContext<S = unknown, T = void>(
   // Create mock context
   const context: Context<S> = {
     server: null as any,
-    app: {} as any, // Mock app - users should use app.inject for full integration tests
+    app: null as any, // Mock app - users should use app.inject for full integration tests
     url: urlObj,
     request: request,
     responseState: resInit,
@@ -48,5 +48,5 @@ export function mockContext<S = unknown, T = void>(
     incomingMessage: undefined as any,
     serverResponse: undefined as any,
   };
-  return wrap(context, () => callback(request));
+  return wrap(context, () => callback(context));
 }
