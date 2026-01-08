@@ -1,21 +1,13 @@
-import { Transform, Writable, PassThrough, type Readable, type TransformCallback, type TransformOptions } from "node:stream";
+import { PassThrough, Transform, Writable, type Readable, type TransformCallback } from "node:stream";
 
-class IteratorStream<T> extends PassThrough {
-  constructor(opt: TransformOptions = {}) {
-    super({ objectMode: true, ...opt });
-  }
-  writeAsync(val: T) {
-    return new Promise<void>((resolve, reject) => {
-      this.write(val, (err) => {
-        err ? reject(err) : resolve();
-      });
-    });
-  }
+export interface TypedStream<T> {
+  write(chunk: T): boolean;
+  end(): this;
+  emit(event: "error", error: unknown): boolean;
 }
-
-export function createIteratorAsync<T>(opt?: TransformOptions) {
-  const stream = new IteratorStream<T>(opt);
-  return [stream, () => stream as unknown as AsyncGenerator<T>] as const;
+export function createAsyncIterator<T>() {
+  const stream = new PassThrough({ objectMode: true, highWaterMark: 16 });
+  return [stream as TypedStream<T>, stream as unknown as AsyncGenerator<T>] as const;
 }
 
 export async function stream2buffer(stream: Readable): Promise<Buffer> {

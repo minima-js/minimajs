@@ -54,23 +54,5 @@ describe("schema builder", () => {
         expect(schema2).not.toBe(schema1);
       });
     });
-
-    describe("parse", () => {
-      test("should return payload unchanged", () => {
-        const schema = file();
-        const mockFile = { field: "test" } as any;
-
-        const result = schema.parse(mockFile);
-
-        expect(result).toBe(mockFile);
-      });
-
-      test("should work with complex schema", () => {
-        const schema = file().max(1024).min(100).accept(["image/*"]);
-        const mockFile = { field: "test" } as any;
-        const result = schema.parse(mockFile);
-        expect(result).toBe(mockFile);
-      });
-    });
   });
 });

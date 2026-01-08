@@ -38,14 +38,14 @@ describe("error module", () => {
       const error = new Error("Test error");
       const httpError = HttpError.create(error);
       expect(httpError).toBeInstanceOf(HttpError);
-      expect(httpError.statusCode).toBe(500);
+      expect(httpError.status).toBe(500);
       expect(httpError.response).toBe("Unable to process request");
     });
 
     test("should create an HttpError from a non-error", () => {
       const httpError = HttpError.create("Test error");
       expect(httpError).toBeInstanceOf(HttpError);
-      expect(httpError.statusCode).toBe(500);
+      expect(httpError.status).toBe(500);
       expect(httpError.message).toBe("Unable to process request");
     });
 
@@ -66,7 +66,7 @@ describe("error module", () => {
 
     test("should handle status code as string", () => {
       const error = new HttpError("An error occurred", "BAD_REQUEST");
-      expect(error.statusCode).toBe(400);
+      expect(error.status).toBe(400);
     });
   });
 

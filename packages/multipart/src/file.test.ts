@@ -135,19 +135,19 @@ describe("File", () => {
 
   describe("buffer", () => {
     test("should convert stream to buffer", async () => {
-      const content = "Hello, World!";
+      const content = Buffer.from("Hello, World!");
       const stream = Readable.from([content]);
       const file = new File("doc", "hello.txt", "7bit", "text/plain", stream);
 
       const buffer = await file.buffer();
 
       expect(buffer).toBeInstanceOf(Buffer);
-      expect(buffer.toString()).toBe(content);
+      expect(buffer.toString()).toBe(content.toString());
     });
 
     test("should cache the buffer", async () => {
       const content = "Hello, World!";
-      const stream = Readable.from([content]);
+      const stream = Readable.from([Buffer.from(content)]);
       const file = new File("doc", "hello.txt", "7bit", "text/plain", stream);
 
       const buffer1 = await file.buffer();

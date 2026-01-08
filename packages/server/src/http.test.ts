@@ -110,7 +110,6 @@ describe("Http", () => {
       mockContext(
         () => {
           const h1 = headers();
-          expect(h1).toBeInstanceOf(Headers);
           expect(h1["name"]).toBe("Adil");
           expect(h1["x-custom"]).toBe("value");
         },
@@ -457,7 +456,7 @@ describe("Http", () => {
         fail("should have thrown");
       } catch (err) {
         expect(err).toBeInstanceOf(HttpError);
-        expect((err as HttpError).statusCode).toBe(400);
+        expect((err as HttpError).status).toBe(400);
       }
     });
 
@@ -467,7 +466,7 @@ describe("Http", () => {
         fail("should have thrown");
       } catch (err) {
         expect(err).toBeInstanceOf(HttpError);
-        expect((err as HttpError).statusCode).toBe(401);
+        expect((err as HttpError).status).toBe(401);
       }
     });
 

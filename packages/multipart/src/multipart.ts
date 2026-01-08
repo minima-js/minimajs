@@ -4,7 +4,7 @@ import { Busboy, type BusboyConfig, type BusboyHeaders } from "@fastify/busboy";
 import { File } from "./file.js";
 import { context } from "@minimajs/server";
 import { ValidationError } from "@minimajs/server/error";
-import { createIteratorAsync, stream2void } from "./stream.js";
+import { createAsyncIterator, stream2void } from "./stream.js";
 import { UploadError } from "./errors.js";
 
 type Config = Omit<BusboyConfig, "headers">;
@@ -80,16 +80,16 @@ export namespace multipart {
    * ```
    */
   export function files() {
-    const [stream, iterator] = createIteratorAsync<File>();
+    const [stream, iterator] = createAsyncIterator<File>();
     const bb = busboy({
       limits: { fields: 0 },
     });
     bb.on("file", (uploadedName, file, filename, encoding, mimeType) => {
       stream.write(new File(uploadedName, filename, encoding, mimeType, file));
     });
-    bb.on("error", (er) => stream.emit("error", er));
+    bb.on("error", (err) => stream.emit("error", err));
     bb.on("finish", () => stream.end());
-    return iterator();
+    return iterator;
   }
 
   /**
@@ -136,16 +136,16 @@ export namespace multipart {
    * ```
    */
   export function body() {
-    const [stream, iterator] = createIteratorAsync<[string, string | File]>();
+    const [stream, iterator] = createAsyncIterator<[string, string | File]>();
     const bb = busboy({});
     bb.on("field", (name, value) => {
-      stream.push([name, value]);
+      stream.write([name, value]);
     });
     bb.on("file", (name, file, filename, encoding, mimeType) => {
       stream.write([name, new File(name, filename, encoding, mimeType, file)]);
     });
     bb.on("error", (err) => stream.emit("error", err));
     bb.on("finish", () => stream.end());
-    return iterator();
+    return iterator;
   }
 }

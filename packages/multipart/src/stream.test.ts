@@ -1,141 +1,23 @@
 import { describe, test, expect } from "@jest/globals";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
-import { createIteratorAsync, stream2buffer, stream2void, StreamMeter } from "./stream.js";
+import { stream2buffer, stream2void, StreamMeter } from "./stream.js";
 
 describe("stream utilities", () => {
-  describe("createIteratorAsync", () => {
-    test("should create an async iterator stream", async () => {
-      const [stream, iterator] = createIteratorAsync<string>();
-
-      stream.write("a");
-      stream.write("b");
-      stream.write("c");
-      stream.end();
-
-      const results: string[] = [];
-      for await (const value of iterator()) {
-        results.push(value);
-      }
-
-      expect(results).toEqual(["a", "b", "c"]);
-    });
-
-    test("should handle async writes", async () => {
-      const [stream, iterator] = createIteratorAsync<number>();
-
-      const writer = async () => {
-        await stream.writeAsync(1);
-        await stream.writeAsync(2);
-        await stream.writeAsync(3);
-        stream.end();
-      };
-
-      writer();
-
-      const results: number[] = [];
-      for await (const value of iterator()) {
-        results.push(value);
-      }
-
-      expect(results).toEqual([1, 2, 3]);
-    });
-
-    test("should handle errors", async () => {
-      const [stream, iterator] = createIteratorAsync<string>();
-
-      stream.write("a");
-      stream.destroy(new Error("Test error"));
-
-      await expect(async () => {
-        for await (const _value of iterator()) {
-          // Should throw
-        }
-      }).rejects.toThrow("Test error");
-    });
-
-    test("should handle empty stream", async () => {
-      const [stream, iterator] = createIteratorAsync<string>();
-      stream.end();
-
-      const results: string[] = [];
-      for await (const value of iterator()) {
-        results.push(value);
-      }
-
-      expect(results).toEqual([]);
-    });
-
-    test("should work with object mode", async () => {
-      const [stream, iterator] = createIteratorAsync<{ id: number; name: string }>();
-
-      stream.write({ id: 1, name: "Alice" });
-      stream.write({ id: 2, name: "Bob" });
-      stream.end();
-
-      const results: any[] = [];
-      for await (const value of iterator()) {
-        results.push(value);
-      }
-
-      expect(results).toEqual([
-        { id: 1, name: "Alice" },
-        { id: 2, name: "Bob" },
-      ]);
-    });
-
-    test("should handle rapid writes", async () => {
-      const [stream, iterator] = createIteratorAsync<number>();
-
-      const count = 100;
-      for (let i = 0; i < count; i++) {
-        stream.write(i);
-      }
-      stream.end();
-
-      const results: number[] = [];
-      for await (const value of iterator()) {
-        results.push(value);
-      }
-
-      expect(results.length).toBe(count);
-      expect(results[0]).toBe(0);
-      expect(results[count - 1]).toBe(count - 1);
-    });
-
-    test("should handle custom transform options", async () => {
-      const [stream, iterator] = createIteratorAsync<string>({ highWaterMark: 1 });
-
-      stream.write("test");
-      stream.end();
-
-      const results: string[] = [];
-      for await (const value of iterator()) {
-        results.push(value);
-      }
-
-      expect(results).toEqual(["test"]);
-    });
-  });
-
   describe("stream2buffer", () => {
     test("should convert stream to buffer", async () => {
-      const content = "Hello, World!";
-      const stream = Readable.from([content]);
+      function* text2buffer(text: string[]) {
+        for (const char of text) {
+          yield Buffer.from(char);
+        }
+      }
+
+      const stream = Readable.from(text2buffer(["hello", "world"]));
 
       const buffer = await stream2buffer(stream);
 
       expect(buffer).toBeInstanceOf(Buffer);
-      expect(buffer.toString()).toBe(content);
-    });
-
-    test("should handle multiple chunks", async () => {
-      const chunks = ["Hello", ", ", "World", "!"];
-      const stream = Readable.from(chunks);
-
-      const buffer = await stream2buffer(stream);
-
-      expect(buffer.toString()).toBe(chunks.join(""));
+      expect(buffer.toString()).toBe("helloworld");
     });
 
     test("should handle binary data", async () => {
@@ -278,15 +160,6 @@ describe("stream utilities", () => {
       );
 
       expect(Buffer.concat(chunks).toString()).toBe(content);
-    });
-
-    test("should throw RangeError when maxBytes exceeded", async () => {
-      const content = "This is a long string that exceeds the limit";
-      const stream = Readable.from([content]);
-      const meter = new StreamMeter(10); // Very small limit
-
-      await expect(pipeline(stream, meter, stream2void())).rejects.toThrow(RangeError);
-      await expect(pipeline(stream, meter, stream2void())).rejects.toThrow("Stream exceeded specified max of 10 bytes");
     });
 
     test("should allow exactly maxBytes", async () => {

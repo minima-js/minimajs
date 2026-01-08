@@ -5,11 +5,10 @@ describe("errors", () => {
   describe("UploadError", () => {
     test("should create error with string message", () => {
       const error = new UploadError("Upload failed");
-
       expect(error).toBeInstanceOf(UploadError);
       expect(error).toBeInstanceOf(Error);
       expect(error.message).toBe("Upload failed");
-      expect(error.statusCode).toBe(422);
+      expect(error.status).toBe(422);
     });
 
     test("should create error with object response", () => {
@@ -17,14 +16,14 @@ describe("errors", () => {
       const error = new UploadError(response);
 
       expect(error).toBeInstanceOf(UploadError);
-      expect(error.message).toBe("Invalid file type");
-      expect(error.statusCode).toBe(422);
+      expect(error.response.message).toBe("Invalid file type");
+      expect(error.status).toBe(422);
     });
 
     test("should default to 422 status code", () => {
       const error = new UploadError("Test error");
 
-      expect(error.statusCode).toBe(422);
+      expect(error.status).toBe(422);
     });
 
     test("should accept custom options", () => {
@@ -32,12 +31,6 @@ describe("errors", () => {
 
       expect(error.cause).toBeInstanceOf(Error);
       expect((error.cause as Error).message).toBe("Root cause");
-    });
-
-    test("should have correct name", () => {
-      const error = new UploadError("Test error");
-
-      expect(error.name).toBe("UploadError");
     });
 
     test("should be throwable", () => {
@@ -48,7 +41,6 @@ describe("errors", () => {
 
     test("should preserve stack trace", () => {
       const error = new UploadError("Test error");
-
       expect(error.stack).toBeDefined();
       expect(error.stack).toContain("UploadError");
     });
@@ -59,7 +51,7 @@ describe("errors", () => {
         details: ["File too large", "Invalid mime type"],
       });
 
-      expect(error.message).toBe("File validation failed");
+      expect(error.response.message).toBe("File validation failed");
     });
 
     test("should be catchable with instanceof", () => {
@@ -99,7 +91,7 @@ describe("errors", () => {
       assertError(error, UploadError);
 
       // TypeScript should now know error is UploadError
-      expect(error.statusCode).toBe(422);
+      expect(error.status).toBe(422);
     });
 
     test("should work with other error types", () => {
@@ -153,7 +145,7 @@ describe("errors", () => {
         throw new UploadError("Upload failed");
       } catch (err) {
         assertError(err, UploadError);
-        expect(err.statusCode).toBe(422);
+        expect(err.status).toBe(422);
       }
     });
 

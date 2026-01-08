@@ -425,6 +425,8 @@ describe("multipart", () => {
 
           for await (const item of multipart.body()) {
             items.push(item);
+            const [, body] = item;
+            if (isFile(body)) await body.flush();
           }
 
           const [name1, value1] = items[0]!;

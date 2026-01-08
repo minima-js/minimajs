@@ -2,14 +2,7 @@ import { $context } from "./internal/context.js";
 import type { Context } from "./interfaces/context.js";
 import { extractIpAddress } from "./internal/request.js";
 
-import {
-  RedirectError,
-  HttpError,
-  BaseHttpError,
-  NotFoundError,
-  type ErrorResponse,
-  type HttpErrorOptions,
-} from "./error.js";
+import { RedirectError, HttpError, BaseHttpError, NotFoundError, type HttpErrorOptions } from "./error.js";
 import type { Dict, HeadersInit, HttpHeader, HttpHeaderIncoming, ResponseOptions } from "./interfaces/response.js";
 
 import { toStatusCode, type StatusCode } from "./internal/response.js";
@@ -123,12 +116,8 @@ export function redirect(path: string, isPermanent?: boolean, options?: HttpErro
  * ```
  * @since v0.2.0
  */
-export function abort(
-  response: ErrorResponse = "Bad Request",
-  statusCode: StatusCode = 400,
-  options?: HttpErrorOptions
-): never {
-  throw new HttpError(response, statusCode, options);
+export function abort<R>(response: R = "Bad Request" as R, statusCode: StatusCode = 400, options?: HttpErrorOptions): never {
+  throw new HttpError<R>(response, statusCode, options);
 }
 
 /**
