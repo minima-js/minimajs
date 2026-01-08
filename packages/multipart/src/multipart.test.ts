@@ -1,39 +1,36 @@
 import { describe, test, expect } from "@jest/globals";
 import { Readable } from "node:stream";
+import { setTimeout as sleep } from "node:timers/promises";
 import { multipart } from "./multipart.js";
 import { File, isFile } from "./file.js";
 import { mockContext } from "@minimajs/server/mock";
 
 // Helper to create multipart form data stream
-function createMultipartStream(
+async function* createMultipartStream(
   boundary: string,
   parts: Array<{ name: string; filename?: string; contentType?: string; data: string }>
 ) {
-  const chunks: string[] = [];
-
   for (const part of parts) {
-    chunks.push(`--${boundary}\r\n`);
-
+    part.contentType ||= "application/octet-stream";
+    yield `--${boundary}\r\n`;
     if (part.filename) {
-      chunks.push(`Content-Disposition: form-data; name="${part.name}"; filename="${part.filename}"\r\n`);
-      chunks.push(`Content-Type: ${part.contentType || "application/octet-stream"}\r\n`);
+      yield `Content-Disposition: form-data; name="${part.name}"; filename="${part.filename}"\r\n`;
+      yield `Content-Type: ${part.contentType}\r\n`;
     } else {
-      chunks.push(`Content-Disposition: form-data; name="${part.name}"\r\n`);
+      yield `Content-Disposition: form-data; name="${part.name}"\r\n`;
     }
-
-    chunks.push(`\r\n`);
-    chunks.push(`${part.data}\r\n`);
+    yield `\r\n`;
+    yield `${part.data}\r\n`;
+    await sleep(1);
   }
-
-  chunks.push(`--${boundary}--\r\n`);
-
-  return Readable.from([chunks.join("")]);
+  yield `--${boundary}--\r\n`;
 }
 
 describe("multipart", () => {
   describe("file", () => {
     test("should retrieve first file without name parameter", async () => {
       const boundary = "----boundary123";
+
       const stream = createMultipartStream(boundary, [
         { name: "avatar", filename: "profile.png", contentType: "image/png", data: "fake-image-data" },
       ]);
@@ -41,7 +38,6 @@ describe("multipart", () => {
       await mockContext(
         async () => {
           const file = await multipart.file();
-
           expect(file).toBeInstanceOf(File);
           expect(file.field).toBe("avatar");
           expect(file.filename).toBe("profile.png");
@@ -49,7 +45,7 @@ describe("multipart", () => {
         },
         {
           headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
-          body: stream as any,
+          body: stream,
         }
       );
     });
@@ -70,7 +66,7 @@ describe("multipart", () => {
         },
         {
           headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
-          body: stream as any,
+          body: stream,
         }
       );
     });
@@ -92,9 +88,11 @@ describe("multipart", () => {
 
     test("should reject when named file not found", async () => {
       const boundary = "----boundary123";
-      const stream = createMultipartStream(boundary, [
-        { name: "avatar", filename: "profile.png", contentType: "image/png", data: "image-data" },
-      ]);
+      const stream = Readable.from(
+        createMultipartStream(boundary, [
+          { name: "avatar", filename: "profile.png", contentType: "image/png", data: "image-data" },
+        ])
+      );
 
       await mockContext(
         async () => {
@@ -129,7 +127,6 @@ describe("multipart", () => {
 
     test("should throw ValidationError when content-type header missing", async () => {
       const stream = Readable.from([""]);
-
       await mockContext(
         async () => {
           await expect(multipart.file()).rejects.toThrow();
@@ -153,9 +150,9 @@ describe("multipart", () => {
       await mockContext(
         async () => {
           const files: File[] = [];
-
           for await (const file of multipart.files()) {
             files.push(file);
+            await file.flush();
           }
 
           expect(files.length).toBe(3);
@@ -165,7 +162,7 @@ describe("multipart", () => {
         },
         {
           headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
-          body: stream as any,
+          body: stream,
         }
       );
     });
@@ -180,8 +177,8 @@ describe("multipart", () => {
 
           for await (const file of multipart.files()) {
             files.push(file);
+            await file.flush();
           }
-
           expect(files.length).toBe(0);
         },
         {
@@ -205,6 +202,7 @@ describe("multipart", () => {
 
           for await (const file of multipart.files()) {
             files.push(file);
+            await file.flush();
           }
 
           expect(files.length).toBe(1);
@@ -212,7 +210,7 @@ describe("multipart", () => {
         },
         {
           headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
-          body: stream as any,
+          body: stream,
         }
       );
     });
@@ -230,25 +228,26 @@ describe("multipart", () => {
       await mockContext(
         async () => {
           const fields = await multipart.fields<{ name: string; email: string; age: string }>();
-
           expect(fields.name).toBe("John Doe");
           expect(fields.email).toBe("john@example.com");
           expect(fields.age).toBe("30");
         },
         {
           headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
-          body: stream as any,
+          body: stream,
         }
       );
     });
 
     test("should ignore files", async () => {
       const boundary = "----boundary123";
-      const stream = createMultipartStream(boundary, [
-        { name: "name", data: "John" },
-        { name: "avatar", filename: "profile.png", contentType: "image/png", data: "image" },
-        { name: "email", data: "john@example.com" },
-      ]);
+      const stream = Readable.from(
+        createMultipartStream(boundary, [
+          { name: "name", data: "John" },
+          { name: "avatar", filename: "profile.png", contentType: "image/png", data: "image" },
+          { name: "email", data: "john@example.com" },
+        ])
+      );
 
       await mockContext(
         async () => {
@@ -267,7 +266,7 @@ describe("multipart", () => {
 
     test("should return empty object when no fields", async () => {
       const boundary = "----boundary123";
-      const stream = createMultipartStream(boundary, []);
+      const stream = Readable.from(createMultipartStream(boundary, []));
 
       await mockContext(
         async () => {
@@ -284,7 +283,9 @@ describe("multipart", () => {
 
     test("should handle special characters in field values", async () => {
       const boundary = "----boundary123";
-      const stream = createMultipartStream(boundary, [{ name: "description", data: "Special chars: <>&\"'/@#$%" }]);
+      const stream = Readable.from(
+        createMultipartStream(boundary, [{ name: "description", data: "Special chars: <>&\"'/@#$%" }])
+      );
 
       await mockContext(
         async () => {
@@ -303,18 +304,21 @@ describe("multipart", () => {
   describe("body", () => {
     test("should iterate over all fields and files", async () => {
       const boundary = "----boundary123";
-      const stream = createMultipartStream(boundary, [
-        { name: "name", data: "John Doe" },
-        { name: "avatar", filename: "profile.png", contentType: "image/png", data: "image-data" },
-        { name: "email", data: "john@example.com" },
-        { name: "document", filename: "doc.pdf", contentType: "application/pdf", data: "pdf-data" },
-      ]);
+      const stream = Readable.from(
+        createMultipartStream(boundary, [
+          { name: "name", data: "John Doe" },
+          { name: "avatar", filename: "profile.png", contentType: "image/png", data: "image-data" },
+          { name: "email", data: "john@example.com" },
+          { name: "document", filename: "doc.pdf", contentType: "application/pdf", data: "pdf-data" },
+        ])
+      );
 
       await mockContext(
         async () => {
           const items: Array<[string, string | File]> = [];
           for await (const item of multipart.body()) {
             items.push(item);
+            if (isFile(item[1])) await item[1].flush();
           }
           expect(items.length).toBe(4);
           expect(items[0]?.[0]).toBe("name");
@@ -329,7 +333,7 @@ describe("multipart", () => {
         },
         {
           headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
-          body: stream as any,
+          body: stream,
         }
       );
     });
@@ -372,6 +376,9 @@ describe("multipart", () => {
 
           for await (const item of multipart.body()) {
             items.push(item);
+            if (item[1] instanceof File) {
+              await item[1].flush();
+            }
           }
 
           expect(items.length).toBe(2);
@@ -379,7 +386,7 @@ describe("multipart", () => {
         },
         {
           headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
-          body: stream as any,
+          body: stream,
         }
       );
     });

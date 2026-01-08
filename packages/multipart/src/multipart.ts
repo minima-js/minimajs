@@ -88,6 +88,7 @@ export namespace multipart {
       stream.write(new File(uploadedName, filename, encoding, mimeType, file));
     });
     bb.on("error", (er) => stream.emit("error", er));
+    bb.on("finish", () => stream.end());
     return iterator();
   }
 

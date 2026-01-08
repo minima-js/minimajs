@@ -1,3 +1,6 @@
+import { Readable } from "node:stream";
+import { isAsyncIterator, isIterator } from "../utils/iterable.js";
+
 /**
  * Creates a mock Request object for testing.
  *
@@ -52,21 +55,24 @@ export function createRequest(url: string, options: MockRequestOptions = {}): Re
     method,
     headers: new Headers(headers),
   };
-
   // Handle body
   if (body !== undefined) {
-    if (typeof body === "string") {
-      requestInit.body = body;
-    } else if (body instanceof FormData || body instanceof Blob || body instanceof ArrayBuffer) {
-      requestInit.body = body;
-    } else {
-      // Assume JSON
-      requestInit.body = JSON.stringify(body);
-      if (!headers["content-type"]) {
-        (requestInit.headers as Headers).set("content-type", "application/json");
-      }
-    }
+    requestInit.body = prepareBody(body, requestInit.headers as Headers);
+  }
+  return new Request(fullUrl, requestInit);
+}
+
+function prepareBody(body: unknown, headers: Headers): RequestInit["body"] {
+  if (typeof body === "string" || body instanceof ReadableStream || body instanceof ArrayBuffer) return body;
+
+  if (isAsyncIterator(body) || isIterator(body)) {
+    body = Readable.from(body);
   }
 
-  return new Request(fullUrl, requestInit);
+  if (body instanceof Readable) {
+    return Readable.toWeb(body);
+  }
+
+  headers.set("Content-Type", "application/json");
+  return JSON.stringify(body);
 }
