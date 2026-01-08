@@ -19,7 +19,7 @@
  * cookies.remove("theme");
  * ```
  */
-
+import cookie, { type SerializeOptions } from "cookie";
 import { createContext, defer, headers } from "@minimajs/server";
 
 /**
