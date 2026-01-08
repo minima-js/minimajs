@@ -1,6 +1,7 @@
 import { wrap } from "../internal/context.js";
 import { type Context } from "../interfaces/context.js";
 import { createRequest, type MockRequestOptions } from "./request.js";
+import { kBody } from "../symbols.js";
 
 export type MockContextCallback<T, S> = (ctx: Context<S>) => T;
 
@@ -48,5 +49,10 @@ export function mockContext<S = unknown, T = void>(
     incomingMessage: undefined as any,
     serverResponse: undefined as any,
   };
+
+  if (reqOptions.body) {
+    context.locals.set(kBody, reqOptions.body);
+  }
+
   return wrap(context, () => callback(context));
 }

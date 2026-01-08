@@ -8,6 +8,8 @@
   },
   "scripts": {
     "dev": "tsc -w",
+    "test": "bun test",
+    "coverage": "bun test --coverage",
     "build": "yarn clean && tsc --build",
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },

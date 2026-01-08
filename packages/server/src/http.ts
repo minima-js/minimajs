@@ -527,7 +527,7 @@ export namespace params {
  * @since v0.2.0
  */
 export function headers() {
-  return request().headers;
+  return Object.fromEntries(request().headers);
 }
 
 /**

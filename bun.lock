@@ -135,6 +135,7 @@
       "name": "@minimajs/schema",
       "version": "1.1.0",
       "devDependencies": {
+        "@jest/globals": "^30.2.0",
         "@minimajs/server": "workspace:*",
         "@types/node": "^25.0.3",
         "zod": "^4.3.2",

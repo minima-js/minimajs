@@ -111,8 +111,8 @@ describe("Http", () => {
         () => {
           const h1 = headers();
           expect(h1).toBeInstanceOf(Headers);
-          expect(h1.get("name")).toBe("Adil");
-          expect(h1.get("x-custom")).toBe("value");
+          expect(h1["name"]).toBe("Adil");
+          expect(h1["x-custom"]).toBe("value");
         },
         { headers: { name: "Adil", "x-custom": "value" } }
       );

@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "tsc -w",
     "build": "tsc",
-    "test": "bun test '**/*.test.ts'",
+    "test": "bun test",
     "test:jest": "yarn node --no-warnings --experimental-vm-modules $(yarn bin jest)",
     "coverage": "yarn test --coverage",
     "clean": "rimraf -g '*.tsbuildinfo' lib"

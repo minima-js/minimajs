@@ -12,7 +12,8 @@
   "scripts": {
     "dev": "tsc -w",
     "build": "yarn clean && tsc --build",
-    "test": "bun test src/",
+    "test": "bun test",
+    "coverage": "bun test --coverage --timeout=2000",
     "test:jest": "yarn node --no-warnings --experimental-vm-modules $(yarn bin jest)",
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
