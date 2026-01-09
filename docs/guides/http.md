@@ -7,279 +7,387 @@ tags:
   - context
 ---
 
-The request and response objects are globally accessible anywhere from request contexts. This section details the helper functions exposed from `@minimajs/server` for interacting with HTTP requests and responses.
+# HTTP Helpers
+
+The request and response objects are globally accessible anywhere from request contexts. This guide covers helper functions for interacting with HTTP requests and responses.
+
+## Quick Reference
+
+### Request Helpers
+
+- [`request()`](#request) - Get native Request object
+- [`request.url()`](#requesturl) - Get URL object
+- [`request.ip()`](#requestip) - Get client IP address
+- [`request.route()`](#requestroute) - Get matched route options
+- [`headers()`](#headers) - Get request headers
+- [`searchParams()`](#searchparams) - Get query string parameters
+- [`params()`](#params) - Get route parameters
+- [`body()`](#body) - Get request body
+
+### Response Helpers
+
+- [`response()`](#response-1) - Get native Response object
+- [`response.status()`](#responsestatus) - Set status code
+- [`headers.set()`](#headersset) - Set response headers
+
+### Customization
+
+- [`app.serialize`](#custom-serializer-appserialize) - Global serialization
+- [`transform` hook](#modifying-response-data-transform-hook) - Modify data before serialization
+- [`send` hook](#modifying-the-final-response-send-hook) - Modify response before sending
+
+---
 
 ## Request
 
 ### `request()`
 
-```typescript
-request(): Request
-```
-
 Retrieves the native Web API `Request` object.
 
-**Examples:**
-
 ```ts
-import { body, request } from "@minimajs/server";
+import { request } from "@minimajs/server";
+
 app.get("/", () => {
   const req = request();
   return req.url;
 });
-app.post("/", () => createUser(body()));
 ```
 
-You can also use `request()` in nested function calls:
+You can use `request()` in nested function calls:
 
 ```ts
 function getURL() {
   return request().url;
 }
-app.get("/", () => {
-  const url = getURL();
-  return url;
+
+app.get("/", () => getURL());
+```
+
+### `request.url()`
+
+Returns the parsed URL object from the request.
+
+```ts
+import { request } from "@minimajs/server";
+
+app.get("/users", () => {
+  const url = request.url();
+  console.log(url.pathname); // "/users"
+  console.log(url.searchParams.get("page")); // query param
+  return { path: url.pathname };
 });
 ```
 
-**Namespace utilities for `request`:**
+### `request.ip()`
 
-#### `request.url()`
-
-```ts
-request.url(): URL
-```
-
-Retrieves the full `URL` object of the incoming request.
-
-**Examples:**
-
-```typescript
-const url = request.url();
-console.log(url.pathname);
-console.log(url.searchParams.get("page"));
-```
-
-#### `request.ip()`
-
-```ts
-request.ip(): string
-```
-
-Retrieves the client IP address from the request. Requires configuration via `request.ip.configure()`.
+Returns the client's IP address. Requires configuration via `request.ip.configure()`.
 
 **Configuration:**
 
-Before using `request.ip()`, you must register the IP configuration plugin:
-
-```typescript
-import { request } from "@minimajs/server";
-
-// Basic usage - trust proxy headers
-app.register(request.ip.configure({ trustProxy: true }));
-
-// Custom header (e.g., Cloudflare)
-app.register(
-  request.ip.configure({
-    header: "CF-Connecting-IP",
-  })
-);
-```
-
-#### `request.route()`
+Before using `request.ip()`, configure the IP plugin:
 
 ```ts
-request.route(): RouteOptions
+import { request } from "@minimajs/server";
+
+// Trust proxy headers
+app.register(request.ip.configure({ trustProxy: true }));
+
+// Use custom header (e.g., Cloudflare)
+app.register(request.ip.configure({ header: "CF-Connecting-IP" }));
 ```
 
-Retrieves the matched route options.
-
-**Examples:**
-
-```typescript
-const routeOpts = request.route();
-console.log(routeOpts.url);
-console.log(routeOpts.method);
-```
-
-### `headers()`
-
-Retrieves the request headers.
-
-**Namespace utilities for `headers`:**
-
-#### `headers.get(name)`
-
-```typescript
-headers.get(name: string): string | undefined
-headers.get<R>(name: string, transform: (value: string) => R): R | undefined
-```
-
-Retrieves a single header value by name with optional transformation.
-
-#### `headers.getAll(name)`
-
-```typescript
-headers.getAll(name: string): string[]
-headers.getAll<R>(name: string, transform: (value: string) => R): R[]
-```
-
-Retrieves all values for a header name with optional transformation.
-
-### `searchParams()`
-
-Retrieves the search parameters (query string).
-
-**Namespace utilities for `searchParams`:**
-
-#### `searchParams.get(name)`
-
-```typescript
-searchParams.get(name: string): string | undefined
-searchParams.get<R>(name: string, transform: (value: string) => R): R
-```
-
-#### `searchParams.getAll(name)`
-
-```typescript
-searchParams.getAll(name: string): string[]
-searchParams.getAll<R>(name: string, transform: (value: string) => R): R[]
-```
-
-### `params()`
-
-Retrieves the request parameters (route parameters).
-
-**Namespace utilities for `params`:**
-
-#### `params.get(name)`
-
-```typescript
-params.get(name: string): string
-params.get<R>(name: string, transform: (value: string) => R): R
-```
-
-#### `params.optional(name)`
-
-```typescript
-params.optional(name: string): string | undefined
-params.optional<R>(name: string, transform: (value: string) => R): R | undefined
-```
-
-### `body()`
-
-```typescript
-body<T = unknown>(): T
-```
-
-Retrieves the request body.
-
-## Response
-
-Minima.js handlers are highly flexible in how they return responses. You can return raw values, `Response` objects, Promises, Streams, or even Generators.
-
-### Returning Values
-
-Any value returned from a route handler will be automatically serialized into a `Response` object.
+**Example:**
 
 ```ts
 app.get("/", () => {
-  return "Hello world"; // Returns a text response
-});
-
-app.get("/json", () => {
-  return { message: "Hello, JSON!" }; // Returns a JSON response
+  const ip = request.ip();
+  return { clientIp: ip };
 });
 ```
+
+### `request.route()`
+
+Returns the matched route options for the current request.
+
+```ts
+import { request } from "@minimajs/server";
+
+app.get(
+  "/admin",
+  () => {
+    const route = request.route();
+    console.log(route.url); // "/admin"
+    console.log(route.method); // "GET"
+    return "Admin panel";
+  },
+  { name: "admin-panel" }
+);
+```
+
+## Headers
+
+### `headers()`
+
+Returns the request headers. Supports direct access and transformation utilities.
+
+```ts
+import { headers } from "@minimajs/server";
+
+app.get("/", () => {
+  const reqHeaders = headers();
+  const auth = reqHeaders.get("authorization");
+  return { auth };
+});
+```
+
+### `headers.get()`
+
+Gets a single header value with optional transformation.
+
+```ts
+import { headers } from "@minimajs/server";
+
+// Get as string
+const contentType = headers.get("content-type");
+
+// Transform to number
+const contentLength = headers.get("content-length", Number);
+```
+
+### `headers.getAll()`
+
+Gets all values for a header with optional transformation.
+
+```ts
+import { headers } from "@minimajs/server";
+
+// Get all values
+const cookies = headers.getAll("cookie");
+
+// Transform each value
+const lengths = headers.getAll("x-custom", Number);
+```
+
+## Search Params
+
+### `searchParams()`
+
+Returns the URL search parameters (query string).
+
+```ts
+import { searchParams } from "@minimajs/server";
+
+app.get("/search", () => {
+  const params = searchParams();
+  const query = params.get("q");
+  return { query };
+});
+```
+
+### `searchParams.get()`
+
+Gets a single query parameter with optional transformation.
+
+```ts
+import { searchParams } from "@minimajs/server";
+
+// Get as string
+const query = searchParams.get("q");
+
+// Transform to number
+const page = searchParams.get("page", Number);
+```
+
+### `searchParams.getAll()`
+
+Gets all values for a query parameter with optional transformation.
+
+```ts
+import { searchParams } from "@minimajs/server";
+
+// Get all values
+const tags = searchParams.getAll("tag");
+
+// Transform each value
+const ids = searchParams.getAll("id", Number);
+```
+
+## Route Params
+
+### `params()`
+
+Returns the route parameters.
+
+```ts
+import { params } from "@minimajs/server";
+
+app.get("/users/:id", () => {
+  const routeParams = params();
+  const userId = routeParams.get("id");
+  return { userId };
+});
+```
+
+### `params.get()`
+
+Gets a route parameter with optional transformation.
+
+```ts
+import { params } from "@minimajs/server";
+
+app.get("/users/:id", () => {
+  // Get as string
+  const userId = params.get("id");
+
+  // Transform to number
+  const numericId = params.get("id", Number);
+
+  return { userId, numericId };
+});
+```
+
+## Request Body
+
+### `body()`
+
+Returns the parsed request body. Requires the body parser plugin.
+
+```ts
+import { body } from "@minimajs/server";
+import { bodyParser } from "@minimajs/server/plugins";
+
+app.register(bodyParser());
+
+app.post("/users", () => {
+  const data = body();
+  return { created: data };
+});
+```
+
+---
+
+## Response
 
 ### `response()`
 
-```typescript
-response(): Response
+Returns the native `Response` object for the current request context.
+
+```ts
+import { response } from "@minimajs/server";
+
+app.get("/", () => {
+  const res = response();
+  console.log(res.status); // 200
+  return "Hello";
+});
 ```
 
-Retrieves the native Web API `Response` object being constructed.
-
-**Namespace utilities for `response`:**
-
-#### `response.status()`
-
-```typescript
-response.status(statusCode: keyof typeof StatusCodes | number): Response
-```
+### `response.status()`
 
 Sets the HTTP status code for the response.
 
-#### `headers.set(name, value)`
+```ts
+import { response } from "@minimajs/server";
 
-To set response headers, use the `headers.set()` helper function.
+app.get("/error", () => {
+  response.status(500);
+  return { error: "Internal Server Error" };
+});
 
-```typescript
-headers.set(name: string, value: string): void
-headers.set(headers: HeadersInit): void
+app.post("/created", () => {
+  response.status(201);
+  return { id: 123 };
+});
 ```
 
-## Modifying the Response
+### `headers.set()`
 
-You can modify or "decorate" the response before it's sent using lifecycle hooks or by customizing the serialization behavior.
+Sets response headers.
 
-### Custom Serializer (`app.serialize`)
+```ts
+import { headers } from "@minimajs/server";
 
-The `app.serialize` function controls how response data is converted to a response body. By default, it serializes objects to JSON and passes through strings and streams as-is.
+app.get("/", () => {
+  headers.set("X-Custom-Header", "value");
+  headers.set("Content-Type", "application/json");
+  return { message: "Hello" };
+});
+```
+
+---
+
+## Modifying Response
+
+### Custom Serializer: `app.serialize`
+
+Define global serialization logic for all responses.
 
 ```ts
 import { createApp } from "@minimajs/server";
 
-const app = createApp();
+const app = createApp({
+  serialize: (data) => {
+    // Wrap all responses in a standard format
+    return JSON.stringify({ success: true, data });
+  },
+});
 
-// Custom serialization (e.g., MessagePack, XML, etc.)
-app.serialize = (data, ctx) => {
-  if (data instanceof ReadableStream) return data;
-  if (typeof data === "string") return data;
-
-  // Custom JSON serialization with formatting
-  return JSON.stringify(data, null, 2);
-};
-
-app.get("/data", () => ({ name: "Alice", age: 30 }));
-// Returns formatted JSON with 2-space indentation
+app.get("/users", () => {
+  return [{ id: 1, name: "Alice" }];
+  // Response: {"success":true,"data":[{"id":1,"name":"Alice"}]}
+});
 ```
 
-> **Note:** `app.serialize` is called **after** the `transform` hook and **before** the `send` hook. It's a global serialization strategy for your entire application.
+**Use cases:**
 
-### Modifying Response Data (`transform` hook)
+- Add global response wrappers
+- Custom encoding formats
+- Consistent API response structure
 
-The `transform` hook allows you to modify data returned by a handler before it is serialized into a response.
+### Modifying Response Data: `transform` Hook
+
+Use the `transform` hook to modify response data before serialization.
 
 ```ts
 import { hook } from "@minimajs/server";
 
-app.register(
-  hook("transform", (data) => {
-    // Wrap all object responses in a `data` property
-    if (typeof data === "object" && data !== null && !Array.isArray(data)) {
-      return { data: data };
-    }
-    return data;
-  })
-);
+// Add timestamp to all responses
+hook("transform", (data) => {
+  return { ...data, timestamp: Date.now() };
+});
+
+app.get("/users", () => {
+  return { users: [] };
+  // Response: {"users":[],"timestamp":1234567890}
+});
 ```
 
-### Modifying the Final Response (`send` hook)
+See [Transform Hook](/guides/hooks#transform) for more details.
 
-The `send` hook is executed just before the response is sent, allowing you to modify the final `Response` object, such as adding headers.
+### Modifying the Final Response: `send` Hook
+
+Use the `send` hook to modify the final `Response` object before sending.
 
 ```ts
-import { hook } from "@minimajs/server";
+import { hook, createResponseFromState } from "@minimajs/server";
 
-app.register(
-  hook("send", ({ response }) => {
-    response.headers.set("X-Response-Time", `${Date.now() - startTime}ms`);
-  })
-);
+// Add custom header to all responses
+hook("send", (response) => {
+  return createResponseFromState(response.body, {
+    headers: { ...response.headers, "X-Server": "MinimaJS" },
+  });
+});
+
+app.get("/", () => "Hello");
+// Response includes: X-Server: MinimaJS
 ```
+
+See [Send Hook](/guides/hooks#send) for more details.
+
+---
 
 ## Related Guides
 
-- For details on `defer` (scheduling tasks after response) and other lifecycle hooks, see the [Hooks Guide](/guides/hooks).
-- For `abort` (terminating requests with errors) and `redirect` (redirecting clients), see the [Error Handling Guide](/guides/error-handling).
+- [Hooks](/guides/hooks) - Request lifecycle and hook system
+- [Error Handling](/guides/error-handling) - Error handling patterns
+- [Context](/core-concepts/context) - Request context management

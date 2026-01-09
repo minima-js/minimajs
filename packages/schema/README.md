@@ -1,90 +1,551 @@
-Schema, built on top of Zod, provides a comprehensive set of validation tools and exposes everything from `@minimajs/schema` to facilitate seamless validation in your applications.
+# @minimajs/schema
 
-### Installation
+Type-safe request validation for Minima.js powered by [Zod](https://zod.dev/). Validate request bodies, headers, search params, and route params with full TypeScript inference.
 
-You can install `@minimajs/schema` via npm or yarn:
+## Features
 
-```bash npm2yarn
-npm install @minimajs/schema
+- 🔒 **Type-Safe** - Full TypeScript inference from Zod schemas
+- ⚡ **Runtime Validation** - Catch invalid data before it reaches your handlers
+- 🎯 **Context-Aware** - Validates and caches data in request context
+- 🔄 **Async Support** - Built-in async validation for database checks
+- 🛠️ **Flexible** - Control unknown field handling with `stripUnknown` option
+- 📦 **Two APIs** - Simple validators and resource-based validation
+
+## Installation
+
+```bash
+# Using Bun
+bun add @minimajs/schema zod
+
+# Using npm
+npm install @minimajs/schema zod
 ```
 
-### Validating Request Body
+## Two Validation Approaches
 
-To validate request bodies, you can use the `createBody` function along with Zod schema definitions. Here's an example:
+### 1. Simple Validators (Recommended for Basic Use)
 
-```typescript
-import { createBody, string } from "@minimajs/schema";
+Direct validation functions that parse data immediately:
 
-const getUserPayload = createBody({
-  name: string().required(),
+```ts
+import { createBody, createHeaders, createSearchParams } from "@minimajs/schema";
+import { z } from "zod";
+
+const userSchema = z.object({
+  name: z.string(),
+  email: z.string().email(),
 });
 
-function createUser() {
-  const payload = getUserPayload(); // { name: string } type will be inferred.
-  // Save data
-  // payload = { name: string }
-  return payload;
-}
+const getUserData = createBody(userSchema);
 
-app.post("/users", createUser);
+app.post("/users", () => {
+  const data = getUserData();
+  return { created: data };
+});
 ```
 
-In this example, we define a schema for validating user payloads with a required name field.
+### 2. Resource API (Advanced - With Route Metadata)
 
-### Custom Validation Type
+Validation integrated with route metadata, validated in `request` hook:
 
-You can also create custom validation types using Zod's `test` function. Here's an example:
+```ts
+import { createBody, schema, configureSchema } from "@minimajs/schema/resource";
+import { z } from "zod";
 
-```typescript
-const jamesSchema = string().test(
-  "is-james",
-  (d) => `${d.path} is not James`,
-  (value) => value == null || value === "James"
+// Register the schema plugin
+app.register(configureSchema());
+
+// Create validator
+const getUserData = createBody(
+  z.object({
+    name: z.string(),
+    email: z.string().email(),
+  })
+);
+
+// Use with schema() descriptor
+app.post("/users", schema(getUserData), () => {
+  const data = getUserData(); // Already validated in request hook
+  return { created: data };
+});
+```
+
+## API Reference
+
+### Simple Validators
+
+#### `createBody<T>(schema, options?)`
+
+Validates request body against a Zod schema.
+
+```ts
+import { createBody } from "@minimajs/schema";
+import { z } from "zod";
+
+const userSchema = z.object({
+  name: z.string().min(2),
+  email: z.string().email(),
+  age: z.number().int().positive().optional(),
+});
+
+const getUserData = createBody(userSchema);
+
+app.post("/users", () => {
+  const data = getUserData();
+  // data: { name: string; email: string; age?: number }
+  return { created: data };
+});
+```
+
+**Options:**
+
+- `stripUnknown?: boolean` - Strip unknown fields (default: `true`)
+
+```ts
+// Preserve unknown fields
+const getUserData = createBody(userSchema, { stripUnknown: false });
+```
+
+#### `createBodyAsync<T>(schema, options?)`
+
+Async version for schemas with async refinements:
+
+```ts
+import { createBodyAsync } from "@minimajs/schema";
+import { z } from "zod";
+
+const userSchema = z.object({
+  email: z
+    .string()
+    .email()
+    .refine(
+      async (email) => {
+        const exists = await db.users.exists({ email });
+        return !exists;
+      },
+      { message: "Email already taken" }
+    ),
+  name: z.string(),
+});
+
+const getUserData = createBodyAsync(userSchema);
+
+app.post("/users", async () => {
+  const data = await getUserData();
+  return { created: data };
+});
+```
+
+#### `createHeaders<T>(schema, options?)`
+
+Validates request headers:
+
+```ts
+import { createHeaders } from "@minimajs/schema";
+import { z } from "zod";
+
+const getHeaders = createHeaders({
+  authorization: z.string().startsWith("Bearer "),
+  "content-type": z.literal("application/json"),
+});
+
+app.post("/protected", () => {
+  const headers = getHeaders();
+  return { authenticated: true };
+});
+```
+
+#### `createHeadersAsync<T>(schema, options?)`
+
+Async version for header validation.
+
+#### `createSearchParams<T>(schema, options?)`
+
+Validates URL search/query parameters:
+
+```ts
+import { createSearchParams } from "@minimajs/schema";
+import { z } from "zod";
+
+const getQuery = createSearchParams({
+  page: z.string().transform(Number).pipe(z.number().positive()),
+  limit: z.string().transform(Number).pipe(z.number().max(100)),
+  search: z.string().optional(),
+});
+
+app.get("/users", () => {
+  const query = getQuery();
+
+  return {
+    page: query.page,
+    limit: query.limit,
+    users: [],
+  };
+});
+```
+
+#### `createSearchParamsAsync<T>(schema, options?)`
+
+Async version for search params validation.
+
+### Resource API (Advanced)
+
+#### `createBody<T>(schema, options?)`
+
+Creates a validator function with metadata for use with `schema()` descriptor:
+
+```ts
+import { createBody, schema, configureSchema } from "@minimajs/schema/resource";
+import { z } from "zod";
+
+app.register(configureSchema());
+
+const getUserData = createBody(
+  z.object({
+    name: z.string(),
+    email: z.string().email(),
+  })
+);
+
+app.post("/users", schema(getUserData), () => {
+  const data = getUserData(); // Already validated
+  return { created: data };
+});
+```
+
+#### `createHeaders<T>(schema, options?)`
+
+Header validator for resource API.
+
+#### `createSearchParams<T>(schema, options?)`
+
+Search params validator for resource API.
+
+#### `createParams<T>(schema, options?)`
+
+Route params validator (resource API only):
+
+```ts
+import { createParams, schema, configureSchema } from "@minimajs/schema/resource";
+import { z } from "zod";
+
+app.register(configureSchema());
+
+const getParams = createParams({
+  id: z.string().uuid(),
+});
+
+app.get("/users/:id", schema(getParams), () => {
+  const params = getParams();
+  return { userId: params.id };
+});
+```
+
+#### `schema(...validators)`
+
+Route metadata descriptor that attaches validators to a route:
+
+```ts
+import { schema, createBody, createParams } from "@minimajs/schema/resource";
+
+const getUserData = createBody(userSchema);
+const getParams = createParams({ id: z.string().uuid() });
+
+app.post("/users/:id", schema(getUserData, getParams), () => {
+  const data = getUserData();
+  const params = getParams();
+  return { updated: data };
+});
+```
+
+#### `configureSchema()`
+
+Plugin that validates all schemas in the `request` hook:
+
+```ts
+import { configureSchema } from "@minimajs/schema/resource";
+
+app.register(configureSchema());
+```
+
+## Error Handling
+
+### ValidationError
+
+Validation failures throw `ValidationError` (422 status):
+
+```ts
+import { ValidationError } from "@minimajs/schema";
+
+try {
+  const data = createBody(userSchema);
+} catch (err) {
+  if (err instanceof ValidationError) {
+    console.log(err.message); // "Validation failed for 'email'"
+    console.log(err.issues); // Zod issues array
+  }
+}
+```
+
+### Error Response Format
+
+```json
+{
+  "message": "Validation failed for 'email', 'name'",
+  "issues": [
+    {
+      "code": "invalid_type",
+      "expected": "string",
+      "received": "undefined",
+      "path": ["email"],
+      "message": "Required"
+    }
+  ]
+}
+```
+
+### Custom Error Handling
+
+```ts
+import { hook } from "@minimajs/server";
+import { ValidationError } from "@minimajs/schema";
+
+app.register(
+  hook("error", (error) => {
+    if (error instanceof ValidationError) {
+      return {
+        success: false,
+        errors: error.issues?.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
+      };
+    }
+  })
 );
 ```
 
-This schema ensures that the value is either `null`, `undefined`, or equals "James".
+## Advanced Examples
 
-### Async Validation
+### Nested Object Validation
 
-In some cases, you may need to perform asynchronous validation, such as checking if a username is unique. You can achieve this by defining a custom validator with an asynchronous test function. Here's how you can create a custom username validator:
-
-```typescript
-// validation/rules.ts
-const username = string().test(
-  "username",
-  (d) => `${d.path} is taken`,
-  async (value) => User.findOne({ username: value })
-);
-```
-
-This validator checks if the username already exists in the database asynchronously.
-
-```typescript title="src/user/index.ts"
-const getUserPayload = createBodyAsync({
-  name: string().required(),
-  username: username().required(),
+```ts
+const addressSchema = z.object({
+  street: z.string(),
+  city: z.string(),
+  zipCode: z.string().regex(/^\d{5}$/),
 });
 
-async function createUser() {
-  // highlight-next-line
-  const payload = await getUserPayload();
-  // Save data
-  return "saved";
-}
+const getUserData = createBody(
+  z.object({
+    name: z.string(),
+    email: z.string().email(),
+    address: addressSchema,
+    alternateAddresses: z.array(addressSchema).optional(),
+  })
+);
 
-app.post("/", createUser);
+app.post("/users", () => {
+  const data = getUserData();
+  return { created: data };
+});
 ```
 
-In this example, we use `createBodyAsync` to validate the request body asynchronously, ensuring that both the name and username fields are present and satisfy the custom username validation rule.
+### Cross-Field Validation
 
-The following functions are exposed from `@minimajs/schema` for your convenience:
+```ts
+const getUserData = createBody(
+  z
+    .object({
+      password: z.string().min(8),
+      confirmPassword: z.string(),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: "Passwords must match",
+      path: ["confirmPassword"],
+    })
+);
 
-1. `createBody`
-2. `createHeaders`
-3. `createSearchParams`
-4. `createBodyAsync`
-5. `createHeadersAsync`
-6. `createSearchParamsAsync`
+app.post("/register", () => {
+  const data = getUserData();
+  return { success: true };
+});
+```
 
-These functions enable you to easily define and validate request bodies, headers, and searchParams, both synchronously and asynchronously, ensuring the integrity and security of your application's data.
+### Database Uniqueness Check
+
+```ts
+const getUserData = createBodyAsync(
+  z.object({
+    email: z
+      .string()
+      .email()
+      .refine(
+        async (email) => {
+          const user = await db.users.findOne({ email });
+          return !user;
+        },
+        { message: "Email already exists" }
+      ),
+    name: z.string(),
+  })
+);
+
+app.post("/users", async () => {
+  const data = await getUserData();
+  return { created: data };
+});
+```
+
+### Transformations
+
+```ts
+const getQuery = createSearchParams({
+  // Transform string to number
+  page: z.string().transform(Number).pipe(z.number().positive()),
+
+  // Trim whitespace
+  search: z.string().trim().optional(),
+
+  // Parse date
+  startDate: z
+    .string()
+    .transform((str) => new Date(str))
+    .pipe(z.date()),
+
+  // Parse JSON
+  filter: z
+    .string()
+    .transform((str) => JSON.parse(str))
+    .pipe(z.object({ category: z.string() })),
+});
+
+app.get("/users", () => {
+  const query = getQuery();
+
+  return {
+    page: query.page, // number
+    search: query.search, // string | undefined
+    startDate: query.startDate, // Date
+    filter: query.filter, // { category: string }
+  };
+});
+```
+
+### Discriminated Unions
+
+```ts
+const getEventData = createBody(
+  z.discriminatedUnion("type", [
+    z.object({
+      type: z.literal("user.created"),
+      userId: z.string(),
+      email: z.string().email(),
+    }),
+    z.object({
+      type: z.literal("user.deleted"),
+      userId: z.string(),
+    }),
+  ])
+);
+
+app.post("/webhooks", () => {
+  const event = getEventData();
+
+  switch (event.type) {
+    case "user.created":
+      return handleUserCreated(event);
+    case "user.deleted":
+      return handleUserDeleted(event);
+  }
+});
+```
+
+### Partial Updates
+
+```ts
+const userSchema = z.object({
+  name: z.string(),
+  email: z.string().email(),
+  age: z.number(),
+});
+
+// Make all fields optional
+const getUpdates = createBody(userSchema.partial());
+
+app.patch("/users/:id", () => {
+  const updates = getUpdates();
+  return { updated: updates };
+});
+```
+
+## When to Use Each API
+
+### Simple Validators (`@minimajs/schema`)
+
+**Best for:**
+
+- Quick validation without route metadata
+- Simple applications
+- One-off validators
+- Direct control over validation timing
+
+```ts
+import { createBody } from "@minimajs/schema";
+```
+
+### Resource API (`@minimajs/schema/resource`)
+
+**Best for:**
+
+- Complex applications with many routes
+- Consistent validation across routes
+- OpenAPI/documentation generation
+- Validation in request hooks (before handler)
+
+```ts
+import { createBody, schema, configureSchema } from "@minimajs/schema/resource";
+```
+
+## TypeScript Tips
+
+### Infer Types from Schemas
+
+```ts
+import { z } from "zod";
+
+const userSchema = z.object({
+  name: z.string(),
+  email: z.string().email(),
+});
+
+type User = z.infer<typeof userSchema>;
+// { name: string; email: string }
+```
+
+### Reusable Schemas
+
+```ts
+// schemas/user.ts
+export const userIdSchema = z.string().uuid();
+
+export const createUserSchema = z.object({
+  name: z.string().min(2),
+  email: z.string().email(),
+});
+
+export const updateUserSchema = createUserSchema.partial();
+
+export type CreateUser = z.infer<typeof createUserSchema>;
+export type UpdateUser = z.infer<typeof updateUserSchema>;
+```
+
+## Related
+
+- [Zod Documentation](https://zod.dev/) - Schema validation library
+- [Minima.js Server](https://minimajs.dev/) - Web framework
+- [Validation Guide](/guides/validation) - Comprehensive validation guide
+
+## License
+
+MIT

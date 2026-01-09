@@ -8,7 +8,39 @@ tags:
 
 # Hooks
 
-Hooks in Minima.js allow you to **tap into the application and request lifecycle**, enabling custom behavior at precise points. They are central to extending and customizing your application’s behavior.
+Hooks in Minima.js allow you to **tap into the application and request lifecycle**, enabling custom behavior at precise points. They are central to extending and customizing your application's behavior.
+
+## Available Hooks
+
+### Request Lifecycle Hooks
+
+- [`request`](#request) - Intercept requests before route matching (auth, rate limiting)
+- [`transform`](#transform) - Modify response data before serialization
+- [`send`](#send) - Modify headers or override response before sending
+- [`sent`](#sent) - Post-response cleanup and logging
+- [`error`](/guides/error-handling#error-hook-behavior) - Handle and format errors
+- [`errorSent`](/guides/error-handling#errorsent-hook) - Post-error cleanup and monitoring
+- [`timeout`](#timeout) - Handle request timeouts
+
+### Application Lifecycle Hooks
+
+- [`hook.lifespan`](#hooklifespansetupfn) - Manage resources with setup/teardown
+- [`ready`](#ready) - Execute when app is ready
+- [`listen`](#listen) - Execute when server starts listening
+- [`close`](#close) - Execute when app shuts down
+- [`register`](#register) - Execute when plugins are registered
+
+### Request-Scoped Helpers
+
+- [`defer`](#defercallback) - Execute after response is sent
+- [`onError`](/guides/error-handling#request-scoped-error-handler-onerror) - Request-specific error handling
+
+### Other Topics
+
+- [Hook Execution Order](#hook-execution-order) - LIFO and scope inheritance
+- [Best Practices](#best-practices) - Recommendations for using hooks
+
+---
 
 ## Application Lifecycle Hooks
 
@@ -44,6 +76,61 @@ const dbLifecycle = hook.lifespan(async () => {
 });
 
 app.register(dbLifecycle);
+```
+
+### Other Application Lifecycle Hooks
+
+#### `ready`
+
+The `ready` hook executes when the application has completed initialization and all plugins have been registered. Use it for tasks that need to run before the server starts listening.
+
+```ts
+app.register(
+  hook("ready", async (app) => {
+    console.log("Application is ready!");
+    // Pre-warm caches, verify connections, etc.
+  })
+);
+```
+
+#### `listen`
+
+The `listen` hook executes after the server starts listening for connections. It receives the server instance as a parameter.
+
+```ts
+app.register(
+  hook("listen", (server) => {
+    console.log(`Server listening on ${server.hostname}:${server.port}`);
+  })
+);
+```
+
+#### `close`
+
+The `close` hook executes when the application is shutting down. Use it for cleanup tasks like closing database connections or flushing logs.
+
+```ts
+app.register(
+  hook("close", async () => {
+    console.log("Server shutting down...");
+    await db.close();
+    await cache.flush();
+  })
+);
+```
+
+> **Tip:** Use `hook.lifespan` instead of separate `ready` and `close` hooks when you need paired setup/teardown logic for a single resource.
+
+#### `register`
+
+The `register` hook executes whenever a plugin is registered. It receives the plugin and its options as parameters. This is primarily used for debugging or plugin inspection.
+
+```ts
+app.register(
+  hook("register", (plugin, opts) => {
+    console.log(`Plugin registered: ${plugin.name || "anonymous"}`, opts);
+  })
+);
 ```
 
 ## Request Lifecycle Hooks
@@ -137,27 +224,7 @@ app.register(
 
 **Flow:**
 
-```mermaid
-graph LR
-    A[Incoming Request] --> B[Request Hook 3]
-    B -->|Response| Exit1[Early Exit]
-    B -->|void| C[Request Hook 2]
-    C -->|Response| Exit2[Early Exit]
-    C -->|void| D[Request Hook 1]
-    D -->|Response| Exit3[Early Exit]
-    D -->|void| E[Route Match]
-
-    E --> F[Handler]
-    F --> G[Transform & Send]
-
-    Exit1 & Exit2 & Exit3 --> H[Send to Client]
-    G --> H
-
-    style Exit1 fill:#ff6b6b
-    style Exit2 fill:#ff6b6b
-    style Exit3 fill:#ff6b6b
-    style E fill:#51cf66
-```
+<!--@include: ./diagrams/request-hook-flow.md-->
 
 > **Important:** Hooks execute in **LIFO order** (last registered runs first). Returning a `Response` terminates the chain immediately and skips the route handler.
 
@@ -167,7 +234,7 @@ The `transform` hook modifies response data returned by a handler before it is s
 
 ```typescript
 app.register(
-  hook("transform", ({ data }) => {
+  hook("transform", (data) => {
     if (Array.isArray(data.users)) {
       data.users = data.users.map((u) => u.toUpperCase());
     }
@@ -213,24 +280,7 @@ app.register(
 
 **Flow:**
 
-```mermaid
-graph LR
-    A[Handler] --> B[Transform] --> C[Serialize]
-    C --> D[Send Hook 3]
-    D -->|Response| Exit1[Early Exit]
-    D -->|void| E[Send Hook 2]
-    E -->|Response| Exit2[Early Exit]
-    E -->|void| F[Send Hook 1]
-    F -->|Response| Exit3[Early Exit]
-    F -->|void| G[Create Response]
-
-    Exit1 & Exit2 & Exit3 & G --> H[Send to Client]
-
-    style Exit1 fill:#ff6b6b
-    style Exit2 fill:#ff6b6b
-    style Exit3 fill:#ff6b6b
-    style G fill:#51cf66
-```
+<!--@include: ./diagrams/send-hook-flow.md-->
 
 > **Important:** Hooks execute in **LIFO order** (last registered runs first). Returning a `Response` terminates the chain immediately.
 
@@ -246,31 +296,31 @@ app.register(
 );
 ```
 
-### Request-Scoped Helpers
+## Request-Scoped Helpers
 
 Minima.js also offers helpers for running logic within the scope of a single request.
 
 #### `defer(callback)`
 
-The `defer` hook registers a callback to be executed **after the response has been sent**, ideal for non-blocking tasks like analytics or logging.
+The `defer` helper registers a callback to be executed **after the response has been sent**, ideal for non-blocking tasks like analytics or logging.
 
 ```ts
 import { createApp, defer } from "@minimajs/server";
 
 const app = createApp();
 
-app.get("/", (req, res) => {
-  res.send({ message: "Hello World!" });
-
+app.get("/", () => {
   defer(() => {
     console.log("Response sent, running deferred task...");
   });
+
+  return { message: "Hello World!" };
 });
 ```
 
 > `defer` is a request-scoped equivalent of the global `sent` hook.
 
-> For `onError` (request-specific error handling), see the [Error Handling Guide](/guides/error-handling).
+> **Note:** For request-specific error handling, see [`onError`](/guides/error-handling#request-scoped-error-handler-onerror) in the Error Handling Guide.
 
 ## Hook Execution Order
 
@@ -285,10 +335,19 @@ app.register(hook("request", () => console.log("Second")));
 // "First"  -> runs last
 ```
 
+### LIFO Execution
+
+<!--@include: ./diagrams/hook-lifo-execution.md-->
+
+### Scope Inheritance
+
 Child scopes inherit hooks from their parents, but sibling scopes remain isolated.
 
 ```typescript
 const app = createApp();
+
+// Parent hook - inherited by all children
+app.register(hook("request", () => console.log("Parent")));
 
 // Child scope 1
 app.register(async (app) => {
@@ -303,11 +362,30 @@ app.register(async (app) => {
 });
 ```
 
+**Execution when calling `/users`:**
+
+```
+Child 1  (runs first - child scope)
+Parent   (runs second - inherited from parent)
+```
+
+**Execution when calling `/admin`:**
+
+```
+Child 2  (runs first - child scope)
+Parent   (runs second - inherited from parent)
+```
+
+<!--@include: ./diagrams/hook-scope-inheritance.md-->
+
 > A request to `/users` will only trigger hooks from **Child 1**, not from its sibling.
 
 ## Best Practices
 
-- Use `hook.lifespan` for managing resources with clear setup and teardown logic.
-- Use `defer` for non-blocking, post-response tasks like logging or analytics.
-- Use `onError` for request-specific error handling that shouldn't be global.
-- Reserve returning a `Response` from a hook for **short-circuiting** a request, such as in authentication or rate-limiting.
+- **Use `hook.lifespan`** for managing resources with paired setup and teardown logic (databases, connections, etc.)
+- **Use `defer`** for non-blocking, post-response tasks like logging or analytics
+- **Use `onError`** for request-specific error handling that shouldn't be global
+- **Avoid returning `Response` objects** from hooks unless necessary for short-circuiting (authentication, rate-limiting)
+- **Prefer `createResponseFromState`** over `new Response()` to preserve context headers set by plugins
+- **Register hooks early** in your application lifecycle to ensure proper LIFO ordering
+- **Use `hook.define`** to organize multiple related hooks together
