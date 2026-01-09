@@ -20,11 +20,9 @@ Each incoming request flows through multiple stages with three main execution pa
 
 <!--@include: ./diagrams/request-lifecycle.md-->
 
----
-
 ## Hook System
 
-The hook system gives you fine-grained control over the application and request lifecycles.
+The hook system gives you fine-grained control over the application and request lifecycle.
 
 ### Hook Execution Order
 

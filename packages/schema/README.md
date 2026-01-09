@@ -8,7 +8,6 @@ Type-safe request validation for Minima.js powered by [Zod](https://zod.dev/). V
 - ⚡ **Runtime Validation** - Catch invalid data before it reaches your handlers
 - 🎯 **Context-Aware** - Validates and caches data in request context
 - 🔄 **Async Support** - Built-in async validation for database checks
-- 🛠️ **Flexible** - Control unknown field handling with `stripUnknown` option
 - 📦 **Two APIs** - Simple validators and resource-based validation
 
 ## Installation

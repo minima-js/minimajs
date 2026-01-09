@@ -1,11 +1,10 @@
----
 title: Testing
 sidebar_position: 8
 tags:
-  - testing
-  - unit-tests
-  - integration-tests
----
+
+- testing
+- unit-tests
+- integration-tests
 
 # Testing
 
@@ -20,8 +19,6 @@ Minima.js is built with testability in mind. This guide covers testing strategie
 - [Testing Plugins](#testing-plugins) - Test custom plugins
 - [Mocking](#mocking) - Mock dependencies and context
 - [Best Practices](#best-practices) - Testing recommendations
-
----
 
 ## Setup
 
@@ -38,13 +35,15 @@ bun test
 ```ts
 import { describe, test, expect } from "bun:test";
 import { createApp } from "@minimajs/server/bun";
+import { createRequest } from "@minimajs/server/mock";
 
 describe("App", () => {
   test("GET /health returns 200", async () => {
     const app = createApp();
     app.get("/health", () => ({ status: "ok" }));
 
-    const response = await app.handle(new Request("http://localhost/health"));
+    // Using createRequest helper
+    const response = await app.inject(createRequest("/health"));
     expect(response.status).toBe(200);
 
     const data = await response.json();
@@ -52,6 +51,8 @@ describe("App", () => {
   });
 });
 ```
+
+> **Tip:** Use `createRequest()` from `@minimajs/server/mock` for cleaner test code, or use native `new Request()` for more control.
 
 ### With Jest/Vitest
 
@@ -76,8 +77,6 @@ export default defineConfig({
 });
 ```
 
----
-
 ## Unit Testing
 
 Test individual handlers in isolation.
@@ -87,6 +86,7 @@ Test individual handlers in isolation.
 ```ts
 import { describe, test, expect } from "bun:test";
 import { createApp } from "@minimajs/server/bun";
+import { createRequest } from "@minimajs/server/mock";
 import { params, body } from "@minimajs/server";
 
 describe("User Routes", () => {
@@ -98,7 +98,7 @@ describe("User Routes", () => {
       return { id, name: "Alice" };
     });
 
-    const response = await app.handle(new Request("http://localhost/users/123"));
+    const response = await app.inject(createRequest("/users/123"));
 
     expect(response.status).toBe(200);
     const data = await response.json();
@@ -113,8 +113,8 @@ describe("User Routes", () => {
       return { id: "456", ...userData };
     });
 
-    const response = await app.handle(
-      new Request("http://localhost/users", {
+    const response = await app.inject(
+      createRequest("/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: "Bob" }),
@@ -128,9 +128,13 @@ describe("User Routes", () => {
 });
 ```
 
+> **Alternative:** You can also use native `new Request("http://localhost/path", options)` if you need more control over the request object.
+
 ### Testing with Query Parameters
 
 ```ts
+import { createRequest } from "@minimajs/server/mock";
+
 test("GET /search with query params", async () => {
   const app = createApp();
 
@@ -140,7 +144,7 @@ test("GET /search with query params", async () => {
     return { results: [], query };
   });
 
-  const response = await app.handle(new Request("http://localhost/search?q=test"));
+  const response = await app.inject(createRequest("/search?q=test"));
 
   const data = await response.json();
   expect(data.query).toBe("test");
@@ -150,6 +154,8 @@ test("GET /search with query params", async () => {
 ### Testing Headers
 
 ```ts
+import { createRequest } from "@minimajs/server/mock";
+
 test("requires authorization header", async () => {
   const app = createApp();
 
@@ -163,20 +169,18 @@ test("requires authorization header", async () => {
   });
 
   // Without auth
-  const res1 = await app.handle(new Request("http://localhost/protected"));
+  const res1 = await app.inject(createRequest("/protected"));
   expect(res1.status).toBe(401);
 
   // With auth
-  const res2 = await app.handle(
-    new Request("http://localhost/protected", {
+  const res2 = await app.inject(
+    createRequest("/protected", {
       headers: { Authorization: "Bearer token" },
     })
   );
   expect(res2.status).toBe(200);
 });
 ```
-
----
 
 ## Integration Testing
 
@@ -185,6 +189,7 @@ Test the full application with plugins and middleware.
 ### Testing with Plugins
 
 ```ts
+import { createRequest } from "@minimajs/server/mock";
 import { bodyParser } from "@minimajs/server/plugins";
 
 test("full app with plugins", async () => {
@@ -197,8 +202,8 @@ test("full app with plugins", async () => {
     return { received: data };
   });
 
-  const response = await app.handle(
-    new Request("http://localhost/data", {
+  const response = await app.inject(
+    createRequest("/data", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ value: 42 }),
@@ -213,6 +218,8 @@ test("full app with plugins", async () => {
 ### Testing Module Encapsulation
 
 ```ts
+import { createRequest } from "@minimajs/server/mock";
+
 test("module routes are isolated", async () => {
   const app = createApp();
 
@@ -223,24 +230,24 @@ test("module routes are isolated", async () => {
   apiModule.get("/users", () => ({ data: [] }));
 
   // Test admin module
-  const res1 = await app.handle(new Request("http://localhost/admin/users"));
+  const res1 = await app.inject(createRequest("/admin/users"));
   const data1 = await res1.json();
   expect(data1).toHaveProperty("users");
 
   // Test api module
-  const res2 = await app.handle(new Request("http://localhost/api/users"));
+  const res2 = await app.inject(createRequest("/api/users"));
   const data2 = await res2.json();
   expect(data2).toHaveProperty("data");
 });
 ```
-
----
 
 ## Testing Hooks
 
 ### Testing Request Hooks
 
 ```ts
+import { createRequest } from "@minimajs/server/mock";
+
 test("request hook modifies context", async () => {
   const app = createApp();
 
@@ -255,7 +262,7 @@ test("request hook modifies context", async () => {
     return { requestId };
   });
 
-  const response = await app.handle(new Request("http://localhost/"));
+  const response = await app.inject(createRequest("/"));
   const data = await response.json();
   expect(data.requestId).toBe("test-123");
 });
@@ -264,6 +271,8 @@ test("request hook modifies context", async () => {
 ### Testing Transform Hooks
 
 ```ts
+import { createRequest } from "@minimajs/server/mock";
+
 test("transform hook wraps response", async () => {
   const app = createApp();
 
@@ -275,7 +284,7 @@ test("transform hook wraps response", async () => {
 
   app.get("/users", () => [{ id: 1 }]);
 
-  const response = await app.handle(new Request("http://localhost/users"));
+  const response = await app.inject(createRequest("/users"));
   const data = await response.json();
   expect(data).toEqual({
     success: true,
@@ -287,6 +296,8 @@ test("transform hook wraps response", async () => {
 ### Testing Send Hooks
 
 ```ts
+import { createRequest } from "@minimajs/server/mock";
+
 test("send hook adds custom header", async () => {
   const app = createApp();
 
@@ -300,18 +311,17 @@ test("send hook adds custom header", async () => {
 
   app.get("/", () => "ok");
 
-  const response = await app.handle(new Request("http://localhost/"));
+  const response = await app.inject(createRequest("/"));
   expect(response.headers.get("X-Custom")).toBe("value");
 });
 ```
-
----
 
 ## Testing Plugins
 
 ### Testing Custom Plugins
 
 ```ts
+import { createRequest } from "@minimajs/server/mock";
 import { definePlugin } from "@minimajs/server";
 
 const myPlugin = definePlugin((app, options) => {
@@ -331,19 +341,18 @@ test("custom plugin sets context", async () => {
     return { data: context.get("pluginData") };
   });
 
-  const response = await app.handle(new Request("http://localhost/"));
+  const response = await app.inject(createRequest("/"));
   const data = await response.json();
   expect(data.data).toBe("test");
 });
 ```
-
----
 
 ## Mocking
 
 ### Mocking External Services
 
 ```ts
+import { createRequest } from "@minimajs/server/mock";
 import { mock } from "bun:test";
 
 test("mocked database query", async () => {
@@ -358,7 +367,7 @@ test("mocked database query", async () => {
     return users;
   });
 
-  const response = await app.handle(new Request("http://localhost/users"));
+  const response = await app.inject(createRequest("/users"));
   const data = await response.json();
 
   expect(mockDb.query).toHaveBeenCalled();
@@ -369,6 +378,8 @@ test("mocked database query", async () => {
 ### Mocking Context Values
 
 ```ts
+import { createRequest } from "@minimajs/server/mock";
+
 test("mock context for testing", async () => {
   const app = createApp();
 
@@ -384,13 +395,11 @@ test("mock context for testing", async () => {
     return { userId };
   });
 
-  const response = await app.handle(new Request("http://localhost/profile"));
+  const response = await app.inject(createRequest("/profile"));
   const data = await response.json();
   expect(data.userId).toBe("mock-user-123");
 });
 ```
-
----
 
 ## Best Practices
 
@@ -424,8 +433,10 @@ describe("User API", () => {
 
 ```ts
 // test-helpers.ts
+import { createRequest } from "@minimajs/server/mock";
+
 export async function makeRequest(app: App, path: string, options?: RequestInit) {
-  const response = await app.handle(new Request(`http://localhost${path}`, options));
+  const response = await app.inject(createRequest(path, options));
   const data = await response.json();
   return { response, data };
 }
@@ -443,6 +454,8 @@ test("using helper", async () => {
 ### 3. Test Error Cases
 
 ```ts
+import { createRequest } from "@minimajs/server/mock";
+
 test("handles errors gracefully", async () => {
   const app = createApp();
 
@@ -450,7 +463,7 @@ test("handles errors gracefully", async () => {
     throw new Error("Something went wrong");
   });
 
-  const response = await app.handle(new Request("http://localhost/error"));
+  const response = await app.inject(createRequest("/error"));
   expect(response.status).toBe(500);
 });
 ```
@@ -458,6 +471,8 @@ test("handles errors gracefully", async () => {
 ### 4. Test Edge Cases
 
 ```ts
+import { createRequest } from "@minimajs/server/mock";
+
 describe("Edge cases", () => {
   test("handles missing parameters", async () => {
     const app = createApp();
@@ -470,7 +485,7 @@ describe("Edge cases", () => {
       return { id };
     });
 
-    const response = await app.handle(new Request("http://localhost/users/"));
+    const response = await app.inject(createRequest("/users/"));
     expect(response.status).toBe(404); // Route doesn't match
   });
 
@@ -488,8 +503,8 @@ describe("Edge cases", () => {
       }
     });
 
-    const response = await app.handle(
-      new Request("http://localhost/data", {
+    const response = await app.inject(
+      createRequest("/data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: "{ invalid json }",
@@ -509,8 +524,6 @@ Aim for good coverage of:
 - ✅ Error paths (invalid inputs, exceptions)
 - ✅ Edge cases (boundaries, empty values)
 - ✅ Integration points (plugins, hooks)
-
----
 
 ## Related Guides
 
