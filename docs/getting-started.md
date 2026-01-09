@@ -89,9 +89,9 @@ This short example already showcases several core concepts we will explore next.
 
 Minima.js is optimized for both runtimes. You select your target by changing the import path:
 
--   `@minimajs/server/bun`: Uses Bun's native, high-performance `Bun.serve()`.
--   `@minimajs/server/node`: Uses Node.js's standard `http.createServer()`.
--   `@minimajs/server`: Defaults to the Node.js runtime.
+- `@minimajs/server/bun`: Uses Bun's native, high-performance `Bun.serve()`.
+- `@minimajs/server/node`: Uses Node.js's standard `http.createServer()`.
+- `@minimajs/server`: Defaults to the Node.js runtime.
 
 This provides native performance with zero abstraction overhead.
 
@@ -206,7 +206,7 @@ app.register(
   hook("error", (error) => {
     console.error("Caught error:", error.message);
     // You can return a custom Response or re-throw an HttpError here
-    return new Response("Something went wrong!", { status: 500 });
+    abort("Something went wrong!", { status: 500 });
   })
 );
 ```
@@ -215,6 +215,6 @@ app.register(
 
 You now have an overview of the most important concepts in Minima.js. To learn more, explore these resources:
 
--   **[Core Concepts](/core-concepts/architecture)**: Learn about the fundamental architecture.
--   **[Guides](/guides/routing)**: Dive deeper into routing, middleware, and hooks.
--   **[Packages](/packages/auth)**: Discover additional packages for authentication, data validation, and more.
+- **[Core Concepts](/core-concepts/architecture)**: Learn about the fundamental architecture.
+- **[Guides](/guides/routing)**: Dive deeper into routing, middleware, and hooks.
+- **[Packages](/packages/auth)**: Discover additional packages for authentication, data validation, and more.

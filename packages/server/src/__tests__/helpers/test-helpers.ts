@@ -38,7 +38,7 @@ export async function testRoute(
       app.get(url, handler);
   }
 
-  const response = await app.inject(createRequest(url, options));
+  const response = await app.handle(createRequest(url, options));
   await app.close();
   return response;
 }

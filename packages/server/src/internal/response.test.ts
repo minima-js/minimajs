@@ -16,7 +16,7 @@ describe("internal/response", () => {
       app.get("/", () => {
         return "hello world";
       });
-      const response = await app.inject(createRequest("/"));
+      const response = await app.handle(createRequest("/"));
       expect(await response.text()).toBe("hello world");
     });
 
@@ -24,7 +24,7 @@ describe("internal/response", () => {
       app.get("/", () => {
         return { message: "hello world" };
       });
-      const response = await app.inject(createRequest("/"));
+      const response = await app.handle(createRequest("/"));
       expect(await response.text()).toBe(JSON.stringify({ message: "hello world" }));
     });
 
@@ -32,7 +32,7 @@ describe("internal/response", () => {
       app.get("/", async () => {
         return { message: "hello world" };
       });
-      const response = await app.inject(createRequest("/"));
+      const response = await app.handle(createRequest("/"));
       expect(await response.text()).toBe(JSON.stringify({ message: "hello world" }));
     });
 
@@ -40,7 +40,7 @@ describe("internal/response", () => {
       app.get("/", async () => {
         return { message: "hello world" };
       });
-      const response = await app.inject(createRequest("/"));
+      const response = await app.handle(createRequest("/"));
       expect(await response.text()).toBe(JSON.stringify({ message: "hello world" }));
     });
 
@@ -54,7 +54,7 @@ describe("internal/response", () => {
         return generator();
       });
       try {
-        await app.inject(createRequest("/"));
+        await app.handle(createRequest("/"));
       } catch (e) {
         expect(e).toBeInstanceOf(Error);
       }
@@ -67,7 +67,7 @@ describe("internal/response", () => {
         return new Response("Hello from Response object");
       });
 
-      const res = await app.inject(createRequest("/response-obj"));
+      const res = await app.handle(createRequest("/response-obj"));
       expect(await res.text()).toBe("Hello from Response object");
       expect(res.status).toBe(200);
     });
@@ -87,7 +87,7 @@ describe("internal/response", () => {
       app.get("/test-path", () => originalBody);
 
       // Mock a context to call createResponse directly
-      const response = await app.inject(createRequest("/test-path"));
+      const response = await app.handle(createRequest("/test-path"));
 
       // After context is mocked and createResponse is called, assert on the response
       expect(response).toEqual(customResponse); // Expect the send hook's response
@@ -107,7 +107,7 @@ describe("internal/response", () => {
           ctx
         );
       });
-      const response = await app.inject(createRequest("/test-headers"));
+      const response = await app.handle(createRequest("/test-headers"));
       expect(response?.headers.get("X-Custom-Header")).toBe("TestValue");
     });
   });

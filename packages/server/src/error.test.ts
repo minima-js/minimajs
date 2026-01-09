@@ -16,7 +16,7 @@ afterEach(() => app.close());
 describe("error module", () => {
   describe("errorHandler", () => {
     test("should not found", async () => {
-      const response = await app.inject(createRequest("/hello"));
+      const response = await app.handle(createRequest("/hello"));
       expect(response.status).toBe(404);
       const body = await response.text();
       expect(body).toEqual(JSON.stringify({ message: "Route GET /hello not found" }));
@@ -26,7 +26,7 @@ describe("error module", () => {
       app.get("/", () => {
         throw new Error("Something went wrong");
       });
-      const response = await app.inject(createRequest("/"));
+      const response = await app.handle(createRequest("/"));
       expect(response.status).toBe(500);
       const body = await response.text();
       expect(body).toBe(JSON.stringify({ message: "Unable to process request" }));
@@ -76,7 +76,7 @@ describe("error module", () => {
         redirect("/world");
       });
 
-      const response = await app.inject(createRequest("/hello"));
+      const response = await app.handle(createRequest("/hello"));
       expect(response.status).toBe(302);
       expect(response.headers.get("location")).toBe("/world");
     });
@@ -85,7 +85,7 @@ describe("error module", () => {
       app.get("/hello", () => {
         redirect("/world", true);
       });
-      const response = await app.inject(createRequest("/hello"));
+      const response = await app.handle(createRequest("/hello"));
       expect(response.status).toBe(301);
       expect(response.headers.get("location")).toBe("/world");
     });
@@ -96,7 +96,7 @@ describe("error module", () => {
       app.get("/404", () => {
         throw new NotFoundError();
       });
-      const res = await app.inject(createRequest("/404"));
+      const res = await app.handle(createRequest("/404"));
       expect(res.status).toBe(404);
       const body = JSON.parse(await res.text());
       expect(body).toStrictEqual({ message: "Route GET /404 not found" });
@@ -106,7 +106,7 @@ describe("error module", () => {
       app.get("/404", () => {
         throw new NotFoundError("Custom not found message");
       });
-      const res = await app.inject(createRequest("/404"));
+      const res = await app.handle(createRequest("/404"));
       expect(res.status).toBe(404);
       const body = JSON.parse(await res.text());
       expect(body).toStrictEqual({
@@ -120,7 +120,7 @@ describe("error module", () => {
       app.get("/validation", () => {
         throw new ValidationError();
       });
-      const res = await app.inject(createRequest("/validation"));
+      const res = await app.handle(createRequest("/validation"));
       expect(res.status).toBe(422); // 422 Unprocessable Entity
       const body = JSON.parse(await res.text());
       expect(body).toStrictEqual({ message: "Validation failed" });
@@ -130,7 +130,7 @@ describe("error module", () => {
       app.get("/validation-custom", () => {
         throw new ValidationError("Custom validation message");
       });
-      const res = await app.inject(createRequest("/validation-custom"));
+      const res = await app.handle(createRequest("/validation-custom"));
       expect(res.status).toBe(422); // 422 Unprocessable Entity
       const body = JSON.parse(await res.text());
       expect(body).toStrictEqual({

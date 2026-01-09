@@ -28,7 +28,7 @@ describe("createAuth", () => {
       const [plugin, getUser] = createAuth(async () => mockUser);
       app.register(plugin);
       app.get("/", () => getUser() ?? "No User");
-      const res = await app.inject(createRequest("/"));
+      const res = await app.handle(createRequest("/"));
       expect(await res.json()).toEqual(mockUser);
     });
 
@@ -44,7 +44,7 @@ describe("createAuth", () => {
         return user ?? "No User";
       });
 
-      const res = await app.inject(createRequest("/"));
+      const res = await app.handle(createRequest("/"));
       expect(await res.text()).toBe("No User");
     });
 
@@ -57,7 +57,7 @@ describe("createAuth", () => {
 
       app.get("/", () => getUser());
 
-      const res = await app.inject(createRequest("/"));
+      const res = await app.handle(createRequest("/"));
       expect(res.status).toBe(500);
     });
 
@@ -72,7 +72,7 @@ describe("createAuth", () => {
         return { userName, isAdmin };
       });
 
-      const res = await app.inject(createRequest("/"));
+      const res = await app.handle(createRequest("/"));
       expect(await res.text()).toBe(JSON.stringify({ userName: "Jane Doe", isAdmin: true }));
     });
 
@@ -86,7 +86,7 @@ describe("createAuth", () => {
         return user;
       });
 
-      const res = await app.inject(createRequest("/"));
+      const res = await app.handle(createRequest("/"));
       expect(await res.text()).toBe(JSON.stringify(mockUser));
     });
 
@@ -101,7 +101,7 @@ describe("createAuth", () => {
         return getUser.required();
       });
 
-      const res = await app.inject(createRequest("/"));
+      const res = await app.handle(createRequest("/"));
       expect(res.status).toBe(401);
       expect(await res.text()).toBe(JSON.stringify({ message: "Invalid token" }));
     });
@@ -113,7 +113,7 @@ describe("createAuth", () => {
 
       app.get("/", () => getUser());
 
-      const res = await app.inject(createRequest("/"));
+      const res = await app.handle(createRequest("/"));
       expect(await res.text()).toBe(JSON.stringify(mockUser));
     });
   });
@@ -128,7 +128,7 @@ describe("createAuth", () => {
 
       app.get("/", () => getUser());
 
-      const res = await app.inject(createRequest("/"));
+      const res = await app.handle(createRequest("/"));
       expect(await res.text()).toBe(JSON.stringify(mockUser));
     });
 
@@ -144,7 +144,7 @@ describe("createAuth", () => {
 
       app.get("/", () => getUser());
 
-      const res = await app.inject(createRequest("/"));
+      const res = await app.handle(createRequest("/"));
       expect(res.status).toBe(401);
       expect(await res.text()).toBe(JSON.stringify({ message: "Unauthorized" }));
     });
@@ -161,7 +161,7 @@ describe("createAuth", () => {
 
       app.get("/", () => getUser());
 
-      const res = await app.inject(createRequest("/"));
+      const res = await app.handle(createRequest("/"));
       expect(res.status).toBe(500);
     });
 
@@ -178,7 +178,7 @@ describe("createAuth", () => {
         return { user1, user2 };
       });
 
-      const res = await app.inject(createRequest("/"));
+      const res = await app.handle(createRequest("/"));
       const body = (await res.json()) as any;
       expect(body.user1).toEqual(mockUser);
       expect(body.user2).toEqual(mockUser);
@@ -197,7 +197,7 @@ describe("createAuth", () => {
         return { name: user.name, id: user.id };
       });
 
-      const res = await app.inject(createRequest("/"));
+      const res = await app.handle(createRequest("/"));
       expect(await res.text()).toBe(JSON.stringify({ name: "Diana", id: 5 }));
     });
   });
@@ -213,10 +213,10 @@ describe("createAuth", () => {
 
       app.get("/", () => getUser());
 
-      const res1 = await app.inject(createRequest("/"));
+      const res1 = await app.handle(createRequest("/"));
       expect(((await res1.json()) as any).name).toBe("User 1");
 
-      const res2 = await app.inject(createRequest("/"));
+      const res2 = await app.handle(createRequest("/"));
       expect(((await res2.json()) as any).name).toBe("User 1");
     });
 
@@ -230,11 +230,11 @@ describe("createAuth", () => {
 
       app.get("/", () => getUser());
 
-      const res1 = await app.inject(createRequest("/"));
+      const res1 = await app.handle(createRequest("/"));
       const body1 = (await res1.json()) as any;
       expect(body1.id).toBe(1);
 
-      const res2 = await app.inject(createRequest("/"));
+      const res2 = await app.handle(createRequest("/"));
       const body2 = (await res2.json()) as any;
       expect(body2.id).toBe(2);
     });
@@ -250,7 +250,7 @@ describe("createAuth", () => {
 
       app.get("/", () => getUser.required());
 
-      const res = await app.inject(createRequest("/"));
+      const res = await app.handle(createRequest("/"));
       expect(res.status).toBe(403);
       expect(await res.text()).toBe(JSON.stringify({ message: "Forbidden" }));
     });
@@ -264,7 +264,7 @@ describe("createAuth", () => {
 
       app.get("/", () => getUser.required());
 
-      const res = await app.inject(createRequest("/"));
+      const res = await app.handle(createRequest("/"));
       expect(res.status).toBe(418);
       expect(await res.text()).toBe(JSON.stringify({ message: "Custom auth error" }));
     });
@@ -294,7 +294,7 @@ describe("createAuth", () => {
         };
       });
 
-      const res = await app.inject(createRequest("/"));
+      const res = await app.handle(createRequest("/"));
       const body = (await res.json()) as any;
       expect(body.user).toEqual(complexUser);
       expect(body.rolesLength).toBe(3);

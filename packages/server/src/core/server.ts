@@ -141,7 +141,7 @@ export class Server<T = any> implements App<T> {
   }
 
   // Testing utility
-  async inject(request: Request): Promise<Response> {
+  async handle(request: Request): Promise<Response> {
     await this.ready();
     return handleRequest(this, this.router, request);
   }

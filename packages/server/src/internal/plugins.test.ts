@@ -138,8 +138,8 @@ describe("plugins", () => {
 
       await app.ready();
 
-      const res1 = await app.inject(createRequest("/route1"));
-      const res2 = await app.inject(createRequest("/route2"));
+      const res1 = await app.handle(createRequest("/route1"));
+      const res2 = await app.handle(createRequest("/route2"));
 
       expect(await res1.text()).toBe("route1");
       expect(await res2.text()).toBe("route2");

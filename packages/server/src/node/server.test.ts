@@ -46,7 +46,7 @@ describe("Node Server", () => {
     test("should register GET route", async () => {
       app.get("/users", () => ({ method: "GET" }));
 
-      const response = await app.inject(createRequest("/users"));
+      const response = await app.handle(createRequest("/users"));
       expect(response.status).toBe(200);
       const data = await response.json();
       expect(data).toEqual({ method: "GET" });
@@ -55,7 +55,7 @@ describe("Node Server", () => {
     test("should register POST route", async () => {
       app.post("/users", () => ({ method: "POST" }));
 
-      const response = await app.inject(new Request("http://localhost/users", { method: "POST" }));
+      const response = await app.handle(new Request("http://localhost/users", { method: "POST" }));
       expect(response.status).toBe(200);
       const data = await response.json();
       expect(data).toEqual({ method: "POST" });
@@ -64,7 +64,7 @@ describe("Node Server", () => {
     test("should register PUT route", async () => {
       app.put("/users/1", () => ({ method: "PUT" }));
 
-      const response = await app.inject(new Request("http://localhost/users/1", { method: "PUT" }));
+      const response = await app.handle(new Request("http://localhost/users/1", { method: "PUT" }));
       expect(response.status).toBe(200);
       const data = await response.json();
       expect(data).toEqual({ method: "PUT" });
@@ -73,7 +73,7 @@ describe("Node Server", () => {
     test("should register DELETE route", async () => {
       app.delete("/users/1", () => ({ method: "DELETE" }));
 
-      const response = await app.inject(new Request("http://localhost/users/1", { method: "DELETE" }));
+      const response = await app.handle(new Request("http://localhost/users/1", { method: "DELETE" }));
       expect(response.status).toBe(200);
       const data = await response.json();
       expect(data).toEqual({ method: "DELETE" });
@@ -82,7 +82,7 @@ describe("Node Server", () => {
     test("should register PATCH route", async () => {
       app.patch("/users/1", () => ({ method: "PATCH" }));
 
-      const response = await app.inject(new Request("http://localhost/users/1", { method: "PATCH" }));
+      const response = await app.handle(new Request("http://localhost/users/1", { method: "PATCH" }));
       expect(response.status).toBe(200);
       const data = await response.json();
       expect(data).toEqual({ method: "PATCH" });
@@ -91,14 +91,14 @@ describe("Node Server", () => {
     test("should register HEAD route", async () => {
       app.head("/health", () => ({}));
 
-      const response = await app.inject(new Request("http://localhost/health", { method: "HEAD" }));
+      const response = await app.handle(new Request("http://localhost/health", { method: "HEAD" }));
       expect(response.status).toBe(200);
     });
 
     test("should register OPTIONS route", async () => {
       app.options("/users", () => ({ method: "OPTIONS" }));
 
-      const response = await app.inject(new Request("http://localhost/users", { method: "OPTIONS" }));
+      const response = await app.handle(new Request("http://localhost/users", { method: "OPTIONS" }));
       expect(response.status).toBe(200);
       const data = await response.json();
       expect(data).toEqual({ method: "OPTIONS" });
@@ -107,10 +107,10 @@ describe("Node Server", () => {
     test("should register ALL route (wildcard)", async () => {
       app.all("/wildcard", (ctx) => ({ method: ctx.request.method }));
 
-      const getResponse = await app.inject(createRequest("/wildcard"));
+      const getResponse = await app.handle(createRequest("/wildcard"));
       expect(((await getResponse.json()) as any).method).toBe("GET");
 
-      const postResponse = await app.inject(new Request("http://localhost/wildcard", { method: "POST" }));
+      const postResponse = await app.handle(new Request("http://localhost/wildcard", { method: "POST" }));
       expect(((await postResponse.json()) as any).method).toBe("POST");
     });
   });
@@ -127,7 +127,7 @@ describe("Node Server", () => {
         return { id };
       });
 
-      const response = await app.inject(createRequest("/users/123"));
+      const response = await app.handle(createRequest("/users/123"));
       const data = (await response.json()) as any;
       expect(data.id).toBe("123");
     });
@@ -137,7 +137,7 @@ describe("Node Server", () => {
         return { userId: route?.params?.userId, postId: route?.params?.postId };
       });
 
-      const response = await app.inject(createRequest("/users/123/posts/456"));
+      const response = await app.handle(createRequest("/users/123/posts/456"));
       const data = (await response.json()) as any;
       expect(data.userId).toBe("123");
       expect(data.postId).toBe("456");
@@ -149,7 +149,7 @@ describe("Node Server", () => {
       app = createApp({ logger: false, prefix: "/api" });
       app.get("/users", () => ({ success: true }));
 
-      const response = await app.inject(createRequest("/api/users"));
+      const response = await app.handle(createRequest("/api/users"));
       expect(response.status).toBe(200);
       const data = (await response.json()) as any;
       expect(data.success).toBe(true);
@@ -160,11 +160,11 @@ describe("Node Server", () => {
       app.prefix("/v1").get("/users", () => ({ version: 1 }));
       app.prefix("/v2").get("/users", () => ({ version: 2 }));
 
-      const v1Response = await app.inject(createRequest("/v1/users"));
+      const v1Response = await app.handle(createRequest("/v1/users"));
       const v1Data = (await v1Response.json()) as any;
       expect(v1Data.version).toBe(1);
 
-      const v2Response = await app.inject(createRequest("/v2/users"));
+      const v2Response = await app.handle(createRequest("/v2/users"));
       const v2Data = (await v2Response.json()) as any;
       expect(v2Data.version).toBe(2);
     });
@@ -175,10 +175,10 @@ describe("Node Server", () => {
       app.get("/users", () => ({ prefixed: true }));
       app.get("/health", () => ({ excluded: true }));
 
-      const apiResponse = await app.inject(createRequest("/api/users"));
+      const apiResponse = await app.handle(createRequest("/api/users"));
       expect(apiResponse.status).toBe(200);
 
-      const healthResponse = await app.inject(createRequest("/health"));
+      const healthResponse = await app.handle(createRequest("/health"));
       expect(healthResponse.status).toBe(200);
       const healthData = (await healthResponse.json()) as any;
       expect(healthData.excluded).toBe(true);
@@ -201,7 +201,7 @@ describe("Node Server", () => {
       await app.ready();
       expect(pluginCalled).toBe(true);
 
-      const response = await app.inject(createRequest("/plugin-route"));
+      const response = await app.handle(createRequest("/plugin-route"));
       const data = (await response.json()) as any;
       expect(data.fromPlugin).toBe(true);
     });
@@ -218,7 +218,7 @@ describe("Node Server", () => {
       await app.ready();
       expect(pluginCalled).toBe(true);
 
-      const response = await app.inject(createRequest("/async-route"));
+      const response = await app.handle(createRequest("/async-route"));
       const data = (await response.json()) as any;
       expect(data.async).toBe(true);
     });
@@ -233,7 +233,7 @@ describe("Node Server", () => {
 
       await app.ready();
 
-      const response = await app.inject(createRequest("/greeting"));
+      const response = await app.handle(createRequest("/greeting"));
       const data = (await response.json()) as any;
       expect(data.message).toBe("Hello World");
     });
@@ -247,7 +247,7 @@ describe("Node Server", () => {
     test("should inject with string URL", async () => {
       app.get("/test", () => ({ injected: true }));
 
-      const response = await app.inject(createRequest("/test"));
+      const response = await app.handle(createRequest("/test"));
       expect(response.status).toBe(200);
       const data = (await response.json()) as any;
       expect(data.injected).toBe(true);
@@ -257,7 +257,7 @@ describe("Node Server", () => {
       app.post("/test", () => ({ method: "POST" }));
 
       const request = new Request("http://localhost/test", { method: "POST" });
-      const response = await app.inject(request);
+      const response = await app.handle(request);
 
       expect(response.status).toBe(200);
       const data = (await response.json()) as any;
@@ -270,7 +270,7 @@ describe("Node Server", () => {
         return { query: url.searchParams.get("q") };
       });
 
-      const response = await app.inject(createRequest("/search?q=test"));
+      const response = await app.handle(createRequest("/search?q=test"));
       const data = (await response.json()) as any;
       expect(data.query).toBe("test");
     });
@@ -287,7 +287,7 @@ describe("Node Server", () => {
         body: JSON.stringify({ test: "data" }),
       });
 
-      const response = await app.inject(request);
+      const response = await app.handle(request);
       const data = (await response.json()) as any;
       expect(data.received).toEqual({ test: "data" });
     });
@@ -367,14 +367,14 @@ describe("Node Server", () => {
         throw new Error("Test error");
       });
 
-      const response = await app.inject(createRequest("/error"));
+      const response = await app.handle(createRequest("/error"));
       expect(response.status).toBeGreaterThanOrEqual(500);
       const body = await getBody(response);
       expect(body.message).toBe("Unable to process request");
     });
 
     test("should handle 404 for non-existent routes", async () => {
-      const response = await app.inject(createRequest("/non-existent"));
+      const response = await app.handle(createRequest("/non-existent"));
       expect(response.status).toBe(404);
     });
   });
@@ -385,7 +385,7 @@ describe("Node Server", () => {
       app.serialize = (data) => `Custom: ${JSON.stringify(data)}`;
       app.get("/custom", () => ({ test: true }));
 
-      const response = await app.inject(createRequest("/custom"));
+      const response = await app.handle(createRequest("/custom"));
       const text = await response.text();
       expect(text).toBe('Custom: {"test":true}');
     });
@@ -402,7 +402,7 @@ describe("Node Server", () => {
         };
       });
 
-      const response = await app.inject(
+      const response = await app.handle(
         new Request("http://localhost/headers", {
           headers: {
             Host: "localhost",
@@ -422,7 +422,7 @@ describe("Node Server", () => {
         return { status: "ok", timestamp: new Date().toISOString() };
       });
 
-      const response = await app.inject(createRequest("/response-test"));
+      const response = await app.handle(createRequest("/response-test"));
       expect(response.status).toBe(200);
       expect(response.headers.get("content-type")).toContain("application/json");
 

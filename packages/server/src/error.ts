@@ -98,6 +98,7 @@ export class NotFoundError<R = unknown> extends HttpError<R> {
 
 export class RedirectError extends BaseHttpError {
   public status: number;
+  headers?: HeadersInit;
   constructor(
     public readonly url: string,
     isPermanent = false,
@@ -112,6 +113,7 @@ export class RedirectError extends BaseHttpError {
     responseState.headers.set("Location", this.url);
     return createResponseFromState(null, {
       status: this.status,
+      headers: this.headers,
     });
   }
 }

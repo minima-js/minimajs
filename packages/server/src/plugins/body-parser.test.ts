@@ -31,7 +31,7 @@ describe("bodyParser", () => {
         body: { name: "John", age: 30 },
       });
 
-      const response = await app.inject(req);
+      const response = await app.handle(req);
 
       expect(response.status).toBe(200);
       const json = await response.json();
@@ -54,7 +54,7 @@ describe("bodyParser", () => {
         body: { message: "hello" },
       });
 
-      const response = await app.inject(req);
+      const response = await app.handle(req);
 
       expect(await response.json()).toEqual({ message: "hello" });
     });
@@ -73,7 +73,7 @@ describe("bodyParser", () => {
         body: "invalid json{",
       });
 
-      const response = await app.inject(req);
+      const response = await app.handle(req);
 
       expect(await response.json()).toEqual({ data: null });
     });
@@ -91,7 +91,7 @@ describe("bodyParser", () => {
         body: JSON.stringify({ test: "data" }),
       });
 
-      const response = await app.inject(req);
+      const response = await app.handle(req);
 
       expect(await response.json()).toEqual({ data: null });
     });
@@ -110,7 +110,7 @@ describe("bodyParser", () => {
         body: JSON.stringify({ test: "value" }),
       });
 
-      const response = await app.inject(req);
+      const response = await app.handle(req);
 
       expect(await response.json()).toEqual({ test: "value" });
     });
@@ -131,7 +131,7 @@ describe("bodyParser", () => {
         body: "Hello World",
       });
 
-      const response = await app.inject(req);
+      const response = await app.handle(req);
 
       expect(await response.json()).toEqual({ text: "Hello World" });
     });
@@ -150,7 +150,7 @@ describe("bodyParser", () => {
         body: "<h1>Title</h1>",
       });
 
-      const response = await app.inject(req);
+      const response = await app.handle(req);
 
       expect(await response.json()).toEqual({ html: "<h1>Title</h1>" });
     });
@@ -169,7 +169,7 @@ describe("bodyParser", () => {
         body: "some text",
       });
 
-      const response = await app.inject(req);
+      const response = await app.handle(req);
 
       expect(await response.json()).toEqual({ data: null });
     });
@@ -207,7 +207,7 @@ describe("bodyParser", () => {
         body: "name=John&age=30",
       });
 
-      const response = await app.inject(req);
+      const response = await app.handle(req);
 
       expect(await response.json()).toEqual({ hasData: true });
 
@@ -231,7 +231,7 @@ describe("bodyParser", () => {
         body: testData,
       });
 
-      const response = await app.inject(req);
+      const response = await app.handle(req);
       const json = (await response.json()) as { length: number };
 
       expect(json.length).toBeGreaterThan(0);
@@ -253,7 +253,7 @@ describe("bodyParser", () => {
         body: "test data",
       });
 
-      const response = await app.inject(req);
+      const response = await app.handle(req);
       const json = (await response.json()) as { hasBlob: boolean; size: number };
 
       expect(json.hasBlob).toBe(true);
@@ -287,8 +287,8 @@ describe("bodyParser", () => {
         body: "plain text",
       });
 
-      const jsonResponse = await app.inject(jsonReq);
-      const textResponse = await app.inject(textReq);
+      const jsonResponse = await app.handle(jsonReq);
+      const textResponse = await app.handle(textReq);
 
       expect(await jsonResponse.json()).toEqual({ test: "value" });
       expect(await textResponse.json()).toEqual({ text: "plain text" });
@@ -308,7 +308,7 @@ describe("bodyParser", () => {
         body: { test: true },
       });
 
-      const response = await app.inject(req);
+      const response = await app.handle(req);
 
       expect(await response.json()).toEqual({ hasData: true });
     });
@@ -329,7 +329,7 @@ describe("bodyParser", () => {
         body: { value: "cloned" },
       });
 
-      const response = await app.inject(req);
+      const response = await app.handle(req);
 
       expect(await response.json()).toEqual({ value: "cloned" });
     });
@@ -350,7 +350,7 @@ describe("bodyParser", () => {
         body: "",
       });
 
-      const response = await app.inject(req);
+      const response = await app.handle(req);
 
       expect(await response.json()).toEqual({ data: null });
     });
@@ -369,7 +369,7 @@ describe("bodyParser", () => {
         body: { test: "value" },
       });
 
-      const response = await app.inject(req);
+      const response = await app.handle(req);
 
       // Without type, no parsing should happen
       expect(await response.json()).toEqual({ data: null });
@@ -389,7 +389,7 @@ describe("bodyParser", () => {
         body: "{{{{ invalid",
       });
 
-      const response = await app.inject(req);
+      const response = await app.handle(req);
 
       expect(await response.json()).toEqual({ isNull: true });
     });

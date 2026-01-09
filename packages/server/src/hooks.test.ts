@@ -24,7 +24,7 @@ describe("hooks", () => {
         return "Done";
       });
 
-      await app.inject(createRequest("/"));
+      await app.handle(createRequest("/"));
       expect(deferred).toHaveBeenCalled();
       expect(execution).toHaveBeenCalled();
       const firstCallIndex = (execution as jest.Mock).mock.invocationCallOrder[0];
@@ -40,7 +40,7 @@ describe("hooks", () => {
         onError(onErrorFn);
         throw new Error("test");
       });
-      await app.inject(createRequest("/"));
+      await app.handle(createRequest("/"));
       expect(onErrorFn).toHaveBeenCalled();
     });
 
@@ -57,7 +57,7 @@ describe("hooks", () => {
         throw new Error("Original error");
       });
 
-      const response = await app.inject(createRequest("/"));
+      const response = await app.handle(createRequest("/"));
       const body = await response.json();
 
       expect(response.status).toBe(200);
@@ -79,7 +79,7 @@ describe("hooks", () => {
         throw new Error("Test error");
       });
 
-      const response = await app.inject(createRequest("/"));
+      const response = await app.handle(createRequest("/"));
       const body = await response.json();
 
       expect(secondHook).toHaveBeenCalled();
@@ -105,7 +105,7 @@ describe("hooks", () => {
         throw new Error("Original error");
       });
 
-      const response = await app.inject(createRequest("/"));
+      const response = await app.handle(createRequest("/"));
       const body = await response.json();
 
       expect(secondHook).toHaveBeenCalled();
@@ -124,7 +124,7 @@ describe("hooks", () => {
         throw new Error("Unhandled error");
       });
 
-      const response = await app.inject(createRequest("/"));
+      const response = await app.handle(createRequest("/"));
 
       expect(hook2).toHaveBeenCalled();
       expect(hook1).toHaveBeenCalled();
@@ -143,7 +143,7 @@ describe("hooks", () => {
         throw new Error("Test error");
       });
 
-      const response = await app.inject(createRequest("/"));
+      const response = await app.handle(createRequest("/"));
       const body = await response.json();
 
       expect(asyncHook).toHaveBeenCalled();
@@ -191,7 +191,7 @@ describe("hooks", () => {
         throw new Error("Original error");
       });
 
-      const response = await app.inject(createRequest("/"));
+      const response = await app.handle(createRequest("/"));
       const body = await response.json();
 
       expect(callOrder).toEqual(["hook4", "hook3", "hook2", "hook1"]);

@@ -2,8 +2,6 @@
 
 Minima.js is designed with a **modular, scalable, and runtime-native architecture**. It is built entirely from scratch to enable native integration with modern runtimes like Bun while maintaining full Node.js compatibility, with zero legacy overhead.
 
----
-
 ## Application & Request Lifecycle
 
 Understanding Minima.js’s lifecycle is key to building robust applications. It consists of two interconnected flows: the global application lifecycle and the per-request processing stages.
@@ -109,6 +107,7 @@ When an error is thrown, the normal flow is interrupted, and the `error` hook pi
 ```
 Any Stage → (error) → ERROR → Serialize Error → ...
 ```
+
 For more details, see the [Error Handling Guide](/guides/error-handling).
 
 ### Performance Considerations
@@ -122,15 +121,16 @@ For more details, see the [Error Handling Guide](/guides/error-handling).
 ```ts
 // Ultra-fast health check (Path 3)
 app.register(
-  hook("request", ({ url }) => {
+  hook("request", ({ url, responseState }) => {
     if (url.pathname === "/health") {
-      return new Response("OK");
+      // carry global response
+      return new Response("OK", responseState);
     }
   })
 );
 
 // Fast static response (Path 2)
-app.get("/ping", () => new Response("pong"));
+app.get("/ping", ({ responseState }) => new Response("pong", responseState));
 
 // Full pipeline (Path 1)
 app.get("/data", () => ({ data: "value" }));

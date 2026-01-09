@@ -39,7 +39,7 @@ export function mockContext<S = unknown, T = void>(
   // Create mock context
   const context: Context<S> = {
     server: null as any,
-    app: null as any, // Mock app - users should use app.inject for full integration tests
+    app: null as any, // Mock app - users should use app.handle for full integration tests
     url: urlObj,
     request: request,
     responseState: resInit,

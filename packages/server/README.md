@@ -393,9 +393,9 @@ const app = createApp();
 
 app.get("/", () => "Hello World");
 
-const response = await app.inject(new Request("http://localhost")); // returns Native Response
+const response = await app.handle(new Request("http://localhost")); // returns Native Response
 // or
-const response = await app.inject(createRequest("/", { method: "GET" })); // returns Native Response
+const response = await app.handle(createRequest("/", { method: "GET" })); // returns Native Response
 expect(await response.text()).toBe("Hello World");
 ```
 

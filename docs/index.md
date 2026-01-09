@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "Minima.js"
   text: "Built from Scratch for Modern Runtimes"
-  tagline: TypeScript-first with pure ESM, Web API standards, and 100% type safety—no false assertions, just real types.
+  tagline: TypeScript-first with pure ESM, Web API standards. Real types, no false assertions.
   image:
     src: /logo.svg
     alt: Minima.js
@@ -73,10 +73,6 @@ await app.listen({ port: 3000 });
 
 <div style="height: 2rem;"></div>
 
----
-
-<div style="height: 2rem;"></div>
-
 <div class="VPFeatures" style="--vp-features-gap: 2rem; --vp-features-max-items-per-row: 1;">
   <div class="container">
     <div class="items">
@@ -98,11 +94,7 @@ await app.listen({ port: 3000 });
   </div>
 </div>
 
-<div style="height: 2rem;"></div>
-
----
-
-<div style="height: 2rem;"></div>
+<div style="height: 4rem;"></div>
 
 <div class="VPFeatures" style="--vp-features-gap: 2rem; --vp-features-max-items-per-row: 1;">
   <div class="container">

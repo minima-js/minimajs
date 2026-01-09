@@ -49,10 +49,10 @@ console.log(`Server running at ${address}`);
 
 The `.register()` method is the primary way to add functionality to your application. You can use it to register:
 
--   Route handlers
--   [Lifecycle hooks](/guides/hooks)
--   [Plugins](/core-concepts/plugins) (reusable components that extend the current scope)
--   [Modules](/core-concepts/modules) (encapsulated functions that create isolated scopes)
+- Route handlers
+- [Lifecycle hooks](/guides/hooks)
+- [Plugins](/core-concepts/plugins) (reusable components that extend the current scope)
+- [Modules](/core-concepts/modules) (encapsulated functions that create isolated scopes)
 
 This method is fundamental to Minima.js's principle of **encapsulation**. When you register a module, it creates an isolated scope, meaning any hooks or plugins registered inside it will not affect the rest of your application, ensuring clear boundaries and predictable behavior.
 
@@ -63,7 +63,7 @@ import { type App, hook } from "@minimajs/server";
 async function myModule(app: App) {
   // This hook is local to myModule only
   app.register(hook("request", () => console.log("Module hook!")));
-  
+
   app.get("/hello", () => "Hello from the module!");
 }
 
@@ -87,16 +87,16 @@ process.on("SIGINT", async () => {
 });
 ```
 
-### `app.inject()`
+### `app.handle()`
 
-For testing purposes, the `.inject()` method allows you to send mock requests to your application without needing to run a live server. It dispatches the request directly to your handlers and returns a `Response` object.
+For testing purposes, the `.handle()` method allows you to send mock requests to your application without needing to run a live server. It dispatches the request directly to your handlers and returns a `Response` object.
 
 ```typescript
 import { createRequest } from "@minimajs/server/mock";
 
 test("GET /", async () => {
-  const response = await app.inject(createRequest("/"));
-  
+  const response = await app.handle(createRequest("/"));
+
   expect(response.status).toBe(200);
   expect(await response.json()).toEqual({ message: "Hello, World!" });
 });

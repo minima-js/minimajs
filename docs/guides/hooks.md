@@ -156,7 +156,8 @@ app.register(
     request({ request }) {
       console.log("Incoming request:", request.url);
       if (request.url.pathname === "/maintenance") {
-        return new Response("Under maintenance", { status: 503 });
+        // need to maintain headers in responseState
+        return abort("Under maintenance", 503);
       }
     },
     sent({ request }) {
@@ -194,7 +195,7 @@ app.register(
   hook("request", ({ request }) => {
     if (!request.headers.get("authorization")) {
       // Early termination - bypasses route handler
-      return new Response("Unauthorized", { status: 401 });
+      abort("Unauthorized", 401);
     }
   })
 );
@@ -214,13 +215,11 @@ app.register(
   hook("request", ({ request }) => {
     const ip = request.headers.get("x-forwarded-for") || "unknown";
     if (isRateLimited(ip)) {
-      return new Response("Too Many Requests", { status: 429 });
+      abort("Too Many Requests", 429);
     }
   })
 );
 ```
-
-> **⚠️ Warning:** Returning a `Response` object bypasses the route handler, all subsequent `request` hooks, and the entire request lifecycle (transform, send hooks). Use `createResponseFromState` to preserve context headers.
 
 **Flow:**
 
@@ -318,7 +317,7 @@ app.get("/", () => {
 });
 ```
 
-> `defer` is a request-scoped equivalent of the global `sent` hook.
+> `defer` is a request-scoped run after `sent` or `errorSent` hook.
 
 > **Note:** For request-specific error handling, see [`onError`](/guides/error-handling#request-scoped-error-handler-onerror) in the Error Handling Guide.
 

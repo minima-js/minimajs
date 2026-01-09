@@ -44,7 +44,7 @@ describe("Bun Server", () => {
     test("should register GET route", async () => {
       app.get("/users", () => ({ method: "GET" }));
 
-      const response = await app.inject(createRequest("/users"));
+      const response = await app.handle(createRequest("/users"));
       expect(response.status).toBe(200);
       const data = await response.json();
       expect(data).toEqual({ method: "GET" });
@@ -53,7 +53,7 @@ describe("Bun Server", () => {
     test("should register POST route", async () => {
       app.post("/users", () => ({ method: "POST" }));
 
-      const response = await app.inject(new Request("http://localhost/users", { method: "POST" }));
+      const response = await app.handle(new Request("http://localhost/users", { method: "POST" }));
       expect(response.status).toBe(200);
       const data = await response.json();
       expect(data).toEqual({ method: "POST" });
@@ -62,7 +62,7 @@ describe("Bun Server", () => {
     test("should register PUT route", async () => {
       app.put("/users/1", () => ({ method: "PUT" }));
 
-      const response = await app.inject(new Request("http://localhost/users/1", { method: "PUT" }));
+      const response = await app.handle(new Request("http://localhost/users/1", { method: "PUT" }));
       expect(response.status).toBe(200);
       const data = await response.json();
       expect(data).toEqual({ method: "PUT" });
@@ -71,7 +71,7 @@ describe("Bun Server", () => {
     test("should register DELETE route", async () => {
       app.delete("/users/1", () => ({ method: "DELETE" }));
 
-      const response = await app.inject(new Request("http://localhost/users/1", { method: "DELETE" }));
+      const response = await app.handle(new Request("http://localhost/users/1", { method: "DELETE" }));
       expect(response.status).toBe(200);
       const data = await response.json();
       expect(data).toEqual({ method: "DELETE" });
@@ -80,7 +80,7 @@ describe("Bun Server", () => {
     test("should register PATCH route", async () => {
       app.patch("/users/1", () => ({ method: "PATCH" }));
 
-      const response = await app.inject(new Request("http://localhost/users/1", { method: "PATCH" }));
+      const response = await app.handle(new Request("http://localhost/users/1", { method: "PATCH" }));
       expect(response.status).toBe(200);
       const data = await response.json();
       expect(data).toEqual({ method: "PATCH" });
@@ -89,14 +89,14 @@ describe("Bun Server", () => {
     test("should register HEAD route", async () => {
       app.head("/health", () => ({}));
 
-      const response = await app.inject(new Request("http://localhost/health", { method: "HEAD" }));
+      const response = await app.handle(new Request("http://localhost/health", { method: "HEAD" }));
       expect(response.status).toBe(200);
     });
 
     test("should register OPTIONS route", async () => {
       app.options("/users", () => ({ method: "OPTIONS" }));
 
-      const response = await app.inject(new Request("http://localhost/users", { method: "OPTIONS" }));
+      const response = await app.handle(new Request("http://localhost/users", { method: "OPTIONS" }));
       expect(response.status).toBe(200);
       const data = await response.json();
       expect(data).toEqual({ method: "OPTIONS" });
@@ -105,10 +105,10 @@ describe("Bun Server", () => {
     test("should register ALL route (wildcard)", async () => {
       app.all("/wildcard", ({ request: req }) => ({ method: req.method }));
 
-      const getResponse = await app.inject(createRequest("/wildcard"));
+      const getResponse = await app.handle(createRequest("/wildcard"));
       expect(((await getResponse.json()) as any).method).toBe("GET");
 
-      const postResponse = await app.inject(new Request("http://localhost/wildcard", { method: "POST" }));
+      const postResponse = await app.handle(new Request("http://localhost/wildcard", { method: "POST" }));
       expect(((await postResponse.json()) as any).method).toBe("POST");
     });
   });
@@ -125,7 +125,7 @@ describe("Bun Server", () => {
         return { id };
       });
 
-      const response = await app.inject(createRequest("/users/123"));
+      const response = await app.handle(createRequest("/users/123"));
       const data = (await response.json()) as any;
       expect(data.id).toBe("123");
     });
@@ -136,7 +136,7 @@ describe("Bun Server", () => {
         return { userId: parts[2], postId: parts[4] };
       });
 
-      const response = await app.inject(createRequest("/users/123/posts/456"));
+      const response = await app.handle(createRequest("/users/123/posts/456"));
       const data = (await response.json()) as any;
       expect(data.userId).toBe("123");
       expect(data.postId).toBe("456");
@@ -148,7 +148,7 @@ describe("Bun Server", () => {
       app = createApp({ logger: false, prefix: "/api" });
       app.get("/users", () => ({ success: true }));
 
-      const response = await app.inject(createRequest("/api/users"));
+      const response = await app.handle(createRequest("/api/users"));
       expect(response.status).toBe(200);
       const data = (await response.json()) as any;
       expect(data.success).toBe(true);
@@ -159,11 +159,11 @@ describe("Bun Server", () => {
       app.prefix("/v1").get("/users", () => ({ version: 1 }));
       app.prefix("/v2").get("/users", () => ({ version: 2 }));
 
-      const v1Response = await app.inject(createRequest("/v1/users"));
+      const v1Response = await app.handle(createRequest("/v1/users"));
       const v1Data = (await v1Response.json()) as any;
       expect(v1Data.version).toBe(1);
 
-      const v2Response = await app.inject(createRequest("/v2/users"));
+      const v2Response = await app.handle(createRequest("/v2/users"));
       const v2Data = (await v2Response.json()) as any;
       expect(v2Data.version).toBe(2);
     });
@@ -174,10 +174,10 @@ describe("Bun Server", () => {
       app.get("/users", () => ({ prefixed: true }));
       app.get("/health", () => ({ excluded: true }));
 
-      const apiResponse = await app.inject(createRequest("/api/users"));
+      const apiResponse = await app.handle(createRequest("/api/users"));
       expect(apiResponse.status).toBe(200);
 
-      const healthResponse = await app.inject(createRequest("/health"));
+      const healthResponse = await app.handle(createRequest("/health"));
       expect(healthResponse.status).toBe(200);
       const healthData = (await healthResponse.json()) as any;
       expect(healthData.excluded).toBe(true);
@@ -192,7 +192,7 @@ describe("Bun Server", () => {
     test("should inject with string URL", async () => {
       app.get("/test", () => ({ injected: true }));
 
-      const response = await app.inject(createRequest("/test"));
+      const response = await app.handle(createRequest("/test"));
       expect(response.status).toBe(200);
       const data = (await response.json()) as any;
       expect(data.injected).toBe(true);
@@ -202,7 +202,7 @@ describe("Bun Server", () => {
       app.post("/test", () => ({ method: "POST" }));
 
       const request = new Request("http://localhost/test", { method: "POST" });
-      const response = await app.inject(request);
+      const response = await app.handle(request);
 
       expect(response.status).toBe(200);
       const data = (await response.json()) as any;
@@ -215,7 +215,7 @@ describe("Bun Server", () => {
         return { query: url.searchParams.get("q") };
       });
 
-      const response = await app.inject(createRequest("/search?q=test"));
+      const response = await app.handle(createRequest("/search?q=test"));
       const data = (await response.json()) as any;
       expect(data.query).toBe("test");
     });
@@ -232,7 +232,7 @@ describe("Bun Server", () => {
         body: JSON.stringify({ test: "data" }),
       });
 
-      const response = await app.inject(request);
+      const response = await app.handle(request);
       const data = (await response.json()) as any;
       expect(data.received).toEqual({ test: "data" });
     });
@@ -296,12 +296,12 @@ describe("Bun Server", () => {
         throw new Error("Test error");
       });
 
-      const response = await app.inject(createRequest("/error"));
+      const response = await app.handle(createRequest("/error"));
       expect(response.status).toBeGreaterThanOrEqual(500);
     });
 
     test("should handle 404 for non-existent routes", async () => {
-      const response = await app.inject(createRequest("/non-existent"));
+      const response = await app.handle(createRequest("/non-existent"));
       expect(response.status).toBe(404);
     });
   });
@@ -312,7 +312,7 @@ describe("Bun Server", () => {
       app.serialize = (data) => `Custom: ${JSON.stringify(data)}`;
       app.get("/custom", () => ({ test: true }));
 
-      const response = await app.inject(createRequest("/custom"));
+      const response = await app.handle(createRequest("/custom"));
       const text = await response.text();
       expect(text).toBe('Custom: {"test":true}');
     });
@@ -331,7 +331,7 @@ describe("Bun Server", () => {
         return { hasContext: !!ctx, hasLocals: ctx.locals instanceof Map };
       });
 
-      const response = await app.inject(createRequest("/context-test"));
+      const response = await app.handle(createRequest("/context-test"));
       const data = (await response.json()) as any;
       expect(data.hasContext).toBe(true);
       expect(data.hasLocals).toBe(true);
@@ -348,7 +348,7 @@ describe("Bun Server", () => {
         return { user };
       });
 
-      const response = await app.inject(createRequest("/test-context"));
+      const response = await app.handle(createRequest("/test-context"));
       const data = (await response.json()) as any;
       expect(data.user).toEqual({ name: "John" });
     });
@@ -362,7 +362,7 @@ describe("Bun Server", () => {
         return { config: getConfig() };
       });
 
-      const response = await app.inject(createRequest("/config"));
+      const response = await app.handle(createRequest("/config"));
       const data = (await response.json()) as any;
       expect(data.config).toEqual({ theme: "dark" });
     });
@@ -376,7 +376,7 @@ describe("Bun Server", () => {
         return { timestamp: getTimestamp() };
       });
 
-      const response = await app.inject(createRequest("/timestamp"));
+      const response = await app.handle(createRequest("/timestamp"));
       const data = (await response.json()) as any;
       expect(typeof data.timestamp).toBe("number");
     });
@@ -394,7 +394,7 @@ describe("Bun Server", () => {
         throw new HttpError("Custom error", 400);
       });
 
-      const response = await app.inject(createRequest("/http-error"));
+      const response = await app.handle(createRequest("/http-error"));
       expect(response.status).toBe(400);
       const data = (await response.json()) as any;
       expect(data.message).toBe("Custom error");
@@ -407,7 +407,7 @@ describe("Bun Server", () => {
         throw new HttpError({ error: "Invalid input", field: "email" }, 422);
       });
 
-      const response = await app.inject(createRequest("/http-error-obj"));
+      const response = await app.handle(createRequest("/http-error-obj"));
       expect(response.status).toBe(422);
       const data = (await response.json()) as any;
       expect(data.error).toBe("Invalid input");
@@ -423,7 +423,7 @@ describe("Bun Server", () => {
         });
       });
 
-      const response = await app.inject(createRequest("/http-error-headers"));
+      const response = await app.handle(createRequest("/http-error-headers"));
       expect(response.status).toBe(400);
       expect(response.headers.get("X-Custom")).toBe("Header");
     });
@@ -436,7 +436,7 @@ describe("Bun Server", () => {
         throw err;
       });
 
-      const response = await app.inject(createRequest("/http-error-from-error"));
+      const response = await app.handle(createRequest("/http-error-from-error"));
       expect(response.status).toBe(500);
     });
 
@@ -448,7 +448,7 @@ describe("Bun Server", () => {
         throw err;
       });
 
-      const response = await app.inject(createRequest("/http-error-from-value"));
+      const response = await app.handle(createRequest("/http-error-from-value"));
       expect(response.status).toBe(500);
     });
 
@@ -459,7 +459,7 @@ describe("Bun Server", () => {
         throw new ValidationError("Invalid data");
       });
 
-      const response = await app.inject(createRequest("/validation-error"));
+      const response = await app.handle(createRequest("/validation-error"));
       expect(response.status).toBe(422);
       const data = (await response.json()) as any;
       expect(data.message).toBe("Invalid data");
@@ -472,7 +472,7 @@ describe("Bun Server", () => {
         throw new RedirectError("/new-location");
       });
 
-      const response = await app.inject(createRequest("/redirect-temp"));
+      const response = await app.handle(createRequest("/redirect-temp"));
       expect(response.status).toBe(302);
       expect(response.headers.get("Location")).toBe("/new-location");
     });
@@ -484,7 +484,7 @@ describe("Bun Server", () => {
         throw new RedirectError("/new-location", true);
       });
 
-      const response = await app.inject(createRequest("/redirect-perm"));
+      const response = await app.handle(createRequest("/redirect-perm"));
       expect(response.status).toBe(301);
       expect(response.headers.get("Location")).toBe("/new-location");
     });
@@ -498,7 +498,7 @@ describe("Bun Server", () => {
         });
       });
 
-      const response = await app.inject(createRequest("/redirect-headers"));
+      const response = await app.handle(createRequest("/redirect-headers"));
       expect(response.status).toBe(302);
       expect(response.headers.get("Location")).toBe("/new-location");
       expect(response.headers.get("X-Redirect-Reason")).toBe("Moved");
@@ -522,7 +522,7 @@ describe("Bun Server", () => {
 
       app.get("/test", () => ({ success: true }));
 
-      await app.inject(createRequest("/test"));
+      await app.handle(createRequest("/test"));
       expect(hookCalled).toBe(true);
     });
 
@@ -539,7 +539,7 @@ describe("Bun Server", () => {
 
       app.get("/test", () => ({ success: true }));
 
-      const response = await app.inject(createRequest("/test"));
+      const response = await app.handle(createRequest("/test"));
       const data = (await response.json()) as any;
       expect(data.intercepted).toBe(true);
     });
@@ -557,7 +557,7 @@ describe("Bun Server", () => {
 
       app.get("/test", () => ({ original: true }));
 
-      const response = await app.inject(createRequest("/test"));
+      const response = await app.handle(createRequest("/test"));
       const data = (await response.json()) as any;
       expect(transformCalled).toBe(true);
       expect(data.original).toBe(true);
@@ -576,7 +576,7 @@ describe("Bun Server", () => {
 
       app.get("/test", () => ({ success: true }));
 
-      await app.inject(createRequest("/test"));
+      await app.handle(createRequest("/test"));
       expect(sendCalled).toBe(true);
     });
 
@@ -592,7 +592,7 @@ describe("Bun Server", () => {
 
       app.get("/test", () => ({ success: true }));
 
-      await app.inject(createRequest("/test"));
+      await app.handle(createRequest("/test"));
       expect(sentCalled).toBe(true);
     });
 
@@ -611,7 +611,7 @@ describe("Bun Server", () => {
         throw new Error("Test error");
       });
 
-      const response = await app.inject(createRequest("/error"));
+      const response = await app.handle(createRequest("/error"));
       expect(errorCalled).toBe(true);
       const data = (await response.json()) as any;
       expect(data.customError).toBe(true);
@@ -632,7 +632,7 @@ describe("Bun Server", () => {
         throw new Error("Test error");
       });
 
-      await app.inject(createRequest("/error"));
+      await app.handle(createRequest("/error"));
       expect(errorSentCalled).toBe(true);
     });
 
@@ -737,7 +737,7 @@ describe("Bun Server", () => {
 
       app.get("/test", () => ({ success: true }));
 
-      await app.inject(createRequest("/test"));
+      await app.handle(createRequest("/test"));
       expect(requestCalled).toBe(true);
       expect(sendCalled).toBe(true);
     });
@@ -755,7 +755,7 @@ describe("Bun Server", () => {
         throw new Error("Original error");
       });
 
-      const response = await app.inject(createRequest("/error"));
+      const response = await app.handle(createRequest("/error"));
       expect(response.status).toBeGreaterThanOrEqual(500);
     });
   });
@@ -774,7 +774,7 @@ describe("Bun Server", () => {
         return { success: true };
       });
 
-      const response = await app.inject(createRequest("/headers"));
+      const response = await app.handle(createRequest("/headers"));
       expect(response.headers.get("X-Custom-Header")).toBe("test-value");
     });
 
@@ -787,7 +787,7 @@ describe("Bun Server", () => {
         return { created: true };
       });
 
-      const response = await app.inject(createRequest("/status"));
+      const response = await app.handle(createRequest("/status"));
       expect(response.status).toBe(201);
     });
   });

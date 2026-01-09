@@ -44,7 +44,7 @@ describe("App", () => {
     const app = createApp();
     app.get("/health", () => ({ status: "ok" }));
 
-    const response = await app.inject(new Request("http://localhost/health"));
+    const response = await app.handle(new Request("http://localhost/health"));
     expect(response.status).toBe(200);
 
     const data = await response.json();
@@ -98,7 +98,7 @@ describe("User Routes", () => {
       return { id, name: "Alice" };
     });
 
-    const response = await app.inject(new Request("http://localhost/users/123"));
+    const response = await app.handle(new Request("http://localhost/users/123"));
 
     expect(response.status).toBe(200);
     const data = await response.json();
@@ -113,7 +113,7 @@ describe("User Routes", () => {
       return { id: "456", ...userData };
     });
 
-    const response = await app.inject(
+    const response = await app.handle(
       new Request("http://localhost/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -140,7 +140,7 @@ test("GET /search with query params", async () => {
     return { results: [], query };
   });
 
-  const response = await app.inject(new Request("http://localhost/search?q=test"));
+  const response = await app.handle(new Request("http://localhost/search?q=test"));
 
   const data = await response.json();
   expect(data.query).toBe("test");
@@ -163,11 +163,11 @@ test("requires authorization header", async () => {
   });
 
   // Without auth
-  const res1 = await app.inject(new Request("http://localhost/protected"));
+  const res1 = await app.handle(new Request("http://localhost/protected"));
   expect(res1.status).toBe(401);
 
   // With auth
-  const res2 = await app.inject(
+  const res2 = await app.handle(
     new Request("http://localhost/protected", {
       headers: { Authorization: "Bearer token" },
     })
@@ -197,7 +197,7 @@ test("full app with plugins", async () => {
     return { received: data };
   });
 
-  const response = await app.inject(
+  const response = await app.handle(
     new Request("http://localhost/data", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -223,12 +223,12 @@ test("module routes are isolated", async () => {
   apiModule.get("/users", () => ({ data: [] }));
 
   // Test admin module
-  const res1 = await app.inject(new Request("http://localhost/admin/users"));
+  const res1 = await app.handle(new Request("http://localhost/admin/users"));
   const data1 = await res1.json();
   expect(data1).toHaveProperty("users");
 
   // Test api module
-  const res2 = await app.inject(new Request("http://localhost/api/users"));
+  const res2 = await app.handle(new Request("http://localhost/api/users"));
   const data2 = await res2.json();
   expect(data2).toHaveProperty("data");
 });
@@ -255,7 +255,7 @@ test("request hook modifies context", async () => {
     return { requestId };
   });
 
-  const response = await app.inject(new Request("http://localhost/"));
+  const response = await app.handle(new Request("http://localhost/"));
   const data = await response.json();
   expect(data.requestId).toBe("test-123");
 });
@@ -275,7 +275,7 @@ test("transform hook wraps response", async () => {
 
   app.get("/users", () => [{ id: 1 }]);
 
-  const response = await app.inject(new Request("http://localhost/users"));
+  const response = await app.handle(new Request("http://localhost/users"));
   const data = await response.json();
   expect(data).toEqual({
     success: true,
@@ -300,7 +300,7 @@ test("send hook adds custom header", async () => {
 
   app.get("/", () => "ok");
 
-  const response = await app.inject(new Request("http://localhost/"));
+  const response = await app.handle(new Request("http://localhost/"));
   expect(response.headers.get("X-Custom")).toBe("value");
 });
 ```
@@ -331,7 +331,7 @@ test("custom plugin sets context", async () => {
     return { data: context.get("pluginData") };
   });
 
-  const response = await app.inject(new Request("http://localhost/"));
+  const response = await app.handle(new Request("http://localhost/"));
   const data = await response.json();
   expect(data.data).toBe("test");
 });
@@ -358,7 +358,7 @@ test("mocked database query", async () => {
     return users;
   });
 
-  const response = await app.inject(new Request("http://localhost/users"));
+  const response = await app.handle(new Request("http://localhost/users"));
   const data = await response.json();
 
   expect(mockDb.query).toHaveBeenCalled();
@@ -384,7 +384,7 @@ test("mock context for testing", async () => {
     return { userId };
   });
 
-  const response = await app.inject(new Request("http://localhost/profile"));
+  const response = await app.handle(new Request("http://localhost/profile"));
   const data = await response.json();
   expect(data.userId).toBe("mock-user-123");
 });
@@ -425,7 +425,7 @@ describe("User API", () => {
 ```ts
 // test-helpers.ts
 export async function makeRequest(app: App, path: string, options?: RequestInit) {
-  const response = await app.inject(new Request(`http://localhost${path}`, options));
+  const response = await app.handle(new Request(`http://localhost${path}`, options));
   const data = await response.json();
   return { response, data };
 }
@@ -450,7 +450,7 @@ test("handles errors gracefully", async () => {
     throw new Error("Something went wrong");
   });
 
-  const response = await app.inject(new Request("http://localhost/error"));
+  const response = await app.handle(new Request("http://localhost/error"));
   expect(response.status).toBe(500);
 });
 ```
@@ -470,7 +470,7 @@ describe("Edge cases", () => {
       return { id };
     });
 
-    const response = await app.inject(new Request("http://localhost/users/"));
+    const response = await app.handle(new Request("http://localhost/users/"));
     expect(response.status).toBe(404); // Route doesn't match
   });
 
@@ -488,7 +488,7 @@ describe("Edge cases", () => {
       }
     });
 
-    const response = await app.inject(
+    const response = await app.handle(
       new Request("http://localhost/data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

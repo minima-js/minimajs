@@ -23,7 +23,7 @@ describe("Http", () => {
       app.get("/test", async () => {
         return await response({ message: "ok" });
       });
-      const res = await app.inject(createRequest("/test"));
+      const res = await app.handle(createRequest("/test"));
       const body = await res.json();
       expect(body).toEqual({ message: "ok" });
       await app.close();
@@ -68,7 +68,7 @@ describe("Http", () => {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ message: "Hello, World!" }),
       });
-      const res = await app.inject(req);
+      const res = await app.handle(req);
       const responseBody = (await res.json()) as { received: { message: string } };
       expect(responseBody.received).toStrictEqual({ message: "Hello, World!" });
       await app.close();
@@ -85,7 +85,7 @@ describe("Http", () => {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name: "John", age: 30 }),
       });
-      const res = await app.inject(req);
+      const res = await app.handle(req);
       const responseBody = (await res.json()) as { name: string; age: number };
       expect(responseBody.name).toBe("John");
       expect(responseBody.age).toBe(30);
@@ -99,7 +99,7 @@ describe("Http", () => {
         const reqBody = body();
         return { bodyIsNull: reqBody === null };
       });
-      const res = await app.inject(createRequest("/test"));
+      const res = await app.handle(createRequest("/test"));
       const responseBody = (await res.json()) as { bodyIsNull: boolean };
       expect(responseBody.bodyIsNull).toBe(true);
       await app.close();
@@ -167,7 +167,7 @@ describe("Http", () => {
         headers.set("x-custom", "test-value");
         return { message: "ok" };
       });
-      const response = await app.inject(createRequest("/test"));
+      const response = await app.handle(createRequest("/test"));
       expect(response.headers.get("x-custom")).toBe("test-value");
       await app.close();
     });
@@ -354,7 +354,7 @@ describe("Http", () => {
         response.status(201);
         return { message: "created" };
       });
-      const res = await app.inject(createRequest("/test"));
+      const res = await app.handle(createRequest("/test"));
       expect(res.status).toBe(201);
       await app.close();
     });
@@ -365,7 +365,7 @@ describe("Http", () => {
         response.status("CREATED");
         return { message: "created" };
       });
-      const res = await app.inject(createRequest("/test"));
+      const res = await app.handle(createRequest("/test"));
       expect(res.status).toBe(201);
       await app.close();
     });
@@ -376,7 +376,7 @@ describe("Http", () => {
         response.status(300);
         return { message: "hello world" };
       });
-      const res = await app.inject(createRequest("/test"));
+      const res = await app.handle(createRequest("/test"));
       expect(res.status).toBe(300);
       await app.close();
     });
@@ -387,7 +387,7 @@ describe("Http", () => {
         response.status("BAD_GATEWAY");
         return { message: "hello world" };
       });
-      const res = await app.inject(createRequest("/test"));
+      const res = await app.handle(createRequest("/test"));
       expect(res.status).toBe(502);
       await app.close();
     });
@@ -400,7 +400,7 @@ describe("Http", () => {
         setHeader("x-name", "Adil");
         return { message: "hello world" };
       });
-      const response = await app.inject(createRequest("/test"));
+      const response = await app.handle(createRequest("/test"));
       expect(response.headers.get("x-name")).toBe("Adil");
       await app.close();
     });
@@ -412,7 +412,7 @@ describe("Http", () => {
         setHeader("x-custom", "value");
         return { message: "hello world" };
       });
-      const response = await app.inject(createRequest("/test"));
+      const response = await app.handle(createRequest("/test"));
       expect(response.headers.get("x-name")).toBe("Adil");
       expect(response.headers.get("x-custom")).toBe("value");
       await app.close();
@@ -511,7 +511,7 @@ describe("Http", () => {
         return "ok";
       });
 
-      const response = await app.inject(createRequest("/test"));
+      const response = await app.handle(createRequest("/test"));
       expect(response.status).toBe(500);
       const json: any = await response.json();
       expect(json.message).toContain("Unable to process request");
@@ -527,7 +527,7 @@ describe("Http", () => {
         return await response({ data: "ok" }, { status: "CREATED" });
       });
 
-      const res = await app.inject(createRequest("/test"));
+      const res = await app.handle(createRequest("/test"));
       expect(res.status).toBe(201);
       await app.close();
     });
@@ -557,7 +557,7 @@ describe("Http", () => {
       });
 
       // Note: Testing the branch for set-cookie headers
-      app.inject(req);
+      app.handle(req);
       app.close();
     });
 
@@ -580,7 +580,7 @@ describe("Http", () => {
         return "ok";
       });
 
-      const res = await app.inject(createRequest("/test"));
+      const res = await app.handle(createRequest("/test"));
       expect(res.headers.get("X-Custom")).toBeTruthy();
       await app.close();
     });
@@ -620,7 +620,7 @@ describe("Http", () => {
         },
       });
 
-      app.inject(req).then((res) => {
+      app.handle(req).then((res) => {
         res.text().then((text) => {
           expect(text).toBe("123.123.123.123");
         });

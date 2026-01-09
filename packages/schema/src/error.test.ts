@@ -25,7 +25,7 @@ describe("error", () => {
 
       expect(error).toBeInstanceOf(ValidationError);
       expect(error.message).toBe("Validation failed");
-      expect(error.statusCode).toBe(422);
+      expect(error.status).toBe(422);
     });
 
     test("should accept options with issues", () => {

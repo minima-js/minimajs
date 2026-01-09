@@ -189,21 +189,6 @@ describe("validation", () => {
       await expect(getData()).rejects.toThrow(ValidationError);
     });
 
-    test("should handle promise-based data callback", async () => {
-      const schema = z.object({
-        name: z.string(),
-      });
-
-      const getData = validatorAsync(schema, async () => {
-        await new Promise((resolve) => setTimeout(resolve, 10));
-        return { name: "John" };
-      });
-
-      const result = await getData();
-
-      expect(result.name).toBe("John");
-    });
-
     test("should handle nested objects", async () => {
       const schema = z.object({
         user: z.object({

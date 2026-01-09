@@ -6,15 +6,11 @@ title: "Introduction"
 
 # Introduction to Minima.js
 
-Minima.js is a high-performance web framework built from the ground up for modern JavaScript runtimes—no legacy dependencies, no framework wrappers, just pure, optimized code.
-
-## Core Philosophy
-
-Built for developers who value **clean code, type safety, and zero magic**.
+Minima.js is a **TypeScript-first, high-performance web framework** built for modern JavaScript runtimes like **Node.js** and **Bun**. It avoids legacy abstractions and framework wrappers in favor of **pure ESM, Web-native APIs, and minimal, explicit primitives —** giving you performance, portability, and clarity without hidden behavior.
 
 ### Context Functions
 
-Access request data anywhere without passing context—powered by AsyncLocalStorage. This allows your functions to be pure and easily testable, pulling request-specific information only when needed.
+Access request data anywhere without passing context—powered by `AsyncLocalStorage`. This allows your functions to be pure and easily testable, pulling request-specific information only when needed.
 
 ```typescript
 import { createApp } from "@minimajs/server/node";
@@ -94,6 +90,7 @@ app.register(
   })
 );
 ```
+
 > For details on error handling hooks and the `abort` helper, refer to the [Error Handling Guide](/guides/error-handling).
 
 ### Runtime-Native Support

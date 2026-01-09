@@ -65,6 +65,7 @@ const config = defineConfig({
           { text: "Hooks", link: "/guides/hooks" },
           { text: "Error Handling", link: "/guides/error-handling" },
           { text: "Logger", link: "/guides/logger" },
+          { text: "Testing", link: "/guides/testing" },
         ],
       },
       {

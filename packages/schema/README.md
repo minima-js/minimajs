@@ -31,12 +31,12 @@ Direct validation functions that parse data immediately:
 import { createBody, createHeaders, createSearchParams } from "@minimajs/schema";
 import { z } from "zod";
 
-const userSchema = z.object({
-  name: z.string(),
-  email: z.string().email(),
-});
-
-const getUserData = createBody(userSchema);
+const getUserData = createBody(
+  z.object({
+    name: z.string(),
+    email: z.string().email(),
+  })
+);
 
 app.post("/users", () => {
   const data = getUserData();
@@ -74,7 +74,7 @@ app.post("/users", schema(getUserData), () => {
 
 ### Simple Validators
 
-#### `createBody<T>(schema, options?)`
+#### `createBody<T>(schema)`
 
 Validates request body against a Zod schema.
 
@@ -82,13 +82,13 @@ Validates request body against a Zod schema.
 import { createBody } from "@minimajs/schema";
 import { z } from "zod";
 
-const userSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  age: z.number().int().positive().optional(),
-});
-
-const getUserData = createBody(userSchema);
+const getUserData = createBody(
+  z.object({
+    name: z.string().min(2),
+    email: z.string().email(),
+    age: z.number().int().positive().optional(),
+  })
+);
 
 app.post("/users", () => {
   const data = getUserData();
@@ -97,16 +97,12 @@ app.post("/users", () => {
 });
 ```
 
-**Options:**
-
-- `stripUnknown?: boolean` - Strip unknown fields (default: `true`)
-
 ```ts
 // Preserve unknown fields
-const getUserData = createBody(userSchema, { stripUnknown: false });
+const getUserData = createBody(userSchema);
 ```
 
-#### `createBodyAsync<T>(schema, options?)`
+#### `createBodyAsync<T>(schema)`
 
 Async version for schemas with async refinements:
 
@@ -114,21 +110,21 @@ Async version for schemas with async refinements:
 import { createBodyAsync } from "@minimajs/schema";
 import { z } from "zod";
 
-const userSchema = z.object({
-  email: z
-    .string()
-    .email()
-    .refine(
-      async (email) => {
-        const exists = await db.users.exists({ email });
-        return !exists;
-      },
-      { message: "Email already taken" }
-    ),
-  name: z.string(),
-});
-
-const getUserData = createBodyAsync(userSchema);
+const getUserData = createBodyAsync(
+  z.object({
+    email: z
+      .string()
+      .email()
+      .refine(
+        async (email) => {
+          const exists = await db.users.exists({ email });
+          return !exists;
+        },
+        { message: "Email already taken" }
+      ),
+    name: z.string(),
+  })
+);
 
 app.post("/users", async () => {
   const data = await getUserData();
@@ -543,8 +539,8 @@ export type UpdateUser = z.infer<typeof updateUserSchema>;
 ## Related
 
 - [Zod Documentation](https://zod.dev/) - Schema validation library
-- [Minima.js Server](https://minimajs.dev/) - Web framework
-- [Validation Guide](/guides/validation) - Comprehensive validation guide
+- [Minima.js Server](https://minima-js.github.io/) - Web framework
+- [Validation Guide](https://minima-js.github.io/guides/validation) - Comprehensive validation guide
 
 ## License
 

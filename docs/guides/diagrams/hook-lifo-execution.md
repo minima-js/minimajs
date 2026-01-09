@@ -1,5 +1,5 @@
 ```mermaid
-graph TB
+graph LR
     Start[Request Arrives] --> Hook3["Hook 3 (registered last)<br/>▶ Runs FIRST"]
     Hook3 --> Hook2["Hook 2 (registered second)<br/>▶ Runs SECOND"]
     Hook2 --> Hook1["Hook 1 (registered first)<br/>▶ Runs LAST"]

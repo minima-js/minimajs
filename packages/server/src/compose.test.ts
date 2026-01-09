@@ -251,11 +251,11 @@ describe("compose", () => {
 
     app.register(compose(p1, p2));
 
-    const response1 = await app.inject(createRequest("/test1"));
+    const response1 = await app.handle(createRequest("/test1"));
     const data1 = await response1.json();
     expect(data1).toEqual({ route: "test1" });
 
-    const response2 = await app.inject(createRequest("/test2"));
+    const response2 = await app.handle(createRequest("/test2"));
     const data2 = await response2.json();
     expect(data2).toEqual({ route: "test2" });
   });
@@ -290,13 +290,13 @@ describe("compose", () => {
     expect(usersCalled).toHaveBeenCalled();
     expect(postsCalled).toHaveBeenCalled();
 
-    const authRes = await app.inject(createRequest("/auth"));
+    const authRes = await app.handle(createRequest("/auth"));
     expect(await authRes.json()).toEqual({ module: "auth" });
 
-    const usersRes = await app.inject(createRequest("/users"));
+    const usersRes = await app.handle(createRequest("/users"));
     expect(await usersRes.json()).toEqual({ module: "users" });
 
-    const postsRes = await app.inject(createRequest("/posts"));
+    const postsRes = await app.handle(createRequest("/posts"));
     expect(await postsRes.json()).toEqual({ module: "posts" });
   });
 
@@ -394,10 +394,10 @@ describe("compose", () => {
 
       app.register(withAuth(usersModule));
 
-      const authRes = await app.inject(createRequest("/auth-check"));
+      const authRes = await app.handle(createRequest("/auth-check"));
       expect(await authRes.json()).toEqual({ authenticated: true });
 
-      const usersRes = await app.inject(createRequest("/users"));
+      const usersRes = await app.handle(createRequest("/users"));
       expect(await usersRes.json()).toEqual({ users: [] });
     });
 
@@ -567,8 +567,8 @@ describe("compose", () => {
       expect(calls).toEqual(["cors", "auth", "rateLimit", "usersModule", "cors", "auth", "rateLimit", "postsModule"]);
 
       // Verify routes work
-      await app.inject(createRequest("/users"));
-      await app.inject(createRequest("/posts"));
+      await app.handle(createRequest("/users"));
+      await app.handle(createRequest("/posts"));
 
       expect(routes).toEqual(["users", "posts"]);
     });
