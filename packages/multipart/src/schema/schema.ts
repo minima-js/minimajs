@@ -1,4 +1,4 @@
-import { z, core } from "zod";
+import { z, core, ZodType } from "zod";
 import { UploadedFile } from "./uploaded-file.js";
 
 export type ExtractTests = Record<string, FileBuilderDef>;
@@ -8,14 +8,17 @@ export interface FileBuilderDef extends core.$ZodTypeDef {
   max?: number;
   types?: string[];
 }
-
-export interface FileSchema extends z.ZodType<UploadedFile, FileBuilderDef> {
+export interface FileBuilderInternals extends core.$ZodTypeInternals<UploadedFile> {
+  def: FileBuilderDef;
+}
+export interface FileSchema extends z.ZodType<UploadedFile, unknown, FileBuilderInternals> {
   max(size: number, message?: string): this;
   min(size: number, message?: string): this;
   accept(types: string[], message?: string): this;
 }
+
 export const FileSchema = core.$constructor<FileSchema, FileBuilderDef>("FileSchema", (inst, def) => {
-  core.$ZodAny.init(inst as any, def as any);
+  ZodType.init(inst, def);
   inst._zod.parse = function (payload) {
     return payload;
   };

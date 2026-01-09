@@ -1,5 +1,5 @@
 import { z, ZodArray } from "zod";
-import { FileSchema, type FileBuilderDef } from "./schema.js";
+import { FileSchema } from "./schema.js";
 import { multipart } from "../multipart.js";
 import { isFile, type File } from "../file.js";
 import { defer, type Context } from "@minimajs/server";
@@ -35,7 +35,7 @@ export async function getUploadedBody<T extends z.ZodRawShape>(
     const schema = shape[field];
 
     if (schema instanceof FileSchema && isFile(data)) {
-      result[field] = await validateAndUpload(data, ctx.request.signal, schema._zod.def, option);
+      result[field] = await validateAndUpload(data, ctx.request.signal, schema, option);
       continue;
     }
 
@@ -43,7 +43,7 @@ export async function getUploadedBody<T extends z.ZodRawShape>(
       result[field] ??= [];
       const files = result[field] as UploadedFile[];
       validate.maximum(schema, files.length, field);
-      files.push(await validateAndUpload(data, ctx.request.signal, schema._zod.def, option));
+      files.push(await validateAndUpload(data, ctx.request.signal, schema.element, option));
       continue;
     }
 
@@ -74,15 +74,10 @@ async function deleteUploadedFiles(files: unknown[]) {
   }
 }
 
-async function validateAndUpload(
-  file: File,
-  signal: AbortSignal,
-  schemaDef: FileBuilderDef,
-  { tmpDir = tmpdir() }: UploadOption
-) {
-  validate.mimeType(file, schemaDef.types);
-  const maxSize = schemaDef.max ?? Infinity;
-  const minSize = schemaDef.min ?? 0;
+async function validateAndUpload(file: File, signal: AbortSignal, schema: FileSchema, { tmpDir = tmpdir() }: UploadOption) {
+  validate.mimeType(file, schema.def.types);
+  const maxSize = schema.def.max ?? Infinity;
+  const minSize = schema.def.min ?? 0;
   const meter = new StreamMeter(maxSize);
   const filename = join(await ensurePath(tmpDir, pkg.name), uuid());
   try {

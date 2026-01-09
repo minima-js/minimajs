@@ -1,52 +1,13 @@
 import { describe, test, expect } from "@jest/globals";
-import { getBytes, humanFileSize, units } from "./helpers.js";
+import { humanFileSize, units, ensurePath } from "./helpers.js";
+import { mkdir, rm } from "node:fs/promises";
+import { resolve } from "node:path";
+import { tmpdir } from "node:os";
 
 describe("helpers", () => {
   describe("units", () => {
     test("should export correct binary units array", () => {
       expect(units).toEqual(["KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]);
-    });
-  });
-
-  describe("getBytes", () => {
-    test("should convert KiB to bytes", () => {
-      expect(getBytes(1, "KiB")).toBe(1024);
-      expect(getBytes(5, "KiB")).toBe(5120);
-    });
-
-    test("should convert MiB to bytes", () => {
-      expect(getBytes(1, "MiB")).toBe(1048576); // 1024 * 1024
-      expect(getBytes(5, "MiB")).toBe(5242880);
-    });
-
-    test("should convert GiB to bytes", () => {
-      expect(getBytes(1, "GiB")).toBe(1073741824); // 1024 * 1024 * 1024
-      expect(getBytes(2, "GiB")).toBe(2147483648);
-    });
-
-    test("should convert TiB to bytes", () => {
-      expect(getBytes(1, "TiB")).toBe(1099511627776); // 1024^4
-    });
-
-    test("should convert PiB to bytes", () => {
-      expect(getBytes(1, "PiB")).toBe(1125899906842624); // 1024^5
-    });
-
-    test("should convert EiB to bytes", () => {
-      expect(getBytes(1, "EiB")).toBe(1152921504606846976); // 1024^6
-    });
-
-    test("should handle fractional sizes", () => {
-      expect(getBytes(0.5, "MiB")).toBe(524288); // 0.5 * 1024 * 1024
-      expect(getBytes(1.5, "KiB")).toBe(1536);
-    });
-
-    test("should handle zero", () => {
-      expect(getBytes(0, "MiB")).toBe(0);
-    });
-
-    test("should handle decimal values correctly", () => {
-      expect(getBytes(2.5, "MiB")).toBe(2621440);
     });
   });
 
@@ -105,6 +66,50 @@ describe("helpers", () => {
       expect(humanFileSize(1100, 1)).toBe("1.1 KiB");
       expect(humanFileSize(1149, 1)).toBe("1.1 KiB");
       expect(humanFileSize(1151, 1)).toBe("1.1 KiB");
+    });
+  });
+
+  describe("ensurePath", () => {
+    test("should create directory if it doesn't exist", async () => {
+      const testDir = resolve(tmpdir(), "minimajs-test-" + Date.now());
+      const result = await ensurePath(testDir);
+      expect(result).toBe(testDir);
+      // Cleanup
+      await rm(testDir, { recursive: true, force: true });
+    });
+
+    test("should not fail if directory already exists", async () => {
+      const testDir = resolve(tmpdir(), "minimajs-test-exists-" + Date.now());
+      await mkdir(testDir, { recursive: true });
+      const result = await ensurePath(testDir);
+      expect(result).toBe(testDir);
+      // Cleanup
+      await rm(testDir, { recursive: true, force: true });
+    });
+
+    test("should create nested directories", async () => {
+      const testBase = resolve(tmpdir(), "minimajs-test-nested-" + Date.now());
+      const testDir = resolve(testBase, "level1", "level2", "level3");
+      const result = await ensurePath(testDir);
+      expect(result).toBe(testDir);
+      // Cleanup
+      await rm(testBase, { recursive: true, force: true });
+    });
+
+    test("should handle multiple path segments", async () => {
+      const testBase = resolve(tmpdir(), "minimajs-test-segments-" + Date.now());
+      const result = await ensurePath(testBase, "sub", "path");
+      expect(result).toBe(resolve(testBase, "sub", "path"));
+      // Cleanup
+      await rm(testBase, { recursive: true, force: true });
+    });
+
+    test("should return resolved absolute path", async () => {
+      const testDir = resolve(tmpdir(), "minimajs-test-abs-" + Date.now());
+      const result = await ensurePath(testDir);
+      expect(result).toMatch(/^[/\\]/); // Starts with / or \ for absolute path
+      // Cleanup
+      await rm(testDir, { recursive: true, force: true });
     });
   });
 });

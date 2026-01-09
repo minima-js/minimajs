@@ -89,9 +89,9 @@ export function required(value: unknown, path: string, message: string) {
   throw new ZodError([{ code: "invalid_value", path: [path], message, values: [undefined] }]);
 }
 
-export function maximum(schema: z.ZodArray, lenght: number, path: string) {
+export function maximum(schema: z.ZodArray, length: number, path: string) {
   const maximum = schema._zod.bag.maximum as number;
-  if (lenght < maximum) {
+  if (length < maximum) {
     return;
   }
   throw new ZodError([
