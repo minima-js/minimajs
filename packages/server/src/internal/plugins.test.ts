@@ -3,19 +3,19 @@ import { plugin } from "./plugins.js";
 import { compose } from "../compose.js";
 import { createApp } from "../bun/index.js";
 import type { App } from "../interfaces/app.js";
-import { kPluginName, kPluginSkipOverride } from "../symbols.js";
+import { kModuleName, kPlugin } from "../symbols.js";
 import { createRequest } from "../mock/request.js";
 
 describe("plugins", () => {
   describe("createPlugin", () => {
     test("it should set override and accept a async function", () => {
       const p: any = plugin(async (_, __) => {});
-      expect(p[kPluginSkipOverride]).toBeTruthy();
+      expect(p[kPlugin]).toBeTruthy();
     });
     test("it should set override and accept a async function set a name", () => {
       const p: any = plugin(async (_, __) => {}, "hello world");
-      expect(p[kPluginSkipOverride]).toBeTruthy();
-      expect(p[kPluginName]).toBeTruthy();
+      expect(p[kPlugin]).toBeTruthy();
+      expect(p[kModuleName]).toBeTruthy();
     });
   });
 

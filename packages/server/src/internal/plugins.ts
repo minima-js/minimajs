@@ -1,4 +1,4 @@
-import { kPluginName, kPluginSkipOverride, kPluginSync } from "../symbols.js";
+import { kModuleName, kPlugin, kPluginSync } from "../symbols.js";
 import type { Plugin, PluginCallback, PluginMeta, PluginOptions, PluginSync, Register } from "../interfaces/plugin.js";
 import type { App } from "../interfaces/app.js";
 // Plugin symbols
@@ -10,11 +10,11 @@ import type { App } from "../interfaces/app.js";
  * Helper to mark plugin as skipping override (wrapped plugins)
  */
 function skipOverride(fn: any) {
-  (fn as any)[kPluginSkipOverride] = true;
+  (fn as any)[kPlugin] = true;
 }
 
 export function setName(fn: any, name: string) {
-  fn[kPluginName] = name;
+  fn[kModuleName] = name;
 }
 
 /**
@@ -53,8 +53,8 @@ export namespace plugin {
     if (opts?.name !== undefined) {
       return opts.name;
     }
-    if (kPluginName in fn && typeof fn[kPluginName] === "string") {
-      return fn[kPluginName];
+    if (kModuleName in fn && typeof fn[kModuleName] === "string") {
+      return fn[kModuleName];
     }
     return fn.name || "anonymous";
   }

@@ -4,9 +4,9 @@ import type { App } from "../interfaces/app.js";
 import { pluginOverride } from "./override.js";
 import { runHooks } from "../hooks/store.js";
 import type { Plugin, Register, PluginOptions, RegisterOptions } from "../interfaces/plugin.js";
-import { kPluginName, kPluginSkipOverride } from "../symbols.js";
+import { kModuleName, kPlugin } from "../symbols.js";
 
-export const METADATA_SYMBOLS = [kPluginName, kPluginSkipOverride];
+export const METADATA_SYMBOLS = [kModuleName, kPlugin];
 /**
  * Copies all registered metadata from source function to target function
  *

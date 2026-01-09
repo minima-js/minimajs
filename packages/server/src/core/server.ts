@@ -4,7 +4,7 @@ import { type Logger } from "pino";
 import type { App, RouteHandler } from "../interfaces/app.js";
 import type { Plugin, PluginOptions, PluginSync, Register, RegisterOptions } from "../interfaces/plugin.js";
 import { applyRouteMetadata, applyRoutePrefix } from "../internal/route.js";
-import { runHooks } from "../hooks/store.js";
+import { createHooksStore, runHooks } from "../hooks/store.js";
 import { serialize, errorHandler } from "../internal/default-handler.js";
 import { handleRequest } from "../internal/handler.js";
 import type { ErrorHandler, Serializer } from "../interfaces/response.js";
@@ -12,6 +12,7 @@ import { plugin as p } from "../internal/plugins.js";
 import type { PrefixOptions, RouteConfig, RouteMetaDescriptor, RouteOptions } from "../interfaces/route.js";
 import { createBoot, wrapPlugin } from "../internal/boot.js";
 import type { AddressInfo, ServerAdapter, ListenOptions } from "../interfaces/server.js";
+import { kAppDescriptor, kHooks } from "../symbols.js";
 
 export interface ServerOptions {
   prefix: string;
@@ -22,7 +23,12 @@ export interface ServerOptions {
 export class Server<T = any> implements App<T> {
   server?: T;
   readonly router: Router.Instance<HTTPVersion.V1>;
-  readonly container = new Map();
+
+  readonly container = new Map<symbol, unknown>([
+    [kHooks, createHooksStore()],
+    [kAppDescriptor, []],
+  ]);
+
   $prefix: string;
   $prefixExclude: string[];
   private boot: Avvio<App>;

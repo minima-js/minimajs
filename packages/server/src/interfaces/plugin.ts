@@ -1,5 +1,5 @@
 import type { App } from "./app.js";
-import type { kPluginSync, kPluginName, kPluginSkipOverride } from "../symbols.js";
+import type { kPluginSync, kModuleName, kPlugin } from "../symbols.js";
 
 // Options for register callbacks with prefix support
 export type PluginCallback<T extends PluginOptions, S> = (app: App<S>, opts: T) => void | Promise<void>;
@@ -18,21 +18,21 @@ export type PluginOptions<T = {}> = T & {
 // Plugin function (created with plugin wrapper, no prefix in user opts)
 export interface Plugin<T extends PluginOptions = PluginOptions> {
   (app: App, opts: T): void | Promise<void>;
-  [kPluginName]?: string;
-  [kPluginSkipOverride]: true; // Wrapped plugins skip override
+  [kModuleName]?: string;
+  [kPlugin]: true; // Wrapped plugins skip override
 }
 
 // Plugin function (created with plugin wrapper, no prefix in user opts)
 export interface PluginSync<T = any> {
   (app: App, opts: T): void;
-  [kPluginName]?: string;
+  [kModuleName]?: string;
   [kPluginSync]: true;
 }
 
 // Register callback (plain function, prefix allowed in register options)
 export interface Register<T extends RegisterOptions = RegisterOptions> {
   (app: App, opts: T): void | Promise<void>;
-  [kPluginName]?: string;
+  [kModuleName]?: string;
 }
 
 export interface PluginMeta {

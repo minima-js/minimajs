@@ -25,9 +25,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Enable Corepack
-        run: corepack enable
-
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
@@ -38,7 +35,7 @@ jobs:
         with:
           path: |
             .vitepress/cache
-          key: ${{ runner.os }}-vitepress-${{ hashFiles('.vitepress/config.*', 'bun.lock') }}
+          key: ${{ runner.os }}-vitepress-${{ hashFiles('.vitepress/config.ts', 'bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-vitepress-
 

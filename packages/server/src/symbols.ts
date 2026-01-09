@@ -24,13 +24,13 @@
  * Symbol for plugin name metadata.
  * Used to identify plugins for debugging and error messages.
  */
-export const kPluginName = Symbol.for("minimajs.plugin.name");
+export const kModuleName = Symbol.for("minimajs.module.name");
 
 /**
  * Symbol to mark plugins that should skip context override.
  * Used for plugins that need to maintain parent context.
  */
-export const kPluginSkipOverride = Symbol.for("minimajs.plugin.skip-override");
+export const kPlugin = Symbol.for("minimajs.plugin");
 
 /**
  * Symbol to mark synchronous plugins.

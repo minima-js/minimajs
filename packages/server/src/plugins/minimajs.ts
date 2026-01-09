@@ -1,7 +1,5 @@
-import { createHooksStore, hook, type OnErrorSentHook } from "../hooks/index.js";
+import { hook, type OnErrorSentHook } from "../hooks/index.js";
 import { createContext } from "../context.js";
-import { plugin } from "../internal/plugins.js";
-import { kAppDescriptor, kHooks } from "../symbols.js";
 import type { Context } from "../interfaces/context.js";
 
 export type ErrorCallback = OnErrorSentHook;
@@ -99,10 +97,5 @@ export function minimajs() {
     await sent();
   }
 
-  const hooks = hook.define({ sent, errorSent });
-  return plugin.sync((app) => {
-    app.container.set(kHooks, createHooksStore());
-    app.container.set(kAppDescriptor, []);
-    app.register(hooks);
-  });
+  return hook.define({ sent, errorSent });
 }

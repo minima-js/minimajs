@@ -1,5 +1,5 @@
 import { type App, type Container } from "../interfaces/app.js";
-import { kPluginSkipOverride } from "../symbols.js";
+import { kPlugin } from "../symbols.js";
 import { isCallable } from "../utils/callable.js";
 
 /**
@@ -29,7 +29,7 @@ function cloneContainer(container: Container): Container {
 }
 
 export function pluginOverride(app: App, fn: any, options: any) {
-  if (fn[kPluginSkipOverride]) return app;
+  if (fn[kPlugin]) return app;
   const { $prefix: parentPrefix = "", $prefixExclude: parentExclude = [] } = app as any;
   return Object.create(app, {
     container: {
