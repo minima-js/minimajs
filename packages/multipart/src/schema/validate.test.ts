@@ -1,7 +1,7 @@
 import { describe, test, expect } from "@jest/globals";
 import { ZodError, z } from "zod";
 import { Readable } from "node:stream";
-import { mimeType, maxSize, minSize, required, maximum } from "./validate.js";
+import { mimeType, maxSize, minSize, maximum } from "./validate.js";
 import { file } from "./schema.js";
 import { File } from "../file.js";
 
@@ -288,46 +288,6 @@ describe("validate", () => {
         const zodError = err as ZodError;
         expect(zodError.issues[0]?.code).toBe("too_small");
       }
-    });
-  });
-
-  describe("required", () => {
-    test("should not throw when value is defined", () => {
-      expect(() => required("value", "field", "Field is required")).not.toThrow();
-      expect(() => required(0, "field", "Field is required")).not.toThrow();
-      expect(() => required(false, "field", "Field is required")).not.toThrow();
-      expect(() => required("", "field", "Field is required")).not.toThrow();
-    });
-
-    test("should throw when value is undefined", () => {
-      expect(() => required(undefined, "field", "Field is required")).toThrow(ZodError);
-    });
-
-    test("should include custom message in error", () => {
-      const message = "Custom error message";
-      try {
-        required(undefined, "field", message);
-        fail("Should have thrown");
-      } catch (err) {
-        expect(err).toBeInstanceOf(ZodError);
-        const zodError = err as ZodError;
-        expect(zodError.issues[0]?.message).toBe(message);
-      }
-    });
-
-    test("should include field path in error", () => {
-      try {
-        required(undefined, "username", "Username is required");
-        fail("Should have thrown");
-      } catch (err) {
-        expect(err).toBeInstanceOf(ZodError);
-        const zodError = err as ZodError;
-        expect(zodError.issues[0]?.path).toEqual(["username"]);
-      }
-    });
-
-    test("should not throw for null value", () => {
-      expect(() => required(null, "field", "Field is required")).not.toThrow();
     });
   });
 

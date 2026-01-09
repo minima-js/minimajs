@@ -83,9 +83,9 @@ async function validateAndUpload(file: File, signal: AbortSignal, schema: FileSc
     await pipeline(file.stream.pipe(meter), createWriteStream(filename));
   } catch (err) {
     if (err instanceof RangeError) {
-      await validate.maxSize(schema, file, meter.bytes);
-      throw err;
+      validate.maxSize(schema, file, meter.bytes);
     }
+    throw err;
   }
   validate.minSize(schema, file, meter.bytes);
   return new UploadedFile(file, filename, meter.bytes, signal);

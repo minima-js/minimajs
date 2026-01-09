@@ -58,7 +58,7 @@ export function mimeType(schema: FileSchema, file: File): never | void {
   ]);
 }
 
-export async function maxSize(schema: FileSchema, file: File, size: number) {
+export function maxSize(schema: FileSchema, file: File, size: number): never {
   const max = schema.def.max!;
   throw new ZodError([
     {
@@ -87,10 +87,10 @@ export async function minSize(schema: FileSchema, file: File, size: number) {
   ]);
 }
 
-export function required(value: unknown, path: string, message: string) {
-  if (value !== undefined) return;
-  throw new ZodError([{ code: "invalid_value", path: [path], message, values: [undefined] }]);
-}
+// export function required(value: unknown, path: string, message: string) {
+//   if (value !== undefined) return;
+//   throw new ZodError([{ code: "invalid_value", path: [path], message, values: [undefined] }]);
+// }
 
 export function maximum(schema: z.ZodArray, length: number, path: string) {
   const maximum = schema._zod.bag.maximum as number | undefined;
