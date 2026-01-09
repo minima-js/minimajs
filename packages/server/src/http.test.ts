@@ -561,13 +561,24 @@ describe("Http", () => {
       app.close();
     });
 
-    test("should transform set-cookie headers with transform function", () => {
-      mockContext(() => {
-        // Set up multiple set-cookie headers
+    test("should transform set-cookie headers with transform function", async () => {
+      const app = createApp({ logger: false });
+      app.get("/test", () => {
         const transform = (val: string) => val.split("=")[0];
         const result = headers.getAll("set-cookie", transform);
-        expect(Array.isArray(result)).toBe(true);
+        return { cookies: result };
       });
+
+      const req = new Request("http://localhost/test", {
+        headers: {
+          "set-cookie": "session=abc123",
+        },
+      });
+
+      const res = await app.handle(req);
+      const body = (await res.json()) as { cookies: string[] };
+      expect(body.cookies).toEqual(["session"]);
+      await app.close();
     });
   });
 
@@ -601,6 +612,19 @@ describe("Http", () => {
       const error = "just a string error";
       expect(() => abort.rethrow(error)).toThrow(error);
     });
+
+    test("should rethrow AbortError (DOMException)", () => {
+      const abortError = new DOMException("The operation was aborted", "AbortError");
+      expect(() => abort.rethrow(abortError)).toThrow(abortError);
+    });
+  });
+
+  describe("request.ip", () => {
+    test("should throw error when IP plugin is not configured", () => {
+      mockContext(() => {
+        expect(() => request.ip()).toThrow("Ip Address Plugin is not configured");
+      });
+    });
   });
 
   describe("request.ip.configure", () => {
@@ -626,6 +650,65 @@ describe("Http", () => {
         });
       });
       app.close();
+    });
+
+    test("should configure with settings object", async () => {
+      const app = createApp({ logger: false });
+      const ipPlugin = request.ip.configure({ trustProxy: true, proxyDepth: 2 });
+      app.register(ipPlugin);
+      app.get("/", () => {
+        return request.ip() ?? "no-ip";
+      });
+
+      const req = new Request("http://localhost/", {
+        headers: {
+          "x-forwarded-for": "192.168.1.1, 10.0.0.1",
+        },
+      });
+
+      const res = await app.handle(req);
+      const text = await res.text();
+      expect(text).toBe("192.168.1.1");
+      await app.close();
+    });
+  });
+
+  describe("headers.getAll with comma-separated values", () => {
+    test("should split comma-separated header values", () => {
+      mockContext(
+        () => {
+          const values = headers.getAll("accept");
+          expect(values).toContain("text/html");
+          expect(values).toContain("application/json");
+        },
+        {
+          headers: {
+            accept: "text/html, application/json",
+          },
+        }
+      );
+    });
+
+    test("should transform comma-separated values", () => {
+      mockContext(
+        () => {
+          const values = headers.getAll("accept", (v) => v.toUpperCase());
+          expect(values).toContain("TEXT/HTML");
+          expect(values).toContain("APPLICATION/JSON");
+        },
+        {
+          headers: {
+            accept: "text/html, application/json",
+          },
+        }
+      );
+    });
+
+    test("should return empty array for missing header", () => {
+      mockContext(() => {
+        const values = headers.getAll("x-missing-header");
+        expect(values).toEqual([]);
+      });
     });
   });
 
