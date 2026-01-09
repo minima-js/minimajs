@@ -1,13 +1,12 @@
 import { BaseHttpError } from "../error.js";
 import type { Context } from "../index.js";
 import type { ErrorHandler, Serializer } from "../interfaces/response.js";
-import { $context } from "./context.js";
 import { createResponseFromState } from "./response.js";
 
-export const serialize: Serializer<any> = (body: unknown, _req) => {
+export const serialize: Serializer<any> = (body: unknown, ctx) => {
   if (body instanceof ReadableStream) return body;
   if (typeof body === "string") return body;
-  const { responseState: response } = $context();
+  const { responseState: response } = ctx;
   response.headers.set("Content-Type", "application/json");
   return JSON.stringify(body);
 };

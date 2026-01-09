@@ -16,12 +16,15 @@ export function toStatusCode(code: StatusCode): number {
   return typeof code === "number" ? code : StatusCodes[code];
 }
 
-export function createResponseFromState(data: ResponseBody, options: ResponseInit): Response {
+export function createResponseFromState(data: ResponseBody, { headers, ...options }: ResponseInit): Response {
   const { responseState: resInit } = $context();
+  if (headers) {
+    mergeHeaders(resInit.headers, new Headers(headers as HeadersInit));
+  }
+
   return new Response(data, {
     ...resInit,
     ...options,
-    headers: options.headers ? mergeHeaders(resInit.headers, new Headers(options.headers as HeadersInit)) : resInit.headers,
   });
 }
 

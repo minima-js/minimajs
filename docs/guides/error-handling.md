@@ -40,6 +40,7 @@ app.get("/users/:id", () => {
 ```
 
 You can also use the shorthand `abort.notFound()`:
+
 ```typescript
 if (!user) {
   abort.notFound("User not found"); // Aborts with 404
@@ -83,7 +84,7 @@ graph TD
     D --> |2. Returns data| F[Serialize data as 200 OK];
     D --> |3. Returns Response obj| E[Send Response Directly (Bypasses CORS)];
     D --> |4. Returns undefined| G;
-    
+
     G --> |...| H[Send Final Error Response];
 
     style C fill:#ffcdd2
@@ -109,7 +110,7 @@ app.register(
     if (abort.is(error) && error.statusCode === 404) {
       abort({ code: "NOT_FOUND", message: "The requested resource was not found." }, 404);
     }
-    
+
     // For all other errors, send a generic 500 error
     abort({ code: "INTERNAL_ERROR", message: "Something went terribly wrong!" }, 500);
   })
@@ -126,15 +127,17 @@ import type { Context } from "@minimajs/server";
 
 async function adminModule(app: App) {
   // This hook only applies to routes within adminModule
-  app.register(hook("error", (error: unknown, ctx: Context) => {
-    console.error("Admin module error:", error);
-    
-    const statusCode = abort.is(error) ? error.statusCode : 500;
-    const message = error instanceof Error ? error.message : "An unknown error occurred";
+  app.register(
+    hook("error", (error: unknown, ctx: Context) => {
+      console.error("Admin module error:", error);
 
-    // Abort with a structured admin-specific error
-    abort({ adminError: message }, statusCode);
-  }));
+      const statusCode = abort.is(error) ? error.statusCode : 500;
+      const message = error instanceof Error ? error.message : "An unknown error occurred";
+
+      // Abort with a structured admin-specific error
+      abort({ adminError: message }, statusCode);
+    })
+  );
 
   app.get("/dashboard", () => {
     throw new Error("Failed to load admin dashboard.");
@@ -167,6 +170,42 @@ app.get("/danger", () => {
   return { status: "ok" };
 });
 ```
+
+## Custom Error Handler (`app.errorHandler`)
+
+For complete control over error responses, you can replace the default error handler by setting `app.errorHandler`. This is a global fallback that runs when no `error` hooks handle the error.
+
+```typescript
+import { createApp, createResponseFromState } from "@minimajs/server";
+import type { Context } from "@minimajs/server";
+
+const app = createApp();
+
+// Custom error handler
+app.errorHandler = async (error: unknown, ctx: Context) => {
+  // Log the error
+  ctx.app.log.error(error);
+
+  // Custom error response format
+  const isDev = process.env.NODE_ENV === "development";
+  const statusCode = error instanceof Error && "status" in error ? (error as any).status : 500;
+
+  const errorBody = JSON.stringify({
+    success: false,
+    error: isDev ? (error instanceof Error ? error.message : String(error)) : "Internal Server Error",
+    timestamp: new Date().toISOString(),
+    ...(isDev && error instanceof Error && { stack: error.stack }),
+  });
+
+  // Use createResponseFromState to preserve context headers (CORS, etc.)
+  return createResponseFromState(errorBody, {
+    status: statusCode,
+    headers: { "Content-Type": "application/json" },
+  });
+};
+```
+
+> **Important:** Use `createResponseFromState` instead of `new Response()` to preserve headers set by plugins (like CORS) and the response context. Direct `Response` objects bypass the framework's header merging logic.
 
 ### `errorSent` Hook
 

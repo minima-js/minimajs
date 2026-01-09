@@ -221,32 +221,62 @@ headers.set(headers: HeadersInit): void
 
 ## Modifying the Response
 
-You can modify or "decorate" the response before it's sent using lifecycle hooks.
+You can modify or "decorate" the response before it's sent using lifecycle hooks or by customizing the serialization behavior.
+
+### Custom Serializer (`app.serialize`)
+
+The `app.serialize` function controls how response data is converted to a response body. By default, it serializes objects to JSON and passes through strings and streams as-is.
+
+```ts
+import { createApp } from "@minimajs/server";
+
+const app = createApp();
+
+// Custom serialization (e.g., MessagePack, XML, etc.)
+app.serialize = (data, ctx) => {
+  if (data instanceof ReadableStream) return data;
+  if (typeof data === "string") return data;
+
+  // Custom JSON serialization with formatting
+  return JSON.stringify(data, null, 2);
+};
+
+app.get("/data", () => ({ name: "Alice", age: 30 }));
+// Returns formatted JSON with 2-space indentation
+```
+
+> **Note:** `app.serialize` is called **after** the `transform` hook and **before** the `send` hook. It's a global serialization strategy for your entire application.
 
 ### Modifying Response Data (`transform` hook)
+
 The `transform` hook allows you to modify data returned by a handler before it is serialized into a response.
 
 ```ts
 import { hook } from "@minimajs/server";
 
-app.register(hook("transform", (data) => {
-  // Wrap all object responses in a `data` property
-  if (typeof data === "object" && data !== null && !Array.isArray(data)) {
-    return { data: data };
-  }
-  return data;
-}));
+app.register(
+  hook("transform", (data) => {
+    // Wrap all object responses in a `data` property
+    if (typeof data === "object" && data !== null && !Array.isArray(data)) {
+      return { data: data };
+    }
+    return data;
+  })
+);
 ```
 
 ### Modifying the Final Response (`send` hook)
+
 The `send` hook is executed just before the response is sent, allowing you to modify the final `Response` object, such as adding headers.
 
 ```ts
 import { hook } from "@minimajs/server";
 
-app.register(hook("send", ({ response }) => {
-  response.headers.set("X-Response-Time", `${Date.now() - startTime}ms`);
-}));
+app.register(
+  hook("send", ({ response }) => {
+    response.headers.set("X-Response-Time", `${Date.now() - startTime}ms`);
+  })
+);
 ```
 
 ## Related Guides

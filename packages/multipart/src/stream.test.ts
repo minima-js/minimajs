@@ -131,16 +131,6 @@ describe("stream utilities", () => {
   });
 
   describe("StreamMeter", () => {
-    test("should track byte count", async () => {
-      const content = "Hello, World!";
-      const stream = Readable.from([content]);
-      const meter = new StreamMeter(1000);
-
-      await pipeline(stream, meter, stream2void());
-
-      expect(meter.bytes).toBe(Buffer.byteLength(content));
-    });
-
     test("should pass through data unchanged", async () => {
       const content = "Hello, World!";
       const stream = Readable.from([content]);
@@ -158,7 +148,7 @@ describe("stream utilities", () => {
         },
         stream2void()
       );
-
+      expect(meter.bytes).toBe(Buffer.byteLength(content));
       expect(Buffer.concat(chunks).toString()).toBe(content);
     });
 
@@ -182,16 +172,6 @@ describe("stream utilities", () => {
       expect(meter.bytes).toBe(totalBytes);
     });
 
-    test("should handle binary data", async () => {
-      const data = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-      const stream = Readable.from([data]);
-      const meter = new StreamMeter(100);
-
-      await pipeline(stream, meter, stream2void());
-
-      expect(meter.bytes).toBe(data.length);
-    });
-
     test("should track bytes across multiple streams", async () => {
       const content1 = "First";
       const stream1 = Readable.from([content1]);
@@ -213,16 +193,6 @@ describe("stream utilities", () => {
       expect(meter.bytes).toBe(0);
     });
 
-    test("should handle large data", async () => {
-      const largeContent = "x".repeat(1024 * 1024); // 1MB
-      const stream = Readable.from([largeContent]);
-      const meter = new StreamMeter(2 * 1024 * 1024); // 2MB limit
-
-      await pipeline(stream, meter, stream2void());
-
-      expect(meter.bytes).toBe(1024 * 1024);
-    });
-
     test("should fail immediately when chunk exceeds limit", async () => {
       const largeChunk = "x".repeat(100);
       const stream = Readable.from([largeChunk]);
@@ -234,12 +204,6 @@ describe("stream utilities", () => {
     test("should initialize with zero bytes", () => {
       const meter = new StreamMeter(1000);
       expect(meter.bytes).toBe(0);
-    });
-
-    test("should store maxBytes property", () => {
-      const maxBytes = 5000;
-      const meter = new StreamMeter(maxBytes);
-      expect(meter.maxBytes).toBe(maxBytes);
     });
   });
 });

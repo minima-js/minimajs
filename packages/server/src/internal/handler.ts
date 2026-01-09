@@ -43,7 +43,7 @@ export async function handleRequest(server: App, router: Instance<HTTPVersion.V1
       // Route found - process request
     } catch (err) {
       const response = await handleError(err, ctx);
-      await runHooks.safe(ctx.app, "errorSent");
+      await runHooks.safe(ctx.app, "errorSent", err, ctx);
       return response;
     }
   });
