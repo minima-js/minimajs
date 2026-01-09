@@ -1,6 +1,7 @@
 import { z, ZodError } from "zod";
 import { humanFileSize } from "../helpers.js";
 import type { File } from "../file.js";
+import type { FileSchema } from "./schema.js";
 
 function isValidFileType(file: File, accept: string[]) {
   if (!accept.length) return true;
@@ -40,11 +41,11 @@ function isValidFileType(file: File, accept: string[]) {
   return false;
 }
 
-export function mimeType(file: File, accept: string[] | undefined) {
-  if (!accept || !accept.length) return;
+export function mimeType(schema: FileSchema, file: File): never | void {
+  const { types: accept = [] } = schema.def;
+  if (!accept.length) return;
   if (isValidFileType(file, accept)) return;
   const acceptedTypes = accept.join(", ");
-
   throw new ZodError([
     {
       code: "invalid_format",
@@ -57,7 +58,8 @@ export function mimeType(file: File, accept: string[] | undefined) {
   ]);
 }
 
-export async function maxSize(max: number, file: File, size: number) {
+export async function maxSize(schema: FileSchema, file: File, size: number) {
+  const max = schema.def.max!;
   throw new ZodError([
     {
       code: "too_big",
@@ -70,7 +72,8 @@ export async function maxSize(max: number, file: File, size: number) {
   ]);
 }
 
-export async function minSize(min: number, file: File, size: number) {
+export async function minSize(schema: FileSchema, file: File, size: number) {
+  const { min = 0 } = schema.def;
   if (size >= min) return;
   throw new ZodError([
     {
@@ -90,7 +93,10 @@ export function required(value: unknown, path: string, message: string) {
 }
 
 export function maximum(schema: z.ZodArray, length: number, path: string) {
-  const maximum = schema._zod.bag.maximum as number;
+  const maximum = schema._zod.bag.maximum as number | undefined;
+  if (maximum === undefined) {
+    return;
+  }
   if (length < maximum) {
     return;
   }

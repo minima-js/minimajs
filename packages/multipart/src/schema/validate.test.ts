@@ -2,79 +2,81 @@ import { describe, test, expect } from "@jest/globals";
 import { ZodError, z } from "zod";
 import { Readable } from "node:stream";
 import { mimeType, maxSize, minSize, required, maximum } from "./validate.js";
+import { file } from "./schema.js";
 import { File } from "../file.js";
 
 describe("validate", () => {
   describe("mimeType", () => {
-    test("should allow any file when accept is undefined", () => {
-      const stream = Readable.from(["test"]);
-      const file = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
-
-      expect(() => mimeType(file, undefined)).not.toThrow();
-    });
-
     test("should allow any file when accept is empty array", () => {
       const stream = Readable.from(["test"]);
-      const file = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
-
-      expect(() => mimeType(file, [])).not.toThrow();
+      const f = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const schema = file();
+      expect(() => mimeType(schema, f)).not.toThrow();
     });
 
     test("should allow file with exact MIME type match", () => {
       const stream = Readable.from(["test"]);
-      const file = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const f = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const schema = file().accept(["application/pdf"]);
 
-      expect(() => mimeType(file, ["application/pdf"])).not.toThrow();
+      expect(() => mimeType(schema, f)).not.toThrow();
     });
 
     test("should allow file with wildcard */*", () => {
       const stream = Readable.from(["test"]);
-      const file = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const f = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const schema = file().accept(["*/*"]);
 
-      expect(() => mimeType(file, ["*/*"])).not.toThrow();
+      expect(() => mimeType(schema, f)).not.toThrow();
     });
 
     test("should allow file with wildcard type image/*", () => {
       const stream = Readable.from(["test"]);
-      const file = new File("avatar", "profile.png", "7bit", "image/png", stream);
+      const f = new File("avatar", "profile.png", "7bit", "image/png", stream);
+      const schema = file().accept(["image/*"]);
 
-      expect(() => mimeType(file, ["image/*"])).not.toThrow();
+      expect(() => mimeType(schema, f)).not.toThrow();
     });
 
     test("should allow file with wildcard subtype */png", () => {
       const stream = Readable.from(["test"]);
-      const file = new File("avatar", "profile.png", "7bit", "image/png", stream);
+      const f = new File("avatar", "profile.png", "7bit", "image/png", stream);
+      const schema = file().accept(["*/png"]);
 
-      expect(() => mimeType(file, ["*/png"])).not.toThrow();
+      expect(() => mimeType(schema, f)).not.toThrow();
     });
 
     test("should allow file with extension match", () => {
       const stream = Readable.from(["test"]);
-      const file = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const f = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const schema = file().accept([".pdf"]);
 
-      expect(() => mimeType(file, [".pdf"])).not.toThrow();
+      expect(() => mimeType(schema, f)).not.toThrow();
     });
 
     test("should be case-insensitive for extensions", () => {
       const stream = Readable.from(["test"]);
-      const file = new File("doc", "test.PDF", "7bit", "application/pdf", stream);
+      const f = new File("doc", "test.PDF", "7bit", "application/pdf", stream);
+      const schema = file().accept([".pdf"]);
 
-      expect(() => mimeType(file, [".pdf"])).not.toThrow();
+      expect(() => mimeType(schema, f)).not.toThrow();
     });
 
     test("should throw ZodError for invalid MIME type", () => {
       const stream = Readable.from(["test"]);
-      const file = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const f = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const schema = file().accept(["image/png"]);
 
-      expect(() => mimeType(file, ["image/png"])).toThrow(ZodError);
+      expect(() => mimeType(schema, f)).toThrow(ZodError);
     });
 
     test("should throw with correct error message for invalid MIME type", () => {
       const stream = Readable.from(["test"]);
-      const file = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const f = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const schema = file().accept(["image/png", "image/jpeg"]);
 
       try {
-        mimeType(file, ["image/png", "image/jpeg"]);
+        mimeType(schema, f);
         fail("Should have thrown");
       } catch (err) {
         expect(err).toBeInstanceOf(ZodError);
@@ -87,10 +89,11 @@ describe("validate", () => {
 
     test("should include field path in error", () => {
       const stream = Readable.from(["test"]);
-      const file = new File("avatar", "test.pdf", "7bit", "application/pdf", stream);
+      const f = new File("avatar", "test.pdf", "7bit", "application/pdf", stream);
+      const schema = file().accept(["image/*"]);
 
       try {
-        mimeType(file, ["image/*"]);
+        mimeType(schema, f);
         fail("Should have thrown");
       } catch (err) {
         expect(err).toBeInstanceOf(ZodError);
@@ -101,58 +104,63 @@ describe("validate", () => {
 
     test("should allow multiple valid types", () => {
       const stream = Readable.from(["test"]);
-      const file = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const f = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const schema = file().accept(["image/png", "application/pdf", "text/plain"]);
 
-      expect(() => mimeType(file, ["image/png", "application/pdf", "text/plain"])).not.toThrow();
+      expect(() => mimeType(schema, f)).not.toThrow();
     });
 
     test("should reject extension mismatch", () => {
       const stream = Readable.from(["test"]);
-      const file = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const f = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const schema = file().accept([".txt"]);
 
-      expect(() => mimeType(file, [".txt"])).toThrow(ZodError);
+      expect(() => mimeType(schema, f)).toThrow(ZodError);
     });
 
     test("should handle files without extension", () => {
       const stream = Readable.from(["test"]);
-      const file = new File("readme", "README", "7bit", "text/plain", stream);
+      const f = new File("readme", "README", "7bit", "text/plain", stream);
+      const schema = file().accept([".txt"]);
 
-      expect(() => mimeType(file, [".txt"])).toThrow(ZodError);
+      expect(() => mimeType(schema, f)).toThrow(ZodError);
     });
 
     test("should match video wildcard", () => {
       const stream = Readable.from(["test"]);
-      const file = new File("video", "clip.mp4", "7bit", "video/mp4", stream);
+      const f = new File("video", "clip.mp4", "7bit", "video/mp4", stream);
+      const schema = file().accept(["video/*"]);
 
-      expect(() => mimeType(file, ["video/*"])).not.toThrow();
+      expect(() => mimeType(schema, f)).not.toThrow();
     });
 
     test("should match audio wildcard", () => {
       const stream = Readable.from(["test"]);
-      const file = new File("audio", "song.mp3", "7bit", "audio/mpeg", stream);
+      const f = new File("audio", "song.mp3", "7bit", "audio/mpeg", stream);
+      const schema = file().accept(["audio/*"]);
 
-      expect(() => mimeType(file, ["audio/*"])).not.toThrow();
+      expect(() => mimeType(schema, f)).not.toThrow();
     });
   });
 
   describe("maxSize", () => {
     test("should throw ZodError when size exceeds max", async () => {
       const stream = Readable.from(["test"]);
-      const file = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
-      const maxBytes = 1024;
+      const f = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const schema = file().max(1024);
       const actualSize = 2048;
 
-      await expect(maxSize(maxBytes, file, actualSize)).rejects.toThrow(ZodError);
+      await expect(maxSize(schema, f, actualSize)).rejects.toThrow(ZodError);
     });
 
     test("should include human-readable sizes in error message", async () => {
       const stream = Readable.from(["test"]);
-      const file = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
-      const maxBytes = 1024;
+      const f = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const schema = file().max(1024);
       const actualSize = 2048;
 
       try {
-        await maxSize(maxBytes, file, actualSize);
+        await maxSize(schema, f, actualSize);
         fail("Should have thrown");
       } catch (err) {
         expect(err).toBeInstanceOf(ZodError);
@@ -164,10 +172,11 @@ describe("validate", () => {
 
     test("should include field path in error", async () => {
       const stream = Readable.from(["test"]);
-      const file = new File("avatar", "profile.png", "7bit", "image/png", stream);
+      const f = new File("avatar", "profile.png", "7bit", "image/png", stream);
+      const schema = file().max(1000);
 
       try {
-        await maxSize(1000, file, 2000);
+        await maxSize(schema, f, 2000);
         fail("Should have thrown");
       } catch (err) {
         expect(err).toBeInstanceOf(ZodError);
@@ -178,10 +187,11 @@ describe("validate", () => {
 
     test("should have correct error code", async () => {
       const stream = Readable.from(["test"]);
-      const file = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const f = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const schema = file().max(1000);
 
       try {
-        await maxSize(1000, file, 2000);
+        await maxSize(schema, f, 2000);
         fail("Should have thrown");
       } catch (err) {
         expect(err).toBeInstanceOf(ZodError);
@@ -192,12 +202,13 @@ describe("validate", () => {
 
     test("should include maximum and input in issue", async () => {
       const stream = Readable.from(["test"]);
-      const file = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const f = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
       const maxBytes = 1024;
       const actualSize = 2048;
+      const schema = file().max(maxBytes);
 
       try {
-        await maxSize(maxBytes, file, actualSize);
+        await maxSize(schema, f, actualSize);
         fail("Should have thrown");
       } catch (err) {
         expect(err).toBeInstanceOf(ZodError);
@@ -211,31 +222,35 @@ describe("validate", () => {
   describe("minSize", () => {
     test("should not throw when size meets minimum", async () => {
       const stream = Readable.from(["test"]);
-      const file = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const f = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const schema = file().min(1000);
 
-      await expect(minSize(1000, file, 2000)).resolves.toBeUndefined();
+      await expect(minSize(schema, f, 2000)).resolves.toBeUndefined();
     });
 
     test("should not throw when size equals minimum", async () => {
       const stream = Readable.from(["test"]);
-      const file = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const f = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const schema = file().min(1000);
 
-      await expect(minSize(1000, file, 1000)).resolves.toBeUndefined();
+      await expect(minSize(schema, f, 1000)).resolves.toBeUndefined();
     });
 
     test("should throw when size is below minimum", async () => {
       const stream = Readable.from(["test"]);
-      const file = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const f = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const schema = file().min(2000);
 
-      await expect(minSize(2000, file, 1000)).rejects.toThrow(ZodError);
+      await expect(minSize(schema, f, 1000)).rejects.toThrow(ZodError);
     });
 
     test("should include human-readable sizes in error message", async () => {
       const stream = Readable.from(["test"]);
-      const file = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const f = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const schema = file().min(2048);
 
       try {
-        await minSize(2048, file, 1024);
+        await minSize(schema, f, 1024);
         fail("Should have thrown");
       } catch (err) {
         expect(err).toBeInstanceOf(ZodError);
@@ -247,10 +262,11 @@ describe("validate", () => {
 
     test("should include field name in error message", async () => {
       const stream = Readable.from(["test"]);
-      const file = new File("avatar", "profile.png", "7bit", "image/png", stream);
+      const f = new File("avatar", "profile.png", "7bit", "image/png", stream);
+      const schema = file().min(2000);
 
       try {
-        await minSize(2000, file, 1000);
+        await minSize(schema, f, 1000);
         fail("Should have thrown");
       } catch (err) {
         expect(err).toBeInstanceOf(ZodError);
@@ -261,10 +277,11 @@ describe("validate", () => {
 
     test("should have correct error code", async () => {
       const stream = Readable.from(["test"]);
-      const file = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const file1 = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const schema = file().min(2000);
 
       try {
-        await minSize(2000, file, 1000);
+        await minSize(schema, file1, 1000);
         fail("Should have thrown");
       } catch (err) {
         expect(err).toBeInstanceOf(ZodError);

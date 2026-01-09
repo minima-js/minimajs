@@ -75,19 +75,18 @@ async function deleteUploadedFiles(files: unknown[]) {
 }
 
 async function validateAndUpload(file: File, signal: AbortSignal, schema: FileSchema, { tmpDir = tmpdir() }: UploadOption) {
-  validate.mimeType(file, schema.def.types);
+  validate.mimeType(schema, file);
   const maxSize = schema.def.max ?? Infinity;
-  const minSize = schema.def.min ?? 0;
   const meter = new StreamMeter(maxSize);
   const filename = join(await ensurePath(tmpDir, pkg.name), uuid());
   try {
     await pipeline(file.stream.pipe(meter), createWriteStream(filename));
   } catch (err) {
     if (err instanceof RangeError) {
-      await validate.maxSize(maxSize, file, meter.bytes);
+      await validate.maxSize(schema, file, meter.bytes);
       throw err;
     }
   }
-  validate.minSize(minSize, file, meter.bytes);
+  validate.minSize(schema, file, meter.bytes);
   return new UploadedFile(file, filename, meter.bytes, signal);
 }

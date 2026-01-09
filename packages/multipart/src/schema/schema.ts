@@ -12,9 +12,9 @@ export interface FileBuilderInternals extends core.$ZodTypeInternals<UploadedFil
   def: FileBuilderDef;
 }
 export interface FileSchema extends z.ZodType<UploadedFile, unknown, FileBuilderInternals> {
-  max(size: number, message?: string): this;
-  min(size: number, message?: string): this;
-  accept(types: string[], message?: string): this;
+  max(size: number): this;
+  min(size: number): this;
+  accept(types: string[]): this;
 }
 
 export const FileSchema = core.$constructor<FileSchema, FileBuilderDef>("FileSchema", (inst, def) => {
