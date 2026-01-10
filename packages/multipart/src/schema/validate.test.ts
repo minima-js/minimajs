@@ -150,7 +150,7 @@ describe("validate", () => {
       const schema = file().max(1024);
       const actualSize = 2048;
 
-      await expect(maxSize(schema, f, actualSize)).rejects.toThrow(ZodError);
+      expect(() => maxSize(schema, f, actualSize)).toThrow(ZodError);
     });
 
     test("should include human-readable sizes in error message", async () => {
