@@ -14,6 +14,13 @@ export interface App<S = any> {
   readonly container: Container;
   readonly router: Router<HTTPVersion.V1>;
 
+  readonly $root: App<S>;
+
+  readonly $parent: App<S> | null;
+
+  readonly $prefix: string;
+  readonly $prefixExclude: string[];
+
   log: Logger;
 
   serialize: Serializer<S>;

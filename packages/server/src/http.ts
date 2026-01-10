@@ -390,7 +390,7 @@ export namespace request {
  * ```
  * @since v0.2.0
  */
-export function body<T = unknown>(): T | undefined {
+export function body<T = unknown>(): T {
   const { locals } = $context();
   if (!locals.has(kBody)) {
     throw new Error("Body parser is not registered. Please register bodyParser plugin first.");

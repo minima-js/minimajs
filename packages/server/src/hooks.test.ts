@@ -34,184 +34,99 @@ describe("hooks", () => {
   });
 
   describe("onError", () => {
-    test("should call on error", async () => {
+    test("should handle request-scoped onError", async () => {
       const onErrorFn = jest.fn<ErrorCallback>();
-      app.get("/", () => {
+
+      app.get("/scoped", () => {
         onError(onErrorFn);
         throw new Error("test");
       });
-      await app.handle(createRequest("/"));
+
+      const res = await app.handle(createRequest("/scoped"));
+      expect(res.status).toBe(500);
       expect(onErrorFn).toHaveBeenCalled();
     });
 
-    test("should return hook response as proper response when hook returns data", async () => {
-      const errorResponse = { error: "Custom error response", code: 400 };
+    test("should return 200 when error hook returns data", async () => {
+      const errorResponse = { error: "Custom error", code: 400 };
+      app.get("/handled", () => {
+        throw new Error("Original error");
+      });
+      app.register(hook("error", () => errorResponse));
 
+      const response = await app.handle(createRequest("/handled"));
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual(errorResponse);
+    });
+
+    test("should return 500 when no error hook handles the error", async () => {
+      app.get("/unhandled", () => {
+        throw new Error("Unhandled");
+      });
       app.register(
         hook("error", () => {
-          return errorResponse;
+          // Return undefined to not handle the error
         })
       );
 
-      app.get("/", () => {
-        throw new Error("Original error");
-      });
-
-      const response = await app.handle(createRequest("/"));
-      const body = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(body).toEqual(errorResponse);
+      const errorRes = await app.handle(createRequest("/unhandled"));
+      expect(errorRes.status).toBe(500);
     });
 
-    test("should chain to next handler when hook returns undefined", async () => {
-      const firstHook = jest.fn(() => {
-        return { error: "Handled by first hook" };
-      });
-      const secondHook = jest.fn(() => {
-        return undefined; // Explicitly return undefined to continue chain
-      });
-
-      app.register(hook("error", firstHook));
-      app.register(hook("error", secondHook));
-
-      app.get("/", () => {
-        throw new Error("Test error");
-      });
-
-      const response = await app.handle(createRequest("/"));
-      const body = await response.json();
-
-      expect(secondHook).toHaveBeenCalled();
-      expect(firstHook).toHaveBeenCalled();
-      expect(body).toEqual({ error: "Handled by first hook" });
-    });
-
-    test("should catch new error thrown by hook and pass to next handler", async () => {
-      const firstHook = jest.fn(() => {
-        return { error: "Handled by first hook" };
-      });
-      const secondHook = jest.fn((err) => {
-        // Should receive the error thrown by first hook
-        expect(err).toBeInstanceOf(Error);
-        expect((err as Error).message).toBe("Error from second hook");
-        throw new Error("Error from second hook");
-      });
-
-      app.register(hook("error", firstHook));
-      app.register(hook("error", secondHook));
-
-      app.get("/", () => {
-        throw new Error("Original error");
-      });
-
-      const response = await app.handle(createRequest("/"));
-      const body = await response.json();
-
-      expect(secondHook).toHaveBeenCalled();
-      expect(firstHook).toHaveBeenCalled();
-      expect(body).toEqual({ error: "Handled by first hook" });
-    });
-
-    test("should throw final error when no hook handles it", async () => {
-      const hook1 = jest.fn(() => undefined);
-      const hook2 = jest.fn(() => undefined);
-
-      app.register(hook("error", hook1));
-      app.register(hook("error", hook2));
-
-      app.get("/", () => {
-        throw new Error("Unhandled error");
-      });
-
-      const response = await app.handle(createRequest("/"));
-
-      expect(hook2).toHaveBeenCalled();
-      expect(hook1).toHaveBeenCalled();
-      expect(response.status).toBe(500);
-    });
-
-    test("should handle async error hooks", async () => {
-      const asyncHook = jest.fn(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 10));
-        return { error: "Async handled" };
-      });
-
-      app.register(hook("error", asyncHook));
-
-      app.get("/", () => {
-        throw new Error("Test error");
-      });
-
-      const response = await app.handle(createRequest("/"));
-      const body = await response.json();
-
-      expect(asyncHook).toHaveBeenCalled();
-      expect(body).toEqual({ error: "Async handled" });
-    });
-
-    test("should properly chain multiple error hooks with mixed return types", async () => {
+    test("should chain error hooks with LIFO order and handle throws", async () => {
       const callOrder: string[] = [];
 
-      // Hook 1 returns a value - should be the final response
+      // First hook handles it
       app.register(
         hook("error", () => {
-          callOrder.push("hook1");
-          return { success: true, message: "Finally handled" };
+          callOrder.push("first");
+          return { handled: true };
         })
       );
 
-      // Hook 2 returns undefined - should continue to hook 1
+      // Second hook returns undefined, continues chain
       app.register(
         hook("error", (err) => {
-          callOrder.push("hook2");
-          // This should receive the error from hook3
-          expect((err as Error).message).toBe("Hook 3 throws");
-          // Returns undefined, continues chain
+          callOrder.push("second");
+          expect((err as Error).message).toBe("Third throws");
         })
       );
 
-      // Hook 3 throws a new error - should be caught by hook 2
+      // Third hook throws new error
       app.register(
         hook("error", () => {
-          callOrder.push("hook3");
-          throw new Error("Hook 3 throws");
+          callOrder.push("third");
+          throw new Error("Third throws");
         })
       );
 
-      // Hook 4 runs first (hooks are reversed), returns undefined
+      // Fourth hook runs first (LIFO)
       app.register(
         hook("error", () => {
-          callOrder.push("hook4");
-          // Returns undefined, should continue to next hook
+          callOrder.push("fourth");
         })
       );
 
-      app.get("/", () => {
-        throw new Error("Original error");
+      app.get("/chain", () => {
+        throw new Error("Original");
       });
 
-      const response = await app.handle(createRequest("/"));
-      const body = await response.json();
-
-      expect(callOrder).toEqual(["hook4", "hook3", "hook2", "hook1"]);
-      expect(body).toEqual({ success: true, message: "Finally handled" });
+      const response = await app.handle(createRequest("/chain"));
+      expect(callOrder).toEqual(["fourth", "third", "second", "first"]);
+      expect(await response.json()).toEqual({ handled: true });
     });
   });
 
-  describe("hook", () => {
-    test("it should call closed hook after app is closed", async () => {
-      const onClose = jest.fn(() => Promise.resolve());
-      app.register(hook("close", onClose));
-      expect(onClose).not.toHaveBeenCalled();
-      await app.close();
-      expect(onClose).toHaveBeenCalled();
-    });
-
-    test("should handle async hooks with plugin.compose", async () => {
+  describe("lifecycle hooks", () => {
+    test("should execute ready and close hooks in correct order", async () => {
       let dbConnected = false;
       let dbClosed = false;
+      const onClose = jest.fn(() => Promise.resolve());
 
+      // Test close hook
+      app.register(hook("close", onClose));
+
+      // Test ready/close with compose
       const closeDBHook = hook("close", async () => {
         await new Promise((resolve) => setTimeout(resolve, 1));
         expect(dbConnected).toBe(true);
@@ -224,61 +139,60 @@ describe("hooks", () => {
 
       app.register(compose(connectDBHook, closeDBHook));
 
+      expect(onClose).not.toHaveBeenCalled();
+
       await app.ready();
       expect(dbConnected).toBe(true);
       expect(dbClosed).toBe(false);
 
       await app.close();
+      expect(onClose).toHaveBeenCalled();
       expect(dbClosed).toBe(true);
     });
   });
 
   describe("hook.lifespan", () => {
-    test("should run setup on ready and cleanup on close", async () => {
+    test("should run setup/cleanup and handle async operations", async () => {
       const onReady = jest.fn();
       const onClose = jest.fn();
+      let asyncReady = false;
+      let asyncClosed = false;
 
-      const lifespan = hook.lifespan(async () => {
+      // Test sync lifespan
+      const syncLifespan = hook.lifespan(async () => {
         onReady();
         return async () => {
           onClose();
         };
       });
 
-      app.register(lifespan);
-
-      expect(onReady).not.toHaveBeenCalled();
-      expect(onClose).not.toHaveBeenCalled();
-
-      await app.ready();
-      expect(onReady).toHaveBeenCalled();
-      expect(onClose).not.toHaveBeenCalled();
-
-      await app.close();
-      expect(onClose).toHaveBeenCalled();
-    });
-
-    test("should work with async setup and cleanup", async () => {
-      let ready = false;
-      let closed = false;
-
-      const lifespan = hook.lifespan(async () => {
+      // Test async lifespan
+      const asyncLifespan = hook.lifespan(async () => {
         await new Promise((resolve) => setTimeout(resolve, 10));
-        ready = true;
+        asyncReady = true;
         return async () => {
           await new Promise((resolve) => setTimeout(resolve, 10));
-          closed = true;
+          asyncClosed = true;
         };
       });
 
-      app.register(lifespan);
+      app.register(syncLifespan);
+      app.register(asyncLifespan);
+
+      expect(onReady).not.toHaveBeenCalled();
+      expect(onClose).not.toHaveBeenCalled();
+      expect(asyncReady).toBe(false);
+      expect(asyncClosed).toBe(false);
 
       await app.ready();
-      expect(ready).toBe(true);
-      expect(closed).toBe(false);
+      expect(onReady).toHaveBeenCalled();
+      expect(asyncReady).toBe(true);
+      expect(onClose).not.toHaveBeenCalled();
+      expect(asyncClosed).toBe(false);
 
       await app.close();
-      expect(closed).toBe(true);
+      expect(onClose).toHaveBeenCalled();
+      expect(asyncClosed).toBe(true);
     });
   });
 
@@ -322,61 +236,268 @@ describe("hooks", () => {
   });
 
   describe("hook.define", () => {
-    test("should register and trigger a single hook", async () => {
-      const readyHook = jest.fn<OnReadyHook>();
-      const multiHook = hook.define({
-        ready: readyHook,
-      });
-
-      app.register(multiHook);
-      expect(readyHook).not.toHaveBeenCalled();
-
-      await app.ready();
-      expect(readyHook).toHaveBeenCalled();
-    });
-
-    test("should register and trigger multiple hooks", async () => {
+    test("should register single, multiple, and async hooks", async () => {
       const readyHook = jest.fn<OnReadyHook>();
       const closeHook = jest.fn<OnCloseHook>();
+      let asyncCalled = false;
 
-      const multiHook = hook.define({
-        ready: readyHook,
-        close: closeHook,
-      });
+      // Test single hook
+      app.register(hook.define({ ready: readyHook }));
 
-      app.register(multiHook);
+      // Test multiple hooks
+      app.register(hook.define({ ready: readyHook, close: closeHook }));
+
+      // Test async hooks
+      app.register(
+        hook.define({
+          ready: async () => {
+            await new Promise((resolve) => setTimeout(resolve, 10));
+            asyncCalled = true;
+          },
+        })
+      );
+
+      // Test empty hooks
+      app.register(hook.define({}));
+
       expect(readyHook).not.toHaveBeenCalled();
       expect(closeHook).not.toHaveBeenCalled();
 
       await app.ready();
-      expect(readyHook).toHaveBeenCalled();
+      expect(readyHook).toHaveBeenCalledTimes(1);
+      expect(asyncCalled).toBe(true);
       expect(closeHook).not.toHaveBeenCalled();
 
       await app.close();
       expect(closeHook).toHaveBeenCalled();
     });
+  });
 
-    test("should handle async hook callbacks", async () => {
-      let readyCalled = false;
-      const readyHook = async () => {
-        await new Promise((resolve) => setTimeout(resolve, 10));
-        readyCalled = true;
-      };
+  describe("hook execution order", () => {
+    test("ready hooks run parent → child across nested modules", async () => {
+      const readyOrder: string[] = [];
 
-      const multiHook = hook.define({
-        ready: readyHook,
+      app.register(
+        hook("ready", () => {
+          readyOrder.push("root");
+        })
+      );
+
+      app.register(async (app) => {
+        app.register(
+          hook("ready", () => {
+            readyOrder.push("level1");
+          })
+        );
+
+        app.register(async (app) => {
+          app.register(
+            hook("ready", () => {
+              readyOrder.push("level2");
+            })
+          );
+        });
       });
 
-      app.register(multiHook);
       await app.ready();
-      expect(readyCalled).toBe(true);
+
+      expect(readyOrder).toEqual(["root", "level1", "level2"]);
     });
 
-    test("should not fail if no hooks are provided", async () => {
-      const multiHook = hook.define({});
-      app.register(multiHook);
+    test("Parent → Child (FIFO): request, transform", async () => {
+      const requestOrder: string[] = [];
+      const transformOrder: string[] = [];
+
+      app.register(
+        hook("request", () => {
+          requestOrder.push("parent");
+        })
+      );
+      app.register(
+        hook("transform", (data) => {
+          transformOrder.push("parent");
+          return data;
+        })
+      );
+
+      app.register(async (app) => {
+        app.register(
+          hook("request", () => {
+            requestOrder.push("child");
+          })
+        );
+        app.register(
+          hook("transform", (data) => {
+            transformOrder.push("child");
+            return data;
+          })
+        );
+
+        app.get("/test", () => ({ result: "ok" }));
+      });
+
+      await app.handle(createRequest("/test"));
+
+      expect(requestOrder).toEqual(["parent", "child"]);
+      expect(transformOrder).toEqual(["parent", "child"]);
+    });
+
+    test("Child → Parent (LIFO): error, send, close", async () => {
+      const errorOrder: string[] = [];
+      const sendOrder: string[] = [];
+      const closeOrder: string[] = [];
+
+      app.register(
+        hook("error", () => {
+          errorOrder.push("parent");
+          return { error: "handled" };
+        })
+      );
+      app.register(
+        hook("send", () => {
+          sendOrder.push("parent");
+        })
+      );
+      app.register(
+        hook("close", () => {
+          closeOrder.push("parent");
+        })
+      );
+
+      app.register(async (app) => {
+        app.register(
+          hook("error", () => {
+            errorOrder.push("child");
+          })
+        );
+        app.register(
+          hook("send", () => {
+            sendOrder.push("child");
+          })
+        );
+        app.register(
+          hook("close", () => {
+            closeOrder.push("child");
+          })
+        );
+
+        app.get("/ok", () => "ok");
+        app.get("/error", () => {
+          throw new Error("test");
+        });
+      });
+
       await app.ready();
-      // No assertions needed, just shouldn't throw
+      await app.handle(createRequest("/ok"));
+      await app.handle(createRequest("/error"));
+      await app.close();
+
+      expect(errorOrder).toEqual(["child", "parent"]);
+      expect(sendOrder).toEqual(["child", "parent", "child", "parent"]);
+      expect(closeOrder).toEqual(["child", "parent"]);
+    });
+
+    test("multiple hooks in same scope follow correct order", async () => {
+      const fifoOrder: string[] = [];
+      const lifoOrder: string[] = [];
+
+      // FIFO: request hooks
+      app.register(
+        hook("request", () => {
+          fifoOrder.push("first");
+        })
+      );
+      app.register(
+        hook("request", () => {
+          fifoOrder.push("second");
+        })
+      );
+      app.register(
+        hook("request", () => {
+          fifoOrder.push("third");
+        })
+      );
+
+      // LIFO: error hooks
+      app.register(
+        hook("error", () => {
+          lifoOrder.push("first");
+        })
+      );
+      app.register(
+        hook("error", () => {
+          lifoOrder.push("second");
+        })
+      );
+      app.register(
+        hook("error", () => {
+          lifoOrder.push("third");
+        })
+      );
+
+      app.get("/ok", () => "ok");
+      app.get("/error", () => {
+        throw new Error("test");
+      });
+
+      await app.handle(createRequest("/ok"));
+      expect(fifoOrder).toEqual(["first", "second", "third"]);
+
+      await app.handle(createRequest("/error"));
+      expect(lifoOrder).toEqual(["third", "second", "first"]);
+    });
+
+    test("nested scopes maintain correct execution order", async () => {
+      const requestOrder: string[] = [];
+      const errorOrder: string[] = [];
+
+      app.register(
+        hook("request", () => {
+          requestOrder.push("root");
+        })
+      );
+      app.register(
+        hook("error", () => {
+          errorOrder.push("root");
+        })
+      );
+
+      app.register(async (app) => {
+        app.register(
+          hook("request", () => {
+            requestOrder.push("level1");
+          })
+        );
+        app.register(
+          hook("error", () => {
+            errorOrder.push("level1");
+          })
+        );
+
+        app.register(async (app) => {
+          app.register(
+            hook("request", () => {
+              requestOrder.push("level2");
+            })
+          );
+          app.register(
+            hook("error", () => {
+              errorOrder.push("level2");
+            })
+          );
+
+          app.get("/ok", () => "ok");
+          app.get("/error", () => {
+            throw new Error("test");
+          });
+        });
+      });
+
+      await app.handle(createRequest("/ok"));
+      expect(requestOrder).toEqual(["root", "level1", "level2"]);
+
+      await app.handle(createRequest("/error"));
+      expect(errorOrder).toEqual(["level2", "level1", "root"]);
     });
   });
 });

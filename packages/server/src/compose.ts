@@ -1,4 +1,6 @@
-import type { Plugin, PluginOptions, PluginSync } from "./interfaces/plugin.js";
+import type { App } from "./interfaces/index.js";
+import type { RegisterOptions, Registerable, Plugin } from "./interfaces/plugin.js";
+import { copyMetadata } from "./internal/boot.js";
 import { plugin } from "./internal/plugins.js";
 
 /**
@@ -29,7 +31,7 @@ import { plugin } from "./internal/plugins.js";
  * app.register(apiModule);
  * ```
  */
-export function compose<T extends PluginOptions = any>(...plugins: (Plugin<T> | PluginSync)[]) {
+export function compose<T extends RegisterOptions = RegisterOptions>(...plugins: Registerable<T>[]): Plugin<T> {
   const composedName = `compose(${plugins.map((p) => p.name || "anonymous").join(",")})`;
   return plugin<T>(async function composed(app, opts) {
     for (const plg of plugins) {
@@ -55,29 +57,21 @@ export namespace compose {
    * );
    *
    * // Apply to different modules
-   * const usersModule = plugin((app) => {
+   * const usersModule = (app: App) => {
    *   app.get("/users", () => ({ users: [] }));
    * });
    *
    * app.register(withAuth(usersModule));
    * ```
-   *
-   * @example
-   * ```typescript
-   * // Compose middleware plugins
-   * const withStandardMiddleware = compose.create(
-   *   corsPlugin,
-   *   helmetPlugin,
-   *   rateLimitPlugin
-   * );
-   *
-   * // Apply to API module
-   * app.register(withStandardMiddleware(apiModule));
-   * ```
    */
-  export function create<T extends PluginOptions = any>(...plugins: (Plugin<T> | PluginSync)[]) {
-    return function applyPlugins(module: Plugin<T> | PluginSync): Plugin<T> {
-      return compose<T>(...plugins, module);
+  export function create<T extends RegisterOptions = RegisterOptions>(...plugins: Registerable<T>[]) {
+    return function applyPlugins(module: Registerable<T>) {
+      function composed(app: App, opts: T) {
+        plugins.forEach((plug) => app.register(plug, opts));
+        return module(app, opts);
+      }
+      copyMetadata(module, composed);
+      return composed as Registerable<T>;
     };
   }
 }

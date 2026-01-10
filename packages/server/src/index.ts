@@ -16,7 +16,7 @@
 // Re-export core for backwards compatibility (App interface, types, etc.)
 export * from "./core/server.js";
 
-export * from "./logger.js";
+export { logger } from "./logger.js";
 
 // Exporting all types
 export * from "./interfaces/index.js";

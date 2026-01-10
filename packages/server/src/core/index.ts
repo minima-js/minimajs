@@ -19,7 +19,7 @@ import { type Logger } from "pino";
 import type { ServerAdapter } from "../interfaces/server.js";
 import { minimajs } from "../plugins/minimajs.js";
 import { Server } from "./server.js";
-import { createLogger } from "../logger.js";
+import { createLogger, logger as defaultLogger } from "../logger.js";
 
 export * from "./server.js";
 
@@ -37,11 +37,11 @@ export interface CreateBaseSeverOptions {
 
 export function createBaseServer<T>(server: ServerAdapter<T>, options: CreateBaseSeverOptions) {
   let logger: Logger | undefined = options.logger === false ? createLogger({ enabled: false }) : options.logger;
-  logger ??= createLogger({});
+  logger ??= defaultLogger;
   const srv = new Server(server, {
     prefix: options.prefix ?? "",
     logger,
-    router: Router(options.router),
+    router: Router({ ignoreTrailingSlash: true, ...options.router }),
   });
   srv.register(minimajs());
   return srv;

@@ -1,12 +1,13 @@
-import { type App, type Container } from "../interfaces/app.js";
-import { kPlugin } from "../symbols.js";
+import type { App, Registerable, Container } from "../interfaces/index.js";
 import { isCallable } from "../utils/callable.js";
+import { plugin } from "./plugins.js";
+import { kModuleName, kModulesChain } from "../symbols.js";
 
 /**
  * Checks if a value has a clone method
  */
-function isClonable(value: unknown): value is { clone(): unknown } {
-  return value !== null && typeof value === "object" && "clone" in value && isCallable((value as any).clone);
+function cloneable(value: unknown): value is { clone(): unknown } {
+  return isCallable((value as any)?.clone);
 }
 
 /**
@@ -19,7 +20,7 @@ function cloneContainer(container: Container): Container {
       newContainer.set(key, [...value]);
       continue;
     }
-    if (isClonable(value)) {
+    if (cloneable(value)) {
       newContainer.set(key, value.clone());
       continue;
     }
@@ -28,10 +29,17 @@ function cloneContainer(container: Container): Container {
   return newContainer;
 }
 
-export function pluginOverride(app: App, fn: any, options: any) {
-  if (fn[kPlugin]) return app;
-  const { $prefix: parentPrefix = "", $prefixExclude: parentExclude = [] } = app as any;
-  return Object.create(app, {
+interface Options {
+  prefix?: string;
+  name?: string;
+}
+
+export function pluginOverride(app: App, fn: Registerable, options: Options = {}): App {
+  if (plugin.is(fn)) return app;
+
+  const { $prefix: parentPrefix = "", $prefixExclude: parentExclude = [] } = app;
+
+  const child: App = Object.create(app, {
     container: {
       value: cloneContainer(app.container),
     },
@@ -41,5 +49,12 @@ export function pluginOverride(app: App, fn: any, options: any) {
     $prefixExclude: {
       value: [...parentExclude],
     },
+    $parent: {
+      value: app,
+    },
   });
+
+  (child.container.get(kModulesChain) as App[])?.push(child);
+  child.container.set(kModuleName, plugin.getName(fn, options));
+  return child;
 }

@@ -1,10 +1,10 @@
 ```mermaid
 graph LR
-    A[Incoming Request] --> B[Request Hook 3]
+    A[Incoming Request] --> B[Request Hook 1]
     B -->|Response| Exit1[Early Exit]
     B -->|void| C[Request Hook 2]
     C -->|Response| Exit2[Early Exit]
-    C -->|void| D[Request Hook 1]
+    C -->|void| D[Request Hook 3]
     D -->|Response| Exit3[Early Exit]
     D -->|void| E[Route Match]
 

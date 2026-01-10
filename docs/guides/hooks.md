@@ -37,7 +37,7 @@ Hooks in Minima.js allow you to **tap into the application and request lifecycle
 
 ### Other Topics
 
-- [Hook Execution Order](#hook-execution-order) - LIFO and scope inheritance
+- [Hook Execution Order](#hook-execution-order) - FIFO and LIFO patterns with scope inheritance
 - [Best Practices](#best-practices) - Recommendations for using hooks
 
 ---
@@ -225,7 +225,7 @@ app.register(
 
 <!--@include: ./diagrams/request-hook-flow.md-->
 
-> **Important:** Hooks execute in **LIFO order** (last registered runs first). Returning a `Response` terminates the chain immediately and skips the route handler.
+> **Important:** `request` hooks execute in **Parent → Child (FIFO) order**. Returning a `Response` terminates the chain immediately and skips the route handler.
 
 #### `transform`
 
@@ -281,7 +281,7 @@ app.register(
 
 <!--@include: ./diagrams/send-hook-flow.md-->
 
-> **Important:** Hooks execute in **LIFO order** (last registered runs first). Returning a `Response` terminates the chain immediately.
+> **Important:** `send` hooks execute in **Child → Parent (LIFO) order**. Returning a `Response` terminates the chain immediately.
 
 #### `sent`
 
@@ -323,20 +323,158 @@ app.get("/", () => {
 
 ## Hook Execution Order
 
-Hooks execute in **LIFO order** (Last-In-First-Out) when registered in the same scope. The last hook registered is the first one to run.
+Minima.js uses two execution patterns for hooks based on their purpose: **Parent → Child (FIFO)** for setup/preparation hooks and **Child → Parent (LIFO)** for cleanup/response hooks.
+
+### Execution Patterns
+
+#### Parent → Child (FIFO - First In, First Out)
+
+These hooks execute in **registration order**: parent hooks run first, then child hooks. This pattern is used for:
+
+- **Setup hooks**: `register`, `listen`, `ready`
+- **Incoming request hooks**: `request`, `transform`
 
 ```typescript
-app.register(hook("request", () => console.log("First")));
-app.register(hook("request", () => console.log("Second")));
+app.register(hook("request", () => console.log("Parent: Auth")));
 
-// Output order:
-// "Second" -> runs first
-// "First"  -> runs last
+app.register(async (app) => {
+  app.register(hook("request", () => console.log("Child: Logging")));
+  app.get("/users", () => "users");
+});
+
+// Request to /users executes:
+// 1. "Parent: Auth"     (parent runs first)
+// 2. "Child: Logging"   (child runs second)
 ```
 
-### LIFO Execution
+**Why?** Parent middleware like authentication or logging should run **before** module-specific logic.
 
-<!--@include: ./diagrams/hook-lifo-execution.md-->
+#### Child → Parent (LIFO - Last In, First Out)
+
+These hooks execute in **reverse order**: child hooks run first, then parent hooks. This pattern is used for:
+
+- **Response hooks**: `send`, `sent`
+- **Error hooks**: `error`, `errorSent`
+- **Cleanup hooks**: `close`, `timeout`
+
+```typescript
+app.register(hook("error", () => ({ error: "Generic error" })));
+
+app.register(async (app) => {
+  app.register(hook("error", () => ({ error: "Module-specific error" })));
+  app.get("/users", () => {
+    throw new Error("Failed");
+  });
+});
+
+// Error in /users executes:
+// 1. Child error handler (module-specific)
+// 2. Parent error handler (only if child doesn't handle)
+```
+
+**Why?** The most specific handler (child) should try first, with parent as fallback.
+
+### Hook Order Reference Table
+
+| Hook        | Direction          | Order | Scope     | Use Case                               |
+| ----------- | ------------------ | ----- | --------- | -------------------------------------- |
+| `register`  | Parent → Child     | FIFO  | Global    | Track plugin registration              |
+| `listen`    | Parent → Child     | FIFO  | Global    | Server startup notifications           |
+| `ready`     | Parent → Child     | FIFO  | Global    | Initialize resources in order          |
+| `close`     | **Child → Parent** | LIFO  | Global    | Cleanup in reverse order               |
+| `request`   | Parent → Child     | FIFO  | Per-scope | Incoming request middleware            |
+| `transform` | Parent → Child     | FIFO  | Per-scope | Transform response data in order       |
+| `send`      | **Child → Parent** | LIFO  | Per-scope | Modify response before sending         |
+| `sent`      | **Child → Parent** | LIFO  | Per-scope | Post-response logging/cleanup          |
+| `error`     | **Child → Parent** | LIFO  | Per-scope | Error handling (specific → general)    |
+| `errorSent` | **Child → Parent** | LIFO  | Per-scope | Post-error logging/cleanup             |
+| `timeout`   | **Child → Parent** | LIFO  | Per-scope | Timeout handling (specific → fallback) |
+
+> **Global Scope**: SERVER_HOOKS (`close`, `listen`, `ready`, `register`) are shared across all modules - there's only one server instance.
+>
+> **Per-scope**: LIFECYCLE_HOOKS are cloned for each child scope to maintain encapsulation.
+
+### Practical Examples
+
+#### Setup Flow (Parent → Child)
+
+```typescript
+// Parent: Initialize database
+app.register(
+  hook("ready", async () => {
+    await db.connect();
+    console.log("1. Database connected");
+  })
+);
+
+// Child: Initialize cache (depends on db)
+app.register(async (app) => {
+  app.register(
+    hook("ready", async () => {
+      await cache.warmup();
+      console.log("2. Cache warmed up");
+    })
+  );
+});
+
+// Output: 1 → 2 (dependencies initialize in order)
+```
+
+#### Cleanup Flow (Child → Parent)
+
+```typescript
+// Parent: Close database
+app.register(
+  hook("close", async () => {
+    await db.disconnect();
+    console.log("2. Database closed");
+  })
+);
+
+// Child: Flush cache first
+app.register(async (app) => {
+  app.register(
+    hook("close", async () => {
+      await cache.flush();
+      console.log("1. Cache flushed");
+    })
+  );
+});
+
+// Output: 1 → 2 (cleanup in reverse order of setup)
+```
+
+#### Error Handling (Child → Parent)
+
+```typescript
+// Parent: Generic error handler
+app.register(
+  hook("error", (err) => {
+    console.log("Fallback: Generic error response");
+    return { error: "Something went wrong" };
+  })
+);
+
+// Child: Specific validation error handler
+app.register(async (app) => {
+  app.register(
+    hook("error", (err) => {
+      if (err.name === "ValidationError") {
+        console.log("Handled: Validation error");
+        return { error: "Validation failed", details: err.details };
+      }
+      // Return undefined to let parent handle it
+    })
+  );
+
+  app.post("/users", () => {
+    /* ... */
+  });
+});
+
+// ValidationError: Child handles it
+// Other errors: Falls through to parent
+```
 
 ### Scope Inheritance
 
@@ -364,15 +502,15 @@ app.register(async (app) => {
 **Execution when calling `/users`:**
 
 ```
-Child 1  (runs first - child scope)
-Parent   (runs second - inherited from parent)
+Child 1  (child hook - runs first)
+Parent   (inherited from parent - runs second)
 ```
 
 **Execution when calling `/admin`:**
 
 ```
-Child 2  (runs first - child scope)
-Parent   (runs second - inherited from parent)
+Child 2  (child hook - runs first)
+Parent   (inherited from parent - runs second)
 ```
 
 <!--@include: ./diagrams/hook-scope-inheritance.md-->
@@ -386,5 +524,5 @@ Parent   (runs second - inherited from parent)
 - **Use `onError`** for request-specific error handling that shouldn't be global
 - **Avoid returning `Response` objects** from hooks unless necessary for short-circuiting (authentication, rate-limiting)
 - **Prefer `createResponseFromState`** over `new Response()` to preserve context headers set by plugins
-- **Register hooks early** in your application lifecycle to ensure proper LIFO ordering
+- **Register hooks in the appropriate scope** to ensure proper FIFO/LIFO ordering based on hook type
 - **Use `hook.define`** to organize multiple related hooks together

@@ -349,7 +349,7 @@ describe("compose", () => {
 
       await app.ready();
 
-      expect(callOrder).toEqual(["pluginA", "pluginB", "module"]);
+      expect(callOrder).toEqual(["module", "pluginA", "pluginB"]);
     });
 
     test("should allow reusing the same composer for multiple modules", async () => {
@@ -450,9 +450,9 @@ describe("compose", () => {
 
       const withPlugins = compose.create(plugin1, plugin2);
 
-      const myModule = plugin<CustomOpts>((_, opts) => {
+      const myModule = (_: any, opts: CustomOpts) => {
         modulePrefix = opts.prefix;
-      });
+      };
 
       app.register(withPlugins(myModule), { prefix: "/api" });
 
@@ -489,7 +489,7 @@ describe("compose", () => {
 
       await app.ready();
 
-      expect(calls).toEqual(["auth", "logging", "caching", "module"]);
+      expect(calls).toEqual(["module", "auth", "logging", "caching"]);
     });
 
     test("should handle errors in plugins before module", async () => {
@@ -515,7 +515,7 @@ describe("compose", () => {
 
       const withPlugins = compose.create(plugin1, plugin2);
       const composedModule = withPlugins(myModule);
-
+      expect(plugin.is(composedModule)).toBeTruthy();
       expect(composedModule.name).toBe("composed");
     });
 
@@ -540,31 +540,36 @@ describe("compose", () => {
       const withStandardMiddleware = compose.create(corsPlugin, authPlugin, rateLimitPlugin);
 
       // Users module
-      const usersModule = plugin((app) => {
+      const usersModule = (app: App) => {
         calls.push("usersModule");
         app.get("/users", () => {
           routes.push("users");
           return { users: [] };
         });
-      });
+      };
 
       // Posts module
-      const postsModule = plugin((app) => {
+      const postsModule = (app: App) => {
         calls.push("postsModule");
         app.get("/posts", () => {
           routes.push("posts");
           return { posts: [] };
         });
-      });
+      };
 
       // Apply middleware to both modules
-      app.register(withStandardMiddleware(usersModule));
-      app.register(withStandardMiddleware(postsModule));
+      const usersModulePacked = withStandardMiddleware(usersModule);
+      expect(plugin.is(usersModulePacked)).toBeFalsy();
+      app.register(usersModulePacked);
+
+      const postsModulePacked = withStandardMiddleware(postsModule);
+      expect(plugin.is(postsModulePacked)).toBeFalsy();
+      app.register(postsModulePacked);
 
       await app.ready();
 
       // Verify setup order
-      expect(calls).toEqual(["cors", "auth", "rateLimit", "usersModule", "cors", "auth", "rateLimit", "postsModule"]);
+      expect(calls).toEqual(["usersModule", "cors", "auth", "rateLimit", "postsModule", "cors", "auth", "rateLimit"]);
 
       // Verify routes work
       await app.handle(createRequest("/users"));

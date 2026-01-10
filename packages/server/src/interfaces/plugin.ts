@@ -35,7 +35,5 @@ export interface Register<T extends RegisterOptions = RegisterOptions> {
   [kModuleName]?: string;
 }
 
-export interface PluginMeta {
-  skipOverride?: boolean;
-  name?: string;
-}
+// Union of all supported plugin-like callables
+export type Registerable<T extends RegisterOptions = RegisterOptions> = Plugin<T> | PluginSync<T> | Register<T>;

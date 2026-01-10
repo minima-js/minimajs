@@ -3,6 +3,7 @@ import { createApp } from "../bun/index.js";
 import type { App } from "../interfaces/app.js";
 import { routeLogger } from "./router.js";
 import chalk from "chalk";
+import { EOL } from "node:os";
 
 describe("routeLogger", () => {
   let app: App;
@@ -27,7 +28,7 @@ describe("routeLogger", () => {
     app.register(routeLogger());
     await app.ready();
 
-    const printedRoutes = app.router.prettyPrint({ commonPrefix: false });
+    const printedRoutes = EOL.repeat(2) + app.router.prettyPrint({ commonPrefix: false });
     expect(spy).toHaveBeenCalledWith(chalk.magenta(printedRoutes));
 
     spy.mockRestore();
@@ -35,10 +36,10 @@ describe("routeLogger", () => {
 
   test("should use custom logger when provided", async () => {
     const mockLogger = jest.fn();
-    await app.register(routeLogger({ logger: mockLogger }));
+    app.register(routeLogger({ logger: mockLogger }));
     await app.ready();
 
-    const printedRoutes = app.router.prettyPrint({ commonPrefix: false });
+    const printedRoutes = EOL.repeat(2) + app.router.prettyPrint({ commonPrefix: false });
     expect(mockLogger).toHaveBeenCalledWith(printedRoutes);
   });
 
@@ -52,14 +53,14 @@ describe("routeLogger", () => {
     );
     await app.ready();
 
-    const printedRoutes = app.router.prettyPrint({ commonPrefix: false });
+    const printedRoutes = EOL.repeat(2) + app.router.prettyPrint({ commonPrefix: false });
     expect(mockLogger).toHaveBeenCalledWith(`${printedRoutes}`);
   });
 
   test("should respect commonPrefix option", async () => {
     const mockLogger = jest.fn();
 
-    await app.register(
+    app.register(
       routeLogger({
         logger: mockLogger,
         commonPrefix: true,
@@ -67,7 +68,7 @@ describe("routeLogger", () => {
     );
     await app.ready();
 
-    const printedRoutes = app.router.prettyPrint({ commonPrefix: true });
+    const printedRoutes = EOL.repeat(2) + app.router.prettyPrint({ commonPrefix: true });
     expect(mockLogger).toHaveBeenCalledWith(printedRoutes);
   });
 
