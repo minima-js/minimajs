@@ -7,8 +7,8 @@ graph TB
     Child1 --> Route1["/users"]
     Child2 --> Route2["/admin"]
 
-    Route1 -.->|Executes| Exec1["1. Child 1 Hook<br/>2. Parent Hook"]
-    Route2 -.->|Executes| Exec2["1. Child 2 Hook<br/>2. Parent Hook"]
+    Route1 -.->|Executes<br/>request hook| Exec1["1. Parent Hook<br/>2. Child 1 Hook"]
+    Route2 -.->|Executes<br/>request hook| Exec2["1. Parent Hook<br/>2. Child 2 Hook"]
 
     style Root fill:#e7f5ff
     style Child1 fill:#d0ebff

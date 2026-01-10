@@ -9,6 +9,16 @@ import { createResponse } from "./response.js";
 import { result2route } from "./route.js";
 import type { RouteFindResult } from "../interfaces/route.js";
 
+async function finalizeSent(ctx: Context, response: Response) {
+  await runHooks.safe(ctx.app, "sent", ctx);
+  return response;
+}
+
+async function finalizeErrorSent(ctx: Context, response: Response, error: unknown) {
+  await runHooks.safe(ctx.app, "errorSent", error, ctx);
+  return response;
+}
+
 export async function handleRequest(server: App, router: Instance<HTTPVersion.V1>, req: Request): Promise<Response> {
   const url = new URL(req.url);
   const result: RouteFindResult<any> | null = router.find(req.method as HTTPMethod, url.pathname);
@@ -37,14 +47,9 @@ export async function handleRequest(server: App, router: Instance<HTTPVersion.V1
 
   return wrap(ctx, async () => {
     try {
-      const response = await prepare(route, ctx);
-      await runHooks.safe(ctx.app, "sent", ctx);
-      return response;
-      // Route found - process request
+      return await finalizeSent(ctx, await prepare(route, ctx));
     } catch (err) {
-      const response = await handleError(err, ctx);
-      await runHooks.safe(ctx.app, "errorSent", err, ctx);
-      return response;
+      return await handleError(err, ctx);
     }
   });
 }
@@ -68,17 +73,17 @@ async function prepare(route: Route | null, ctx: Context): Promise<Response> {
 async function handleError(err: unknown, ctx: Context): Promise<Response> {
   if (err instanceof RedirectError) return err.render(ctx);
   const hooks = getHooks(ctx.app);
-  // No app-level error hooks - use default error handler
-  console.log("handling The error", err);
-  if (hooks.error.size === 0) {
-    return ctx.app.errorHandler(err, ctx);
-  }
 
+  // No app-level error hooks - use default error handler
+  if (hooks.error.size === 0) {
+    return finalizeErrorSent(ctx, await ctx.app.errorHandler(err, ctx), err);
+  }
   // App-level error hook
   try {
     // Create error response (handles transform, serialize, send, and sent hooks)
-    return await createResponse(await runHooks.error(ctx.app, err, ctx), {}, ctx);
+    const response = await createResponse(await runHooks.error(ctx.app, err, ctx), {}, ctx);
+    return finalizeSent(ctx, response);
   } catch (e) {
-    return ctx.app.errorHandler(e, ctx);
+    return finalizeErrorSent(ctx, await ctx.app.errorHandler(e, ctx), e);
   }
 }

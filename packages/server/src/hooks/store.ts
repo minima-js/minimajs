@@ -5,18 +5,21 @@ import type { Context, OnErrorHook, OnRequestHook, OnSendHook, OnTransformHook }
 import type { ResponseBody } from "../interfaces/response.js";
 
 /**
- * Hook	Direction
- * register	Parent → Child
- * listen	Parent → Child
- * ready	Parent → Child
- * close	Child → Parent
- * request	Parent → Child
- * transform	Parent → Child
- * send	Child → Parent
- * sent	Child → Parent
- * error	Child → Parent
- * errorSent	Child → Parent
- * timeout	Child → Parent
+ * Hook Execution Order and Direction
+ *
+ * Hook         Direction           Order
+ * ────────────────────────────────────────────
+ * register     [Parent → Child]    FIFO (normal)
+ * listen       [Parent → Child]    FIFO (normal)
+ * ready        [Parent → Child]    FIFO (normal)
+ * close        [Child → Parent]    LIFO (reversed)
+ * request      [Parent → Child]    FIFO (normal)
+ * transform    [Parent → Child]    FIFO (normal)
+ * send         [Child → Parent]    LIFO (reversed)
+ * sent         [Child → Parent]    LIFO (reversed)
+ * error        [Child → Parent]    LIFO (reversed)
+ * errorSent    [Child → Parent]    LIFO (reversed)
+ * timeout      [Child → Parent]    LIFO (reversed)
  */
 
 /**
@@ -30,6 +33,8 @@ export const SERVER_HOOKS = ["close", "listen", "ready", "register"] as const;
 export const LIFECYCLE_HOOKS = ["request", "transform", "send", "error", "errorSent", "sent", "timeout"] as const;
 
 export type LifecycleHook = (typeof SERVER_HOOKS)[number] | (typeof LIFECYCLE_HOOKS)[number];
+
+const reversedHooks = new Set<LifecycleHook>(["close", "send", "sent", "error", "errorSent", "timeout"]);
 
 // ============================================================================
 // HookStore Management
@@ -51,15 +56,22 @@ export function createHooksStore(): HookStore {
 
   // Add clone method to make the store clonable
   store.clone = function (): HookStore {
-    const store = {} as HookStore;
+    const clonedStore = {} as HookStore;
+
+    // SERVER_HOOKS are NOT cloned - they're shared globally across all scopes
+    // This is intentional: there's only ONE server instance, so hooks like
+    // close, listen, ready, register should be shared. Later registered hooks
     for (const hook of SERVER_HOOKS) {
-      store[hook] = this[hook];
+      clonedStore[hook] = this[hook];
     }
 
+    // LIFECYCLE_HOOKS are cloned for proper encapsulation
+    // Each child scope gets its own copy for request/response lifecycle hooks
     for (const hook of LIFECYCLE_HOOKS) {
-      store[hook] = new Set(this[hook]);
+      clonedStore[hook] = new Set(this[hook]);
     }
-    return store;
+
+    return clonedStore;
   };
 
   return store;
@@ -88,13 +100,19 @@ export function addHook<S = unknown>(app: App<S>, name: LifecycleHook, callback:
 // Run Hooks
 // ============================================================================
 
-function findHookToRun<T = GenericHookCallback, S = unknown>(app: App<S>, name: LifecycleHook) {
+function findHookToRun<T = GenericHookCallback, S = unknown>(app: App<S>, name: LifecycleHook): T[] {
   const store = app.container.get(kHooks) as HookStore;
-  return store[name] as Set<T>;
+  const hooks = [...store[name]] as T[];
+  if (reversedHooks.has(name)) {
+    return hooks.reverse();
+  }
+  return hooks;
 }
 
 /**
- * Runs all hooks for a given lifecycle event
+ * Runs all hooks for a given lifecycle event with automatic order detection
+ * - Parent → Child hooks run in FIFO order (normal)
+ * - Child → Parent hooks run in LIFO order (reversed)
  */
 export async function runHooks<S = unknown>(app: App<S>, name: LifecycleHook, ...args: any[]): Promise<void> {
   const hooks = findHookToRun(app, name);
@@ -115,32 +133,8 @@ export namespace runHooks {
     }
   }
 
-  export async function safeReversed<S = unknown>(app: App<S>, name: LifecycleHook, ...args: any[]): Promise<void> {
-    const hooks = [...findHookToRun(app, name)].reverse();
-    for (const hook of hooks) {
-      try {
-        await hook(...args);
-      } catch (e) {
-        app.log.child({ hook: name, handler: hook.name || undefined }).error(e);
-      }
-    }
-  }
-
-  /**
-   * Runs all hooks for a given lifecycle event
-   */
-  export async function reversed<S = unknown>(app: App<S>, name: LifecycleHook, ...args: any[]): Promise<void> {
-    const hooks = [...findHookToRun(app, name)].reverse();
-    for (const hook of hooks) {
-      await hook(...args);
-    }
-  }
   export async function request<S = unknown>(app: App<S>, ctx: Context<S>): Promise<void | Response> {
     const hooks = findHookToRun<OnRequestHook<S>, S>(app, "request");
-    if (hooks.size === 0) {
-      return;
-    }
-
     for (const hook of hooks) {
       const response = await hook(ctx);
       if (response instanceof Response) {
@@ -151,10 +145,6 @@ export namespace runHooks {
 
   export async function send<S = unknown>(app: App<S>, serialized: ResponseBody, ctx: Context<S>): Promise<void | Response> {
     const hooks = findHookToRun<OnSendHook<S>, S>(app, "send");
-    if (hooks.size === 0) {
-      return;
-    }
-
     for (const hook of hooks) {
       const response = await hook(serialized, ctx);
       if (response instanceof Response) {
@@ -165,9 +155,6 @@ export namespace runHooks {
 
   export async function transform<S = unknown>(app: App<S>, data: unknown, ctx: Context<S>) {
     const hooks = findHookToRun<OnTransformHook<S>, S>(app, "transform");
-    if (hooks.size === 0) {
-      return data;
-    }
     let result = data;
     for (const hook of hooks) {
       result = await hook(result, ctx);
@@ -176,7 +163,7 @@ export namespace runHooks {
   }
 
   export async function error<S = unknown>(app: App<S>, error: unknown, ctx: Context<S>): Promise<any> {
-    const hooks = [...findHookToRun<OnErrorHook<S>, S>(app, "error")].reverse();
+    const hooks = findHookToRun<OnErrorHook<S>, S>(app, "error");
     let err = error;
     for (const hook of hooks) {
       try {
