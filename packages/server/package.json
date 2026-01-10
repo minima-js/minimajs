@@ -23,7 +23,7 @@
   },
   "scripts": {
     "dev": "tsc -w",
-    "build": "bun run clean && tsc -p ./tsconfig.build.json",
+    "build": "tsc -p ./tsconfig.build.json",
     "test": "bun test --timeout=2000",
     "test:jest": "node --no-warnings --experimental-vm-modules node_modules/.bin/jest --detectOpenHandles",
     "coverage": "bun test --coverage --timeout=2000",

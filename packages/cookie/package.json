@@ -10,7 +10,7 @@
     "dev": "tsc -w",
     "test": "bun test",
     "coverage": "bun test --coverage",
-    "build": "yarn clean && tsc --build",
+    "build": "tsc -p ./tsconfig.build.json",
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "devDependencies": {
