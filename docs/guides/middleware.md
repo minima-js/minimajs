@@ -12,10 +12,20 @@ tags:
 In Minima.js, "middleware" refers to code executed during the request lifecycle, such as before your route handler runs. This is achieved by creating **plugins** that register lifecycle **hooks**. This pattern allows for powerful, reusable, and composable middleware.
 
 Middleware is commonly used for:
+
 - Authentication and authorization
 - Logging and metrics
 - Request parsing and validation
 - Adding data to the context
+
+## Quick Reference
+
+- [`plugin()`](#creating-a-middleware-plugin) - Create a middleware plugin
+- [`hook()`](#creating-a-middleware-plugin) - Register lifecycle hooks
+- [`compose.create()`](#applying-middleware) - Create middleware applicator
+- [Applying middleware](#applying-middleware) - Use middleware with modules
+
+---
 
 ## Creating a Middleware Plugin
 
@@ -27,12 +37,15 @@ import { plugin, hook, request } from "@minimajs/server";
 // 1. The middleware is a plugin
 export const loggerPlugin = plugin((app) => {
   // 2. It registers a hook, in this case 'request'
-  app.register(hook("request", () => {
-    const req = request();
-    console.log(`[${req.method}] ${req.url}`);
-  }));
+  app.register(
+    hook("request", () => {
+      const req = request();
+      console.log(`[${req.method}] ${req.url}`);
+    })
+  );
 });
 ```
+
 This middleware plugin will log the HTTP method and URL of every incoming request it's applied to.
 
 ## Applying Middleware
@@ -61,6 +74,7 @@ app.register(homeModuleWithLogger);
 
 await app.listen({ port: 3000 });
 ```
+
 Now, every request that hits a route inside `homeModule` will be logged to the console.
 
 ## Chaining Middleware
@@ -90,15 +104,18 @@ import cors from "cors";
 
 // Wrap the cors Express middleware in a Minima.js plugin
 export const corsPlugin = plugin((app) => {
-  app.register(hook("request", (ctx) => {
-    // This is a simplified example. A full implementation would need to handle
-    // the req, res, and next objects that Express middleware expect.
-    // For many cases, it's better to use or create a native Minima.js plugin.
-    const corsMiddleware = cors();
-    // corsMiddleware(ctx.request, ctx.response, () => {});
-  }));
+  app.register(
+    hook("request", (ctx) => {
+      // This is a simplified example. A full implementation would need to handle
+      // the req, res, and next objects that Express middleware expect.
+      // For many cases, it's better to use or create a native Minima.js plugin.
+      const corsMiddleware = cors();
+      // corsMiddleware(ctx.request, ctx.response, () => {});
+    })
+  );
 });
 ```
+
 > **Note**: Adapting Express middleware can be complex because they rely on the `(req, res, next)` signature, which is different from Minima.js's context-based approach. For common needs like CORS, it is highly recommended to use a native Minima.js plugin like `@minimajs/cors` or create one.
 
 For more details on creating and composing plugins, refer to the **[Plugins & Composition guide](/core-concepts/plugins)**.

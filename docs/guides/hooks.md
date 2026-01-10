@@ -10,7 +10,7 @@ tags:
 
 Hooks in Minima.js allow you to **tap into the application and request lifecycle**, enabling custom behavior at precise points. They are central to extending and customizing your application's behavior.
 
-## Available Hooks
+## Quick Reference
 
 ### Request Lifecycle Hooks
 

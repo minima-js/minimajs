@@ -12,6 +12,17 @@ Routing is the process of defining how your application responds to a client req
 
 In Minima.js, you can define routes using the application instance. Each route has a handler function that is executed when the route is matched.
 
+## Quick Reference
+
+- [`app.get/post/put/delete()`](#basic-routing) - Define routes for HTTP methods
+- [`app.route()`](#basic-routing) - Define routes with advanced options
+- [`params()`](#route-parameters) - Get route parameters
+- [`searchParams()`](#query-parameters) - Get query string parameters
+- [`app.prefix`](#prefix) - Set URL prefix for routes
+- [Route metadata](#route-metadata) - Attach metadata to routes
+
+---
+
 ## Basic Routing
 
 The most basic way to define a route is to use the `app.get()`, `app.post()`, `app.put()`, `app.delete()` methods, which correspond to the respective HTTP methods.
@@ -163,21 +174,16 @@ import { context } from "@minimajs/server";
 const kAuthRequired = Symbol("AuthRequired");
 const kPermissions = Symbol("Permissions");
 
-app.get(
-  "/admin-dashboard",
-  [kAuthRequired, true],
-  [kPermissions, ["admin"]],
-  () => {
-    const routeMetadata = context().route.metadata;
-    const authRequired = routeMetadata.get(kAuthRequired); // true
-    const requiredPermissions = routeMetadata.get(kPermissions); // ["admin"]
+app.get("/admin-dashboard", [kAuthRequired, true], [kPermissions, ["admin"]], () => {
+  const routeMetadata = context().route.metadata;
+  const authRequired = routeMetadata.get(kAuthRequired); // true
+  const requiredPermissions = routeMetadata.get(kPermissions); // ["admin"]
 
-    console.log(`Auth Required: ${authRequired}`);
-    console.log(`Required Permissions: ${requiredPermissions}`);
+  console.log(`Auth Required: ${authRequired}`);
+  console.log(`Required Permissions: ${requiredPermissions}`);
 
-    return { authRequired, requiredPermissions };
-  }
-);
+  return { authRequired, requiredPermissions };
+});
 ```
 
 **Accessing Metadata in a Hook:**

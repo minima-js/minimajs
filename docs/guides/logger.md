@@ -10,6 +10,16 @@ tags:
 
 Minima.js streamlines development by offering a built-in logger powered by Pino. This logger simplifies debugging and monitoring by providing informative messages about your application's execution.
 
+## Quick Reference
+
+- [`logger.info()`](#leveraging-the-built-in-logger) - Log informational messages
+- [`logger.error()`](#logging-errors) - Log errors
+- [`logger.debug()`](#debug-logging) - Log debug information
+- [`logger.warn()`](#warning-logs) - Log warnings
+- [`app.log`](#accessing-logger) - Access logger from app instance
+
+---
+
 **Leveraging the Built-in Logger:**
 
 Here's how to integrate it into your code:
