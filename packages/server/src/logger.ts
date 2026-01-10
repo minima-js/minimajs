@@ -74,3 +74,5 @@ export function mixin(data: Dict<unknown>) {
 export function createLogger(option: LoggerOptions) {
   return pino(merge({ ...loggerOptions, mixin }, option));
 }
+
+export const logger = createLogger({});

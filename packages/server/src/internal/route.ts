@@ -21,6 +21,29 @@ export function applyRouteMetadata<T>(route: RouteConfig<T>, descriptors: RouteM
   }
 }
 
+export function normalizePath(path: string): `/${string}` {
+  // Empty or falsy → root
+  if (!path) return "/";
+
+  // Ensure string
+  let p = path;
+
+  // Add leading slash if missing
+  if (p[0] !== "/") {
+    p = "/" + p;
+  }
+
+  // Collapse multiple slashes: ///a//b → /a/b
+  p = p.replace(/\/{2,}/g, "/");
+
+  // Remove trailing slash except root
+  if (p.length > 1 && p.endsWith("/")) {
+    p = p.slice(0, -1);
+  }
+
+  return p as `/${string}`;
+}
+
 /**
  * Applies prefix to a path, considering exclusions
  */

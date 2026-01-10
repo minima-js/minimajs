@@ -5,6 +5,21 @@ import type { Context, OnErrorHook, OnRequestHook, OnSendHook, OnTransformHook }
 import type { ResponseBody } from "../interfaces/response.js";
 
 /**
+ * Hook	Direction
+ * register	Parent → Child
+ * listen	Parent → Child
+ * ready	Parent → Child
+ * close	Child → Parent
+ * request	Parent → Child
+ * transform	Parent → Child
+ * send	Child → Parent
+ * sent	Child → Parent
+ * error	Child → Parent
+ * errorSent	Child → Parent
+ * timeout	Child → Parent
+ */
+
+/**
  * @internal
  */
 export const SERVER_HOOKS = ["close", "listen", "ready", "register"] as const;
@@ -75,7 +90,7 @@ export function addHook<S = unknown>(app: App<S>, name: LifecycleHook, callback:
 
 function findHookToRun<T = GenericHookCallback, S = unknown>(app: App<S>, name: LifecycleHook) {
   const store = app.container.get(kHooks) as HookStore;
-  return [...store[name]].reverse() as T[];
+  return store[name] as Set<T>;
 }
 
 /**
@@ -99,9 +114,30 @@ export namespace runHooks {
       }
     }
   }
+
+  export async function safeReversed<S = unknown>(app: App<S>, name: LifecycleHook, ...args: any[]): Promise<void> {
+    const hooks = [...findHookToRun(app, name)].reverse();
+    for (const hook of hooks) {
+      try {
+        await hook(...args);
+      } catch (e) {
+        app.log.child({ hook: name, handler: hook.name || undefined }).error(e);
+      }
+    }
+  }
+
+  /**
+   * Runs all hooks for a given lifecycle event
+   */
+  export async function reversed<S = unknown>(app: App<S>, name: LifecycleHook, ...args: any[]): Promise<void> {
+    const hooks = [...findHookToRun(app, name)].reverse();
+    for (const hook of hooks) {
+      await hook(...args);
+    }
+  }
   export async function request<S = unknown>(app: App<S>, ctx: Context<S>): Promise<void | Response> {
     const hooks = findHookToRun<OnRequestHook<S>, S>(app, "request");
-    if (hooks.length === 0) {
+    if (hooks.size === 0) {
       return;
     }
 
@@ -115,7 +151,7 @@ export namespace runHooks {
 
   export async function send<S = unknown>(app: App<S>, serialized: ResponseBody, ctx: Context<S>): Promise<void | Response> {
     const hooks = findHookToRun<OnSendHook<S>, S>(app, "send");
-    if (hooks.length === 0) {
+    if (hooks.size === 0) {
       return;
     }
 
@@ -129,7 +165,7 @@ export namespace runHooks {
 
   export async function transform<S = unknown>(app: App<S>, data: unknown, ctx: Context<S>) {
     const hooks = findHookToRun<OnTransformHook<S>, S>(app, "transform");
-    if (hooks.length === 0) {
+    if (hooks.size === 0) {
       return data;
     }
     let result = data;
@@ -140,7 +176,7 @@ export namespace runHooks {
   }
 
   export async function error<S = unknown>(app: App<S>, error: unknown, ctx: Context<S>): Promise<any> {
-    const hooks = findHookToRun<OnErrorHook<S>, S>(app, "error");
+    const hooks = [...findHookToRun<OnErrorHook<S>, S>(app, "error")].reverse();
     let err = error;
     for (const hook of hooks) {
       try {

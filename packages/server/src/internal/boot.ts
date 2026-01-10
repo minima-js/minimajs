@@ -7,13 +7,14 @@ import type { Plugin, Register, PluginOptions, RegisterOptions } from "../interf
 import { kModuleName, kPlugin } from "../symbols.js";
 
 export const METADATA_SYMBOLS = [kModuleName, kPlugin];
+
 /**
  * Copies all registered metadata from source function to target function
  *
  * This ensures that when wrapping functions, all metadata symbols are preserved.
  * The metadata symbols are defined in METADATA_SYMBOLS registry.
  */
-function copyMetadata<T extends CallableFunction>(source: any, target: T): T {
+export function copyMetadata<T extends CallableFunction>(source: any, target: T): T {
   for (const symbol of METADATA_SYMBOLS) {
     if (symbol in source && source[symbol] !== undefined) {
       (target as any)[symbol] = source[symbol];

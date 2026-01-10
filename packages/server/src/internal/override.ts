@@ -1,12 +1,12 @@
 import { type App, type Container } from "../interfaces/app.js";
-import { kPlugin } from "../symbols.js";
 import { isCallable } from "../utils/callable.js";
+import { plugin } from "./plugins.js";
 
 /**
  * Checks if a value has a clone method
  */
-function isClonable(value: unknown): value is { clone(): unknown } {
-  return value !== null && typeof value === "object" && "clone" in value && isCallable((value as any).clone);
+function cloneable(value: unknown): value is { clone(): unknown } {
+  return isCallable((value as any)?.clone);
 }
 
 /**
@@ -19,7 +19,7 @@ function cloneContainer(container: Container): Container {
       newContainer.set(key, [...value]);
       continue;
     }
-    if (isClonable(value)) {
+    if (cloneable(value)) {
       newContainer.set(key, value.clone());
       continue;
     }
@@ -28,8 +28,11 @@ function cloneContainer(container: Container): Container {
   return newContainer;
 }
 
-export function pluginOverride(app: App, fn: any, options: any) {
-  if (fn[kPlugin]) return app;
+interface Options {
+  prefix?: string;
+}
+export function pluginOverride(app: App, fn: CallableFunction, options: Options = {}) {
+  if (plugin.is(fn)) return app;
   const { $prefix: parentPrefix = "", $prefixExclude: parentExclude = [] } = app as any;
   return Object.create(app, {
     container: {

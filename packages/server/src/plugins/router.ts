@@ -1,3 +1,4 @@
+import { EOL } from "node:os";
 import { hook } from "../hooks/index.js";
 
 export interface RouteLoggerOptions {
@@ -45,6 +46,6 @@ export function routeLogger({ commonPrefix = false, logger }: RouteLoggerOptions
         logger = (routes) => app.log.info(routes);
       }
     }
-    logger(app.router.prettyPrint({ commonPrefix }));
+    logger(EOL.repeat(2) + app.router.prettyPrint({ commonPrefix }));
   });
 }

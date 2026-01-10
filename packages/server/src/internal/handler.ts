@@ -4,7 +4,7 @@ import { type Route } from "../interfaces/route.js";
 import { runHooks, getHooks } from "../hooks/store.js";
 import { wrap } from "./context.js";
 import { type Context } from "../interfaces/context.js";
-import { NotFoundError } from "../error.js";
+import { NotFoundError, RedirectError } from "../error.js";
 import { createResponse } from "./response.js";
 import { result2route } from "./route.js";
 import type { RouteFindResult } from "../interfaces/route.js";
@@ -66,8 +66,10 @@ async function prepare(route: Route | null, ctx: Context): Promise<Response> {
 }
 
 async function handleError(err: unknown, ctx: Context): Promise<Response> {
+  if (err instanceof RedirectError) return err.render(ctx);
   const hooks = getHooks(ctx.app);
   // No app-level error hooks - use default error handler
+  console.log("handling The error", err);
   if (hooks.error.size === 0) {
     return ctx.app.errorHandler(err, ctx);
   }

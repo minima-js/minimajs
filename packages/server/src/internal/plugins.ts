@@ -39,7 +39,11 @@ export function setMeta(fn: Function, { name, skipOverride: shouldSkipOverride }
  * Plugin utilities namespace providing helper functions for creating and composing plugins.
  */
 export namespace plugin {
-  export function isSync(fn: Function): fn is PluginSync {
+  export function is<T extends PluginOptions>(fn: CallableFunction): fn is Plugin<T> {
+    return kPlugin in fn && fn[kPlugin] === true;
+  }
+
+  export function isSync(fn: CallableFunction): fn is PluginSync {
     return kPluginSync in fn;
   }
 
