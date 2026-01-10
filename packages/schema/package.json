@@ -1,6 +1,6 @@
 {
   "name": "@minimajs/schema",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Schema validation powered by Zod for request/response validation with type safety",
   "type": "module",
   "exports": {
