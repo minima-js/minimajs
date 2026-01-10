@@ -1,6 +1,6 @@
 {
   "name": "@minimajs/server",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "High-performance HTTP framework built for node/bun with context-aware request handling and zero boilerplate",
   "type": "module",
   "license": "MIT",
