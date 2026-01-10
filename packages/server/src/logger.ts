@@ -20,6 +20,7 @@ import { pino, type LoggerOptions } from "pino";
 import merge from "deepmerge";
 import { maybeContext } from "./context.js";
 import type { App } from "./interfaces/app.js";
+import { kModulesChain, kModuleName } from "./symbols.js";
 
 export const loggerOptions: LoggerOptions = {
   transport: {
@@ -32,11 +33,16 @@ export const loggerOptions: LoggerOptions = {
   },
 };
 
-function getPluginNames(_server: App): string {
-  return "";
+function getPluginNames(server: App): string {
+  const chain = server.container.get(kModulesChain) as App[];
+  return chain
+    .slice(-3)
+    .map((app) => {
+      return app.container.get(kModuleName) as string;
+    })
+    .filter(Boolean)
+    .join("/");
 }
-
-const kModuleName = Symbol("module name");
 
 function getModuleName() {
   const ctx = maybeContext();

@@ -40,9 +40,13 @@ export const kPluginSync = Symbol.for("minimajs.plugin.sync");
 
 /**
  * Symbol for accessing registered hooks.
- * @internal
  */
 export const kHooks = Symbol.for("minimajs.hooks");
+
+/**
+ * Symbol for maintaining module chain (root -> ... -> child) in container.
+ */
+export const kModulesChain = Symbol.for("minimajs.modules.chain");
 
 /**
  * Symbol for app descriptor metadata.

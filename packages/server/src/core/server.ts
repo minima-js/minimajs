@@ -2,7 +2,7 @@ import Router, { type HTTPVersion } from "find-my-way";
 import { type Avvio } from "avvio";
 import { type Logger } from "pino";
 import type { App, RouteHandler } from "../interfaces/app.js";
-import type { Plugin, PluginOptions, PluginSync, Register, RegisterOptions } from "../interfaces/plugin.js";
+import type { Plugin, Registerable, PluginOptions, PluginSync, Register, RegisterOptions } from "../interfaces/plugin.js";
 import { applyRouteMetadata, applyRoutePrefix } from "../internal/route.js";
 import { createHooksStore, runHooks } from "../hooks/store.js";
 import { serialize, errorHandler } from "../internal/default-handler.js";
@@ -12,7 +12,7 @@ import { plugin as p } from "../internal/plugins.js";
 import type { PrefixOptions, RouteConfig, RouteMetaDescriptor, RouteOptions } from "../interfaces/route.js";
 import { createBoot, wrapPlugin } from "../internal/boot.js";
 import type { AddressInfo, ServerAdapter, ListenOptions } from "../interfaces/server.js";
-import { kAppDescriptor, kHooks } from "../symbols.js";
+import { kAppDescriptor, kHooks, kModulesChain } from "../symbols.js";
 
 export interface ServerOptions {
   prefix: string;
@@ -27,10 +27,16 @@ export class Server<T = any> implements App<T> {
   readonly container = new Map<symbol, unknown>([
     [kHooks, createHooksStore()],
     [kAppDescriptor, []],
+    [kModulesChain, [this]],
   ]);
 
   $prefix: string;
   $prefixExclude: string[];
+
+  $parent: App<T> | null = null;
+
+  $root: App<T> = this;
+
   private boot: Avvio<App>;
 
   public log: Logger;
@@ -43,7 +49,7 @@ export class Server<T = any> implements App<T> {
     opts: ServerOptions
   ) {
     this.log = opts.logger;
-    this.$prefix = opts.prefix || "";
+    this.$prefix = opts.prefix;
     this.$prefixExclude = [];
     this.router = opts.router;
     this.boot = createBoot(this);
@@ -137,7 +143,7 @@ export class Server<T = any> implements App<T> {
   register<T>(plugin: Plugin<PluginOptions<T>>, opts?: T): this;
   register<T>(plugin: PluginSync<T>, opts?: any): this;
   register<T>(plugin: Register<RegisterOptions<T>>, opts?: T): this;
-  register(plugin: Plugin | PluginSync | Register, opts?: any): this {
+  register(plugin: Registerable, opts?: any): this {
     if (p.isSync(plugin)) {
       plugin(this, opts);
       return this;

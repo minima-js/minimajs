@@ -1,6 +1,7 @@
-import { type App, type Container } from "../interfaces/app.js";
+import type { App, Registerable, Container } from "../interfaces/index.js";
 import { isCallable } from "../utils/callable.js";
 import { plugin } from "./plugins.js";
+import { kModuleName, kModulesChain } from "../symbols.js";
 
 /**
  * Checks if a value has a clone method
@@ -30,11 +31,15 @@ function cloneContainer(container: Container): Container {
 
 interface Options {
   prefix?: string;
+  name?: string;
 }
-export function pluginOverride(app: App, fn: CallableFunction, options: Options = {}) {
+
+export function pluginOverride(app: App, fn: Registerable, options: Options = {}): App {
   if (plugin.is(fn)) return app;
-  const { $prefix: parentPrefix = "", $prefixExclude: parentExclude = [] } = app as any;
-  return Object.create(app, {
+
+  const { $prefix: parentPrefix = "", $prefixExclude: parentExclude = [] } = app;
+
+  const child: App = Object.create(app, {
     container: {
       value: cloneContainer(app.container),
     },
@@ -44,5 +49,12 @@ export function pluginOverride(app: App, fn: CallableFunction, options: Options 
     $prefixExclude: {
       value: [...parentExclude],
     },
+    $parent: {
+      value: app,
+    },
   });
+
+  (child.container.get(kModulesChain) as App[])?.push(child);
+  child.container.set(kModuleName, plugin.getName(fn, options));
+  return child;
 }

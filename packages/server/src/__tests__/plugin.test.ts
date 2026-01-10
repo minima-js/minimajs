@@ -5,6 +5,7 @@ import { plugin } from "../internal/plugins.js";
 import { getBody, sleep } from "./helpers/index.js";
 import type { App } from "../interfaces/index.js";
 import { createRequest } from "../mock/request.js";
+import { kModulesChain } from "../symbols.js";
 
 describe("Plugin System", () => {
   let app: Server<any>;
@@ -264,6 +265,40 @@ describe("Plugin System", () => {
 
       // Plugins registered in parent execute sequentially
       expect(order).toEqual(["parent", "child1", "child2"]);
+    });
+
+    test("should maintain module chain across nested plugins", async () => {
+      const chains: App[][] = [];
+
+      const child = async (c: App) => {
+        chains.push(c.container.get(kModulesChain) as App[]);
+      };
+
+      const parent = async (p: App) => {
+        chains.push(p.container.get(kModulesChain) as App[]);
+        p.register(child);
+      };
+
+      chains.push(app.container.get(kModulesChain) as App[]);
+
+      app.register(parent);
+      await app.ready();
+
+      // Expect snapshots: root chain [root], parent chain [root, parent], child chain [root, parent, child]
+      expect(chains.length).toBe(3);
+      const [rootChain, parentChain, childChain] = chains as [App[], App[], App[]];
+
+      expect(rootChain).toHaveLength(1);
+      expect(rootChain[0]).toBe(app);
+
+      expect(parentChain).toHaveLength(2);
+      expect(parentChain[0]).toBe(app);
+      expect(parentChain[1]).not.toBe(app);
+
+      expect(childChain).toHaveLength(3);
+      expect(childChain[0]).toBe(app);
+      expect(childChain[1]).not.toBe(app);
+      expect(childChain[2]).not.toBe(app);
     });
   });
 });
