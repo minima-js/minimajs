@@ -3,8 +3,8 @@ layout: home
 
 hero:
   name: "Minima.js"
-  text: "The Modern Node.js Framework"
-  tagline: Build fast, scalable, and maintainable web applications with a TypeScript-first, context-aware, and minimalist framework.
+  text: "Built from Scratch for Modern Runtimes"
+  tagline: TypeScript-first with pure ESM, Web API standards. Real types, no false assertions.
   image:
     src: /logo.svg
     alt: Minima.js
@@ -17,43 +17,59 @@ hero:
       link: https://github.com/minima-js/minimajs
 
 features:
-  - icon: '🚀'
-    title: 'TypeScript First'
-    details: 'Built entirely in TypeScript, for TypeScript. Enjoy a top-tier developer experience with excellent type safety and autocompletion.'
-  - icon: '✨'
-    title: 'Context over req/res'
-    details: 'Say goodbye to prop drilling! Access request data from anywhere in your code using a modern, AsyncLocalStorage-based context.'
-  - icon: '⚡️'
-    title: 'Modern JavaScript, Today'
-    details: 'Built for the future. Minima.js exclusively uses modern ECMAScript Modules (ESM) and the latest JavaScript features.'
-  - icon: '🧩'
-    title: 'Effortless Integration'
-    details: 'Easily integrate third-party libraries without passing `req` and `res` objects around. The context system makes it a breeze.'
-  - icon: '🛡️'
-    title: 'Best-in-class Tooling'
-    details: 'Comes with robust, built-in support for multipart form data and data validation using `@minimajs/multipart` and `@minimajs/schema`.'
-  - icon: '🎨'
-    title: 'Minimalist and Opinionated'
-    details: 'A "one-rule of doing things" philosophy results in a consistent and predictable codebase with minimal boilerplate.'
-
+  - icon:
+      src: /icon-lightning.svg
+    title: "Built from Scratch"
+    details: "Zero dependencies on legacy frameworks. Pure, optimized code designed for modern runtimes."
+  - icon:
+      src: /icon-bun.svg
+    title: "100% Bun-Native Compatible"
+    details: "First-class Bun support with dedicated imports. Full Node.js compatibility. Same code, different runtime."
+  - icon:
+      src: /icon-globe.svg
+    title: "Web Standards & ESM"
+    details: "Native Request/Response objects and pure ESM modules. No wrappers, no abstractions—just standardized, future-proof APIs."
+  - icon:
+      src: /icon-typescript.svg
+    title: "100% Type Safety"
+    details: "TypeScript-first with zero type assertions. Real generics, and full inference — no 'as any' shortcuts."
+  - icon:
+      src: /icon-context.svg
+    title: "Context-Aware Design"
+    details: "AsyncLocalStorage-based context. Access request data anywhere without prop drilling."
+  - icon:
+      src: /icon-function.svg
+    title: "Function-First Philosophy"
+    details: "Pure functional approach. Plain async functions, composable plugins, zero boilerplate."
 ---
-<div style="height: 1rem;"></div>
 
-## As Easy As It Gets
+## Quick Example
 
-```typescript
-import { createApp, params } from '@minimajs/server';
+::: code-group
+
+```typescript [Bun]
+import { createApp } from "@minimajs/server/bun"; // [!code highlight]
+import { params } from "@minimajs/server";
 
 const app = createApp();
 
-app.get('/:name', () => `Hello, ${params.get('name')}!`);
+app.get("/:name", () => `Hello, ${params.get("name")}!`);
 
 await app.listen({ port: 3000 });
 ```
 
-<div style="height: 2rem;"></div>
+```typescript [Node.js]
+import { createApp } from "@minimajs/server/node"; // [!code highlight]
+import { params } from "@minimajs/server";
 
----
+const app = createApp();
+
+app.get("/:name", () => `Hello, ${params.get("name")}!`);
+
+await app.listen({ port: 3000 });
+```
+
+:::
 
 <div style="height: 2rem;"></div>
 
@@ -63,10 +79,14 @@ await app.listen({ port: 3000 });
       <div class="item grid-1">
         <div class="VPLink no-arrow" href="#">
           <article class="VPFeature">
-            <h2 class="title">Designed for the Modern Developer</h2>
+            <h2 class="title">Why Minima.js?</h2>
             <p class="details">
-              Minima.js is for developers who value performance, type safety, and a modern development experience. We believe that building web applications should be a joy, not a chore. That's why we've designed a framework that is both powerful and easy to use. With Minima.js, you can focus on writing your application's logic, not on boilerplate code.
+              Traditional frameworks carry decades of compatibility baggage and outdated patterns. Minima.js takes a different path: built entirely from scratch for modern JavaScript runtimes, using Web API standards, with zero legacy overhead. The result? Blazing performance, exceptional developer experience, and code that's portable and future-proof.
             </p>
+            <div style="height: 1rem;"></div>
+            <a href="/intro" class="VPButton" role="button" style="background-color: var(--vp-c-brand-1); color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.25rem;">
+              Learn More
+            </a>
           </article>
         </div>
       </div>
@@ -74,11 +94,7 @@ await app.listen({ port: 3000 });
   </div>
 </div>
 
-<div style="height: 2rem;"></div>
-
----
-
-<div style="height: 2rem;"></div>
+<div style="height: 4rem;"></div>
 
 <div class="VPFeatures" style="--vp-features-gap: 2rem; --vp-features-max-items-per-row: 1;">
   <div class="container">
@@ -88,7 +104,7 @@ await app.listen({ port: 3000 });
           <article class="VPFeature">
             <h2 class="title">Join the Community</h2>
             <p class="details">
-              Minima.js is an open-source project, and we welcome contributions from the community. Whether you want to report a bug, suggest a new feature, or contribute to the code, we would love to have you on board. Check out our GitHub repository to get started.
+              Open source and community-driven. Report bugs, suggest features, or contribute code. We'd love to have you on board.
             </p>
             <div style="height: 1rem;"></div>
             <a href="https://github.com/minima-js/minimajs" class="VPButton" role="button" style="background-color: var(--vp-c-brand-1); color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.25rem;">

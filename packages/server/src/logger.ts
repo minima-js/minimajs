@@ -19,8 +19,8 @@
 import { pino, type LoggerOptions } from "pino";
 import merge from "deepmerge";
 import { maybeContext } from "./context.js";
-import type { App, Dict, Request } from "./types.js";
-import { kPluginNameChain, kRequestContext } from "./internal/fastify.js";
+import type { App } from "./interfaces/app.js";
+import { kModulesChain, kModuleName } from "./symbols.js";
 
 export const loggerOptions: LoggerOptions = {
   transport: {
@@ -33,6 +33,33 @@ export const loggerOptions: LoggerOptions = {
   },
 };
 
+function getPluginNames(server: App): string {
+  const chain = server.container.get(kModulesChain) as App[];
+  return chain
+    .slice(-3)
+    .map((app) => {
+      return app.container.get(kModuleName) as string;
+    })
+    .filter(Boolean)
+    .join("/");
+}
+
+function getModuleName() {
+  const ctx = maybeContext();
+  if (!ctx) {
+    return null;
+  }
+  const { route, locals } = ctx;
+  if (!locals.has(kModuleName)) {
+    let name = getPluginNames(ctx.app);
+    const handler = route?.handler.name;
+    if (handler) {
+      name = name + ":" + handler;
+    }
+    locals.set(kModuleName, name);
+  }
+  return locals.get(kModuleName);
+}
 /**
  * Mixin function for Pino logger that enriches log data with module name context.
  * Automatically adds the current module name to log entries if not already present.
@@ -44,34 +71,6 @@ export function mixin(data: Dict<unknown>) {
   }
   data.name = name;
   return data;
-}
-
-function getPluginNames(server: App): string {
-  const plugins = server[kPluginNameChain];
-  if (!plugins) return "";
-  return plugins[0] ?? "";
-}
-function getHandler(req: Request) {
-  return (req as any)[kRequestContext]?.handler.name.replace("bound ", "");
-}
-
-const kModuleName = Symbol("module name");
-
-function getModuleName() {
-  const ctx = maybeContext();
-  if (!ctx) {
-    return null;
-  }
-  const { req, local } = ctx;
-  if (!local.has(kModuleName)) {
-    let name = getPluginNames(req.server);
-    const handler = getHandler(req);
-    if (handler) {
-      name = name + ":" + handler;
-    }
-    local.set(kModuleName, name);
-  }
-  return local.get(kModuleName);
 }
 
 /**

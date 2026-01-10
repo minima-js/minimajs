@@ -3,112 +3,119 @@ title: Middleware
 sidebar_position: 4
 tags:
   - middleware
-  - interceptor
+  - plugins
+  - composition
 ---
 
-# Middleware
+# Middleware with Plugins
 
-Middleware functions are a powerful feature in Minima.js that allow you to execute code before your route handlers. They are commonly used for tasks like:
+In Minima.js, "middleware" refers to code executed during the request lifecycle, such as before your route handler runs. This is achieved by creating **plugins** that register lifecycle **hooks**. This pattern allows for powerful, reusable, and composable middleware.
 
-*   Authentication and authorization
-*   Logging and metrics
-*   Request parsing and validation
-*   Adding data to the context
+Middleware is commonly used for:
 
-In Minima.js, middleware is handled by a function called `interceptor`.
+- Authentication and authorization
+- Logging and metrics
+- Request parsing and validation
+- Adding data to the context
 
-## Creating Middleware
+## Quick Reference
 
-A middleware in Minima.js is an asynchronous function that can perform operations on the request and response.
+- [`plugin()`](#creating-a-middleware-plugin) - Create a middleware plugin
+- [`hook()`](#creating-a-middleware-plugin) - Register lifecycle hooks
+- [`compose.create()`](#applying-middleware) - Create middleware applicator
+- [Applying middleware](#applying-middleware) - Use middleware with modules
 
-Here's an example of a simple logger middleware:
+---
 
-```typescript title="src/middleware/logger.ts"
-import { request } from '@minimajs/server';
+## Creating a Middleware Plugin
 
-export async function logger() {
-  const req = request();
-  console.log(`[${req.method}] ${req.url}`);
-}
+A middleware is simply a plugin that registers a hook (e.g., `request`, `send`). Let's create a simple logger middleware.
+
+```typescript title="src/plugins/logger.ts"
+import { plugin, hook, request } from "@minimajs/server";
+
+// 1. The middleware is a plugin
+export const loggerPlugin = plugin((app) => {
+  // 2. It registers a hook, in this case 'request'
+  app.register(
+    hook("request", () => {
+      const req = request();
+      console.log(`[${req.method}] ${req.url}`);
+    })
+  );
+});
 ```
 
-This middleware logs the HTTP method and URL of every incoming request.
+This middleware plugin will log the HTTP method and URL of every incoming request it's applied to.
 
-## Registering Middleware
+## Applying Middleware
 
-To use a middleware, you need to register it with your application or a specific module using the `interceptor` function.
+To apply one or more middleware plugins to a module, you use the `compose.create()` function. This creates a reusable "applicator" that wraps your module with the specified plugins.
 
-### Global Middleware
+### Applying to a Module
 
-You can register a middleware to be executed for every request in your application.
+Let's apply our `loggerPlugin` to a module.
 
 ```typescript title="src/index.ts"
-import { createApp, interceptor } from '@minimajs/server';
-import { logger } from './middleware/logger';
-import { homeModule } from './home';
+import { createApp, compose, type App } from "@minimajs/server";
+import { loggerPlugin } from "./plugins/logger";
+import { homeModule } from "./home";
 
 const app = createApp();
 
-const globalMiddleware = interceptor([logger]);
+// 1. Create a middleware applicator
+const withLogger = compose.create(loggerPlugin);
 
-app.register(globalMiddleware(homeModule));
+// 2. Apply it to your module
+const homeModuleWithLogger = withLogger(homeModule);
+
+// 3. Register the wrapped module
+app.register(homeModuleWithLogger);
 
 await app.listen({ port: 3000 });
 ```
 
-### Module-Level Middleware
-
-You can also apply middleware to a specific module.
-
-```typescript title="src/user/index.ts"
-import { type App, interceptor } from '@minimajs/server';
-import { authMiddleware } from './middleware/auth';
-
-async function userModule(app: App) {
-  app.get('/', () => 'All users');
-}
-
-export const protectedUserModule = interceptor([authMiddleware], userModule);
-```
-
-Then, in your main application file:
-
-```typescript title="src/index.ts"
-import { createApp } from '@minimajs/server';
-import { protectedUserModule } from './user';
-
-const app = createApp();
-
-app.register(protectedUserModule, { prefix: '/users' });
-
-await app.listen({ port: 3000 });
-```
-
-Now, the `authMiddleware` will be executed for all routes defined in the `userModule`.
+Now, every request that hits a route inside `homeModule` will be logged to the console.
 
 ## Chaining Middleware
 
-The `interceptor` function accepts an array of middleware, allowing you to chain them together. The middleware will be executed in the order they are defined in the array.
+The power of this pattern shines when you chain multiple middleware plugins together. The plugins will be executed in the order they are provided to `compose.create`.
 
 ```typescript
-import { interceptor } from '@minimajs/server';
-import { logger } from './middleware/logger';
-import { authMiddleware } from './middleware/auth';
+import { compose } from "@minimajs/server";
+import { loggerPlugin } from "./plugins/logger";
+import { authPlugin } from "./plugins/auth"; // Assuming you have an auth plugin
 
-const chainedMiddleware = interceptor([logger, authMiddleware]);
+// Creates an applicator that runs auth, then logging
+const withAuthAndLogger = compose.create(authPlugin, loggerPlugin);
+
+// Apply to a module
+const protectedModule = withAuthAndLogger(adminRoutes);
+app.register(protectedModule, { prefix: "/admin" });
 ```
 
 ## Using Express Middleware
 
-Minima.js is compatible with Express middleware. You can use your favorite Express middleware with the `interceptor` function.
+While Minima.js has its own powerful middleware system, you can still leverage the rich ecosystem of Express middleware. You can wrap an Express middleware in a plugin.
 
 ```typescript
-import { interceptor } from '@minimajs/server';
-import * as cors from 'cors';
+import { plugin, hook } from "@minimajs/server";
+import cors from "cors";
 
-const corsMiddleware = cors();
-
-const appModule = interceptor([corsMiddleware], mainModule);
+// Wrap the cors Express middleware in a Minima.js plugin
+export const corsPlugin = plugin((app) => {
+  app.register(
+    hook("request", (ctx) => {
+      // This is a simplified example. A full implementation would need to handle
+      // the req, res, and next objects that Express middleware expect.
+      // For many cases, it's better to use or create a native Minima.js plugin.
+      const corsMiddleware = cors();
+      // corsMiddleware(ctx.request, ctx.response, () => {});
+    })
+  );
+});
 ```
 
-This allows you to leverage the rich ecosystem of Express middleware in your Minima.js applications.
+> **Note**: Adapting Express middleware can be complex because they rely on the `(req, res, next)` signature, which is different from Minima.js's context-based approach. For common needs like CORS, it is highly recommended to use a native Minima.js plugin like `@minimajs/cors` or create one.
+
+For more details on creating and composing plugins, refer to the **[Plugins & Composition guide](/core-concepts/plugins)**.

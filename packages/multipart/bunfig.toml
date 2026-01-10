@@ -1,0 +1,8 @@
+[test]
+root = "src"
+smol = true
+
+# Exclude other packages and parent directories from coverage
+coveragePathIgnorePatterns = [
+  "../**"
+]

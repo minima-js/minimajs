@@ -274,7 +274,5 @@ function seed() {
 let num = 0;
 let str = seed();
 export function generateId() {
-  return num === 255 // eslint-disable-line no-return-assign
-    ? (str = seed()) + HEX[(num = 0)]
-    : str + HEX[++num];
+  return num === 255 ? (str = seed()) + HEX[(num = 0)] : str + HEX[++num];
 }

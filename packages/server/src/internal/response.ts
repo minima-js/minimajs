@@ -1,47 +1,56 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
-import { Readable } from "node:stream";
-import { pipeline } from "node:stream/promises";
-import type { Next, Request, Response } from "../types.js";
-import { isAsyncIterator } from "../utils/iterable.js";
-import { getDecoratedResponse, isResponseDecoratorSkipped } from "../utils/decorators/index.js";
-export type { ResponseDecorator } from "../utils/decorators/index.js";
+import { StatusCodes } from "http-status-codes";
+import type { HeadersInit, ResponseBody } from "../interfaces/response.js";
+import { $context } from "./context.js";
+import { mergeHeaders } from "../utils/headers.js";
+import { runHooks } from "../hooks/store.js";
+import type { Context } from "../interfaces/index.js";
 
-export const ResponseAbort = Symbol("RequestCancelled");
+export type StatusCode = keyof typeof StatusCodes | number;
 
-export function isRequestAbortedError(err: unknown) {
-  if (err instanceof Error && err.cause === ResponseAbort) {
-    return true;
-  }
-  return false;
+/**
+ * Converts a StatusCode (number or named status code) to a numeric status code
+ * @param code - Status code as number or StatusCodes key
+ * @returns Numeric status code
+ */
+export function toStatusCode(code: StatusCode): number {
+  return typeof code === "number" ? code : StatusCodes[code];
 }
 
-export function createAbortController(message: IncomingMessage, response: ServerResponse) {
-  const controller = new AbortController();
-  response.on("close", () => {
-    if (message.destroyed) {
-      controller.abort(ResponseAbort);
-    }
+export function createResponseFromState(data: ResponseBody, { headers, ...options }: ResponseInit): Response {
+  const { responseState: resInit } = $context();
+  if (headers) {
+    mergeHeaders(resInit.headers, new Headers(headers as HeadersInit));
+  }
+
+  return new Response(data, {
+    ...resInit,
+    ...options,
   });
-  return controller;
 }
 
-export function handleResponse(request: Request, response: Response, body: unknown, next: Next): void {
-  if (isResponseDecoratorSkipped(response)) {
-    next(null, body);
-    return;
-  }
-  if (isAsyncIterator(body)) {
-    response.hijack();
-    pipeline(Readable.from(body), response.raw).catch((err) => {
-      if (!request.raw.destroyed) {
-        next(err);
-      }
-    });
-    return;
+export async function createResponse(data: unknown, options: ResponseInit = {}, ctx: Context): Promise<Response> {
+  const { app, responseState } = ctx;
+  // If data is already a Response, return as-is (no header merging)
+  if (data instanceof Response) {
+    return data;
   }
 
-  function onResponse(body: unknown) {
-    next(null, body);
+  // 1. transform hook
+  const transformed = await runHooks.transform(app, data, ctx);
+
+  // 2. serialize
+  const body = await app.serialize(transformed, ctx);
+
+  {
+    // 3. send hook
+    const response = await runHooks.send(app, body, ctx);
+    if (response instanceof Response) return response;
   }
-  getDecoratedResponse(request.server, request, body).then(onResponse).catch(next);
+
+  // 4. Create response with merged headers
+  const { headers, ...responseInit } = options;
+  if (headers) {
+    mergeHeaders(responseState.headers, new Headers(headers as HeadersInit));
+  }
+  return new Response(body, { ...responseState, ...responseInit });
 }

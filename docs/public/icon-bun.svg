@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <linearGradient id="bun-peach" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FBF0DF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F4DCC4;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Bun body (peach colored) -->
+  <ellipse cx="16" cy="18" rx="12" ry="10" fill="url(#bun-peach)" stroke="#D4A574" stroke-width="1.5"/>
+  <!-- Top of bun -->
+  <path d="M8 15 Q8 10 16 9 Q24 10 24 15" fill="url(#bun-peach)" stroke="#D4A574" stroke-width="1.5"/>
+  <!-- Sesame seeds -->
+  <ellipse cx="12" cy="13" rx="1.5" ry="1" fill="#8B6F47"/>
+  <ellipse cx="16" cy="11" rx="1.5" ry="1" fill="#8B6F47"/>
+  <ellipse cx="20" cy="13" rx="1.5" ry="1" fill="#8B6F47"/>
+  <ellipse cx="14" cy="15" rx="1.5" ry="1" fill="#8B6F47"/>
+  <ellipse cx="18" cy="15" rx="1.5" ry="1" fill="#8B6F47"/>
+</svg>

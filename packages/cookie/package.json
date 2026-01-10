@@ -1,36 +1,29 @@
 {
   "name": "@minimajs/cookie",
   "version": "1.1.0",
-  "description": "Type-safe cookie management with validation and schema support",
+  "description": "Type-safe cookie management for Minima.js",
   "type": "module",
   "exports": {
-    ".": "./lib/index.js",
-    "./schema": "./lib/schema.js"
+    ".": "./lib/index.js"
   },
   "scripts": {
     "dev": "tsc -w",
-    "build": "yarn clean && tsc --build",
+    "test": "bun test",
+    "coverage": "bun test --coverage",
+    "build": "tsc -p ./tsconfig.build.json",
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "devDependencies": {
-    "@minimajs/schema": "workspace:*",
+    "@jest/globals": "^30.2.0",
     "@minimajs/server": "workspace:*",
-    "@types/node": "^25.0.3",
-    "fastify": "^5.6.2",
-    "yup": "^1.7.1"
-  },
-  "peerDependencies": {
-    "@minimajs/schema": ">=1.0.0",
-    "@minimajs/server": ">=0.3.0",
-    "yup": ">=1.6.1"
-  },
-  "peerDependenciesMeta": {
-    "@minimajs/schema": {
-      "optional": true
-    }
+    "@types/cookie": "^1.0.0",
+    "@types/node": "^25.0.3"
   },
   "dependencies": {
-    "@fastify/cookie": "^11.0.2"
+    "cookie": "^1.0.2"
+  },
+  "peerDependencies": {
+    "@minimajs/server": ">=0.3.0"
   },
   "files": [
     "lib"

@@ -6,9 +6,10 @@
   "exports": "./lib/index.js",
   "scripts": {
     "dev": "tsc -w",
-    "build": "tsc",
-    "test": "yarn node --no-warnings --experimental-vm-modules $(yarn bin jest)",
-    "coverage": "yarn test --coverage",
+    "build": "tsc -p ./tsconfig.build.json",
+    "test": "bun test",
+    "coverage": "bun test --coverage",
+    "test:jest": "yarn node --no-warnings --experimental-vm-modules $(yarn bin jest)",
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "peerDependencies": {

@@ -2,27 +2,26 @@
   "$schema": "https://turbo.build/schema.json",
   "tasks": {
     "build": {
-      "cache": true,
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        "lib/**"
-      ]
-    },
-    "clean": {
-      "cache": false
-    },
-    "test": {
-      "cache": false
-    },
-    "coverage": {
-      "cache": false
+      "dependsOn": ["clean", "^build"],
+      "outputs": ["lib/**", "*.tsbuildinfo"]
     },
     "dev": {
       "cache": false,
       "persistent": true
     },
-    "lint": {}
+    "test": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "coverage": {
+      "dependsOn": ["build"],
+      "outputs": ["coverage/**"]
+    },
+    "lint": {
+      "dependsOn": ["^build"]
+    },
+    "clean": {
+      "cache": false
+    }
   }
 }

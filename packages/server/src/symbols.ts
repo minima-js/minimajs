@@ -1,0 +1,67 @@
+/**
+ * Symbols used throughout Minima.js framework.
+ *
+ * Provides well-known symbols for internal framework operations and plugin metadata.
+ * Using Symbol.for() allows cross-realm access and debugging.
+ *
+ * @module @minimajs/server/symbols
+ *
+ * @example
+ * ```typescript
+ * import { kPluginName, kPluginSync } from '@minimajs/server/symbols';
+ *
+ * function myPlugin() {
+ *   return {
+ *     [kPluginName]: 'my-plugin',
+ *     [kPluginSync]: true,
+ *     // plugin implementation
+ *   };
+ * }
+ * ```
+ */
+
+/**
+ * Symbol for plugin name metadata.
+ * Used to identify plugins for debugging and error messages.
+ */
+export const kModuleName = Symbol.for("minimajs.module.name");
+
+/**
+ * Symbol to mark plugins that should skip context override.
+ * Used for plugins that need to maintain parent context.
+ */
+export const kPlugin = Symbol.for("minimajs.plugin");
+
+/**
+ * Symbol to mark synchronous plugins.
+ * Used for plugins that don't require async initialization.
+ */
+export const kPluginSync = Symbol.for("minimajs.plugin.sync");
+
+/**
+ * Symbol for accessing registered hooks.
+ */
+export const kHooks = Symbol.for("minimajs.hooks");
+
+/**
+ * Symbol for maintaining module chain (root -> ... -> child) in container.
+ */
+export const kModulesChain = Symbol.for("minimajs.modules.chain");
+
+/**
+ * Symbol for app descriptor metadata.
+ * @internal
+ */
+export const kAppDescriptor = Symbol.for("minimajs.app.descriptor");
+
+/**
+ * Symbol for request body storage in context.
+ * Used by body parser plugin to store parsed body.
+ */
+export const kBody = Symbol.for("minimajs.body");
+
+/**
+ * Symbol to mark requests that should skip body parsing.
+ * Used to opt-out of automatic body parsing for specific routes.
+ */
+export const kBodySkip = Symbol.for("minimajs.body.skip");

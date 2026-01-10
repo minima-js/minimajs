@@ -1,4 +1,4 @@
-import { HttpError, type ErrorResponse, type HttpErrorOptions } from "@minimajs/server/error";
+import { HttpError, type HttpErrorOptions } from "@minimajs/server/error";
 
 /**
  * HTTP error for file upload failures.
@@ -10,9 +10,10 @@ import { HttpError, type ErrorResponse, type HttpErrorOptions } from "@minimajs/
  * throw new UploadError({ message: 'Invalid file type' });
  * ```
  */
-export class UploadError extends HttpError {
-  constructor(response: ErrorResponse, option?: HttpErrorOptions) {
+export class UploadError<R = unknown> extends HttpError<R> {
+  constructor(response: R, option?: HttpErrorOptions) {
     super(response, 422, option);
+    this.name = UploadError.name;
   }
 }
 

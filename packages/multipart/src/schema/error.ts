@@ -1,67 +1,82 @@
-import { ValidationError as ValidationBaseError } from "yup";
-import { ValidationError as BaseError, type HttpErrorOptions } from "@minimajs/server/error";
-import { ok } from "assert";
+import type { z, ZodError } from "zod";
+import { ValidationError as BaseValidationError, type HttpErrorOptions } from "@minimajs/server/error";
 
-interface Params {
-  value: unknown;
-  originalValue: unknown;
-  label: string;
-  path: string;
-  spec: Spec;
-  disableStackTrace: boolean;
-}
-
-interface Spec {
-  strip: boolean;
-  strict: boolean;
-  abortEarly: boolean;
-  recursive: boolean;
-  disableStackTrace: boolean;
-  nullable: boolean;
-  optional: boolean;
-  coerce: boolean;
-}
-
+/**
+ * Extended options for multipart validation errors.
+ */
 export interface ValidatorErrorOptions extends HttpErrorOptions {
-  params?: Params;
-  value?: unknown;
-  path?: string;
-  type?: string;
-  errors?: string[];
-  inner?: ValidationError[];
+  /** Array of Zod validation issues */
+  issues?: z.core.$ZodIssue[];
 }
 
-export interface ValidationError extends ValidatorErrorOptions {}
+function formatMessage(issues: z.core.$ZodIssue[], maxFields = 3): string {
+  if (issues.length === 0) return "Validation failed";
+  if (issues.length === 1) return issues[0]!.message;
 
-export class ValidationError extends BaseError {
-  static createFromYup(base: ValidationBaseError) {
-    const error = new ValidationError(base.message, { base });
-    error.params = base.params as unknown as Params;
-    error.value = base.value;
-    error.path = base.path;
-    error.type = base.type;
-    error.errors = base.errors;
-    error.inner = base.inner.map((x) => ValidationError.createFromYup(x));
-    return error;
+  const topIssues = issues.slice(0, maxFields);
+  const remaining = issues.length - maxFields;
+
+  const fieldMessages = topIssues.map((issue) => {
+    const path = issue.path.length > 0 ? issue.path.join(".") : "value";
+    return `${path} (${issue.message})`;
+  });
+
+  let message = `Validation failed: ${fieldMessages.join(", ")}`;
+  if (remaining > 0) {
+    message += ` and ${remaining} more ${remaining === 1 ? "field" : "fields"}`;
   }
 
-  inner: ValidationError[] = [];
-  name = ValidationError.name;
+  return message;
+}
 
-  constructor(public message: string, extend: ValidatorErrorOptions = {}) {
-    super(message);
-    Object.assign(this, extend);
-    const { base } = extend;
-    if (base && base instanceof Error) {
-      this.cause = base.message;
+/**
+ * Validation error for multipart schema validation.
+ * Extends the base ValidationError with Zod validation context.
+ */
+export class ValidationError extends BaseValidationError {
+  /** Array of Zod validation issues */
+  issues?: z.core.$ZodIssue[];
+
+  /**
+   * Creates a ValidationError from a ZodError.
+   * Preserves the original Zod issues for full context.
+   */
+  static createFromZod(zodError: ZodError): ValidationError {
+    return new ValidationError(formatMessage(zodError.issues), {
+      base: zodError,
+      issues: zodError.issues,
+    });
+  }
+
+  /**
+   * Custom toJSON serializer for ValidationError.
+   * Returns a clean error response with Zod issues.
+   */
+  static toJSON = function toJSON(err: ValidationError): unknown {
+    const response: { message: unknown; issues?: z.core.$ZodIssue[] } = {
+      message: err.response,
+    };
+
+    if (err.issues && err.issues.length > 0) {
+      response.issues = err.issues;
+    }
+
+    return response;
+  };
+
+  constructor(message: string, options: ValidatorErrorOptions = {}) {
+    super(message, options);
+
+    if (options.issues) {
+      this.issues = options.issues;
+    }
+
+    if (options.base instanceof Error) {
+      this.cause = options.base.message;
     }
   }
-}
 
-ValidationError.toJSON = function toJSON(err: unknown) {
-  ok(err instanceof ValidationError);
-  if (err.params?.spec.abortEarly) {
-    return { message: err.response };
+  override toJSON(): unknown {
+    return ValidationError.toJSON(this);
   }
-  return { message: err.response, errors: err.errors };
-};
+}

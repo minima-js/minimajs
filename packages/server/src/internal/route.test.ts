@@ -1,0 +1,230 @@
+import { describe, test, expect } from "@jest/globals";
+import { applyRoutePrefix, applyRouteMetadata, getAppRouteDescriptors, result2route } from "./route.js";
+import type { RouteFindResult, RouteConfig, RouteMetaDescriptor } from "../interfaces/route.js";
+import { kAppDescriptor } from "../symbols.js";
+import type { App, Container } from "../interfaces/app.js";
+
+describe("internal/route", () => {
+  const tag = Symbol("tag");
+  const myKey = Symbol("myKey");
+  const funcKey = Symbol("funcKey");
+  const appKey = Symbol("appKey");
+  const routeKey = Symbol("routeKey");
+  const key1 = Symbol("key1");
+  const key2 = Symbol("key2");
+  const key3 = Symbol("key3");
+
+  describe("getAppRouteDescriptors", () => {
+    test("should return route descriptors from container", () => {
+      const descriptors = [[tag, "value"] as [symbol, string]];
+      const container = new Map() as unknown as Container;
+      container.set(kAppDescriptor, descriptors);
+
+      const result = getAppRouteDescriptors(container);
+      expect(result).toBe(descriptors);
+    });
+  });
+
+  describe("applyRouteMetadata", () => {
+    test("should apply array descriptor to metadata", () => {
+      const metadata = new Map();
+      const container = new Map() as unknown as Container;
+      container.set(kAppDescriptor, []);
+
+      const routeConfig: RouteConfig<unknown> = {
+        app: { container } as unknown as App,
+        metadata,
+        path: "/test",
+        methods: ["GET"],
+        handler: () => "test",
+      };
+
+      const arrayDescriptor: RouteMetaDescriptor<unknown> = [myKey, "myValue"];
+
+      applyRouteMetadata(routeConfig, [arrayDescriptor]);
+
+      expect(metadata.get(myKey)).toBe("myValue");
+    });
+
+    test("should apply function descriptor to route config", () => {
+      const metadata = new Map();
+      const container = new Map() as unknown as Container;
+      container.set(kAppDescriptor, []);
+
+      const routeConfig: RouteConfig<unknown> = {
+        app: { container } as unknown as App,
+        metadata,
+        path: "/test",
+        methods: ["GET"],
+        handler: () => "test",
+      };
+
+      const functionDescriptor: RouteMetaDescriptor<unknown> = (config) => {
+        config.metadata.set(funcKey, "funcValue");
+      };
+
+      applyRouteMetadata(routeConfig, [functionDescriptor]);
+
+      expect(metadata.get(funcKey)).toBe("funcValue");
+    });
+
+    test("should apply both app-level and route-level descriptors", () => {
+      const metadata = new Map();
+      const container = new Map() as unknown as Container;
+      const appDescriptor: RouteMetaDescriptor<unknown> = [appKey, "appValue"];
+      container.set(kAppDescriptor, [appDescriptor]);
+
+      const routeConfig: RouteConfig<unknown> = {
+        app: { container } as unknown as App,
+        metadata,
+        path: "/test",
+        methods: ["GET"],
+        handler: () => "test",
+      };
+
+      const routeDescriptor: RouteMetaDescriptor<unknown> = [routeKey, "routeValue"];
+
+      applyRouteMetadata(routeConfig, [routeDescriptor]);
+
+      expect(metadata.get(appKey)).toBe("appValue");
+      expect(metadata.get(routeKey)).toBe("routeValue");
+    });
+
+    test("should apply mixed array and function descriptors", () => {
+      const metadata = new Map();
+      const container = new Map() as unknown as Container;
+      container.set(kAppDescriptor, []);
+
+      const routeConfig: RouteConfig<unknown> = {
+        app: { container } as unknown as App,
+        metadata,
+        path: "/test",
+        methods: ["GET"],
+        handler: () => "test",
+      };
+
+      const descriptors: RouteMetaDescriptor<unknown>[] = [
+        [key1, "value1"],
+        (config) => config.metadata.set(key2, "value2"),
+        [key3, "value3"],
+      ];
+
+      applyRouteMetadata(routeConfig, descriptors);
+
+      expect(metadata.get(key1)).toBe("value1");
+      expect(metadata.get(key2)).toBe("value2");
+      expect(metadata.get(key3)).toBe("value3");
+    });
+  });
+
+  describe("applyRoutePrefix", () => {
+    test("should apply prefix to path", () => {
+      const result = applyRoutePrefix("/users", "/api", []);
+      expect(result).toBe("/api/users");
+    });
+
+    test("should not apply prefix if path is in exclude list", () => {
+      const result = applyRoutePrefix("/health", "/api", ["/health", "/status"]);
+      expect(result).toBe("/health");
+    });
+
+    test("should not apply prefix if path starts with excluded path", () => {
+      const result = applyRoutePrefix("/health/check", "/api", ["/health"]);
+      expect(result).toBe("/health/check");
+    });
+
+    test("should apply prefix if path is not in exclude list", () => {
+      const result = applyRoutePrefix("/users", "/api", ["/health", "/status"]);
+      expect(result).toBe("/api/users");
+    });
+
+    test("should handle empty prefix", () => {
+      const result = applyRoutePrefix("/users", "", []);
+      expect(result).toBe("/users");
+    });
+
+    test("should handle root path", () => {
+      const result = applyRoutePrefix("/", "/api", []);
+      expect(result).toBe("/api/");
+    });
+
+    test("should exclude exact path match", () => {
+      const result = applyRoutePrefix("/public", "/api", ["/public"]);
+      expect(result).toBe("/public");
+    });
+
+    test("should exclude paths starting with excluded prefix", () => {
+      const result = applyRoutePrefix("/public/assets/image.png", "/api", ["/public"]);
+      expect(result).toBe("/public/assets/image.png");
+    });
+  });
+
+  describe("result2route", () => {
+    test("should convert route find result to route", () => {
+      const handler = () => "test";
+      const metadata = new Map();
+      metadata.set(tag, new Set(["api"]));
+
+      const routeFindResult: RouteFindResult<any> = {
+        params: { id: "123" },
+        handler,
+        searchParams: {},
+        store: {
+          methods: ["GET"],
+          handler,
+          app: {} as any,
+          path: "/users/:id",
+          metadata,
+        },
+      };
+
+      const route = result2route(routeFindResult);
+
+      expect(route.params).toEqual({ id: "123" });
+      expect(route.methods).toEqual(["GET"]);
+      expect(route.handler).toBe(handler);
+      expect(route.path).toBe("/users/:id");
+      expect(route.metadata).toBe(metadata);
+    });
+
+    test("should handle empty params", () => {
+      const handler = () => "test";
+      const metadata = new Map();
+
+      const routeFindResult: RouteFindResult<any> = {
+        params: {},
+        store: {
+          methods: ["POST"],
+          handler,
+          path: "/users",
+          metadata,
+        },
+      } as any;
+
+      const route = result2route(routeFindResult);
+
+      expect(route.params).toEqual({});
+      expect(route.methods).toEqual(["POST"]);
+      expect(route.path).toBe("/users");
+    });
+
+    test("should handle multiple methods", () => {
+      const handler = () => "test";
+      const metadata = new Map();
+
+      const routeFindResult: RouteFindResult<any> = {
+        params: {},
+        store: {
+          methods: ["GET", "POST", "PUT"],
+          handler,
+          path: "/resource",
+          metadata,
+        },
+      } as any;
+
+      const route = result2route(routeFindResult);
+
+      expect(route.methods).toEqual(["GET", "POST", "PUT"]);
+    });
+  });
+});

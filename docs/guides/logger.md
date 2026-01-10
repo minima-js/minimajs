@@ -6,9 +6,19 @@ tags:
   - logger
 ---
 
-# MinimaJS: Integrated Logging with Pino
+# Minima.js: Integrated Logging with Pino
 
-MinimaJS streamlines development by offering a built-in logger powered by Pino. This logger simplifies debugging and monitoring by providing informative messages about your application's execution.
+Minima.js streamlines development by offering a built-in logger powered by Pino. This logger simplifies debugging and monitoring by providing informative messages about your application's execution.
+
+## Quick Reference
+
+- [`logger.info()`](#leveraging-the-built-in-logger) - Log informational messages
+- [`logger.error()`](#logging-errors) - Log errors
+- [`logger.debug()`](#debug-logging) - Log debug information
+- [`logger.warn()`](#warning-logs) - Log warnings
+- [`app.log`](#accessing-logger) - Access logger from app instance
+
+---
 
 **Leveraging the Built-in Logger:**
 
@@ -49,6 +59,6 @@ INFO (serviceModule:serviceHandler): received service request with {"name":"John
 - `(serviceModule:serviceHandler)`: Indicates the source of the log message (&lt;Module Name>:&lt;Handler function>)
 - `received service request with {"name":"John"}`: The actual log message with the interpolated search parameters object.
 
-**Embrace Streamlined Development with MinimaJS's Built-in Logging**
+**Embrace Streamlined Development with Minima.js's Built-in Logging**
 
-By incorporating the built-in Pino logger, MinimaJS empowers you to construct well-instrumented Node.js applications, fostering efficient development and a clear understanding of your application's execution flow.
+By incorporating the built-in Pino logger, Minima.js empowers you to construct well-instrumented Node.js applications, fostering efficient development and a clear understanding of your application's execution flow.

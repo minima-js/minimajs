@@ -1,7 +1,7 @@
-import { createApp, type App } from "../index.js";
-import { createAbortController, ResponseAbort, isRequestAbortedError } from "./response.js";
-import { EventEmitter } from "node:events";
-import { IncomingMessage, ServerResponse } from "node:http";
+import { describe, test, expect, beforeEach, afterEach } from "@jest/globals";
+import { type App } from "../interfaces/app.js";
+import { createApp } from "../bun/index.js";
+import { createRequest } from "../mock/request.js";
 
 describe("internal/response", () => {
   let app: App;
@@ -11,75 +11,37 @@ describe("internal/response", () => {
 
   afterEach(() => app.close());
 
-  describe("createAbortController", () => {
-    test("should abort the controller when response closes and message is destroyed", () => {
-      const mockMessage = new EventEmitter() as IncomingMessage;
-      mockMessage.destroyed = false; // Initially not destroyed
-
-      const mockResponse = new EventEmitter() as ServerResponse;
-
-      const controller = createAbortController(mockMessage, mockResponse);
-
-      expect(controller.signal.aborted).toBe(false);
-
-      // Simulate message being destroyed
-      mockMessage.destroyed = true;
-      // Simulate response closing
-      mockResponse.emit("close");
-
-      expect(controller.signal.aborted).toBe(true);
-      expect(controller.signal.reason).toBe(ResponseAbort);
-    });
-
-    test("should not abort the controller when response closes but message is not destroyed", () => {
-      const mockMessage = new EventEmitter() as IncomingMessage;
-      mockMessage.destroyed = false;
-
-      const mockResponse = new EventEmitter() as ServerResponse;
-
-      const controller = createAbortController(mockMessage, mockResponse);
-
-      expect(controller.signal.aborted).toBe(false);
-
-      // Do NOT simulate message being destroyed
-      // Simulate response closing
-      mockResponse.emit("close");
-
-      expect(controller.signal.aborted).toBe(false);
-    });
-  });
-
   describe("handleResponse", () => {
     test("plain string response", async () => {
       app.get("/", () => {
         return "hello world";
       });
-      const response = await app.inject({ url: "/" });
-      expect(response.body).toBe("hello world");
+      const response = await app.handle(createRequest("/"));
+      expect(await response.text()).toBe("hello world");
     });
 
     test("plain object synchronous response", async () => {
       app.get("/", () => {
         return { message: "hello world" };
       });
-      const response = await app.inject({ url: "/" });
-      expect(response.body).toBe(JSON.stringify({ message: "hello world" }));
+      const response = await app.handle(createRequest("/"));
+      expect(await response.text()).toBe(JSON.stringify({ message: "hello world" }));
     });
 
     test("plain object async  response", async () => {
       app.get("/", async () => {
         return { message: "hello world" };
       });
-      const response = await app.inject({ url: "/" });
-      expect(response.body).toBe(JSON.stringify({ message: "hello world" }));
+      const response = await app.handle(createRequest("/"));
+      expect(await response.text()).toBe(JSON.stringify({ message: "hello world" }));
     });
 
     test("plain object async synchronous response", async () => {
       app.get("/", async () => {
         return { message: "hello world" };
       });
-      const response = await app.inject({ url: "/" });
-      expect(response.body).toBe(JSON.stringify({ message: "hello world" }));
+      const response = await app.handle(createRequest("/"));
+      expect(await response.text()).toBe(JSON.stringify({ message: "hello world" }));
     });
 
     test("async iterator response with error", async () => {
@@ -92,23 +54,61 @@ describe("internal/response", () => {
         return generator();
       });
       try {
-        await app.inject({ url: "/" });
+        await app.handle(createRequest("/"));
       } catch (e) {
         expect(e).toBeInstanceOf(Error);
       }
     });
   });
 
-  describe("isRequestAbortedError", () => {
-    test("should return true for aborted error", () => {
-      const error = new Error("test");
-      (error as any).cause = ResponseAbort;
-      expect(isRequestAbortedError(error)).toBe(true);
+  describe("createResponse", () => {
+    test("should return data as-is if it's already a Response object", async () => {
+      app.get("/response-obj", () => {
+        return new Response("Hello from Response object");
+      });
+
+      const res = await app.handle(createRequest("/response-obj"));
+      expect(await res.text()).toBe("Hello from Response object");
+      expect(res.status).toBe(200);
     });
 
-    test("should return false for other errors", () => {
-      const error = new Error("test");
-      expect(isRequestAbortedError(error)).toBe(false);
+    test("should use Response from send hook if provided", async () => {
+      const { hook } = await import("../hooks/index.js");
+
+      const originalBody = "Original body content";
+      const customResponse = new Response("Intercepted by send hook", { status: 202 });
+
+      app.register(
+        hook("send", async (_body, _ctx) => {
+          return customResponse;
+        })
+      );
+
+      app.get("/test-path", () => originalBody);
+
+      // Mock a context to call createResponse directly
+      const response = await app.handle(createRequest("/test-path"));
+
+      // After context is mocked and createResponse is called, assert on the response
+      expect(response).toEqual(customResponse); // Expect the send hook's response
+      expect(await response?.text()).toBe("Intercepted by send hook");
+      expect(response?.status).toBe(202);
+    });
+
+    test("should merge headers from options", async () => {
+      // Import createResponse directly
+      const { createResponse } = await import("./response.js");
+      app.get("/test-headers", (ctx) => {
+        return createResponse(
+          "OK",
+          {
+            headers: { "X-Custom-Header": "TestValue" },
+          },
+          ctx
+        );
+      });
+      const response = await app.handle(createRequest("/test-headers"));
+      expect(response?.headers.get("X-Custom-Header")).toBe("TestValue");
     });
   });
 });

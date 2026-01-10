@@ -1,29 +1,58 @@
-import { wrap } from "../internal/index.js";
-import type { Request, Response } from "../types.js";
+import { wrap } from "../internal/context.js";
+import { type Context } from "../interfaces/context.js";
 import { createRequest, type MockRequestOptions } from "./request.js";
-import { createResponse } from "./response.js";
+import { kBody } from "../symbols.js";
 
-export type MockContextCallback<T> = (request: Request, response: Response) => T;
+export type MockContextCallback<T, S> = (ctx: Context<S>) => T;
 
 /**
  * Creates a mock context for testing context-based functions.
- * This is a lightweight approach suitable for unit testing individual functions.
- *
- * For integration tests that need full Fastify lifecycle (hooks, decorators, etc.),
- * use mockApp/mockRoute or Fastify's inject method directly instead.
+ * This allows you to test route handlers and context functions in isolation.
  *
  * @example
  * ```ts
+ * import { mockContext } from '@minimajs/server/mock';
+ * import { body, params } from '@minimajs/server';
+ *
  * mockContext(() => {
  *   const user = body();
  *   expect(user.name).toBe("John");
  * }, { body: { name: "John" } });
+ *
+ * mockContext(() => {
+ *   const id = params().id;
+ *   expect(id).toBe("123");
+ * }, { url: '/users/123', params: { id: '123' } });
  * ```
  *
- * @since v0.1.0
+ * @since v0.2.0
  */
-export function mockContext<T>(callback: MockContextCallback<T>, reqOptions: MockRequestOptions = {}): T {
-  const request = createRequest(reqOptions);
-  const response = createResponse({ request: request });
-  return wrap(request, response, () => callback(request, response)) as T;
+export function mockContext<S = unknown, T = void>(
+  callback: MockContextCallback<T, S>,
+  options: MockRequestOptions & { url?: string; params?: Record<string, string> } = {}
+): T {
+  const { params = {}, url = "/", ...reqOptions } = options;
+  const request = createRequest(url, reqOptions);
+  const resInit = { status: 200, headers: new Headers() };
+  const urlObj = new URL(request.url);
+
+  // Create mock context
+  const context: Context<S> = {
+    server: null as any,
+    app: null as any, // Mock app - users should use app.handle for full integration tests
+    url: urlObj,
+    request: request,
+    responseState: resInit,
+    container: new Map(),
+    locals: new Map(),
+    route: (Object.keys(params).length > 0 ? { params, store: { handler: () => {} } } : null) as any,
+    incomingMessage: undefined as any,
+    serverResponse: undefined as any,
+  };
+
+  if (reqOptions.body) {
+    context.locals.set(kBody, reqOptions.body);
+  }
+
+  return wrap(context, () => callback(context));
 }

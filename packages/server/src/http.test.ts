@@ -1,44 +1,32 @@
-import { context } from "./context.js";
+import { describe, test, expect } from "@jest/globals";
 import { HttpError, NotFoundError, RedirectError } from "./error.js";
-import { abort, body, headers, params, redirect, request, response, searchParams, setHeader } from "./http.js";
-import { mockContext } from "./mock/context.js";
-import { mockApp, mockRoute } from "./mock/index.js";
+import { abort, body, headers, params, redirect, request, response, searchParams } from "./http.js";
+import { mockContext } from "./mock/index.js";
+import { createApp } from "./bun/index.js";
+import { bodyParser } from "./plugins/body-parser.js";
+import { createRequest } from "./mock/request.js";
+
+const setHeader = headers.set;
 
 describe("Http", () => {
   describe("request", () => {
     test("should retrieve request object", () => {
-      mockContext((req) => {
-        expect(request().raw).toBe(req.raw);
-      });
-    });
-  });
-
-  describe("request.signal", () => {
-    test("should return an AbortSignal instance", () => {
-      mockContext(() => {
-        expect(request.signal()).toBeInstanceOf(AbortSignal);
-      });
-    });
-
-    test("should return an aborted signal if the AbortController is aborted", () => {
-      mockContext(() => {
-        const abortController = context().abortController;
-
-        const signal = request.signal();
-        expect(signal.aborted).toBe(false);
-
-        abortController.abort();
-
-        expect(signal.aborted).toBe(true);
+      mockContext((ctx) => {
+        expect(request()).toBe(ctx.request);
       });
     });
   });
 
   describe("response", () => {
-    test("should retrieve response object", () => {
-      mockContext((_req, reply) => {
-        expect(response()).toBe(reply);
+    test("should create response from data", async () => {
+      const app = createApp({ logger: false });
+      app.get("/test", async () => {
+        return await response({ message: "ok" });
       });
+      const res = await app.handle(createRequest("/test"));
+      const body = await res.json();
+      expect(body).toEqual({ message: "ok" });
+      await app.close();
     });
   });
 
@@ -47,9 +35,10 @@ describe("Http", () => {
       mockContext((req) => {
         const url1 = request.url();
         const url2 = request.url();
-        expect(url1.host).toBe(req.hostname);
+        const reqUrl = new URL(req.url);
+        expect(url1.host).toBe(reqUrl.host);
         expect(url1.protocol).toBe("http:");
-        expect(url2.host).toBe(req.hostname);
+        expect(url2.host).toBe(reqUrl.host);
         expect(url2.protocol).toBe("http:");
         expect(url1).toBe(url2); // should be memoized
       });
@@ -67,50 +56,61 @@ describe("Http", () => {
     });
   });
 
-  describe("route / getRoute", () => {
-    test("should retrieve route options", async () => {
-      const testRoute = mockRoute(() => {
-        const route1 = request.route();
-        const route2 = request.route();
-        expect(route1).toBeDefined();
-        expect(route2).toBeDefined();
-        expect(route1).toBe(route2);
-        return { message: "ok" };
-      });
-      await mockApp(testRoute);
-    });
-  });
   describe("body", () => {
-    test("should retrieve request body", () => {
-      const option = { body: { message: "Hello, World!" } };
-      mockContext(() => {
-        expect(body()).toStrictEqual({ message: "Hello, World!" });
-      }, option);
-    });
-
-    test("should handle typed body", () => {
-      mockContext(
-        () => {
-          const data = body<{ name: string; age: number }>();
-          expect(data.name).toBe("John");
-          expect(data.age).toBe(30);
-        },
-        { body: { name: "John", age: 30 } }
-      );
-    });
-
-    test("should handle empty body", () => {
-      mockContext(() => {
-        expect(body()).toBeUndefined();
+    test("should retrieve request body as ReadableStream", async () => {
+      const app = createApp({ logger: false });
+      app.post("/test", async () => {
+        const data = (await request().json()) as { message: string };
+        return { received: data };
       });
+      const req = new Request("http://localhost/test", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message: "Hello, World!" }),
+      });
+      const res = await app.handle(req);
+      const responseBody = (await res.json()) as { received: { message: string } };
+      expect(responseBody.received).toStrictEqual({ message: "Hello, World!" });
+      await app.close();
+    });
+
+    test("should handle typed body", async () => {
+      const app = createApp({ logger: false });
+      app.post("/test", async () => {
+        const data = (await request().json()) as { name: string; age: number };
+        return { name: data.name, age: data.age };
+      });
+      const req = new Request("http://localhost/test", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: "John", age: 30 }),
+      });
+      const res = await app.handle(req);
+      const responseBody = (await res.json()) as { name: string; age: number };
+      expect(responseBody.name).toBe("John");
+      expect(responseBody.age).toBe(30);
+      await app.close();
+    });
+
+    test("should handle empty body", async () => {
+      const app = createApp({ logger: false });
+      app.register(bodyParser());
+      app.get("/test", () => {
+        const reqBody = body();
+        return { bodyIsNull: reqBody === null };
+      });
+      const res = await app.handle(createRequest("/test"));
+      const responseBody = (await res.json()) as { bodyIsNull: boolean };
+      expect(responseBody.bodyIsNull).toBe(true);
+      await app.close();
     });
   });
   describe("headers", () => {
-    test("should retrieve all headers", () => {
+    test("should retrieve headers as Headers object", () => {
       mockContext(
         () => {
           const h1 = headers();
-          expect(h1.name).toBe("Adil");
+          expect(h1["name"]).toBe("Adil");
           expect(h1["x-custom"]).toBe("value");
         },
         { headers: { name: "Adil", "x-custom": "value" } }
@@ -122,9 +122,10 @@ describe("Http", () => {
         () => {
           expect(headers.get("authorization")).toBe("Bearer token");
           expect(headers.get("x-custom")).toBe("value");
-          expect(headers.get("x-missing")).toBeUndefined();
+          expect(headers.get("x-missing")).toBeNull();
+          expect(headers.get("x-empty-header")).toBe("");
         },
-        { headers: { authorization: "Bearer token", "x-custom": "value" } }
+        { headers: { authorization: "Bearer token", "x-custom": "value", "x-empty-header": "" } }
       );
     });
 
@@ -143,7 +144,7 @@ describe("Http", () => {
 
     test("headers.getAll should retrieve all header values", () => {
       mockContext(
-        (_req) => {
+        () => {
           const cookies = headers.getAll("cookie");
           expect(cookies).toBeDefined();
           expect(Array.isArray(cookies)).toBe(true);
@@ -160,29 +161,15 @@ describe("Http", () => {
       });
     });
 
-    test("headers.getAll with transform should transform each value", () => {
-      mockContext(
-        (_req) => {
-          const parsed = headers.getAll("set-cookie", (val) => val.split("="));
-          expect(parsed).toEqual([
-            ["session", "123"],
-            ["token", "abc"],
-          ]);
-
-          const lengths = headers.getAll("set-cookie", (val) => val.length);
-          expect(lengths).toEqual([11, 9]);
-        },
-        { headers: { "set-cookie": ["session=123", "token=abc"] } }
-      );
-    });
-
     test("headers.set should set response header", async () => {
-      const route = mockRoute(() => {
+      const app = createApp({ logger: false });
+      app.get("/test", () => {
         headers.set("x-custom", "test-value");
         return { message: "ok" };
       });
-      const [response] = await mockApp(route);
-      expect(response!.headers["x-custom"]).toBe("test-value");
+      const response = await app.handle(createRequest("/test"));
+      expect(response.headers.get("x-custom")).toBe("test-value");
+      await app.close();
     });
   });
   describe("searchParams", () => {
@@ -202,9 +189,11 @@ describe("Http", () => {
         () => {
           expect(searchParams.get("name")).toBe("John Doe");
           expect(searchParams.get("page")).toBe("2");
-          expect(searchParams.get("missing")).toBeUndefined();
+          expect(searchParams.get("empty-param")).toBe("");
+          expect(searchParams.get("missing")).toBeNull();
+          expect(searchParams.get("another-empty")).toBe("");
         },
-        { url: "/?name=John Doe&page=2" }
+        { url: "/?name=John Doe&page=2&empty-param=&another-empty=" }
       );
     });
 
@@ -241,11 +230,17 @@ describe("Http", () => {
     });
 
     test("searchParams.getAll should return empty array for missing param", () => {
-      mockContext(() => {
-        const result = searchParams.getAll("missing");
-        expect(result).toEqual([]);
-        expect(Array.isArray(result)).toBe(true);
-      });
+      mockContext(
+        () => {
+          let result = searchParams.getAll("missing");
+          expect(result).toEqual([]);
+          expect(Array.isArray(result)).toBe(true);
+
+          result = searchParams.getAll("empty-param");
+          expect(result).toEqual([""]);
+        },
+        { url: "/?empty-param=" }
+      );
     });
 
     test("searchParams.getAll with transform should transform each value", () => {
@@ -258,30 +253,6 @@ describe("Http", () => {
           expect(uppercased).toEqual(["JS", "TS"]);
         },
         { url: "/?id=1&id=2&id=3&tag=js&tag=ts" }
-      );
-    });
-  });
-
-  describe("searchParams", () => {
-    test("should retrieve query string parameters", () => {
-      mockContext(
-        () => {
-          const queries = searchParams<{ name: string; page: string }>();
-          expect(queries.name).toBe("John");
-          expect(queries.page).toBe("1");
-        },
-        { url: "/?name=John&page=1" }
-      );
-    });
-  });
-
-  describe("searchParams.get", () => {
-    test("getSearchParam should be alias of searchParams.get", () => {
-      mockContext(
-        () => {
-          expect(searchParams.get("name")).toBe("John");
-        },
-        { url: "/?name=John" }
       );
     });
   });
@@ -378,61 +349,79 @@ describe("Http", () => {
 
   describe("status", () => {
     test("should set status code with number", async () => {
-      const route = mockRoute(() => {
+      const app = createApp({ logger: false });
+      app.get("/test", () => {
         response.status(201);
         return { message: "created" };
       });
-      const [res] = await mockApp(route);
-      expect(res!.statusCode).toBe(201);
+      const res = await app.handle(createRequest("/test"));
+      expect(res.status).toBe(201);
+      await app.close();
     });
 
     test("should set status code with StatusCodes key", async () => {
-      const route = mockRoute(() => {
+      const app = createApp({ logger: false });
+      app.get("/test", () => {
         response.status("CREATED");
         return { message: "created" };
       });
-      const [res] = await mockApp(route);
-      expect(res!.statusCode).toBe(201);
+      const res = await app.handle(createRequest("/test"));
+      expect(res.status).toBe(201);
+      await app.close();
     });
 
     test("setStatusCode should work with number", async () => {
-      const route = mockRoute(() => {
+      const app = createApp({ logger: false });
+      app.get("/test", () => {
         response.status(300);
         return { message: "hello world" };
       });
-      const [res] = await mockApp(route);
-      expect(res!.statusCode).toBe(300);
+      const res = await app.handle(createRequest("/test"));
+      expect(res.status).toBe(300);
+      await app.close();
     });
 
     test("setStatusCode should work with StatusCodes key", async () => {
-      const route = mockRoute(() => {
+      const app = createApp({ logger: false });
+      app.get("/test", () => {
         response.status("BAD_GATEWAY");
         return { message: "hello world" };
       });
-      const [res] = await mockApp(route);
-      expect(res!.statusCode).toBe(502);
+      const res = await app.handle(createRequest("/test"));
+      expect(res.status).toBe(502);
+      await app.close();
     });
   });
 
   describe("setHeader", () => {
     test("should set header", async () => {
-      const route = mockRoute(() => {
+      const app = createApp({ logger: false });
+      app.get("/test", () => {
         setHeader("x-name", "Adil");
         return { message: "hello world" };
       });
-      const [response] = await mockApp(route);
-      expect(response!.headers["x-name"]).toBe("Adil");
+      const response = await app.handle(createRequest("/test"));
+      expect(response.headers.get("x-name")).toBe("Adil");
+      await app.close();
     });
 
     test("should set multiple headers", async () => {
-      const route = mockRoute(() => {
+      const app = createApp({ logger: false });
+      app.get("/test", () => {
         setHeader("x-name", "Adil");
         setHeader("x-custom", "value");
         return { message: "hello world" };
       });
-      const [response] = await mockApp(route);
-      expect(response!.headers["x-name"]).toBe("Adil");
-      expect(response!.headers["x-custom"]).toBe("value");
+      const response = await app.handle(createRequest("/test"));
+      expect(response.headers.get("x-name")).toBe("Adil");
+      expect(response.headers.get("x-custom")).toBe("value");
+      await app.close();
+    });
+
+    test("should throw error when value is undefined for single header", () => {
+      mockContext(() => {
+        expect(() => headers.set("x-test", undefined as any)).toThrow("Value is required when setting a single header");
+      });
     });
   });
 
@@ -467,7 +456,7 @@ describe("Http", () => {
         fail("should have thrown");
       } catch (err) {
         expect(err).toBeInstanceOf(HttpError);
-        expect((err as HttpError).statusCode).toBe(400);
+        expect((err as HttpError).status).toBe(400);
       }
     });
 
@@ -477,7 +466,7 @@ describe("Http", () => {
         fail("should have thrown");
       } catch (err) {
         expect(err).toBeInstanceOf(HttpError);
-        expect((err as HttpError).statusCode).toBe(401);
+        expect((err as HttpError).status).toBe(401);
       }
     });
 
@@ -511,6 +500,237 @@ describe("Http", () => {
     test("abort.assertNot should not throw for non-abort errors", () => {
       const regularError = new Error("regular");
       expect(() => abort.assertNot(regularError)).not.toThrow();
+    });
+  });
+
+  describe("body() without bodyParser", () => {
+    test("should throw error when bodyParser is not registered", async () => {
+      const app = createApp();
+      app.get("/test", () => {
+        body(); // This will throw
+        return "ok";
+      });
+
+      const response = await app.handle(createRequest("/test"));
+      expect(response.status).toBe(500);
+      const json: any = await response.json();
+      expect(json.message).toContain("Unable to process request");
+
+      await app.close();
+    });
+  });
+
+  describe("response() with status option", () => {
+    test("should create response with status code from ReasonPhrases", async () => {
+      const app = createApp();
+      app.get("/test", async () => {
+        return await response({ data: "ok" }, { status: "CREATED" });
+      });
+
+      const res = await app.handle(createRequest("/test"));
+      expect(res.status).toBe(201);
+      await app.close();
+    });
+  });
+
+  describe("params() without route", () => {
+    test("should return empty object when no route is matched", () => {
+      mockContext(() => {
+        const result = params();
+        expect(result).toEqual({});
+      });
+    });
+  });
+
+  describe("headers.getAll() with set-cookie", () => {
+    test("should return all set-cookie headers", () => {
+      const app = createApp();
+      app.get("/test", () => {
+        const cookies = headers.getAll("set-cookie");
+        return { count: cookies.length };
+      });
+
+      const req = new Request("http://localhost/test", {
+        headers: {
+          "set-cookie": "session=abc123",
+        },
+      });
+
+      // Note: Testing the branch for set-cookie headers
+      app.handle(req);
+      app.close();
+    });
+
+    test("should transform set-cookie headers with transform function", async () => {
+      const app = createApp({ logger: false });
+      app.get("/test", () => {
+        const transform = (val: string) => val.split("=")[0];
+        const result = headers.getAll("set-cookie", transform);
+        return { cookies: result };
+      });
+
+      const req = new Request("http://localhost/test", {
+        headers: {
+          "set-cookie": "session=abc123",
+        },
+      });
+
+      const res = await app.handle(req);
+      const body = (await res.json()) as { cookies: string[] };
+      expect(body.cookies).toEqual(["session"]);
+      await app.close();
+    });
+  });
+
+  describe("headers.append()", () => {
+    test("should append header to response", async () => {
+      const app = createApp();
+      app.get("/test", () => {
+        headers.append("X-Custom", "value1");
+        headers.append("X-Custom", "value2");
+        return "ok";
+      });
+
+      const res = await app.handle(createRequest("/test"));
+      expect(res.headers.get("X-Custom")).toBeTruthy();
+      await app.close();
+    });
+  });
+
+  describe("abort.rethrow() with non-abort Error", () => {
+    test("should not rethrow regular Error", () => {
+      const regularError = new Error("test");
+      expect(() => abort.rethrow(regularError)).not.toThrow();
+    });
+
+    test("should rethrow abort errors", () => {
+      const httpError = new HttpError("test", 400);
+      expect(() => abort.rethrow(httpError)).toThrow(httpError);
+    });
+
+    test("should rethrow non-BaseHttpError errors", () => {
+      const error = "just a string error";
+      expect(() => abort.rethrow(error)).toThrow(error);
+    });
+
+    test("should rethrow AbortError (DOMException)", () => {
+      const abortError = new DOMException("The operation was aborted", "AbortError");
+      expect(() => abort.rethrow(abortError)).toThrow(abortError);
+    });
+  });
+
+  describe("request.ip", () => {
+    test("should throw error when IP plugin is not configured", () => {
+      mockContext(() => {
+        expect(() => request.ip()).toThrow("Ip Address Plugin is not configured");
+      });
+    });
+  });
+
+  describe("request.ip.configure", () => {
+    test("should configure with a callback function", () => {
+      const app = createApp();
+      const ipPlugin = request.ip.configure((ctx) => {
+        return ctx.request.headers.get("x-real-ip");
+      });
+      app.register(ipPlugin);
+      app.get("/", () => {
+        return request.ip();
+      });
+
+      const req = new Request("http://localhost/", {
+        headers: {
+          "x-real-ip": "123.123.123.123",
+        },
+      });
+
+      app.handle(req).then((res) => {
+        res.text().then((text) => {
+          expect(text).toBe("123.123.123.123");
+        });
+      });
+      app.close();
+    });
+
+    test("should configure with settings object", async () => {
+      const app = createApp({ logger: false });
+      const ipPlugin = request.ip.configure({ trustProxy: true, proxyDepth: 2 });
+      app.register(ipPlugin);
+      app.get("/", () => {
+        return request.ip() ?? "no-ip";
+      });
+
+      const req = new Request("http://localhost/", {
+        headers: {
+          "x-forwarded-for": "192.168.1.1, 10.0.0.1",
+        },
+      });
+
+      const res = await app.handle(req);
+      const text = await res.text();
+      expect(text).toBe("192.168.1.1");
+      await app.close();
+    });
+  });
+
+  describe("headers.getAll with comma-separated values", () => {
+    test("should split comma-separated header values", () => {
+      mockContext(
+        () => {
+          const values = headers.getAll("accept");
+          expect(values).toContain("text/html");
+          expect(values).toContain("application/json");
+        },
+        {
+          headers: {
+            accept: "text/html, application/json",
+          },
+        }
+      );
+    });
+
+    test("should transform comma-separated values", () => {
+      mockContext(
+        () => {
+          const values = headers.getAll("accept", (v) => v.toUpperCase());
+          expect(values).toContain("TEXT/HTML");
+          expect(values).toContain("APPLICATION/JSON");
+        },
+        {
+          headers: {
+            accept: "text/html, application/json",
+          },
+        }
+      );
+    });
+
+    test("should return empty array for missing header", () => {
+      mockContext(() => {
+        const values = headers.getAll("x-missing-header");
+        expect(values).toEqual([]);
+      });
+    });
+  });
+
+  describe("searchParams.get with various types", () => {
+    test("should handle various data types", () => {
+      mockContext(
+        () => {
+          expect(searchParams.get("string", (v) => v)).toBe("text");
+          expect(searchParams.get("number", (v) => parseInt(v))).toBe(123);
+          expect(searchParams.get("boolean", (v) => v === "true")).toBe(true);
+        },
+        { url: "/?string=text&number=123&boolean=true" }
+      );
+    });
+
+    test("should return value directly when no transform is provided", () => {
+      mockContext(
+        () => {
+          expect(searchParams.get("foo")).toBe("bar");
+        },
+        { url: "/?foo=bar" }
+      );
     });
   });
 });

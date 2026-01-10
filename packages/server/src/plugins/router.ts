@@ -1,5 +1,5 @@
-import chalk from "chalk";
-import { plugin } from "../internal/plugins.js";
+import { EOL } from "node:os";
+import { hook } from "../hooks/index.js";
 
 export interface RouteLoggerOptions {
   /** Custom logger function to output routes. Defaults to console.log with magenta color */
@@ -8,13 +8,7 @@ export interface RouteLoggerOptions {
   commonPrefix?: boolean;
 }
 
-function defaultLogger(routes: string) {
-  console.log(chalk.magenta(routes));
-}
-
 /**
- * Creates a Fastify plugin that logs all registered routes when the server is ready.
- *
  * Displays a formatted tree of all routes with their HTTP methods and paths.
  * Useful for debugging and understanding the application's route structure during development.
  *
@@ -22,7 +16,6 @@ function defaultLogger(routes: string) {
  * @param options.logger - Custom logger function (default: console.log with magenta color)
  * @param options.commonPrefix - Whether to remove common prefix from routes (default: false)
  *
- * @returns A Fastify plugin that logs routes on server ready
  *
  * @example
  * ```typescript
@@ -40,14 +33,19 @@ function defaultLogger(routes: string) {
  * }));
  *
  * // With common prefix removed
- * app.register(routeLogger({ commonPrefix: false }));
+ * app.register(routeLogger({ commonPrefix: false  }));
  * ```
  */
-export function routeLogger({ commonPrefix = false, logger = defaultLogger }: RouteLoggerOptions = {}) {
-  return plugin.sync(function logRoute(app) {
-    function logRoutes() {
-      logger(app.printRoutes({ commonPrefix }));
+export function routeLogger({ commonPrefix = false, logger }: RouteLoggerOptions = {}) {
+  return hook("ready", async (app) => {
+    if (!logger) {
+      try {
+        const { default: chalk } = await import("chalk");
+        logger = (routes) => app.log.info(chalk.magenta(routes));
+      } catch {
+        logger = (routes) => app.log.info(routes);
+      }
     }
-    app.addHook("onReady", logRoutes);
+    logger(EOL.repeat(2) + app.router.prettyPrint({ commonPrefix }));
   });
 }

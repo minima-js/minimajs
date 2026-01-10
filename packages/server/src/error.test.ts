@@ -1,7 +1,9 @@
-import { ForbiddenError, HttpError, NotFoundError, ValidationError } from "./error.js";
-import { createApp, redirect } from "./index.js";
-import { mockApp, mockRoute } from "./mock/index.js";
-import type { App } from "./types.js";
+import { test, beforeEach, afterEach, describe, expect } from "@jest/globals";
+import { HttpError, NotFoundError, ValidationError } from "./error.js";
+import { redirect } from "./index.js";
+import { createApp } from "./bun/index.js";
+import type { App } from "./interfaces/app.js";
+import { createRequest } from "./mock/request.js";
 
 let app: App;
 
@@ -9,47 +11,45 @@ beforeEach(() => {
   app = createApp({ logger: false });
 });
 
-afterEach(() => {
-  return app.close();
-});
+afterEach(() => app.close());
 
 describe("error module", () => {
   describe("errorHandler", () => {
-    it("should not found", async () => {
-      const response = await app.inject({
-        path: "/hello",
-      });
-      expect(response.statusCode).toBe(404);
-      expect(response.body).toEqual(JSON.stringify({ message: "Route GET /hello not found" }));
+    test("should not found", async () => {
+      const response = await app.handle(createRequest("/hello"));
+      expect(response.status).toBe(404);
+      const body = await response.text();
+      expect(body).toEqual(JSON.stringify({ message: "Route GET /hello not found" }));
     });
 
-    it("should handle non-base http error", async () => {
+    test("should handle non-base http error", async () => {
       app.get("/", () => {
         throw new Error("Something went wrong");
       });
-      const response = await app.inject({ path: "/" });
-      expect(response.statusCode).toBe(500);
-      expect(response.body).toBe(JSON.stringify({ message: "Unable to process request" }));
+      const response = await app.handle(createRequest("/"));
+      expect(response.status).toBe(500);
+      const body = await response.text();
+      expect(body).toBe(JSON.stringify({ message: "Unable to process request" }));
     });
   });
 
   describe("HttpError", () => {
-    it("should create an HttpError from an error", () => {
+    test("should create an HttpError from an error", () => {
       const error = new Error("Test error");
       const httpError = HttpError.create(error);
       expect(httpError).toBeInstanceOf(HttpError);
-      expect(httpError.statusCode).toBe(500);
+      expect(httpError.status).toBe(500);
       expect(httpError.response).toBe("Unable to process request");
     });
 
-    it("should create an HttpError from a non-error", () => {
+    test("should create an HttpError from a non-error", () => {
       const httpError = HttpError.create("Test error");
       expect(httpError).toBeInstanceOf(HttpError);
-      expect(httpError.statusCode).toBe(500);
+      expect(httpError.status).toBe(500);
       expect(httpError.message).toBe("Unable to process request");
     });
 
-    it("should assign options properties to the instance", () => {
+    test("should assign options properties to the instance", () => {
       const customError = new Error("Custom Base Error");
       const httpError = new HttpError("Test Response", 400, {
         code: "CUSTOM_CODE",
@@ -59,121 +59,82 @@ describe("error module", () => {
       expect(httpError.base).toBe(customError);
     });
 
-    it("should handle non-string response", () => {
+    test("should handle non-string response", () => {
       const error = new HttpError({ a: 1 }, 400);
       expect(error.toJSON()).toEqual({ a: 1 });
     });
 
-    it("should handle status code as string", () => {
+    test("should handle status code as string", () => {
       const error = new HttpError("An error occurred", "BAD_REQUEST");
-      expect(error.statusCode).toBe(400);
+      expect(error.status).toBe(400);
     });
   });
 
   describe("RedirectError", () => {
-    it("should redirect to world when comes to hello temporary", async () => {
+    test("should redirect to world when comes to hello temporary", async () => {
       app.get("/hello", () => {
         redirect("/world");
       });
 
-      const response = await app.inject({ path: "/hello" });
-      expect(response.statusCode).toBe(302);
-      expect(response.headers.location).toBe("/world");
+      const response = await app.handle(createRequest("/hello"));
+      expect(response.status).toBe(302);
+      expect(response.headers.get("location")).toBe("/world");
     });
 
-    it("should redirect to world when comes to hello permanent", async () => {
+    test("should redirect to world when comes to hello permanent", async () => {
       app.get("/hello", () => {
         redirect("/world", true);
       });
-      const response = await app.inject({
-        method: "GET",
-        path: "/hello",
-      });
-      expect(response.statusCode).toBe(301);
-      expect(response.headers.location).toBe("/world");
+      const response = await app.handle(createRequest("/hello"));
+      expect(response.status).toBe(301);
+      expect(response.headers.get("location")).toBe("/world");
     });
   });
 
   describe("NotFoundError", () => {
-    it("should test not found error", async () => {
-      const notFoundRoute = mockRoute(
-        () => {
-          throw new NotFoundError();
-        },
-        { url: "/404" }
-      );
-      const [res] = await mockApp(notFoundRoute);
-      expect(res?.statusCode).toBe(404);
-      expect(res?.body).toStrictEqual({ message: "Route GET /404 not found" });
+    test("should test not found error", async () => {
+      app.get("/404", () => {
+        throw new NotFoundError();
+      });
+      const res = await app.handle(createRequest("/404"));
+      expect(res.status).toBe(404);
+      const body = JSON.parse(await res.text());
+      expect(body).toStrictEqual({ message: "Route GET /404 not found" });
     });
 
-    it("should test not found error with custom message", async () => {
-      const notFoundRoute = mockRoute(
-        () => {
-          throw new NotFoundError("Custom not found message");
-        },
-        { url: "/404" }
-      );
-      const [res] = await mockApp(notFoundRoute);
-      expect(res?.statusCode).toBe(404);
-      expect(res?.body).toStrictEqual({
+    test("should test not found error with custom message", async () => {
+      app.get("/404", () => {
+        throw new NotFoundError("Custom not found message");
+      });
+      const res = await app.handle(createRequest("/404"));
+      expect(res.status).toBe(404);
+      const body = JSON.parse(await res.text());
+      expect(body).toStrictEqual({
         message: "Custom not found message",
       });
     });
   });
 
   describe("ValidationError", () => {
-    it("should test validation error", async () => {
-      const validationError = mockRoute(
-        () => {
-          throw new ValidationError();
-        },
-        { url: "/validation" }
-      );
-      const [res] = await mockApp(validationError);
-      expect(res?.statusCode).toBe(400);
-      expect(res?.body).toStrictEqual({ message: "Validation failed" });
-    });
-
-    it("should test validation error with custom message", async () => {
-      const validationError = mockRoute(
-        () => {
-          throw new ValidationError("Custom validation message");
-        },
-        { url: "/validation" }
-      );
-      const [res] = await mockApp(validationError);
-      expect(res?.statusCode).toBe(400);
-      expect(res?.body).toStrictEqual({
-        message: "Custom validation message",
+    test("should test validation error", async () => {
+      app.get("/validation", () => {
+        throw new ValidationError();
       });
-    });
-  });
-
-  describe("ForbiddenError", () => {
-    it("should test forbidden error", async () => {
-      const forbiddenError = mockRoute(
-        () => {
-          throw new ForbiddenError();
-        },
-        { url: "/forbidden" }
-      );
-      const [res] = await mockApp(forbiddenError);
-      expect(res?.statusCode).toBe(403);
-      expect(res?.body).toStrictEqual({ message: "Forbidden" });
+      const res = await app.handle(createRequest("/validation"));
+      expect(res.status).toBe(422); // 422 Unprocessable Entity
+      const body = JSON.parse(await res.text());
+      expect(body).toStrictEqual({ message: "Validation failed" });
     });
 
-    it("should test forbidden error with custom message", async () => {
-      const forbiddenError = mockRoute(
-        () => {
-          throw new ForbiddenError("Custom forbidden message");
-        },
-        { url: "/forbidden" }
-      );
-      const [res] = await mockApp(forbiddenError);
-      expect(res?.statusCode).toBe(403);
-      expect(res?.body).toStrictEqual({
-        message: "Custom forbidden message",
+    test("should test validation error with custom message", async () => {
+      app.get("/validation-custom", () => {
+        throw new ValidationError("Custom validation message");
+      });
+      const res = await app.handle(createRequest("/validation-custom"));
+      expect(res.status).toBe(422); // 422 Unprocessable Entity
+      const body = JSON.parse(await res.text());
+      expect(body).toStrictEqual({
+        message: "Custom validation message",
       });
     });
   });

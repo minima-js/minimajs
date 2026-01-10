@@ -1,5 +1,3 @@
-import type { InjectResponse } from "../../mock/index.js";
-
 /**
  * Custom Jest matchers for better test readability
  *
@@ -16,7 +14,6 @@ import type { InjectResponse } from "../../mock/index.js";
 interface CustomMatchers<R = unknown> {
   toHaveStatusCode(expected: number): R;
   toHaveHeader(name: string, value?: string): R;
-  toHaveBody(expected: any): R;
   toBeSuccessResponse(): R;
   toBeErrorResponse(): R;
 }
@@ -31,35 +28,23 @@ declare global {
 
 export function setupCustomMatchers() {
   expect.extend({
-    toHaveStatusCode(
-      response: InjectResponse,
-      expected: number
-    ) {
-      const pass = response.statusCode === expected;
+    toHaveStatusCode(response: Response, expected: number) {
+      const pass = response.status === expected;
       return {
         pass,
         message: () =>
-          pass
-            ? `expected status code not to be ${expected}`
-            : `expected status code ${response.statusCode} to be ${expected}`,
+          pass ? `expected status code not to be ${expected}` : `expected status code ${response.status} to be ${expected}`,
       };
     },
 
-    toHaveHeader(
-      response: InjectResponse,
-      name: string,
-      value?: string
-    ) {
-      const headerValue = response.headers[name];
-      const exists = headerValue !== undefined;
+    toHaveHeader(response: Response, name: string, value?: string) {
+      const headerValue = response.headers.get(name);
+      const exists = headerValue !== null;
 
       if (value === undefined) {
         return {
           pass: exists,
-          message: () =>
-            exists
-              ? `expected header "${name}" not to exist`
-              : `expected header "${name}" to exist`,
+          message: () => (exists ? `expected header "${name}" not to exist` : `expected header "${name}" to exist`),
         };
       }
 
@@ -73,36 +58,25 @@ export function setupCustomMatchers() {
       };
     },
 
-    toHaveBody(response: InjectResponse, expected: any) {
-      const pass = JSON.stringify(response.body) === JSON.stringify(expected);
+    toBeSuccessResponse(response: Response) {
+      const pass = response.status >= 200 && response.status < 300;
       return {
         pass,
         message: () =>
           pass
-            ? `expected body not to match`
-            : `expected body to match\nExpected: ${JSON.stringify(expected, null, 2)}\nReceived: ${JSON.stringify(response.body, null, 2)}`,
+            ? `expected status code ${response.status} not to be a success code (2xx)`
+            : `expected status code ${response.status} to be a success code (2xx)`,
       };
     },
 
-    toBeSuccessResponse(response: InjectResponse) {
-      const pass = response.statusCode >= 200 && response.statusCode < 300;
+    toBeErrorResponse(response: Response) {
+      const pass = response.status >= 400;
       return {
         pass,
         message: () =>
           pass
-            ? `expected status code ${response.statusCode} not to be a success code (2xx)`
-            : `expected status code ${response.statusCode} to be a success code (2xx)`,
-      };
-    },
-
-    toBeErrorResponse(response: InjectResponse) {
-      const pass = response.statusCode >= 400;
-      return {
-        pass,
-        message: () =>
-          pass
-            ? `expected status code ${response.statusCode} not to be an error code (4xx/5xx)`
-            : `expected status code ${response.statusCode} to be an error code (4xx/5xx)`,
+            ? `expected status code ${response.status} not to be an error code (4xx/5xx)`
+            : `expected status code ${response.status} to be an error code (4xx/5xx)`,
       };
     },
   });

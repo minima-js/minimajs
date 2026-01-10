@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <linearGradient id="hook-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E74C3C;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#C0392B;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <path d="M6 20s1.5-1.5 5-1.5 6 2.5 10 2.5 5-1.5 5-1.5V5s-1.5 1.5-5 1.5-6-2.5-10-2.5S6 5.5 6 5.5z" fill="url(#hook-gradient)" stroke="#A93226" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="6" y1="29" x2="6" y2="20" stroke="#E74C3C" stroke-width="2" stroke-linecap="round"/>
+</svg>

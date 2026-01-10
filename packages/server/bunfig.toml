@@ -1,0 +1,12 @@
+[test]
+root = "src"
+smol = true
+
+# Exclude files from code coverage reports
+coveragePathIgnorePatterns = [
+  "lib/**",
+  "src/interceptor.ts",
+  "src/__tests__/helpers/**",
+  "src/__tests__/fixtures/**",
+  "src/mock/**",
+]

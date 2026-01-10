@@ -2,203 +2,219 @@
 title: Getting Started
 sidebar_position: 2
 tags:
-  - installation
-  - app
+  - concepts
+  - core
   - tutorial
 ---
 
-# Getting Started: Building a Todo App
+# Getting Started with Minima.js
 
-Welcome to Minima.js! This guide will walk you through the process of building a simple but complete Todo application. By the end of this tutorial, you will have a good understanding of the basic concepts of Minima.js and be able to build your own web applications.
+This guide introduces the core concepts of Minima.js to get you up and running quickly. We'll start with a minimal application and then explore the key features that make the framework powerful and elegant.
 
-## Prerequisites
+## Setup
 
-Before you start, make sure you have the following installed on your machine:
+First, choose your runtime and create a new project directory.
 
-*   [Node.js](https://nodejs.org/) (v18 or higher)
-*   A text editor (we recommend [VS Code](https://code.visualstudio.com/))
-*   A command-line interface (CLI) like Terminal or Command Prompt
-
-## 1. Project Setup
-
-First, let's create a new directory for our project and initialize a new Node.js project.
+**Option 1: Bun (Recommended)**
 
 ```bash
-mkdir minimajs-todo-app
-cd minimajs-todo-app
+mkdir minimajs-app
+cd minimajs-app
+bun init -y
+bun add @minimajs/server
+```
+
+**Option 2: Node.js**
+
+```bash
+mkdir minimajs-app
+cd minimajs-app
 npm init -y
-```
-
-Next, we need to tell Node.js that we are using ECMAScript Modules (ESM). Open your `package.json` file and add the following line:
-
-```json
-{
-  "name": "minimajs-todo-app",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "start": "node src/index.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "module"
-}
-```
-
-## 2. Installation
-
-Now, let's install `@minimajs/server`, the core package for building Minima.js applications.
-
-```bash
 npm install @minimajs/server
 ```
 
-## 3. Creating the Server
+If using Node.js, add `"type": "module"` to your `package.json`.
 
-Create a `src` directory and a file named `index.ts` inside it. This will be the entry point of our application.
+## A Minimal Application
 
-```bash
-mkdir src
-touch src/index.ts
-```
+Create a `src/index.ts` file. Here is a very basic Minima.js application:
 
-Now, let's create a basic server. Open `src/index.ts` and add the following code:
+::: code-group
 
-```typescript title="src/index.ts"
-import { createApp } from '@minimajs/server';
+```typescript [Bun]
+import { createApp } from "@minimajs/server/bun";
+import { params, body } from "@minimajs/server";
 
 const app = createApp();
 
-app.get('/', () => 'Hello, World!');
+// Simple functional route
+app.get("/", () => ({ message: "Hello, World!" }));
 
-await app.listen({ port: 3000 });
+// Demonstrates context-aware access to route parameters
+app.get("/hello/:name", () => {
+  const name = params.get("name");
+  return { message: `Hello, ${name}!` };
+});
 
-console.log('Server listening on http://localhost:3000');
+const { address } = await app.listen({ port: 3000 });
+console.log(`Server listening on ${address}`);
 ```
 
-This code creates a new Minima.js application, defines a single route for the root URL (`/`), and starts the server on port 3000.
-
-## 4. Building the Todo App
-
-Now, let's build the Todo application. We will create a simple in-memory "database" to store our todos and define routes for creating, reading, updating, and deleting todos.
-
-Replace the content of `src/index.ts` with the following code:
-
-```typescript title="src/index.ts"
-import { createApp, body, params } from '@minimajs/server';
+```typescript [Node.js]
+import { createApp } from "@minimajs/server/node";
+import { params, body } from "@minimajs/server";
 
 const app = createApp();
 
-// In-memory "database" for todos
-let todos = [
-  { id: 1, text: 'Learn Minima.js', completed: false },
-  { id: 2, text: 'Build a Todo app', completed: false },
-];
+// Simple functional route
+app.get("/", () => ({ message: "Hello, World!" }));
 
-// GET /todos - Get all todos
-app.get('/todos', () => todos);
-
-// GET /todos/:id - Get a single todo
-app.get('/todos/:id', () => {
-  const { id } = params<{ id: string }>();
-  const todo = todos.find(t => t.id === parseInt(id));
-  return todo || { message: 'Todo not found' };
+// Demonstrates context-aware access to route parameters
+app.get("/hello/:name", () => {
+  const name = params.get("name");
+  return { message: `Hello, ${name}!` };
 });
 
-// POST /todos - Create a new todo
-app.post('/todos', () => {
-  const { text } = body<{ text: string }>();
-  const newTodo = {
-    id: todos.length + 1,
-    text,
-    completed: false,
-  };
-  todos.push(newTodo);
-  return newTodo;
-});
-
-// PUT /todos/:id - Update a todo
-app.put('/todos/:id', () => {
-  const { id } = params<{ id: string }>();
-  const { text, completed } = body<{ text?: string; completed?: boolean }>();
-  const todo = todos.find(t => t.id === parseInt(id));
-
-  if (!todo) {
-    return { message: 'Todo not found' };
-  }
-
-  if (text !== undefined) {
-    todo.text = text;
-  }
-
-  if (completed !== undefined) {
-    todo.completed = completed;
-  }
-
-  return todo;
-});
-
-// DELETE /todos/:id - Delete a todo
-app.delete('/todos/:id', () => {
-  const { id } = params<{ id: string }>();
-  const index = todos.findIndex(t => t.id === parseInt(id));
-
-  if (index === -1) {
-    return { message: 'Todo not found' };
-  }
-
-  todos.splice(index, 1);
-  return { message: 'Todo deleted' };
-});
-
-
-await app.listen({ port: 3000 });
-
-console.log('Server listening on http://localhost:3000');
+const { address } = await app.listen({ port: 3000 });
+console.log(`Server listening on ${address}`);
 ```
 
-## 5. Running the Application
+:::
 
-To run the application, you need a TypeScript runtime like `tsx`. Let's install it.
+This short example already showcases several core concepts we will explore next.
 
-```bash
-npm install -D tsx
+## Core Concepts
+
+### Bun/Node Compatibility
+
+Minima.js is optimized for both runtimes. You select your target by changing the import path:
+
+- `@minimajs/server/bun`: Uses Bun's native, high-performance `Bun.serve()`.
+- `@minimajs/server/node`: Uses Node.js's standard `http.createServer()`.
+- `@minimajs/server`: Defaults to the Node.js runtime.
+
+This provides native performance with zero abstraction overhead.
+
+### Context-Aware Functions
+
+Notice we imported `params` and used it directly in the route handler without it being passed as an argument. This is Minima.js's **context-aware API**, powered by `AsyncLocalStorage`.
+
+It allows you to access request-specific data from anywhere in your application's call stack, leading to cleaner, more readable code. You no longer need to pass `req` or `ctx` objects through layers of functions.
+
+Key context functions include: `request`, `response`, `params`, `body`, `headers`, and `searchParams`.
+For more details, see the [Http Helpers Guide](/guides/http).
+
+### Web-Native APIs (Request, Response)
+
+Minima.js is built on the standard Web APIs, primarily `Request` and `Response`.
+
+You can access the native `Request` object at any time:
+
+```ts
+import { request } from "@minimajs/server";
+
+app.get("/info", () => {
+  const req = request();
+  return { userAgent: req.headers.get("user-agent") };
+});
 ```
 
-Now add a `dev` script to your `package.json`.
+#### Short-Circuiting
 
-```json
-{
-  "scripts": {
-    "start": "node dist/index.js",
-    "dev": "tsx src/index.ts"
-  }
+If you return a `Response` object directly from a handler, Minima.js performs a **short-circuit**. It immediately sends the response, bypassing all subsequent processing (like `transform` hooks and serialization). This is a powerful tool for performance-critical paths.
+
+```ts
+app.get("/fast", () => {
+  // Bypasses everything, sends response immediately
+  return new Response("This is a raw, fast response", {
+    headers: { "Content-Type": "text/plain" },
+  });
+});
+```
+
+### Encapsulation with Modules and Plugins
+
+Minima.js allows you to structure your application into encapsulated [modules](/core-concepts/modules) and [plugins](/core-concepts/plugins). When you register a module with `app.register()`, it creates an isolated scope. Hooks and plugins registered inside a module only affect that module and its children, ensuring clear boundaries and predictable behavior.
+
+```ts
+import { type App, hook } from "@minimajs/server";
+
+async function userModule(app: App) {
+  // This hook is local to userModule ONLY
+  app.register(hook("request", () => console.log("Inside user module")));
+  app.get("/users", () => [
+    /* ... */
+  ]);
 }
+
+const app = createApp();
+// The root app is not affected by userModule's hooks
+app.register(userModule, { prefix: "/api/v1" });
 ```
 
-Now you can run the application in development mode:
+### Lifecycle Hooks
 
-```bash
-npm run dev
+Hooks allow you to tap into any stage of the application or request lifecycle. This is perfect for middleware, logging, authentication, and error handling. For a full overview, see the [Hooks Guide](/guides/hooks).
+
+This example uses a `request` hook to log every incoming request:
+
+```ts
+import { hook } from "@minimajs/server";
+
+app.register(
+  hook("request", ({ request, url }) => {
+    console.log(`[REQ] ${request.method} ${url.pathname}`);
+  })
+);
 ```
 
-You should see the message `Server listening on http://localhost:3000` in your console.
+### Custom Request-Scoped Data (`createContext`)
 
-You can now use a tool like `curl` or Postman to interact with your Todo API:
+For advanced use cases, you can create your own request-scoped context to share data. This is ideal for storing per-request data like trace IDs or user authentication status. For a detailed guide and practical examples, see the [Context Guide](/core-concepts/context).
 
-*   **`GET http://localhost:3000/todos`**: Get all todos.
-*   **`POST http://localhost:3000/todos`** with body `{"text": "My new todo"}`: Create a new todo.
-*   **`PUT http://localhost:3000/todos/1`** with body `{"completed": true}`: Update a todo.
-*   **`DELETE http://localhost:3000/todos/1`**: Delete a todo.
+Here's a basic example:
+
+```ts
+import { createContext } from "@minimajs/server";
+import { randomUUID } from "crypto";
+
+// 1. Create a context with a getter and setter
+const [getTraceId, setTraceId] = createContext<string>("");
+
+// 2. Use a hook to set the context for each request
+app.register(
+  hook("request", async () => {
+    setTraceId(randomUUID());
+  })
+);
+
+// 3. Access the data anywhere in your application
+app.get("/trace-info", () => {
+  const traceId = getTraceId();
+  return { traceId };
+});
+```
+
+### Error Handling
+
+Centralized error handling can be achieved with an `error` hook. This keeps your route handlers clean and focused on the happy path. For a comprehensive guide, see the [Error Handling Guide](/guides/error-handling).
+
+```ts
+import { hook }s from "@minimajs/server";
+
+app.register(
+  hook("error", (error) => {
+    console.error("Caught error:", error.message);
+    // You can return a custom Response or re-throw an HttpError here
+    abort("Something went wrong!", { status: 500 });
+  })
+);
+```
 
 ## Next Steps
 
-Congratulations! You have successfully built your first Minima.js application.
+You now have an overview of the most important concepts in Minima.js. To learn more, explore these resources:
 
-Now that you have a basic understanding of Minima.js, you can explore the following topics to learn more:
-
-*   **[Core Concepts](/core-concepts/architecture)**: Learn about the fundamental architecture of Minima.js.
-*   **[Guides](/guides/routing)**: Dive deeper into specific features like routing, middleware, and error handling.
-*   **[Packages](/packages/auth)**: Discover the additional packages that can help you with authentication, data validation, and more.
+- **[Core Concepts](/core-concepts/architecture)**: Learn about the fundamental architecture.
+- **[Guides](/guides/routing)**: Dive deeper into routing, middleware, and hooks.
+- **[Packages](/packages/auth)**: Discover additional packages for authentication, data validation, and more.

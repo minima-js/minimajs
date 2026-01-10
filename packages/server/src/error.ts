@@ -15,33 +15,22 @@
  * ```
  */
 
-import { StatusCodes } from "http-status-codes";
-import type { Dict, Request, Response } from "./types.js";
-import { isRequestAbortedError } from "./internal/response.js";
-import { getDecoratedError } from "./utils/decorators/index.js";
-import { skipResponseDecorator } from "./utils/decorators/index.js";
-
-export type { ErrorDecorator, DecoratorOptions } from "./utils/decorators/index.js";
+import type { HeadersInit } from "./interfaces/response.js";
+import { toStatusCode, type StatusCode, createResponseFromState } from "./internal/response.js";
+import type { Context } from "./interfaces/context.js";
 
 /**
  * Represents the response body of an HTTP error.
  * Can be either a simple string message or a dictionary object with custom error data.
  */
-export type ErrorResponse = string | Dict;
-
-/**
- * Represents an HTTP status code.
- * Can be either a named status code from the StatusCodes enum or a numeric status code.
- */
-export type StatusCode = keyof typeof StatusCodes | number;
 
 export abstract class BaseHttpError extends Error {
-  abstract statusCode: number;
+  abstract status: number;
   declare code?: string;
   static is(value: unknown): value is BaseHttpError {
     return value instanceof this;
   }
-  abstract render(req: Request, res: Response): void | Promise<void>;
+  abstract render(ctx: Context): Response | Promise<Response>;
 }
 
 export interface HttpErrorOptions extends ErrorOptions {
@@ -49,120 +38,93 @@ export interface HttpErrorOptions extends ErrorOptions {
   code?: string;
   name?: string;
   base?: unknown;
+  headers?: HeadersInit;
 }
 
-export class HttpError extends BaseHttpError {
+export class HttpError<R = unknown> extends BaseHttpError {
   public static toJSON = function toJSON<T extends HttpError = HttpError>(err: T): unknown {
     return typeof err.response === "string" ? { message: err.response } : err.response;
   };
   static is(value: unknown): value is HttpError {
     return value instanceof this;
   }
-  public static create(err: unknown, statusCode = 500) {
+  public static create(err: unknown, status = 500): HttpError<string> {
     if (err instanceof Error) {
-      return new HttpError("Unable to process request", statusCode, {
+      return new HttpError("Unable to process request", status, {
         message: err.message,
         name: err.name,
         base: err,
       });
     }
-    return new HttpError("Unable to process request", statusCode, {
+    return new HttpError("Unable to process request", status, {
       base: err,
     });
   }
-  public statusCode: number;
+  public status: number;
+  public response: R;
   public base?: unknown;
+  public headers?: HeadersInit;
   declare ["constructor"]: typeof HttpError;
-  constructor(public response: ErrorResponse, statusCode: StatusCode, options?: HttpErrorOptions) {
+  constructor(response: R, status: StatusCode, options?: HttpErrorOptions) {
     super(typeof response === "string" ? response : "Unknown error");
+    this.response = response;
+    this.status = toStatusCode(status);
     Object.assign(this, options);
-    if (typeof statusCode !== "number") {
-      this.statusCode = StatusCodes[statusCode];
-    } else {
-      this.statusCode = statusCode;
-    }
   }
 
   public toJSON(): unknown {
     return this.constructor.toJSON(this);
   }
 
-  async render(_: Request, res: Response) {
-    res.status(this.statusCode).send(this.toJSON());
+  async render(ctx: Context): Promise<Response> {
+    return createResponseFromState(await ctx.app.serialize(this.toJSON(), ctx), {
+      status: this.status,
+      headers: this.headers,
+    });
   }
 }
 
-export class NotFoundError extends HttpError {
-  constructor(response: ErrorResponse = "") {
-    super(response, 404);
+export class NotFoundError<R = unknown> extends HttpError<R> {
+  constructor(response: R = "" as R, options?: HttpErrorOptions) {
+    super(response, 404, options);
     this.message = "Page not found";
   }
 
-  render(req: Request, res: Response): Promise<void> {
-    this.response ||= `Route ${req.method} ${req.url} not found`;
-    return super.render(req, res);
+  async render(ctx: Context): Promise<Response> {
+    this.response ||= `Route ${ctx.request.method} ${ctx.url.pathname} not found` as R;
+    return super.render(ctx);
   }
 }
 
 export class RedirectError extends BaseHttpError {
-  public statusCode: number;
-  constructor(public readonly url: string, isPermanent = false) {
+  public status: number;
+  headers?: HeadersInit;
+  constructor(
+    public readonly url: string,
+    isPermanent = false,
+    options?: HttpErrorOptions
+  ) {
     super();
-    this.statusCode = isPermanent ? 301 : 302;
+    this.status = isPermanent ? 301 : 302;
+    Object.assign(this, options);
   }
-  render(_: unknown, res: Response) {
-    res.redirect(this.url, this.statusCode);
+  render({ responseState }: Context): Response {
+    // Merge instance headers with Location header
+    responseState.headers.set("Location", this.url);
+    return createResponseFromState(null, {
+      status: this.status,
+      headers: this.headers,
+    });
   }
 }
 
-export class ValidationError extends HttpError {
+export class ValidationError<R = unknown> extends HttpError<R> {
   public static getStatusCode = function getStatusCode<T extends ValidationError>(_error: T) {
     return 422;
   };
 
-  declare ["constructor"]: typeof ValidationError;
-  constructor(response: ErrorResponse = "Validation failed") {
-    super(response, 400);
-    this.statusCode ??= this.constructor.getStatusCode(this);
+  constructor(response: R = "Validation failed" as R, options?: HttpErrorOptions) {
+    super(response, 422, options);
+    this.status = (this.constructor as typeof ValidationError).getStatusCode(this);
   }
-}
-
-export class ForbiddenError extends HttpError {
-  constructor(response: ErrorResponse = "Forbidden") {
-    super(response, 403);
-  }
-}
-
-/**
- * Global error handler for HTTP requests.
- * Processes errors, applies error decorators, and renders appropriate error responses.
- * Handles request aborted errors silently and converts unknown errors to HTTP errors.
- */
-export async function errorHandler(error: unknown, req: Request, reply: Response) {
-  if (error instanceof RedirectError) {
-    error.render(req, reply);
-    reply.hijack(); // block further response
-    return;
-  }
-  if (isRequestAbortedError(error)) {
-    return;
-  }
-  skipResponseDecorator(reply); // tell response decorator not to re-decorate this response
-  try {
-    const response = await getDecoratedError(req.server, req, error);
-    reply.send(response);
-    reply.hijack(); // block further response
-    return; // terminate here and send body!
-  } catch (err) {
-    error = err;
-  }
-  let handler: BaseHttpError;
-  if (BaseHttpError.is(error)) {
-    handler = error;
-  } else {
-    req.server.log.error(error);
-    handler = HttpError.create(error);
-  }
-  await handler.render(req, reply);
-  reply.hijack(); // block further response
 }

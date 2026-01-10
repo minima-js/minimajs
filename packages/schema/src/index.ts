@@ -1,33 +1,30 @@
-import type { ObjectShape, ValidateOptions } from "yup";
-import { body, headers, request } from "@minimajs/server";
-import { validator, validatorAsync } from "./validation.js";
+import { z } from "zod";
+import { body, headers, searchParams } from "@minimajs/server";
+import { validator, validatorAsync, type ValidationOptions } from "./validation.js";
 
-function getSearchParams() {
-  return request().query;
+export function createBody<T extends z.ZodTypeAny>(schema: T, option?: ValidationOptions) {
+  return validator(schema, body, option);
 }
 
-export function createBody<T extends ObjectShape>(obj: T, option: ValidateOptions = {}) {
-  return validator(obj, body, option);
+export function createBodyAsync<T extends z.ZodTypeAny>(schema: T, option?: ValidationOptions) {
+  return validatorAsync(schema, body, option);
 }
 
-export function createBodyAsync<T extends ObjectShape>(obj: T, option: ValidateOptions = {}) {
-  return validatorAsync(obj, body, option);
+export function createHeaders<T extends z.ZodRawShape>(obj: T, option?: ValidationOptions) {
+  return validator(z.object(obj), headers, option);
 }
 
-export function createHeaders<T extends ObjectShape>(obj: T, option: ValidateOptions = {}) {
-  return validator(obj, headers, option);
+export function createHeadersAsync<T extends z.ZodRawShape>(obj: T, option?: ValidationOptions) {
+  return validatorAsync(z.object(obj), headers, option);
 }
 
-export function createHeadersAsync<T extends ObjectShape>(obj: T, option: ValidateOptions = {}) {
-  return validatorAsync(obj, headers, option);
+export function createSearchParams<T extends z.ZodRawShape>(obj: T, option?: ValidationOptions) {
+  return validator(z.object(obj), searchParams, option);
 }
 
-export function createSearchParams<T extends ObjectShape>(obj: T, option: ValidateOptions = {}) {
-  return validator(obj, getSearchParams, option);
+export function createSearchParamsAsync<T extends z.ZodRawShape>(obj: T, option?: ValidationOptions) {
+  return validatorAsync(z.object(obj), searchParams, option);
 }
 
-export function createSearchParamsAsync<T extends ObjectShape>(obj: T, option: ValidateOptions = {}) {
-  return validatorAsync(obj, getSearchParams, option);
-}
-
-export { ValidationError, type ValidatorErrorOptions, type Params, type Spec } from "./error.js";
+export { ValidationError, type ValidatorErrorOptions } from "./error.js";
+export { type ValidationOptions } from "./validation.js";

@@ -4,32 +4,149 @@ sidebar_position: 1
 title: "Introduction"
 ---
 
-# Minima\.js: Where Efficiency Meets Elegance
+# Introduction to Minima.js
 
-Minima.js is a cutting-edge Node.js framework meticulously designed to empower developers to construct contemporary web applications with exceptional efficiency and elegance.
+Minima.js is a **TypeScript-first, high-performance web framework** built for modern JavaScript runtimes like **Node.js** and **Bun**. It avoids legacy abstractions and framework wrappers in favor of **pure ESM, Web-native APIs, and minimal, explicit primitives —** giving you performance, portability, and clarity without hidden behavior.
 
-**Key Features:**
+### Context Functions
 
-- **TypeScript First:** Minima.js is built entirely in TypeScript, for TypeScript. This means you get a top-tier developer experience with excellent type safety, autocompletion, and a significant reduction in runtime errors.
+Access request data anywhere without passing context—powered by `AsyncLocalStorage`. This allows your functions to be pure and easily testable, pulling request-specific information only when needed.
 
-- **Context over `req`/`res`:** Say goodbye to prop drilling! Minima.js uses modern `AsyncLocalStorage` to provide a global context for each request. You can access request data, headers, and more from anywhere in your code without passing `req` and `res` objects around.
+```typescript
+import { createApp } from "@minimajs/server/node";
+import { params, searchParams, headers, request, abort } from "@minimajs/server";
 
-- **Modern JavaScript, Today:** Minima.js is built for the future. It exclusively uses modern ECMAScript Modules (ESM) and the latest JavaScript features, without being held back by backward compatibility concerns.
+const app = createApp();
 
-- **Effortless Third-Party Integration:** Integrating third-party libraries is a breeze. Since you can access the request context from anywhere, you can easily integrate libraries that don't have direct access to the `req`/`res` objects.
+// Route params - accessible from anywhere within the request context
+app.get("/users/:id", () => {
+  const userId = params.get("id");
+  return { userId };
+});
 
-- **Best-in-class Multipart and Schema Support:** Minima.js comes with robust, built-in support for multipart form data and data validation. The `@minimajs/multipart` and `@minimajs/schema` packages provide a seamless experience for handling file uploads and validating data.
+// Query params with type coercion
+app.get("/search", () => {
+  const query = searchParams.get("q");
+  const page = searchParams.get("page", Number) ?? 1; // page type will be inferred as number
+  return { query, page };
+});
 
-- **Minimalist and Opinionated:** Minima.js follows a "one-rule of doing things" philosophy, which results in a consistent and predictable codebase. The minimalist API and lack of boilerplate allow you to focus on writing your application's logic.
+// Native Web API Request object - for full control
+app.post("/upload", async () => {
+  const req = request();
+  const formData = await req.formData();
+  return { uploaded: true };
+});
+```
 
-- **Functional and Modular:** The framework encourages a functional and modular approach to building applications. This leads to cleaner, more maintainable, and scalable code.
+**Extract logic to pure functions:**
 
-**Unparalleled Development Experience:**
+```typescript
+import { params, headers, abort } from "@minimajs/server";
 
-- **Blazing-Fast Builds:** Bundled with Esbuild, Minima.js ensures exceptional build times, enabling rapid development iteration and deployment.
-- **Straightforward Learning:** Designed with simplicity in mind, Minima.js offers an intuitive API and comprehensive documentation, making it easy for developers to get started quickly.
-- **Circular Dependency Management:** Minima.js provides a clever solution to circular dependencies, promoting cleaner code architecture and smoother development workflows.
+// Pure functions that leverage Minima.js's context
+function getUser() {
+  // Assuming User.findById exists and uses context
+  return User.findById(params.get("id", Number));
+}
 
-**Embrace the Future of Node.js Development**
+function isAuthenticated() {
+  return headers.get("authorization")?.startsWith("Bearer ");
+}
 
-Minima.js represents a paradigm shift in web development, offering a powerful combination of modern JavaScript, functional programming, and developer-friendly features. Empower yourself to build exceptional Node.js applications with unparalleled speed, efficiency, and elegance – regardless of project size or complexity.
+// Compose them anywhere for clean, readable logic
+app.get("/users/:id/posts", async () => {
+  if (!isAuthenticated()) {
+    abort(401, "Unauthorized"); // Use abort for early exit with an error response
+  }
+  const user = await getUser();
+  return { user, posts: [] };
+});
+```
+
+### Hooks: Lifecycle Control
+
+Hooks allow you to intercept and transform requests and application events at different lifecycle stages. They are central to implementing cross-cutting concerns like authentication, logging, and data transformation.
+
+For a comprehensive guide, see the [Hooks Guide](/guides/hooks).
+
+```typescript
+import { hook } from "@minimajs/server";
+
+// Example: A request hook for logging
+app.register(
+  hook("request", ({ request }) => {
+    console.log(`${request.method} ${request.url}`);
+  })
+);
+
+// Example: A transform hook to modify response data
+app.register(
+  hook("transform", (data) => {
+    if (typeof data === "object") {
+      return { ...data, timestamp: Date.now() };
+    }
+    return data;
+  })
+);
+```
+
+> For details on error handling hooks and the `abort` helper, refer to the [Error Handling Guide](/guides/error-handling).
+
+### Runtime-Native Support
+
+Minima.js is designed for native integration with modern JavaScript runtimes like Bun and Node.js. You can switch between runtimes by changing a single import, ensuring optimal performance without abstraction overhead.
+
+::: code-group
+
+```typescript [Bun (Native)]
+import { createApp } from "@minimajs/server/bun"; // [!code highlight]
+import { params, headers } from "@minimajs/server";
+
+const app = createApp();
+
+app.get("/api/:resource", () => {
+  const resource = params.get("resource");
+  const apiKey = headers.get("x-api-key");
+
+  return { resource, apiKey };
+});
+
+await app.listen({ port: 3000 });
+```
+
+```typescript [Node.js]
+import { createApp } from "@minimajs/server/node"; // [!code highlight]
+import { params, headers } from "@minimajs/server";
+
+const app = createApp();
+
+app.get("/api/:resource", () => {
+  const resource = params.get("resource");
+  const apiKey = headers.get("x-api-key");
+
+  return { resource, apiKey };
+});
+
+await app.listen({ port: 3000 });
+```
+
+:::
+
+**Key Advantages:**
+
+- **Context functions work everywhere** - `params`, `headers`, `searchParams`, `request` are runtime-agnostic.
+- **Module-scoped logic** - extract functions, test them independently.
+- **Hooks are portable** - define once, works across all runtimes.
+- **Web API standards** - native `Request`/`Response` objects, no custom wrappers.
+
+Benefits:
+
+- **Testable** - Extract logic to pure functions.
+- **Composable** - Module functions work anywhere.
+- **Type-safe** - Full TypeScript inference.
+- **Standard** - Web API `Request`/`Response`.
+
+---
+
+**Minima.js** is a composition-first backend framework where features are built by assembling primitives, not obeying patterns. Context, lifecycle, and schemas are explicit, reusable, and under your control—so your architecture stays intentional, not accidental.

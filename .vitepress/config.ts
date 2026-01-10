@@ -1,19 +1,40 @@
 import { defineConfig } from "vitepress";
+import { withMermaid } from "vitepress-plugin-mermaid";
 
-export default defineConfig({
+const config = defineConfig({
   title: "Minima.js",
   description: "A cutting-edge Node.js framework for modern web applications",
   base: "/",
   srcDir: "docs",
   cleanUrls: true,
+
+  // Vite configuration for Mermaid compatibility
+  vite: {
+    optimizeDeps: {
+      include: ["mermaid", "dayjs", "@braintree/sanitize-url"],
+    },
+    ssr: {
+      noExternal: ["mermaid"],
+    },
+  },
+
+  // Mermaid configuration
+  mermaid: {
+    theme: "default",
+  },
+
+  // Mermaid plugin configuration
+  mermaidPlugin: {
+    class: "mermaid",
+  },
   themeConfig: {
     logo: "/logo.svg",
     nav: [
-      { text: "Home", link: "/" },
       { text: "Guide", link: "/intro" },
+      { text: "Architecture", link: "/core-concepts/architecture" },
       { text: "Cookbook", link: "/cookbook/jwt-authentication" },
-      { text: "Packages", link: "/packages/auth" },
       { text: "API Reference", link: "/api/README" },
+      { text: "Packages", link: "/packages/auth" },
     ],
 
     sidebar: [
@@ -30,6 +51,8 @@ export default defineConfig({
         items: [
           { text: "Architecture", link: "/core-concepts/architecture" },
           { text: "Application", link: "/core-concepts/application" },
+          { text: "Plugins", link: "/core-concepts/plugins" }, // Updated link
+          { text: "Modules", link: "/core-concepts/modules" }, // Updated link
           { text: "Context", link: "/core-concepts/context" },
         ],
       },
@@ -38,19 +61,21 @@ export default defineConfig({
         items: [
           { text: "Routing", link: "/guides/routing" },
           { text: "HTTP", link: "/guides/http" },
-          { text: "Modules", link: "/guides/modules" },
-          { text: "Middleware", link: "/guides/middleware" },
+          { text: "Middleware", link: "/guides/middleware" }, // Updated link
           { text: "Hooks", link: "/guides/hooks" },
           { text: "Error Handling", link: "/guides/error-handling" },
           { text: "Logger", link: "/guides/logger" },
-          { text: "Third-Party Integration", link: "/guides/third-party-integration" },
+          { text: "Testing", link: "/guides/testing" },
         ],
       },
       {
         text: "Plugins",
         items: [
-          { text: "Route Logger", link: "/guides/route-logger" },
-          { text: "Graceful Shutdown", link: "/guides/graceful-shutdown" },
+          { text: "Introduction", link: "/plugins/index" },
+          { text: "Body Parser", link: "/plugins/body-parser" },
+          { text: "CORS", link: "/plugins/cors" },
+          { text: "Route Logger", link: "/plugins/route-logger" },
+          { text: "Graceful Shutdown", link: "/plugins/shutdown" },
         ],
       },
       {
@@ -59,7 +84,7 @@ export default defineConfig({
           { text: "JWT Authentication", link: "/cookbook/jwt-authentication" },
           { text: "File Uploads", link: "/cookbook/file-uploads" },
           { text: "Database Integration", link: "/cookbook/database-integration" },
-          { text: "Data Validation with Yup", link: "/cookbook/data-validation" },
+          { text: "Data Validation with Zod", link: "/cookbook/data-validation" },
         ],
       },
       {
@@ -76,9 +101,14 @@ export default defineConfig({
         link: "/api/README",
       },
     ],
-    socialLinks: [{ icon: "github", link: "https://github.com/minima-js/minimajs" }],
+    socialLinks: [
+      { icon: "github", link: "https://github.com/minima-js/minimajs" },
+      { icon: "npm", link: "https://www.npmjs.com/package/@minimajs/server" },
+    ],
     search: {
       provider: "local",
     },
   },
 });
+
+export default withMermaid(config);
