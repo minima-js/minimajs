@@ -77,9 +77,8 @@ export class ValidationError extends BaseError {
    * // }
    * ```
    */
-  static toJSON(err: unknown) {
-    if (err instanceof ValidationError) return { message: err.message, issues: err.issues };
-    throw err;
+  static toJSON(err: ValidationError): unknown {
+    return { message: err.response, issues: err.issues };
   }
 
   /** The name of this error class */

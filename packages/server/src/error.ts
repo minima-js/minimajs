@@ -48,15 +48,15 @@ export class HttpError<R = unknown> extends BaseHttpError {
   static is(value: unknown): value is HttpError {
     return value instanceof this;
   }
-  public static create(err: unknown, statusCode = 500): HttpError<string> {
+  public static create(err: unknown, status = 500): HttpError<string> {
     if (err instanceof Error) {
-      return new HttpError("Unable to process request", statusCode, {
+      return new HttpError("Unable to process request", status, {
         message: err.message,
         name: err.name,
         base: err,
       });
     }
-    return new HttpError("Unable to process request", statusCode, {
+    return new HttpError("Unable to process request", status, {
       base: err,
     });
   }
@@ -65,10 +65,10 @@ export class HttpError<R = unknown> extends BaseHttpError {
   public base?: unknown;
   public headers?: HeadersInit;
   declare ["constructor"]: typeof HttpError;
-  constructor(response: R, statusCode: StatusCode, options?: HttpErrorOptions) {
+  constructor(response: R, status: StatusCode, options?: HttpErrorOptions) {
     super(typeof response === "string" ? response : "Unknown error");
     this.response = response;
-    this.status = toStatusCode(statusCode);
+    this.status = toStatusCode(status);
     Object.assign(this, options);
   }
 

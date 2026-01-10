@@ -171,12 +171,6 @@ describe("error", () => {
         });
       });
 
-      test("should throw for non-ValidationError", () => {
-        const regularError = new Error("Regular error");
-
-        expect(() => ValidationError.toJSON(regularError)).toThrow();
-      });
-
       test("should handle ValidationError without issues", () => {
         const error = new ValidationError("Validation failed");
         const json = ValidationError.toJSON(error);
@@ -195,7 +189,7 @@ describe("error", () => {
         } catch (err) {
           if (err instanceof ZodError) {
             const validationError = ValidationError.createFromZodError(err);
-            const json = ValidationError.toJSON(validationError);
+            const json: any = ValidationError.toJSON(validationError);
 
             expect(json.message).toBeDefined();
             expect(json.issues).toBeDefined();

@@ -17,15 +17,22 @@ function toBusBoyHeaders(headers: Headers): BusboyHeaders {
 }
 
 function busboy(opt: Config) {
-  const { request, incomingMessage } = context();
-  const stream = incomingMessage ? incomingMessage : Readable.fromWeb(request.body as any);
-  const headers = toBusBoyHeaders(request.headers);
-  const bb = new Busboy({
-    ...opt,
-    headers,
-  });
-  stream.pipe(bb);
-  return bb;
+  try {
+    const { request, incomingMessage } = context();
+    const stream = incomingMessage ? incomingMessage : Readable.fromWeb(request.body as any);
+    const headers = toBusBoyHeaders(request.headers);
+    const bb = new Busboy({
+      ...opt,
+      headers,
+    });
+    stream.pipe(bb);
+    return bb;
+  } catch (err) {
+    if (err instanceof Error) {
+      throw new UploadError(err.message, { base: err });
+    }
+    throw err;
+  }
 }
 
 export namespace multipart {

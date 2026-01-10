@@ -52,13 +52,9 @@ export class ValidationError extends BaseValidationError {
    * Custom toJSON serializer for ValidationError.
    * Returns a clean error response with Zod issues.
    */
-  static toJSON = function toJSON(err: unknown): { message: string; issues?: z.core.$ZodIssue[] } {
-    if (!(err instanceof ValidationError)) {
-      throw new TypeError("Expected ValidationError");
-    }
-
-    const response: { message: string; issues?: z.core.$ZodIssue[] } = {
-      message: typeof err.response === "string" ? err.response : "Validation failed",
+  static toJSON = function toJSON(err: ValidationError): unknown {
+    const response: { message: unknown; issues?: z.core.$ZodIssue[] } = {
+      message: err.response,
     };
 
     if (err.issues && err.issues.length > 0) {
@@ -80,7 +76,7 @@ export class ValidationError extends BaseValidationError {
     }
   }
 
-  override toJSON(): { message: string; issues?: z.core.$ZodIssue[] } {
+  override toJSON(): unknown {
     return ValidationError.toJSON(this);
   }
 }
