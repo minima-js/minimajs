@@ -177,7 +177,7 @@ describe("bodyParser", () => {
 
   describe("form parsing", () => {
     test("should parse form data with deprecation warning", async () => {
-      const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+      const consoleWarnSpy = jest.spyOn(app.log, "warn").mockImplementation(() => {});
 
       app.register(bodyParser({ type: "form" }));
 

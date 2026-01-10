@@ -1,5 +1,6 @@
 import { hook } from "../hooks/index.js";
 import type { Context, RouteMetaDescriptor } from "../interfaces/index.js";
+import { plugin } from "../internal/plugins.js";
 import { kBody, kBodySkip } from "../symbols.js";
 
 export type BodyParserType = "json" | "text" | "form" | "arrayBuffer" | "blob";
@@ -92,14 +93,6 @@ export function bodyParser(opts: BodyParserOptions = { type: ["json"] }) {
   // Convert type option to Set for fast lookup
   const allowedTypes = getAllowedTypes(opts.type);
 
-  // Warn if form type is used (deprecated)
-  if (allowedTypes.has("form")) {
-    console.warn(
-      "[bodyParser] The 'form' type is deprecated and will be removed in a future version. " +
-        "Please use @minimajs/multipart for form data parsing instead."
-    );
-  }
-
   async function onRequest({ request, app, route, locals }: Context) {
     if (route?.metadata.has(kBodySkip)) return;
     // Mark that body parser is registered, even if no body is parsed
@@ -146,8 +139,16 @@ export function bodyParser(opts: BodyParserOptions = { type: ["json"] }) {
       // The body() function will return null
     }
   }
-
-  return hook("request", onRequest);
+  return plugin.sync((app) => {
+    // Warn if form type is used (deprecated)
+    if (allowedTypes.has("form")) {
+      app.log.warn(
+        "[bodyParser] The 'form' type is deprecated and will be removed in a future version. " +
+          "Please use @minimajs/multipart for form data parsing instead."
+      );
+    }
+    app.register(hook("request", onRequest));
+  });
 }
 
 export namespace bodyParser {

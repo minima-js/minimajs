@@ -120,7 +120,6 @@ describe("index", () => {
       const getHeaders = createHeaders(schema);
       mockContext(
         () => {
-          console.log(headers()["x-api-key"]);
           const result = getHeaders();
           expect(result["x-api-key"]).toBe("secret");
           expect(result["content-type"]).toBe("application/json");

@@ -35,9 +35,7 @@ describe("hooks", () => {
 
   describe("onError", () => {
     test("should handle request-scoped onError", async () => {
-      const onErrorFn = jest.fn<ErrorCallback>(() => {
-        console.log("Scoped error handler called");
-      });
+      const onErrorFn = jest.fn<ErrorCallback>();
 
       app.get("/scoped", () => {
         onError(onErrorFn);

@@ -138,7 +138,6 @@ export function createAuth<T, S = any>(
       if (!BaseHttpError.is(error)) {
         throw error;
       }
-      console.log("setting error message!");
       setAuth({ error });
     }
   });
