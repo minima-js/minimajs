@@ -1,4 +1,5 @@
 ---
+"@minimajs/auth": minor
 "@minimajs/schema": minor
 "@minimajs/server": minor
 ---
