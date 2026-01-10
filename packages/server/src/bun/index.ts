@@ -1,7 +1,7 @@
 /**
- * Bun runtime server adapter for MinimaJS.
+ * Bun runtime server adapter for Minima.js.
  *
- * This module provides the main entry point for creating MinimaJS applications
+ * This module provides the main entry point for creating Minima.js applications
  * that run on the Bun runtime. It wraps the base server functionality with
  * Bun-specific server adapter.
  *
@@ -27,7 +27,7 @@ import { createBaseServer } from "../core/index.js";
 export type { BunServeOptions };
 
 /**
- * Configuration options for creating a Bun-based MinimaJS application.
+ * Configuration options for creating a Bun-based Minima.js application.
  *
  * @template T - Type for additional server context data
  */
@@ -40,15 +40,15 @@ export interface BunAppOptions<T> extends CreateBaseSeverOptions {
 }
 
 /**
- * Creates a new MinimaJS application using the Bun runtime adapter.
+ * Creates a new Minima.js application using the Bun runtime adapter.
  *
- * This is the primary factory function for initializing MinimaJS applications
+ * This is the primary factory function for initializing Minima.js applications
  * on Bun. It sets up the server with Bun-specific optimizations and returns
  * a configured application instance.
  *
  * @template T - Type for additional server context data
  * @param options - Configuration options for the application
- * @returns A configured MinimaJS server instance
+ * @returns A configured Minima.js server instance
  *
  * @example
  * ```typescript

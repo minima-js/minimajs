@@ -374,12 +374,12 @@ import { hook, createResponseFromState } from "@minimajs/server";
 // Add custom header to all responses
 hook("send", (response) => {
   return createResponseFromState(response.body, {
-    headers: { ...response.headers, "X-Server": "MinimaJS" },
+    headers: { ...response.headers, "X-Server": "Minima.js" },
   });
 });
 
 app.get("/", () => "Hello");
-// Response includes: X-Server: MinimaJS
+// Response includes: X-Server: Minima.js
 ```
 
 See [Send Hook](/guides/hooks#send) for more details.

@@ -27,7 +27,7 @@ export interface AuthResourceOptional<T> {
 }
 
 /**
- * Creates an authentication middleware plugin and resource accessor for MinimaJS applications.
+ * Creates an authentication middleware plugin and resource accessor for Minima.js applications.
  *
  * This function sets up authentication by creating a middleware plugin that executes your
  * authentication logic and a resource accessor function to retrieve the authenticated data

@@ -1,7 +1,7 @@
 /**
- * Node.js runtime server adapter for MinimaJS.
+ * Node.js runtime server adapter for Minima.js.
  *
- * This module provides the main entry point for creating MinimaJS applications
+ * This module provides the main entry point for creating Minima.js applications
  * that run on Node.js runtime. It wraps the base server functionality with
  * Node.js-specific HTTP/HTTPS server adapter.
  *
@@ -29,7 +29,7 @@ import { NodeServerAdapter, type NodeServerOptions } from "./server.js";
 export type { NodeServerOptions };
 
 /**
- * Configuration options for creating a Node.js-based MinimaJS application.
+ * Configuration options for creating a Node.js-based Minima.js application.
  *
  * Extends the base server options with Node.js-specific server configuration.
  */
@@ -41,10 +41,10 @@ export interface NodeAppOptions extends CreateBaseSeverOptions {
 }
 
 /**
- * Creates a new MinimaJS application for Node.js runtime.
+ * Creates a new Minima.js application for Node.js runtime.
  *
  * @param options - Configuration options for the application
- * @returns A configured MinimaJS application instance
+ * @returns A configured Minima.js application instance
  *
  * @example
  * ```typescript

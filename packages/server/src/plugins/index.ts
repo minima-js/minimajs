@@ -1,5 +1,5 @@
 /**
- * Built-in plugins for MinimaJS framework.
+ * Built-in plugins for Minima.js framework.
  *
  * Provides essential plugins for common web server functionality including
  * body parsing, CORS, routing, and graceful shutdown.

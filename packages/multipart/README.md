@@ -1,4 +1,4 @@
-## Efficient Multipart Data Handling in MinimaJS
+## Efficient Multipart Data Handling in Minima.js
 
 **Installation:**
 

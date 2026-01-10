@@ -1,5 +1,5 @@
 /**
- * Symbols used throughout MinimaJS framework.
+ * Symbols used throughout Minima.js framework.
  *
  * Provides well-known symbols for internal framework operations and plugin metadata.
  * Using Symbol.for() allows cross-realm access and debugging.

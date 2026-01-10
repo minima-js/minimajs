@@ -1,11 +1,11 @@
 ---
-title: "MinimaJS vs. The Crowd"
+title: "Minima.js vs. The Crowd"
 sidebar_position: 2
 ---
 
-# MinimaJS vs. Other Frameworks
+# Minima.js vs. Other Frameworks
 
-Choosing the right framework can be overwhelming. This guide compares MinimaJS with popular alternatives to help you understand what makes Minima.js fundamentally different.
+Choosing the right framework can be overwhelming. This guide compares Minima.js with popular alternatives to help you understand what makes Minima.js fundamentally different.
 
 ## The Fundamental Difference
 
