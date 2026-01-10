@@ -10,7 +10,6 @@ import {
   createSearchParamsAsync,
   ValidationError,
 } from "./index.js";
-import { headers } from "@minimajs/server";
 
 describe("index", () => {
   describe("createBody", () => {
