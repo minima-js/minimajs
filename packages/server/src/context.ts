@@ -36,15 +36,15 @@ export function createContext<T>(value?: T | (() => T)) {
 
   function getValue() {
     const { locals } = context();
-    if (!locals.has(kName) && value !== undefined) {
-      locals.set(kName, isCallable(value) ? value() : value);
+    if (!(kName in locals) && value !== undefined) {
+      locals[kName] = isCallable(value) ? value() : value;
     }
-    return locals.get(kName) as T;
+    return locals[kName] as T;
   }
 
   function setValue(val: T) {
     const { locals } = context();
-    locals.set(kName, val);
+    locals[kName] = val;
   }
 
   return [getValue, setValue] as const;

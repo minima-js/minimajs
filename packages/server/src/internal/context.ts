@@ -8,7 +8,7 @@ export type ErrorHookCallback = (err: unknown) => any | Promise<any>;
 const contextStorage = new AsyncLocalStorage<Context<any>>();
 
 export function wrap<S, T>(context: Context<S>, cb: () => T) {
-  return contextStorage.run(Object.freeze(context), cb);
+  return contextStorage.run(context, cb);
 }
 
 export function safe<T, U extends unknown[]>(cb: (...args: U) => T) {

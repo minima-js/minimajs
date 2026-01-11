@@ -23,12 +23,7 @@ export interface ServerOptions {
 export class Server<T = any> implements App<T> {
   server?: T;
   readonly router: Router.Instance<HTTPVersion.V1>;
-
-  readonly container = new Map<symbol, unknown>([
-    [kHooks, createHooksStore()],
-    [kAppDescriptor, []],
-    [kModulesChain, [this]],
-  ]);
+  readonly container: Record<symbol, unknown>;
 
   $prefix: string;
   $prefixExclude: string[];
@@ -48,6 +43,11 @@ export class Server<T = any> implements App<T> {
     public readonly adapter: ServerAdapter<T>,
     opts: ServerOptions
   ) {
+    this.container = {
+      [kHooks]: createHooksStore(),
+      [kAppDescriptor]: [],
+      [kModulesChain]: [this],
+    };
     this.log = opts.logger;
     this.$prefix = opts.prefix;
     this.$prefixExclude = [];
@@ -119,7 +119,7 @@ export class Server<T = any> implements App<T> {
       path: fullPath,
       methods: Array.isArray(method) ? method : [method],
       handler,
-      metadata: new Map(),
+      metadata: {},
     };
     applyRouteMetadata(store, descriptors);
     this.router.on(
@@ -155,7 +155,7 @@ export class Server<T = any> implements App<T> {
   // Testing utility
   async handle(request: Request): Promise<Response> {
     await this.ready();
-    return handleRequest(this, this.router, request);
+    return handleRequest(this, request);
   }
 
   // Lifecycle
@@ -173,7 +173,7 @@ export class Server<T = any> implements App<T> {
     await this.ready();
 
     const requestHandler = (request: Request) => {
-      return handleRequest(this, this.router, request);
+      return handleRequest(this, request);
     };
 
     const { server, address } = await this.adapter.listen(opts, requestHandler);

@@ -94,9 +94,9 @@ export function bodyParser(opts: BodyParserOptions = { type: ["json"] }) {
   const allowedTypes = getAllowedTypes(opts.type);
 
   async function onRequest({ request, app, route, locals }: Context) {
-    if (route?.metadata.has(kBodySkip)) return;
+    if (route?.metadata[kBodySkip]) return;
     // Mark that body parser is registered, even if no body is parsed
-    locals.set(kBody, null);
+    locals[kBody] = null;
 
     const contentType = request.headers.get("content-type");
 
@@ -132,7 +132,7 @@ export function bodyParser(opts: BodyParserOptions = { type: ["json"] }) {
           break;
       }
 
-      locals.set(kBody, parsed);
+      locals[kBody] = parsed;
     } catch {
       // Parse error - keep null value
       app.log.error("body already parsed!");

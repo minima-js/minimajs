@@ -2,6 +2,7 @@ import { wrap } from "../internal/context.js";
 import { type Context } from "../interfaces/context.js";
 import { createRequest, type MockRequestOptions } from "./request.js";
 import { kBody } from "../symbols.js";
+import { parseRequestURL } from "../utils/request.js";
 
 export type MockContextCallback<T, S> = (ctx: Context<S>) => T;
 
@@ -34,24 +35,25 @@ export function mockContext<S = unknown, T = void>(
   const { params = {}, url = "/", ...reqOptions } = options;
   const request = createRequest(url, reqOptions);
   const resInit = { status: 200, headers: new Headers() };
-  const urlObj = new URL(request.url);
+  const { pathname } = parseRequestURL(request);
 
   // Create mock context
   const context: Context<S> = {
     server: null as any,
     app: null as any, // Mock app - users should use app.handle for full integration tests
-    url: urlObj,
+    url,
+    pathname,
     request: request,
     responseState: resInit,
-    container: new Map(),
-    locals: new Map(),
+    container: {},
+    locals: {},
     route: (Object.keys(params).length > 0 ? { params, store: { handler: () => {} } } : null) as any,
     incomingMessage: undefined as any,
     serverResponse: undefined as any,
   };
 
   if (reqOptions.body) {
-    context.locals.set(kBody, reqOptions.body);
+    context.locals[kBody] = reqOptions.body;
   }
 
   return wrap(context, () => callback(context));

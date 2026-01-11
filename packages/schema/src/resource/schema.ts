@@ -23,17 +23,17 @@ interface SchemaStore<T> {
  * Helper to add value to a Set-based metadata entry
  */
 function addSchemaToMetadataSet<T>(metadata: RouteMetadata, value: T): void {
-  if (!metadata.has(kSchema)) {
-    metadata.set(kSchema, new Set<T>());
+  if (!metadata[kSchema]) {
+    metadata[kSchema] = new Set<T>();
   }
-  (metadata.get(kSchema) as Set<T>).add(value);
+  (metadata[kSchema] as Set<T>).add(value);
 }
 
 export function configureSchema(): PluginSync {
   async function handleRequest(ctx: Context) {
     const { route } = ctx;
     if (!route) return;
-    const schemaStore = route.metadata.get(kSchema) as Set<SchemaStore<any>> | undefined;
+    const schemaStore = route.metadata[kSchema] as Set<SchemaStore<any>> | undefined;
     if (!schemaStore) return;
     for (const store of schemaStore) {
       for (const schema of store.schemas) {

@@ -271,16 +271,15 @@ describe("Plugin System", () => {
       const chains: App[][] = [];
 
       const child = async (c: App) => {
-        chains.push(c.container.get(kModulesChain) as App[]);
+        chains.push(c.container[kModulesChain] as App[]);
       };
 
       const parent = async (p: App) => {
-        chains.push(p.container.get(kModulesChain) as App[]);
+        chains.push(p.container[kModulesChain] as App[]);
         p.register(child);
       };
 
-      chains.push(app.container.get(kModulesChain) as App[]);
-
+      chains.push(app.container[kModulesChain] as App[]);
       app.register(parent);
       await app.ready();
 

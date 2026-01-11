@@ -3,7 +3,7 @@ import type { Container } from "../interfaces/app.js";
 import { kAppDescriptor } from "../symbols.js";
 
 export function getAppRouteDescriptors<S = unknown>(container: Container) {
-  return container.get(kAppDescriptor) as RouteMetaDescriptor<S>[];
+  return container[kAppDescriptor] as RouteMetaDescriptor<S>[];
 }
 
 /**
@@ -14,7 +14,7 @@ export function applyRouteMetadata<T>(route: RouteConfig<T>, descriptors: RouteM
   for (const descriptor of [...getAppRouteDescriptors<T>(app.container), ...descriptors]) {
     if (Array.isArray(descriptor)) {
       const [name, value] = descriptor;
-      metadata.set(name, value);
+      metadata[name] = value;
       continue;
     }
     descriptor(route);
@@ -55,6 +55,7 @@ export function applyRoutePrefix(path: string, prefix: string, excludeList: stri
 export function result2route<T>(route: RouteFindResult<T>): Route<T> {
   return {
     params: route.params,
+    searchParams: route.searchParams,
     methods: route.store.methods,
     handler: route.store.handler,
     path: route.store.path,

@@ -28,7 +28,7 @@ export interface ListenOptions {
  * Handler function that processes HTTP requests.
  * Takes a Web standard Request and returns a Web standard Response.
  */
-export type RequestHandler = (request: Request) => Promise<Response>;
+export type RequestHandler = (request: Request, url: string) => Promise<Response>;
 
 /**
  * Result returned when a server starts listening.

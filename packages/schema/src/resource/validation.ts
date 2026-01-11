@@ -36,10 +36,10 @@ export function validatorAsync<T extends z.ZodTypeAny>(
   const symbol = Symbol("minimajs.schema.data");
   function getData(): z.infer<T> {
     const { locals } = context();
-    if (!locals.has(symbol)) {
+    if (!locals[symbol]) {
       throw new SchemaError("Schema not register");
     }
-    return locals.get(symbol) as z.infer<T>;
+    return locals[symbol] as z.infer<T>;
   }
 
   setSchemaMetadata(getData, {
@@ -47,7 +47,7 @@ export function validatorAsync<T extends z.ZodTypeAny>(
     type,
     callback: async ({ locals }) => {
       const val = await validateObjectAsync(schema, await data(), option);
-      locals.set(symbol, val);
+      locals[symbol] = val;
     },
   });
 

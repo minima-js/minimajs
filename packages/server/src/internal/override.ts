@@ -11,21 +11,24 @@ function cloneable(value: unknown): value is { clone(): unknown } {
 }
 
 /**
- * Clones a container by creating a new Map and cloning values that have a clone() method
+ * Clones a container by iterating symbol properties and conditionally cloning values
  */
 function cloneContainer(container: Container): Container {
-  const newContainer: Container = new Map();
-  for (const [key, value] of container) {
+  const newContainer: Container = {};
+  // Iterate over symbol properties
+  for (const key of Object.getOwnPropertySymbols(container)) {
+    const value = container[key];
     if (Array.isArray(value)) {
-      newContainer.set(key, [...value]);
+      newContainer[key] = [...value];
       continue;
     }
     if (cloneable(value)) {
-      newContainer.set(key, value.clone());
+      newContainer[key] = value.clone();
       continue;
     }
-    newContainer.set(key, value);
+    newContainer[key] = value;
   }
+
   return newContainer;
 }
 
@@ -54,7 +57,7 @@ export function pluginOverride(app: App, fn: Registerable, options: Options = {}
     },
   });
 
-  (child.container.get(kModulesChain) as App[])?.push(child);
-  child.container.set(kModuleName, plugin.getName(fn, options));
+  (child.container[kModulesChain] as App[])?.push(child);
+  child.container[kModuleName] = plugin.getName(fn, options);
   return child;
 }

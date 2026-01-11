@@ -76,7 +76,7 @@ export function createHooksStore(parent?: HookStore): HookStore {
  * Gets the HookStore from the app's container
  */
 export function getHooks<S = unknown>(app: App<S>): HookStore {
-  const hooks = app.container.get(kHooks) as HookStore;
+  const hooks = app.container[kHooks] as HookStore;
   if (!hooks) {
     throw new Error("HookStore not found in container");
   }
@@ -100,7 +100,7 @@ export function addHook<S = unknown>(app: App<S>, name: LifecycleHook, callback:
  * @returns Hooks in correct execution order (FIFO or LIFO based on hook type)
  */
 function findHookToRun<T = GenericHookCallback, S = unknown>(app: App<S>, name: LifecycleHook): Iterable<T> {
-  const store = app.container.get(kHooks) as HookStore;
+  const store = app.container[kHooks] as HookStore;
   const hooks = store[name] as Set<T>;
 
   // LIFO hooks (Child → Parent) need reversed execution order

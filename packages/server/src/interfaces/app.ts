@@ -5,7 +5,7 @@ import type { Context } from "./context.js";
 import type { PrefixOptions, RouteMetaDescriptor, RouteOptions } from "./route.js";
 import type { Logger } from "pino";
 
-export type Container = Map<symbol, unknown>;
+export type Container = Record<symbol, unknown>;
 
 export type RouteHandler<S = unknown> = (ctx: Context<S>) => unknown;
 

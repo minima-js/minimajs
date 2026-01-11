@@ -119,7 +119,7 @@ describe("Bun Server", () => {
     });
 
     test("should handle route parameters", async () => {
-      app.get("/users/:id", (req) => {
+      app.get("/users/:id", ({ request: req }) => {
         const url = new URL(req.url);
         const id = url.pathname.split("/")[2];
         return { id };
@@ -131,7 +131,7 @@ describe("Bun Server", () => {
     });
 
     test("should handle multiple route parameters", async () => {
-      app.get("/users/:userId/posts/:postId", (req) => {
+      app.get("/users/:userId/posts/:postId", ({ request: req }) => {
         const parts = new URL(req.url).pathname.split("/");
         return { userId: parts[2], postId: parts[4] };
       });
@@ -210,7 +210,7 @@ describe("Bun Server", () => {
     });
 
     test("should inject with query parameters", async () => {
-      app.get("/search", (req) => {
+      app.get("/search", ({ request: req }) => {
         const url = new URL(req.url);
         return { query: url.searchParams.get("q") };
       });
@@ -244,7 +244,7 @@ describe("Bun Server", () => {
       let readyCalled = false;
 
       app.register(async (instance) => {
-        instance.container.set(Symbol("ready"), true);
+        instance.container[Symbol("ready")] = true;
       });
 
       await app.ready();

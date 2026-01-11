@@ -34,11 +34,11 @@ export const loggerOptions: LoggerOptions = {
 };
 
 function getPluginNames(server: App): string {
-  const chain = server.container.get(kModulesChain) as App[];
+  const chain = server.container[kModulesChain] as App[];
   return chain
     .slice(-3)
     .map((app) => {
-      return app.container.get(kModuleName) as string;
+      return app.container[kModuleName] as string;
     })
     .filter(Boolean)
     .join("/");
@@ -50,15 +50,15 @@ function getModuleName() {
     return null;
   }
   const { route, locals } = ctx;
-  if (!locals.has(kModuleName)) {
+  if (!locals[kModuleName]) {
     let name = getPluginNames(ctx.app);
     const handler = route?.handler.name;
     if (handler) {
       name = name + ":" + handler;
     }
-    locals.set(kModuleName, name);
+    locals[kModuleName] = name;
   }
-  return locals.get(kModuleName);
+  return locals[kModuleName];
 }
 /**
  * Mixin function for Pino logger that enriches log data with module name context.

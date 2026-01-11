@@ -44,7 +44,7 @@ export class NodeServerAdapter implements ServerAdapter<NodeServer> {
   async listen(opts: ListenOptions, requestHandler: RequestHandler): Promise<ListenResult<NodeServer>> {
     async function onRequest(req: IncomingMessage, res: ServerResponse) {
       const request = toWebRequest(req);
-      const response = await requestHandler(request);
+      const response = await requestHandler(request, req.url ?? "/");
       await fromWebResponse(response, res);
     }
 

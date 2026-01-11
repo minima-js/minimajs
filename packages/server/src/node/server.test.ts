@@ -265,7 +265,7 @@ describe("Node Server", () => {
     });
 
     test("should inject with query parameters", async () => {
-      app.get("/search", (req) => {
+      app.get("/search", ({ request: req }) => {
         const url = new URL(req.url);
         return { query: url.searchParams.get("q") };
       });
@@ -299,7 +299,7 @@ describe("Node Server", () => {
       let readyCalled = false;
 
       app.register(async (instance) => {
-        instance.container.set(Symbol("ready"), true);
+        instance.container[Symbol("ready")] = true;
       });
 
       await app.ready();

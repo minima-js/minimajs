@@ -91,7 +91,7 @@ export class NotFoundError<R = unknown> extends HttpError<R> {
   }
 
   async render(ctx: Context): Promise<Response> {
-    this.response ||= `Route ${ctx.request.method} ${ctx.url.pathname} not found` as R;
+    this.response ||= `Route ${ctx.request.method} ${ctx.pathname} not found` as R;
     return super.render(ctx);
   }
 }

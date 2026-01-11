@@ -12,6 +12,9 @@ import { isCallable } from "./utils/callable.js";
 import { mergeHeaders } from "./utils/headers.js";
 import { kBody } from "./symbols.js";
 import { hook } from "./hooks/index.js";
+import { createContext } from "./context.js";
+import type { ParsedUrlQuery } from "node:querystring";
+import { toLastValue } from "./utils/iterable.js";
 
 // ============================================================================
 //  Response
@@ -248,10 +251,13 @@ export namespace request {
    * ```
    * @since v0.2.0
    */
-  export function url(): URL {
-    const { url } = $context();
-    return url;
-  }
+
+  const [_url] = createContext(() => {
+    const { request } = $context();
+    return new URL(request.url);
+  });
+
+  export const url = _url;
 
   const kIp = Symbol("ipAddr");
 
@@ -278,10 +284,10 @@ export namespace request {
    */
   export function ip(): string | null {
     const { locals } = $context();
-    if (!locals.has(kIp)) {
+    if (!(kIp in locals)) {
       throw new Error("Ip Address Plugin is not configured, please configure using request.ip.configure()");
     }
-    return locals.get(kIp) as string | null;
+    return locals[kIp] as string | null;
   }
 
   export namespace ip {
@@ -356,14 +362,14 @@ export namespace request {
       if (isCallable<IpCallback<S>>(options)) {
         return hook<S>("request", (ctx) => {
           const ipAddress = options(ctx);
-          ctx.locals.set(kIp, ipAddress);
+          ctx.locals[kIp] = ipAddress;
         });
       }
 
       // Otherwise, use the settings-based approach
       return hook("request", (ctx) => {
         const ipAddress = extractIpAddress(ctx, options);
-        ctx.locals.set(kIp, ipAddress);
+        ctx.locals[kIp] = ipAddress;
       });
     }
   }
@@ -392,10 +398,10 @@ export namespace request {
  */
 export function body<T = unknown>(): T {
   const { locals } = $context();
-  if (!locals.has(kBody)) {
+  if (!(kBody in locals)) {
     throw new Error("Body parser is not registered. Please register bodyParser plugin first.");
   }
-  return locals.get(kBody) as T;
+  return locals[kBody] as T;
 }
 
 /**
@@ -658,8 +664,7 @@ export namespace headers {
  * @since v0.2.0
  */
 export function searchParams<T>() {
-  const { url } = $context();
-  return Object.fromEntries(url.searchParams) as T;
+  return $context().route?.searchParams ?? {};
 }
 
 /**
@@ -681,10 +686,10 @@ export namespace searchParams {
   export function get(name: string): string | undefined;
   export function get<R>(name: string, transform: (value: string) => R): R;
   export function get(name: string, transform?: (value: string) => unknown): unknown {
-    const { searchParams } = request.url();
-    const value = searchParams.get(name);
-    if (value === null) {
-      return value;
+    const searchParams: ParsedUrlQuery = $context().route?.searchParams || {};
+    const value = toLastValue(searchParams[name]);
+    if (value === undefined) {
+      return null;
     }
     if (!transform) return value;
     return transform(value);

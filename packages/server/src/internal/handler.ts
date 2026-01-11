@@ -1,4 +1,4 @@
-import { type Instance, type HTTPMethod, type HTTPVersion } from "find-my-way";
+import { type HTTPMethod } from "find-my-way";
 import { type App } from "../interfaces/app.js";
 import { type Route } from "../interfaces/route.js";
 import { runHooks, getHooks } from "../hooks/store.js";
@@ -8,6 +8,7 @@ import { NotFoundError, RedirectError } from "../error.js";
 import { createResponse } from "./response.js";
 import { result2route } from "./route.js";
 import type { RouteFindResult } from "../interfaces/route.js";
+import { parseRequestURL } from "../utils/request.js";
 
 async function finalizeSent(ctx: Context, response: Response) {
   await runHooks.safe(ctx.app, "sent", ctx);
@@ -19,13 +20,22 @@ async function finalizeErrorSent(ctx: Context, response: Response, error: unknow
   return response;
 }
 
-export async function handleRequest(server: App, router: Instance<HTTPVersion.V1>, req: Request): Promise<Response> {
-  const url = new URL(req.url);
-  const result: RouteFindResult<any> | null = router.find(req.method as HTTPMethod, url.pathname);
+export function getPathname(url: string): string {
+  let i = 8; // after "https://"
+  if (url.charCodeAt(4) !== 115) i = 7; // "http://"
+
+  // find first /
+  for (; url.charCodeAt(i) !== 47; i++);
+
+  const q = url.indexOf("?", i);
+  return q === -1 ? url.slice(i) : url.slice(i, q);
+}
+
+export async function handleRequest(server: App, req: Request): Promise<Response> {
+  const { url, pathname } = parseRequestURL(req);
+  const result: RouteFindResult<any> | null = server.router.find(req.method as HTTPMethod, url);
   let route: Route | null = null;
   let app = server;
-
-  const locals = new Map<symbol, unknown>();
 
   if (result) {
     route = result2route(result);
@@ -34,10 +44,11 @@ export async function handleRequest(server: App, router: Instance<HTTPVersion.V1
 
   const ctx: Context = {
     app,
-    server: server.server!,
+    pathname,
     url,
+    server: server.server!,
     route,
-    locals,
+    locals: {},
     container: app.container,
     request: req,
     responseState: { headers: new Headers() }, // Initialize mutable response headers

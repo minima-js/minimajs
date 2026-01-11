@@ -1,6 +1,6 @@
 import { describe, test, expect } from "@jest/globals";
 import { createHooksStore, getHooks, addHook } from "./store.js";
-import type { App } from "../interfaces/app.js";
+import type { App, Container } from "../interfaces/app.js";
 import { kHooks } from "../symbols.js";
 
 describe("hooks/store", () => {
@@ -115,8 +115,8 @@ describe("hooks/store", () => {
   describe("getHooks", () => {
     test("should return hooks from app container", () => {
       const mockHooks = createHooksStore();
-      const container = new Map();
-      container.set(kHooks, mockHooks);
+      const container: Container = {};
+      container[kHooks] = mockHooks;
 
       const app = { container } as unknown as App;
 
@@ -135,8 +135,8 @@ describe("hooks/store", () => {
   describe("addHook", () => {
     test("should add hook callback to the specified hook set", () => {
       const mockHooks = createHooksStore();
-      const container = new Map();
-      container.set(kHooks, mockHooks);
+      const container: Container = {};
+      container[kHooks] = mockHooks;
 
       const app = { container } as unknown as App;
       const callback = () => {};
@@ -148,8 +148,8 @@ describe("hooks/store", () => {
 
     test("should add multiple hooks to the same set", () => {
       const mockHooks = createHooksStore();
-      const container = new Map();
-      container.set(kHooks, mockHooks);
+      const container: Container = {};
+      container[kHooks] = mockHooks;
 
       const app = { container } as unknown as App;
       const callback1 = () => {};

@@ -32,7 +32,7 @@ describe("Http", () => {
 
   describe("request.url", () => {
     test("should retrieve request URL", () => {
-      mockContext((req) => {
+      mockContext(({ request: req }) => {
         const url1 = request.url();
         const url2 = request.url();
         const reqUrl = new URL(req.url);
