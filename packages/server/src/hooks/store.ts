@@ -41,39 +41,34 @@ const reversedHooks = new Set<LifecycleHook>(["close", "send", "sent", "error", 
 // ============================================================================
 
 /**
- * Creates a new HookStore, optionally cloning from an existing store
+ * Creates a new HookStore with proper cloning support for module isolation
  */
-export function createHooksStore(): HookStore {
-  const store = {} as HookStore;
+export function createHooksStore(parent?: HookStore): HookStore {
+  const store = {
+    clone() {
+      return createHooksStore(this);
+    },
+  } as HookStore;
+
+  if (!parent) {
+    // Parent not provided, initialize new store
+    for (const hook of SERVER_HOOKS) {
+      store[hook] = new Set();
+    }
+    for (const hook of LIFECYCLE_HOOKS) {
+      store[hook] = new Set();
+    }
+    return store;
+  }
 
   for (const hook of SERVER_HOOKS) {
-    store[hook] = new Set();
+    // Share reference for server hooks (global server lifecycle)
+    store[hook] = parent[hook];
   }
-
   for (const hook of LIFECYCLE_HOOKS) {
-    store[hook] = new Set();
+    // Always copy for lifecycle hooks (module isolation)
+    store[hook] = new Set(parent[hook]);
   }
-
-  // Add clone method to make the store clonable
-  store.clone = function (): HookStore {
-    const clonedStore = {} as HookStore;
-
-    // SERVER_HOOKS are NOT cloned - they're shared globally across all scopes
-    // This is intentional: there's only ONE server instance, so hooks like
-    // close, listen, ready, register should be shared. Later registered hooks
-    for (const hook of SERVER_HOOKS) {
-      clonedStore[hook] = this[hook];
-    }
-
-    // LIFECYCLE_HOOKS are cloned for proper encapsulation
-    // Each child scope gets its own copy for request/response lifecycle hooks
-    for (const hook of LIFECYCLE_HOOKS) {
-      clonedStore[hook] = new Set(this[hook]);
-    }
-
-    return clonedStore;
-  };
-
   return store;
 }
 
@@ -100,13 +95,16 @@ export function addHook<S = unknown>(app: App<S>, name: LifecycleHook, callback:
 // Run Hooks
 // ============================================================================
 
-function findHookToRun<T = GenericHookCallback, S = unknown>(app: App<S>, name: LifecycleHook): T[] {
+/**
+ * Retrieves hooks for a lifecycle event from the app's store
+ * @returns Hooks in correct execution order (FIFO or LIFO based on hook type)
+ */
+function findHookToRun<T = GenericHookCallback, S = unknown>(app: App<S>, name: LifecycleHook): Iterable<T> {
   const store = app.container.get(kHooks) as HookStore;
-  const hooks = [...store[name]] as T[];
-  if (reversedHooks.has(name)) {
-    return hooks.reverse();
-  }
-  return hooks;
+  const hooks = store[name] as Set<T>;
+
+  // LIFO hooks (Child → Parent) need reversed execution order
+  return reversedHooks.has(name) ? [...hooks].reverse() : hooks;
 }
 
 /**
