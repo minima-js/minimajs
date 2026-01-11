@@ -171,7 +171,7 @@ export class Server<T = any> implements App<T> {
       throw new Error("No adapter provided. Please provide an adapter in the constructor.");
     }
     await this.ready();
-    const { server, address } = await this.adapter.listen(opts, handleRequest, this);
+    const { server, address } = await this.adapter.listen(this, opts, handleRequest);
     this.server = server;
     // Execute listen hook with address information
     await runHooks(this, "listen", server);

@@ -8,9 +8,9 @@ export class BunServerAdapter<T = unknown> implements ServerAdapter<BunServer<T>
   constructor(private readonly serverOptions: BunServeOptions<T> = {}) {}
 
   async listen(
+    srv: Server,
     opts: ListenOptions,
-    requestHandler: RequestHandler<BunServer<T>>,
-    srv: Server
+    requestHandler: RequestHandler<BunServer<T>>
   ): Promise<ListenResult<BunServer<T>>> {
     const host = opts.host || "0.0.0.0";
     const port = opts.port;

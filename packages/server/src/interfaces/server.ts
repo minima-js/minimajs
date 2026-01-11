@@ -80,7 +80,7 @@ export interface ServerAdapter<T> {
    * @param requestHandler - Function to handle incoming requests
    * @returns Promise resolving to server instance and address info
    */
-  listen(opts: ListenOptions, requestHandler: RequestHandler<T>, server: Server<T>): Promise<ListenResult<T>>;
+  listen(server: Server<T>, opts: ListenOptions, requestHandler: RequestHandler<T>): Promise<ListenResult<T>>;
 
   /**
    * Stops the server and closes all connections.
