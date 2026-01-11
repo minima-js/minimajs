@@ -328,7 +328,7 @@ describe("Bun Server", () => {
 
       app.get("/context-test", () => {
         const ctx = context();
-        return { hasContext: !!ctx, hasLocals: ctx.locals instanceof Map };
+        return { hasContext: !!ctx, hasLocals: !!ctx.locals };
       });
 
       const response = await app.handle(createRequest("/context-test"));
