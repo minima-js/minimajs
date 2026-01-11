@@ -6,7 +6,7 @@ export type BunServeOptions<T = unknown> = Omit<Serve.Options<T>, "fetch" | "por
 export class BunServerAdapter<T = unknown> implements ServerAdapter<BunServer<T>> {
   constructor(private readonly serverOptions: BunServeOptions<T> = {}) {}
 
-  async listen(opts: ListenOptions, requestHandler: RequestHandler): Promise<ListenResult<BunServer<T>>> {
+  async listen(opts: ListenOptions, requestHandler: RequestHandler<BunServer<T>>): Promise<ListenResult<BunServer<T>>> {
     const host = opts.host || "0.0.0.0";
     const port = opts.port;
 
@@ -15,7 +15,7 @@ export class BunServerAdapter<T = unknown> implements ServerAdapter<BunServer<T>
       port,
       hostname: host,
       development: this.serverOptions.development ?? process.env.NODE_ENV !== "production",
-      fetch: requestHandler,
+      fetch: (request) => requestHandler(request),
     });
 
     const address: AddressInfo = {

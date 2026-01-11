@@ -3,9 +3,10 @@ import { createApp } from "./index.js";
 import type { Server } from "../core/index.js";
 import { getBody } from "../__tests__/helpers/index.js";
 import { createRequest } from "../mock/request.js";
+import { IncomingMessage, ServerResponse, type Server as NodeServer } from "node:http";
 
 describe("Node Server", () => {
-  let app: Server;
+  let app: Server<NodeServer>;
 
   afterEach(async () => {
     if (app) {
@@ -44,9 +45,24 @@ describe("Node Server", () => {
     });
 
     test("should register GET route", async () => {
-      app.get("/users", () => ({ method: "GET" }));
+      let rq: IncomingMessage = {} as any;
+      let rs: ServerResponse = {} as any;
 
-      const response = await app.handle(createRequest("/users"));
+      const incomingMessage = {} as IncomingMessage;
+      const serverResponse = {} as ServerResponse;
+
+      app.get("/users", (ctx) => {
+        rq = ctx.incomingMessage;
+        rs = ctx.serverResponse;
+        return { method: "GET" };
+      });
+
+      const response = await app.handle(createRequest("/users"), {
+        incomingMessage,
+        serverResponse,
+      });
+      expect(rq).toBe(incomingMessage);
+      expect(rs).toBe(serverResponse);
       expect(response.status).toBe(200);
       const data = await response.json();
       expect(data).toEqual({ method: "GET" });

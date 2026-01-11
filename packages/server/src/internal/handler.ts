@@ -3,7 +3,7 @@ import { type App } from "../interfaces/app.js";
 import { type Route } from "../interfaces/route.js";
 import { runHooks, getHooks } from "../hooks/store.js";
 import { wrap } from "./context.js";
-import { type Context } from "../interfaces/context.js";
+import { type Context, type PartialContext } from "../interfaces/context.js";
 import { NotFoundError, RedirectError } from "../error.js";
 import { createResponse } from "./response.js";
 import { result2route } from "./route.js";
@@ -31,7 +31,7 @@ export function getPathname(url: string): string {
   return q === -1 ? url.slice(i) : url.slice(i, q);
 }
 
-export async function handleRequest(server: App, req: Request): Promise<Response> {
+export async function handleRequest(server: App, req: Request, partial: PartialContext): Promise<Response> {
   const { url, pathname } = parseRequestURL(req);
   const result: RouteFindResult<any> | null = server.router.find(req.method as HTTPMethod, url);
   let route: Route | null = null;
@@ -52,8 +52,9 @@ export async function handleRequest(server: App, req: Request): Promise<Response
     container: app.container,
     request: req,
     responseState: { headers: new Headers() }, // Initialize mutable response headers
-    incomingMessage: undefined as any,
-    serverResponse: undefined as any,
+    incomingMessage: undefined,
+    serverResponse: undefined,
+    ...partial,
   };
 
   return wrap(ctx, async () => {

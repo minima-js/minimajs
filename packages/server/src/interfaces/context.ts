@@ -18,3 +18,5 @@ export interface Context<S = unknown> {
   readonly incomingMessage: S extends HttpServer | HttpsServer ? IncomingMessage : undefined;
   readonly serverResponse: S extends HttpServer | HttpsServer ? ServerResponse : undefined;
 }
+
+export type PartialContext<S = unknown> = Partial<Context<S>>;

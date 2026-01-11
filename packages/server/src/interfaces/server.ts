@@ -1,3 +1,5 @@
+import type { PartialContext } from "./index.js";
+
 /**
  * Information about the server's network address and binding.
  */
@@ -28,7 +30,7 @@ export interface ListenOptions {
  * Handler function that processes HTTP requests.
  * Takes a Web standard Request and returns a Web standard Response.
  */
-export type RequestHandler = (request: Request, url: string) => Promise<Response>;
+export type RequestHandler<S = unknown> = (request: Request, partial?: PartialContext<S>) => Promise<Response>;
 
 /**
  * Result returned when a server starts listening.
@@ -73,7 +75,7 @@ export interface ServerAdapter<T> {
    * @param requestHandler - Function to handle incoming requests
    * @returns Promise resolving to server instance and address info
    */
-  listen(opts: ListenOptions, requestHandler: RequestHandler): Promise<ListenResult<T>>;
+  listen(opts: ListenOptions, requestHandler: RequestHandler<T>): Promise<ListenResult<T>>;
 
   /**
    * Stops the server and closes all connections.

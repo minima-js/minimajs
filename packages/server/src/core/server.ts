@@ -13,6 +13,7 @@ import type { PrefixOptions, RouteConfig, RouteMetaDescriptor, RouteOptions } fr
 import { createBoot, wrapPlugin } from "../internal/boot.js";
 import type { AddressInfo, ServerAdapter, ListenOptions } from "../interfaces/server.js";
 import { kAppDescriptor, kHooks, kModulesChain } from "../symbols.js";
+import type { PartialContext } from "../interfaces/index.js";
 
 export interface ServerOptions {
   prefix: string;
@@ -153,9 +154,9 @@ export class Server<T = any> implements App<T> {
   }
 
   // Testing utility
-  async handle(request: Request): Promise<Response> {
+  async handle(request: Request, ctx: PartialContext<T> = {}): Promise<Response> {
     await this.ready();
-    return handleRequest(this, request);
+    return handleRequest(this, request, ctx as PartialContext);
   }
 
   // Lifecycle
@@ -172,8 +173,8 @@ export class Server<T = any> implements App<T> {
 
     await this.ready();
 
-    const requestHandler = (request: Request) => {
-      return handleRequest(this, request);
+    const requestHandler = (request: Request, ctx: PartialContext<T> = {}) => {
+      return handleRequest(this, request, ctx as PartialContext);
     };
 
     const { server, address } = await this.adapter.listen(opts, requestHandler);
