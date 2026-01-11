@@ -1,5 +1,11 @@
 # @minimajs/server
 
+## 0.5.1
+
+### Patch Changes
+
+- 2e84347: Fixed hooks leaking with async functions
+
 ## 0.5.0
 
 ### Minor Changes
