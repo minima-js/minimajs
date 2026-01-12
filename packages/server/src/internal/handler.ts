@@ -45,7 +45,7 @@ export async function handleRequest<S>(server: App<S>, req: Request, partial: Re
 
   const ctx: Context<any> = {
     app,
-    metadata: {
+    $metadata: {
       pathStart,
       pathEnd,
     },

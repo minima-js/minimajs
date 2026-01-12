@@ -246,7 +246,7 @@ export namespace request {
    */
 
   export function url(): URL {
-    const { metadata } = $context();
+    const { $metadata: metadata } = $context();
     if (!metadata.url) {
       abort(
         "proxy() plugin is not configured. Please register proxy({ host: { ... }, proto: { ... } }) to reconstruct full URL.",
@@ -557,7 +557,7 @@ export namespace headers {
   }
 }
 
-function createURLSearchParams({ metadata, request }: Context): URLSearchParams {
+function createURLSearchParams({ $metadata: metadata, request }: Context): URLSearchParams {
   return new URLSearchParams(request.url.slice(metadata.pathEnd + 1));
 }
 
@@ -580,7 +580,7 @@ function createURLSearchParams({ metadata, request }: Context): URLSearchParams 
  */
 export function searchParams<T>(): T {
   const ctx = $context();
-  const { metadata } = ctx;
+  const { $metadata: metadata } = ctx;
   if (!metadata.searchParams) {
     metadata.searchParams = createURLSearchParams(ctx);
   }
@@ -607,7 +607,7 @@ export namespace searchParams {
   export function get<R>(name: string, transform: (value: string) => R): R;
   export function get(name: string, transform?: (value: string) => unknown): unknown {
     const ctx = $context();
-    const { metadata } = ctx;
+    const { $metadata: metadata } = ctx;
     if (!metadata.searchParams) {
       metadata.searchParams = createURLSearchParams(ctx);
     }
@@ -634,7 +634,7 @@ export namespace searchParams {
   export function getAll<R>(name: string, transform: (value: string) => R): R[];
   export function getAll(name: string, transform?: (value: string) => unknown): unknown[] {
     const ctx = $context();
-    const { metadata } = ctx;
+    const { $metadata: metadata } = ctx;
     if (!metadata.searchParams) {
       metadata.searchParams = createURLSearchParams(ctx);
     }

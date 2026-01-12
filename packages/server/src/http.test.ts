@@ -45,7 +45,7 @@ describe("Http", () => {
           expect(url1).toBe(url2); // should be memoized
         },
         {
-          context: { metadata: { url: new URL("http://example.com/test") } },
+          context: { $metadata: { url: new URL("http://example.com/test") } },
         }
       );
     });
@@ -57,7 +57,7 @@ describe("Http", () => {
           expect(url.pathname).toBe("/users/123");
           expect(url.search).toBe("?page=1");
         },
-        { context: { metadata: { url: new URL("http://example.com/users/123?page=1") } } }
+        { context: { $metadata: { url: new URL("http://example.com/users/123?page=1") } } }
       );
     });
   });

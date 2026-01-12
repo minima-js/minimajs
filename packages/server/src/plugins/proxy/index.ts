@@ -88,9 +88,10 @@ export function proxy<S>(options: ProxyOptions<S>) {
     if (shouldReconstructUrl) {
       const proto = getProtoFn(ctx);
       const host = getHostFn(ctx);
-      const path = ctx.request.url.slice(ctx.metadata.pathStart);
-      ctx.metadata.url = new URL(`${proto}://${host}${path}`);
-      ctx.metadata.searchParams = ctx.metadata.url.searchParams;
+      const { $metadata: metadata, request } = ctx;
+      const path = request.url.slice(metadata.pathStart);
+      metadata.url = new URL(`${proto}://${host}${path}`);
+      metadata.searchParams = metadata.url.searchParams;
     }
   }
 

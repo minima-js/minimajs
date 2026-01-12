@@ -8,7 +8,7 @@ export type MockContextCallback<T, S> = (ctx: Context<S>) => T;
 export interface MockContextOptions<S> extends MockRequestOptions {
   url?: string;
   params?: Record<string, string>;
-  context?: Partial<Omit<Context<S>, "metadata">> & { metadata?: Partial<Context<S>["metadata"]> };
+  context?: Partial<Omit<Context<S>, "$metadata">> & { $metadata?: Partial<Context<S>["$metadata"]> };
 }
 /**
  * Creates a mock context for testing context-based functions.
@@ -55,7 +55,7 @@ export function mockContext<S = unknown, T = void>(
     incomingMessage: undefined as any,
     serverResponse: undefined as any,
     ...partialContext,
-    metadata: { pathEnd, pathStart, ...partialContext.metadata },
+    $metadata: { pathEnd, pathStart, ...partialContext.$metadata },
   };
 
   if (reqOptions.body) {

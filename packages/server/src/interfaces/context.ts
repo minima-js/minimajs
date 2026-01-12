@@ -16,7 +16,7 @@ export interface Context<S = unknown> {
   readonly app: App<S>;
   readonly server: S;
   readonly pathname: string;
-  readonly metadata: ContextMetadata;
+  readonly $metadata: ContextMetadata;
   readonly request: Request; // WebApi Request
   readonly responseState: ResponseState; // Mutable response headers/status
   readonly container: Container; // app.container
