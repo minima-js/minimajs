@@ -1,6 +1,4 @@
 import { $context } from "./internal/context.js";
-import type { Context } from "./interfaces/context.js";
-import { extractIpAddress } from "./internal/request.js";
 
 import { RedirectError, HttpError, BaseHttpError, NotFoundError, type HttpErrorOptions } from "./error.js";
 import type { Dict, HeadersInit, HttpHeader, HttpHeaderIncoming, ResponseOptions } from "./interfaces/response.js";
@@ -8,10 +6,8 @@ import type { Dict, HeadersInit, HttpHeader, HttpHeaderIncoming, ResponseOptions
 import { toStatusCode, type StatusCode } from "./internal/response.js";
 import { createResponse } from "./internal/response.js";
 import { isAbortError } from "./utils/errors.js";
-import { isCallable } from "./utils/callable.js";
 import { mergeHeaders } from "./utils/headers.js";
-import { kBody } from "./symbols.js";
-import { hook } from "./hooks/index.js";
+import { kBody, kIpAddr } from "./symbols.js";
 import { createContext } from "./context.js";
 import type { ParsedUrlQuery } from "node:querystring";
 import { toLastValue } from "./utils/iterable.js";
@@ -259,8 +255,6 @@ export namespace request {
 
   export const url = _url;
 
-  const kIp = Symbol("ipAddr");
-
   /**
    * Retrieves the client IP address from the request.
    * Requires IP address configuration via request.ip.configure().
@@ -284,94 +278,10 @@ export namespace request {
    */
   export function ip(): string | null {
     const { locals } = $context();
-    if (!(kIp in locals)) {
+    if (!(kIpAddr in locals)) {
       throw new Error("Ip Address Plugin is not configured, please configure using request.ip.configure()");
     }
-    return locals[kIp] as string | null;
-  }
-
-  export namespace ip {
-    /**
-     * Configuration options for IP address extraction
-     */
-    export interface Settings {
-      /**
-       * Trust proxy headers (X-Forwarded-For, X-Real-IP, etc.)
-       * Default: false
-       */
-      trustProxy?: boolean;
-
-      /**
-       * Custom header to read IP from
-       * Default: tries X-Forwarded-For, X-Real-IP, then falls back to socket address
-       */
-      header?: string;
-
-      /**
-       * Number of proxy hops to trust when using X-Forwarded-For
-       * Default: 1 (trust the last proxy)
-       */
-      proxyDepth?: number;
-    }
-
-    /**
-     * Callback function type for custom IP extraction
-     */
-    export type IpCallback<S = unknown> = (ctx: Context<S>) => string | null;
-
-    /**
-     * Configures IP address extraction from requests.
-     * Returns a hook that extracts and stores the client IP address.
-     *
-     * @param options - Configuration options for IP extraction, or a callback function for custom extraction
-     * @returns A request hook that populates the IP address in locals
-     *
-     * @example
-     * ```ts
-     * // Basic usage - trust proxy headers
-     * app.register(request.ip.configure({ trustProxy: true }));
-     *
-     * // Custom header
-     * app.register(request.ip.configure({
-     *   trustProxy: true,
-     *   header: 'CF-Connecting-IP' // Cloudflare
-     * }));
-     *
-     * // Multiple proxies
-     * app.register(request.ip.configure({
-     *   trustProxy: true,
-     *   proxyDepth: 2 // trust 2 proxy hops
-     * }));
-     *
-     * // Custom callback with full context access
-     * app.register(request.ip.configure((ctx) => {
-     *   // Custom logic to extract IP
-     *   const customHeader = ctx.request.headers.get('x-custom-ip');
-     *   if (customHeader) return customHeader;
-     *
-     *   // Access socket directly
-     *   if (ctx.incomingMessage) {
-     *     return ctx.incomingMessage.socket.remoteAddress || null;
-     *   }
-     *   return null;
-     * }));
-     * ```
-     */
-    export function configure<S = unknown>(options: Settings | IpCallback<S> = {}) {
-      // If options is a function, use it as the callback
-      if (isCallable<IpCallback<S>>(options)) {
-        return hook<S>("request", (ctx) => {
-          const ipAddress = options(ctx);
-          ctx.locals[kIp] = ipAddress;
-        });
-      }
-
-      // Otherwise, use the settings-based approach
-      return hook("request", (ctx) => {
-        const ipAddress = extractIpAddress(ctx, options);
-        ctx.locals[kIp] = ipAddress;
-      });
-    }
+    return locals[kIpAddr] as string | null;
   }
 }
 

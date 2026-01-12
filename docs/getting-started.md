@@ -200,7 +200,7 @@ app.get("/trace-info", () => {
 Centralized error handling can be achieved with an `error` hook. This keeps your route handlers clean and focused on the happy path. For a comprehensive guide, see the [Error Handling Guide](/guides/error-handling).
 
 ```ts
-import { hook }s from "@minimajs/server";
+import { hook } from "@minimajs/server";
 
 app.register(
   hook("error", (error) => {

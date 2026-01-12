@@ -32,8 +32,9 @@ export function getPathname(url: string): string {
 }
 
 export async function handleRequest<S>(server: App<S>, req: Request, partial: RequestHandlerContext<S>): Promise<Response> {
-  const { url, pathname } = parseRequestURL(req);
-  const result: RouteFindResult<any> | null = server.router.find(req.method as HTTPMethod, url);
+  const { pathEnd, pathStart } = parseRequestURL(req);
+  const pathname = req.url.slice(pathStart, pathEnd);
+  const result: RouteFindResult<any> | null = server.router.find(req.method as HTTPMethod, pathname);
   let route: Route | null = null;
   let app = server;
 
@@ -44,8 +45,11 @@ export async function handleRequest<S>(server: App<S>, req: Request, partial: Re
 
   const ctx: Context<any> = {
     app,
+    metadata: {
+      pathStart,
+      pathEnd,
+    },
     pathname,
-    url,
     server: server.server!,
     route,
     locals: {},

@@ -5,11 +5,18 @@ import type { App, Container } from "./app.js";
 import type { ResponseState } from "./response.js";
 import type { Route } from "./route.js";
 
+export interface ContextMetadata {
+  url?: URL;
+  searchParams?: URLSearchParams;
+  pathStart: number;
+  pathEnd: number;
+}
+
 export interface Context<S = unknown> {
   readonly app: App<S>;
   readonly server: S;
-  readonly url: string;
   readonly pathname: string;
+  readonly metadata: ContextMetadata;
   readonly request: Request; // WebApi Request
   readonly responseState: ResponseState; // Mutable response headers/status
   readonly container: Container; // app.container

@@ -65,3 +65,5 @@ export const kBody = Symbol.for("minimajs.body");
  * Used to opt-out of automatic body parsing for specific routes.
  */
 export const kBodySkip = Symbol.for("minimajs.body.skip");
+
+export const kIpAddr = Symbol("ipAddr");

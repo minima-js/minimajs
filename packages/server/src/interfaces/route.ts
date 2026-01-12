@@ -6,13 +6,12 @@ export type RouteMetadata = Record<symbol, unknown>;
 export interface Route<S = unknown> {
   methods: HTTPMethod[];
   params: { [key: string]: string | undefined } | undefined;
-  searchParams: Record<string, string> | undefined;
   handler: RouteHandler<S>;
   path: string;
   metadata: RouteMetadata;
 }
 
-export interface RouteConfig<S = unknown> extends Omit<Route<S>, "params" | "searchParams"> {
+export interface RouteConfig<S = unknown> extends Omit<Route<S>, "params"> {
   app: App<S>;
 }
 
