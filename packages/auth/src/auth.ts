@@ -142,5 +142,5 @@ export function createAuth<T, S = any>(
     }
   });
 
-  return [plugin, resource as any] as const;
+  return [plugin, resource] as const;
 }

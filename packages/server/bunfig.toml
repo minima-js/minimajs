@@ -1,5 +1,5 @@
 [test]
-root = "src"
+root = "./src"
 smol = true
 
 # Exclude files from code coverage reports
