@@ -2,7 +2,6 @@ import { $context } from "./internal/context.js";
 
 import { RedirectError, HttpError, BaseHttpError, NotFoundError, type HttpErrorOptions } from "./error.js";
 import type { Dict, HeadersInit, HttpHeader, HttpHeaderIncoming, ResponseOptions } from "./interfaces/response.js";
-import type { Context } from "./interfaces/index.js";
 import { toStatusCode, type StatusCode } from "./internal/response.js";
 import { createResponse } from "./internal/response.js";
 import { isAbortError } from "./utils/errors.js";
@@ -246,12 +245,14 @@ export namespace request {
    */
 
   export function url(): URL {
-    const { $metadata: metadata } = $context();
+    const { $metadata: metadata, request } = $context();
     if (!metadata.url) {
-      abort(
-        "proxy() plugin is not configured. Please register proxy({ host: { ... }, proto: { ... } }) to reconstruct full URL.",
-        500
-      );
+      if (metadata.host) {
+        const path = request.url.slice(metadata.pathStart);
+        metadata.url = new URL(`${metadata.proto}://${metadata.host}${path}`);
+      } else {
+        metadata.url = new URL(request.url);
+      }
     }
     return metadata.url;
   }
@@ -557,10 +558,6 @@ export namespace headers {
   }
 }
 
-function createURLSearchParams({ $metadata: metadata, request }: Context): URLSearchParams {
-  return new URLSearchParams(request.url.slice(metadata.pathEnd + 1));
-}
-
 // ============================================================================
 // Search Params / Queries
 // ============================================================================
@@ -582,9 +579,9 @@ export function searchParams<T>(): T {
   const ctx = $context();
   const { $metadata: metadata } = ctx;
   if (!metadata.searchParams) {
-    metadata.searchParams = createURLSearchParams(ctx);
+    metadata.searchParams = Object.fromEntries(request.url().searchParams);
   }
-  return Object.fromEntries(metadata.searchParams) as T;
+  return metadata.searchParams as T;
 }
 
 /**
@@ -606,12 +603,8 @@ export namespace searchParams {
   export function get(name: string): string | undefined;
   export function get<R>(name: string, transform: (value: string) => R): R;
   export function get(name: string, transform?: (value: string) => unknown): unknown {
-    const ctx = $context();
-    const { $metadata: metadata } = ctx;
-    if (!metadata.searchParams) {
-      metadata.searchParams = createURLSearchParams(ctx);
-    }
-    const value = metadata.searchParams.get(name);
+    const url = request.url();
+    const value = url.searchParams.get(name);
     if (value === null) {
       return null;
     }
@@ -633,12 +626,8 @@ export namespace searchParams {
   export function getAll(name: string): string[];
   export function getAll<R>(name: string, transform: (value: string) => R): R[];
   export function getAll(name: string, transform?: (value: string) => unknown): unknown[] {
-    const ctx = $context();
-    const { $metadata: metadata } = ctx;
-    if (!metadata.searchParams) {
-      metadata.searchParams = createURLSearchParams(ctx);
-    }
-    const values = metadata.searchParams.getAll(name);
+    const url = request.url();
+    const values = url.searchParams.getAll(name);
     if (!transform) return values;
     return values.map(transform);
   }

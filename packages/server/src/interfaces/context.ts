@@ -7,7 +7,9 @@ import type { Route } from "./route.js";
 
 export interface ContextMetadata {
   url?: URL;
-  searchParams?: URLSearchParams;
+  searchParams?: unknown;
+  host?: string;
+  proto?: string;
   pathStart: number;
   pathEnd: number;
 }

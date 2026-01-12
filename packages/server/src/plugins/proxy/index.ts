@@ -78,20 +78,19 @@ export function proxy<S>(options: ProxyOptions<S>) {
     getProtoFn = isCallable(options.proto) ? options.proto : extractProto<S>(options.proto, shouldTrust);
   }
 
-  const shouldReconstructUrl = Boolean(options.host || options.proto);
+  const hasHost = Boolean(options.host || options.proto);
 
   function process(ctx: Context<S>) {
     if (getIpAddress) {
       ctx.locals[kIpAddr] = getIpAddress(ctx);
     }
 
-    if (shouldReconstructUrl) {
+    if (hasHost) {
       const proto = getProtoFn(ctx);
       const host = getHostFn(ctx);
-      const { $metadata: metadata, request } = ctx;
-      const path = request.url.slice(metadata.pathStart);
-      metadata.url = new URL(`${proto}://${host}${path}`);
-      metadata.searchParams = metadata.url.searchParams;
+      const { $metadata } = ctx;
+      $metadata.host = host;
+      $metadata.proto = proto;
     }
   }
 
