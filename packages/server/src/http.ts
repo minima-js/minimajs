@@ -2,15 +2,12 @@ import { $context } from "./internal/context.js";
 
 import { RedirectError, HttpError, BaseHttpError, NotFoundError, type HttpErrorOptions } from "./error.js";
 import type { Dict, HeadersInit, HttpHeader, HttpHeaderIncoming, ResponseOptions } from "./interfaces/response.js";
-
+import type { Context } from "./interfaces/index.js";
 import { toStatusCode, type StatusCode } from "./internal/response.js";
 import { createResponse } from "./internal/response.js";
 import { isAbortError } from "./utils/errors.js";
 import { mergeHeaders } from "./utils/headers.js";
 import { kBody, kIpAddr } from "./symbols.js";
-import { createContext } from "./context.js";
-import type { ParsedUrlQuery } from "node:querystring";
-import { toLastValue } from "./utils/iterable.js";
 
 // ============================================================================
 //  Response
@@ -248,12 +245,16 @@ export namespace request {
    * @since v0.2.0
    */
 
-  const [_url] = createContext(() => {
-    const { request } = $context();
-    return new URL(request.url);
-  });
-
-  export const url = _url;
+  export function url(): URL {
+    const { metadata } = $context();
+    if (!metadata.url) {
+      abort(
+        "proxy() plugin is not configured. Please register proxy({ host: { ... }, proto: { ... } }) to reconstruct full URL.",
+        500
+      );
+    }
+    return metadata.url;
+  }
 
   /**
    * Retrieves the client IP address from the request.
@@ -279,7 +280,7 @@ export namespace request {
   export function ip(): string | null {
     const { locals } = $context();
     if (!(kIpAddr in locals)) {
-      throw new Error("Ip Address Plugin is not configured, please configure using request.ip.configure()");
+      abort("proxy() plugin is not configured. Please register proxy({ ip: { ... } }) to enable IP extraction.", 500);
     }
     return locals[kIpAddr] as string | null;
   }
@@ -556,6 +557,10 @@ export namespace headers {
   }
 }
 
+function createURLSearchParams({ metadata, request }: Context): URLSearchParams {
+  return new URLSearchParams(request.url.slice(metadata.pathEnd + 1));
+}
+
 // ============================================================================
 // Search Params / Queries
 // ============================================================================
@@ -573,8 +578,13 @@ export namespace headers {
  * ```
  * @since v0.2.0
  */
-export function searchParams<T>() {
-  return $context().route?.searchParams ?? {};
+export function searchParams<T>(): T {
+  const ctx = $context();
+  const { metadata } = ctx;
+  if (!metadata.searchParams) {
+    metadata.searchParams = createURLSearchParams(ctx);
+  }
+  return Object.fromEntries(metadata.searchParams) as T;
 }
 
 /**
@@ -596,9 +606,13 @@ export namespace searchParams {
   export function get(name: string): string | undefined;
   export function get<R>(name: string, transform: (value: string) => R): R;
   export function get(name: string, transform?: (value: string) => unknown): unknown {
-    const searchParams: ParsedUrlQuery = $context().route?.searchParams || {};
-    const value = toLastValue(searchParams[name]);
-    if (value === undefined) {
+    const ctx = $context();
+    const { metadata } = ctx;
+    if (!metadata.searchParams) {
+      metadata.searchParams = createURLSearchParams(ctx);
+    }
+    const value = metadata.searchParams.get(name);
+    if (value === null) {
       return null;
     }
     if (!transform) return value;
@@ -619,8 +633,12 @@ export namespace searchParams {
   export function getAll(name: string): string[];
   export function getAll<R>(name: string, transform: (value: string) => R): R[];
   export function getAll(name: string, transform?: (value: string) => unknown): unknown[] {
-    const { searchParams } = request.url();
-    const values = searchParams.getAll(name);
+    const ctx = $context();
+    const { metadata } = ctx;
+    if (!metadata.searchParams) {
+      metadata.searchParams = createURLSearchParams(ctx);
+    }
+    const values = metadata.searchParams.getAll(name);
     if (!transform) return values;
     return values.map(transform);
   }

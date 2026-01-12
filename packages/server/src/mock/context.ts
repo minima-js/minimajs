@@ -5,7 +5,11 @@ import { kBody } from "../symbols.js";
 import { parseRequestURL } from "../utils/request.js";
 
 export type MockContextCallback<T, S> = (ctx: Context<S>) => T;
-
+export interface MockContextOptions<S> extends MockRequestOptions {
+  url?: string;
+  params?: Record<string, string>;
+  context?: Partial<Omit<Context<S>, "metadata">> & { metadata?: Partial<Context<S>["metadata"]> };
+}
 /**
  * Creates a mock context for testing context-based functions.
  * This allows you to test route handlers and context functions in isolation.
@@ -30,18 +34,18 @@ export type MockContextCallback<T, S> = (ctx: Context<S>) => T;
  */
 export function mockContext<S = unknown, T = void>(
   callback: MockContextCallback<T, S>,
-  options: MockRequestOptions & { url?: string; params?: Record<string, string> } = {}
+  options: MockContextOptions<S> = {}
 ): T {
-  const { params = {}, url = "/", ...reqOptions } = options;
+  const { params = {}, url = "/", context: partialContext = {}, ...reqOptions } = options;
   const request = createRequest(url, reqOptions);
   const resInit = { status: 200, headers: new Headers() };
-  const { pathname } = parseRequestURL(request);
+  const { pathStart, pathEnd } = parseRequestURL(request);
+  const pathname = request.url.slice(pathStart, pathEnd);
 
   // Create mock context
   const context: Context<S> = {
     server: null as any,
     app: null as any, // Mock app - users should use app.handle for full integration tests
-    url,
     pathname,
     request: request,
     responseState: resInit,
@@ -50,6 +54,8 @@ export function mockContext<S = unknown, T = void>(
     route: (Object.keys(params).length > 0 ? { params, store: { handler: () => {} } } : null) as any,
     incomingMessage: undefined as any,
     serverResponse: undefined as any,
+    ...partialContext,
+    metadata: { pathEnd, pathStart, ...partialContext.metadata },
   };
 
   if (reqOptions.body) {

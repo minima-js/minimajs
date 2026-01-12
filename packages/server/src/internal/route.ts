@@ -55,7 +55,6 @@ export function applyRoutePrefix(path: string, prefix: string, excludeList: stri
 export function result2route<T>(route: RouteFindResult<T>): Route<T> {
   return {
     params: route.params,
-    searchParams: route.searchParams,
     methods: route.store.methods,
     handler: route.store.handler,
     path: route.store.path,

@@ -5,6 +5,7 @@ import { mockContext } from "./mock/index.js";
 import { createApp } from "./bun/index.js";
 import { bodyParser } from "./plugins/body-parser.js";
 import { createRequest } from "./mock/request.js";
+import { proxy } from "./plugins/proxy/index.js";
 
 const setHeader = headers.set;
 
@@ -32,16 +33,21 @@ describe("Http", () => {
 
   describe("request.url", () => {
     test("should retrieve request URL", () => {
-      mockContext(({ request: req }) => {
-        const url1 = request.url();
-        const url2 = request.url();
-        const reqUrl = new URL(req.url);
-        expect(url1.host).toBe(reqUrl.host);
-        expect(url1.protocol).toBe("http:");
-        expect(url2.host).toBe(reqUrl.host);
-        expect(url2.protocol).toBe("http:");
-        expect(url1).toBe(url2); // should be memoized
-      });
+      mockContext(
+        () => {
+          const url1 = request.url();
+          const url2 = request.url();
+          const reqUrl = new URL("http://example.com");
+          expect(url1.host).toBe(reqUrl.host);
+          expect(url1.protocol).toBe("http:");
+          expect(url2.host).toBe(reqUrl.host);
+          expect(url2.protocol).toBe("http:");
+          expect(url1).toBe(url2); // should be memoized
+        },
+        {
+          context: { metadata: { url: new URL("http://example.com/test") } },
+        }
+      );
     });
 
     test("should handle custom URL paths", () => {
@@ -51,7 +57,7 @@ describe("Http", () => {
           expect(url.pathname).toBe("/users/123");
           expect(url.search).toBe("?page=1");
         },
-        { url: "/users/123?page=1" }
+        { context: { metadata: { url: new URL("http://example.com/users/123?page=1") } } }
       );
     });
   });
@@ -622,7 +628,9 @@ describe("Http", () => {
   describe("request.ip", () => {
     test("should throw error when IP plugin is not configured", () => {
       mockContext(() => {
-        expect(() => request.ip()).toThrow("Ip Address Plugin is not configured");
+        expect(() => request.ip()).toThrow(
+          "proxy() plugin is not configured. Please register proxy({ ip: { ... } }) to enable IP extraction."
+        );
       });
     });
   });
@@ -630,8 +638,10 @@ describe("Http", () => {
   describe("request.ip.configure", () => {
     test("should configure with a callback function", () => {
       const app = createApp();
-      const ipPlugin = request.ip.configure((ctx) => {
-        return ctx.request.headers.get("x-real-ip");
+      const ipPlugin = proxy({
+        ip: (ctx) => {
+          return ctx.request.headers.get("x-real-ip");
+        },
       });
       app.register(ipPlugin);
       app.get("/", () => {
@@ -654,7 +664,7 @@ describe("Http", () => {
 
     test("should configure with settings object", async () => {
       const app = createApp({ logger: false });
-      const ipPlugin = request.ip.configure({ trustProxy: true, proxyDepth: 2 });
+      const ipPlugin = proxy({ trustProxies: true, ip: { proxyDepth: 2 } });
       app.register(ipPlugin);
       app.get("/", () => {
         return request.ip() ?? "no-ip";

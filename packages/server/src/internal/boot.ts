@@ -1,10 +1,11 @@
 import "./avvio-patch.js";
 import avvio, { type Avvio } from "avvio";
-import type { App } from "../interfaces/app.js";
-import { pluginOverride } from "./override.js";
+import type { App, Container, Registerable } from "../interfaces/index.js";
 import { runHooks } from "../hooks/store.js";
-import type { PluginOptions, RegisterOptions, Registerable } from "../interfaces/plugin.js";
-import { kModuleName, kPlugin } from "../symbols.js";
+import type { PluginOptions, RegisterOptions } from "../interfaces/plugin.js";
+import { kModuleName, kModulesChain, kPlugin } from "../symbols.js";
+import { isCallable } from "../utils/callable.js";
+import { plugin } from "./plugins.js";
 
 export const METADATA_SYMBOLS = [kModuleName, kPlugin];
 
@@ -12,6 +13,65 @@ type MetadataCarrier = CallableFunction & {
   [kModuleName]?: string;
   [kPlugin]?: boolean;
 };
+
+/**
+ * Checks if a value has a clone method
+ */
+function cloneable(value: unknown): value is { clone(): unknown } {
+  return isCallable((value as any)?.clone);
+}
+
+/**
+ * Clones a container by iterating symbol properties and conditionally cloning values
+ */
+function cloneContainer(container: Container): Container {
+  const newContainer: Container = {};
+  // Iterate over symbol properties
+  for (const key of Object.getOwnPropertySymbols(container)) {
+    const value = container[key];
+    if (Array.isArray(value)) {
+      newContainer[key] = [...value];
+      continue;
+    }
+    if (cloneable(value)) {
+      newContainer[key] = value.clone();
+      continue;
+    }
+    newContainer[key] = value;
+  }
+
+  return newContainer;
+}
+
+interface OverrideOptions {
+  prefix?: string;
+  name?: string;
+}
+
+function pluginOverride(app: App, fn: Registerable, options: OverrideOptions = {}): App {
+  if (plugin.is(fn)) return app;
+
+  const { $prefix: parentPrefix = "", $prefixExclude: parentExclude = [] } = app;
+
+  const child: App = Object.create(app, {
+    container: {
+      value: cloneContainer(app.container),
+    },
+    $prefix: {
+      value: options.prefix ? parentPrefix + options.prefix : parentPrefix,
+    },
+    $prefixExclude: {
+      value: [...parentExclude],
+    },
+    $parent: {
+      value: app,
+    },
+  });
+
+  (child.container[kModulesChain] as App[])?.push(child);
+  child.container[kModuleName] = plugin.getName(fn, options);
+  return child;
+}
 
 /**
  * Copies all registered metadata from source function to target function
