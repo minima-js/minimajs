@@ -123,12 +123,7 @@ function createTrustValidator<S>(trustProxies: ProxyOptions<S>["trustProxies"]):
   const trustProxiesSet = new Set(trustProxies);
 
   return (ctx: Context<S>) => {
-    // Get socket IP (only available in Node.js HTTP server)
-    const ip = ctx.incomingMessage?.socket?.remoteAddress;
-
-    // If no socket access (e.g., Bun server), cannot validate against IP list
-    // In this case, default to false for security
-    return ip ? trustProxiesSet.has(ip) : false;
+    return ctx.remoteAddr ? trustProxiesSet.has(ctx.remoteAddr) : false;
   };
 }
 
@@ -142,7 +137,7 @@ function createIpExtractor<S>(config: ProxyOptions<S>["ip"]): IpExtractor<S> | n
   const { header, proxyDepth = 1 } = config || {};
 
   return (ctx: Context<S>, isTrusted: boolean) => {
-    const { request, incomingMessage } = ctx;
+    const { request } = ctx;
 
     // Check custom header first
     if (header && isTrusted) {
@@ -168,7 +163,7 @@ function createIpExtractor<S>(config: ProxyOptions<S>["ip"]): IpExtractor<S> | n
     }
 
     // Fallback to socket IP (only available in Node.js HTTP server)
-    return incomingMessage?.socket?.remoteAddress || null;
+    return ctx.remoteAddr;
   };
 }
 

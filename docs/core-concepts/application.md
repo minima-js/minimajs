@@ -101,3 +101,5 @@ test("GET /", async () => {
   expect(await response.json()).toEqual({ message: "Hello, World!" });
 });
 ```
+
+For more information on testing your application, see the [Testing guide](/guides/testing).

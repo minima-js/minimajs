@@ -1,9 +1,10 @@
 import { describe, test, expect, beforeEach, afterEach } from "@jest/globals";
+import type { Server as BunServer } from "bun";
 import { createApp } from "./index.js";
 import type { Server } from "../core/index.js";
 import { createRequest } from "../mock/request.js";
 describe("Bun Server", () => {
-  let app: Server<any>;
+  let app: Server<BunServer<unknown>>;
 
   afterEach(async () => {
     if (app) {

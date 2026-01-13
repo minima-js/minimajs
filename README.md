@@ -224,8 +224,8 @@ const app = createApp();
 
 // Request lifecycle hooks
 app.register(
-  hook("request", ({ request, url }) => {
-    console.log(`${request.method} ${url.pathname}`);
+  hook("request", ({ request, pathname }) => {
+    console.log(`${request.method} ${pathname}`);
   })
 );
 

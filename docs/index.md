@@ -48,23 +48,29 @@ features:
 ::: code-group
 
 ```typescript [Bun]
-import { createApp } from "@minimajs/server/bun"; // [!code highlight]
-import { params } from "@minimajs/server";
+import { createApp } from "@minimajs/server/bun";
+import { body } from "@minimajs/server"; // [!code highlight]
 
 const app = createApp();
 
-app.get("/:name", () => `Hello, ${params.get("name")}!`);
+app.post("/users", async () => {
+  const data = await body(); // [!code highlight]
+  return { message: "User created", data };
+});
 
 await app.listen({ port: 3000 });
 ```
 
 ```typescript [Node.js]
-import { createApp } from "@minimajs/server/node"; // [!code highlight]
-import { params } from "@minimajs/server";
+import { createApp } from "@minimajs/server/node";
+import { body } from "@minimajs/server"; // [!code highlight]
 
 const app = createApp();
 
-app.get("/:name", () => `Hello, ${params.get("name")}!`);
+app.post("/users", async () => {
+  const data = await body(); // [!code highlight]
+  return { message: "User created", data };
+});
 
 await app.listen({ port: 3000 });
 ```

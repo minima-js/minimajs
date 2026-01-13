@@ -258,7 +258,7 @@ const authPlugin = (options: AuthOptions) =>
 
     app.register(
       hook("request", async (ctx) => {
-        if (excludePaths.includes(ctx.request.url.pathname)) return;
+        if (excludePaths.includes(ctx.pathname)) return;
 
         const token = ctx.request.headers.get("authorization")?.split(" ")[1];
         if (!token) {

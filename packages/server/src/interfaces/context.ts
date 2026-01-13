@@ -14,6 +14,8 @@ export interface ContextMetadata {
   pathEnd: number;
 }
 
+export type ContextLocals = Record<symbol, unknown>;
+
 export interface Context<S = unknown> {
   readonly remoteAddr: string | null;
   readonly app: App<S>;
@@ -23,7 +25,7 @@ export interface Context<S = unknown> {
   readonly request: Request; // WebApi Request
   readonly responseState: ResponseState; // Mutable response headers/status
   readonly container: Container; // app.container
-  readonly locals: Record<symbol, unknown>;
+  readonly locals: ContextLocals;
   readonly route: Route<S> | null;
   readonly incomingMessage: S extends HttpServer | HttpsServer ? IncomingMessage : undefined;
   readonly serverResponse: S extends HttpServer | HttpsServer ? ServerResponse : undefined;

@@ -162,8 +162,8 @@ This example uses a `request` hook to log every incoming request:
 import { hook } from "@minimajs/server";
 
 app.register(
-  hook("request", ({ request, url }) => {
-    console.log(`[REQ] ${request.method} ${url.pathname}`);
+  hook("request", ({ request, pathname }) => {
+    console.log(`[REQ] ${request.method} ${pathname}`);
   })
 );
 ```

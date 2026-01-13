@@ -153,9 +153,9 @@ const app = createApp();
 
 app.register(
   hook.define({
-    request({ request }) {
+    request({ request, pathname }) {
       console.log("Incoming request:", request.url);
-      if (request.url.pathname === "/maintenance") {
+      if (pathname === "/maintenance") {
         // need to maintain headers in responseState
         return abort("Under maintenance", 503);
       }
@@ -202,8 +202,8 @@ app.register(
 
 // Request logging
 app.register(
-  hook("request", ({ request, url }) => {
-    console.log(`[${request.method}] ${url.pathname}`, {
+  hook("request", ({ request, pathname }) => {
+    console.log(`[${request.method}] ${pathname}`, {
       userAgent: request.headers.get("user-agent"),
       timestamp: new Date().toISOString(),
     });
@@ -266,8 +266,8 @@ app.register(
 
 // Logging serialized output
 app.register(
-  hook("send", (serialized, { request }) => {
-    console.log(`[${request.method}] ${request.url.pathname}`, {
+  hook("send", (serialized, { request, pathname }) => {
+    console.log(`[${request.method}] ${pathname}`, {
       bodySize: typeof serialized === "string" ? serialized.length : "stream",
       timestamp: new Date().toISOString(),
     });

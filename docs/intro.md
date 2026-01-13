@@ -75,8 +75,8 @@ import { hook } from "@minimajs/server";
 
 // Example: A request hook for logging
 app.register(
-  hook("request", ({ request }) => {
-    console.log(`${request.method} ${request.url}`);
+  hook("request", ({ request, pathname }) => {
+    console.log(`${request.method} ${pathname}`);
   })
 );
 
