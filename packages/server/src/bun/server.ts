@@ -18,7 +18,7 @@ export class BunServerAdapter<T = unknown> implements ServerAdapter<BunServer<T>
   ): Promise<ListenResult<BunServer<T>>> {
     const host = opts.host || "0.0.0.0";
     const port = opts.port;
-
+    // TODO: Need to figure correct option types!
     const server = Bun.serve<T>({
       ...(this.serverOptions as any),
       port,
@@ -30,7 +30,7 @@ export class BunServerAdapter<T = unknown> implements ServerAdapter<BunServer<T>
     const address: AddressInfo = {
       hostname: server.hostname!,
       port: server.port!,
-      family: (server as any).address?.family,
+      family: (server as any).address?.family, // TODO: fix typing
       protocol: server.protocol!,
       address: server.url.href,
     };

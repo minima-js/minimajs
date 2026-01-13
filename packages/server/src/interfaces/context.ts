@@ -5,6 +5,7 @@ import type { App, Container } from "./app.js";
 import type { ResponseState } from "./response.js";
 import type { Route } from "./route.js";
 import type { ServerAdapter } from "../index.js";
+import type { kIpAddr } from "../symbols.js";
 
 export interface ContextMetadata {
   url?: URL;
@@ -15,7 +16,10 @@ export interface ContextMetadata {
   pathEnd: number;
 }
 
-export type ContextLocals = Record<symbol, unknown>;
+export interface ContextLocals {
+  [kIpAddr]?: string | null;
+  [key: symbol]: unknown;
+}
 
 export interface Context<S = unknown> {
   readonly app: App<S>;

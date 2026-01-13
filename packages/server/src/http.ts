@@ -277,10 +277,10 @@ export namespace request {
    */
   export function ip(): string | null {
     const { locals } = $context();
-    if (!(kIpAddr in locals)) {
+    const ipAddr = locals[kIpAddr];
+    if (ipAddr === undefined)
       abort("proxy() plugin is not configured. Please register proxy({ ip: { ... } }) to enable IP extraction.", 500);
-    }
-    return locals[kIpAddr] as string | null;
+    return ipAddr;
   }
 
   export function remoteAddr() {

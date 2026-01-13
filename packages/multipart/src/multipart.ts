@@ -17,9 +17,10 @@ function toBusBoyHeaders(headers: Headers): BusboyHeaders {
 }
 
 function busboy(opt: Config) {
+  const { request, incomingMessage } = context();
   try {
-    const { request, incomingMessage } = context();
-    const stream = incomingMessage ? incomingMessage : Readable.fromWeb(request.body as any);
+    // TODO: needs to handle if request.body is null
+    const stream = incomingMessage ? incomingMessage : Readable.fromWeb(request.body!);
     const headers = toBusBoyHeaders(request.headers);
     const bb = new Busboy({
       ...opt,

@@ -110,7 +110,7 @@ export function bodyParser(opts: BodyParserOptions = { type: ["json"] }) {
     try {
       let req = request;
       if (opts.clone) {
-        req = request.clone() as any;
+        req = request.clone() as Request;
       }
 
       let parsed: unknown;

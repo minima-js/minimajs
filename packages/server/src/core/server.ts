@@ -1,4 +1,4 @@
-import Router, { type HTTPVersion } from "find-my-way";
+import Router, { type HTTPMethod, type HTTPVersion } from "find-my-way";
 import { type Avvio } from "avvio";
 import { type Logger } from "pino";
 import type { App, RouteHandler } from "../interfaces/app.js";
@@ -103,8 +103,8 @@ export class Server<T = any> implements App<T> {
   all(path: string, ...args: [...RouteMetaDescriptor<T>[], RouteHandler<T>]): this;
   all(path: string, ...args: [...RouteMetaDescriptor<T>[], RouteHandler<T>]): this {
     // Register route for all HTTP methods
-    const methods = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
-    return this.route({ method: methods as any, path }, ...args);
+    const methods: HTTPMethod[] = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
+    return this.route({ method: methods, path }, ...args);
   }
 
   route(options: RouteOptions, handler: RouteHandler<T>): this;

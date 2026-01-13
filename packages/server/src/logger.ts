@@ -34,12 +34,9 @@ export const loggerOptions: LoggerOptions = {
 };
 
 function getPluginNames(server: App): string {
-  const chain = server.container[kModulesChain];
+  const chain = server.container[kModulesChain].slice(-3);
   return chain
-    .slice(-3)
-    .map((app) => {
-      return app.container[kModuleName] as string;
-    })
+    .map((app) => app.container[kModuleName])
     .filter(Boolean)
     .join("/");
 }
