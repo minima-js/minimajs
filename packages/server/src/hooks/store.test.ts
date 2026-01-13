@@ -115,8 +115,7 @@ describe("hooks/store", () => {
   describe("getHooks", () => {
     test("should return hooks from app container", () => {
       const mockHooks = createHooksStore();
-      const container: Container = {};
-      container[kHooks] = mockHooks;
+      const container: Container = { [kHooks]: mockHooks } as any;
 
       const app = { container } as unknown as App;
 
@@ -135,8 +134,7 @@ describe("hooks/store", () => {
   describe("addHook", () => {
     test("should add hook callback to the specified hook set", () => {
       const mockHooks = createHooksStore();
-      const container: Container = {};
-      container[kHooks] = mockHooks;
+      const container: Container = { [kHooks]: mockHooks } as any;
 
       const app = { container } as unknown as App;
       const callback = () => {};
@@ -148,8 +146,7 @@ describe("hooks/store", () => {
 
     test("should add multiple hooks to the same set", () => {
       const mockHooks = createHooksStore();
-      const container: Container = {};
-      container[kHooks] = mockHooks;
+      const container: Container = { [kHooks]: mockHooks } as any;
 
       const app = { container } as unknown as App;
       const callback1 = () => {};

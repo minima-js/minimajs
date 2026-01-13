@@ -13,7 +13,7 @@ import type { PrefixOptions, RouteConfig, RouteMetaDescriptor, RouteOptions } fr
 import { createBoot, wrapPlugin } from "../internal/boot.js";
 import type { AddressInfo, ServerAdapter, ListenOptions } from "../interfaces/server.js";
 import { kAppDescriptor, kHooks, kModulesChain } from "../symbols.js";
-import type { RequestHandlerContext } from "../interfaces/index.js";
+import type { Container, RequestHandlerContext } from "../interfaces/index.js";
 
 export interface ServerOptions {
   prefix: string;
@@ -24,7 +24,7 @@ export interface ServerOptions {
 export class Server<T = any> implements App<T> {
   server?: T;
   readonly router: Router.Instance<HTTPVersion.V1>;
-  readonly container: Record<symbol, unknown>;
+  readonly container: Container<T>;
 
   $prefix: string;
   $prefixExclude: string[];

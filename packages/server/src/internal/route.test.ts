@@ -17,8 +17,7 @@ describe("internal/route", () => {
   describe("getAppRouteDescriptors", () => {
     test("should return route descriptors from container", () => {
       const descriptors = [[tag, "value"] as [symbol, string]];
-      const container = new Map() as unknown as Container;
-      container[kAppDescriptor] = descriptors;
+      const container: Container = { [kAppDescriptor]: descriptors } as unknown as Container;
 
       const result = getAppRouteDescriptors(container);
       expect(result).toBe(descriptors);
@@ -28,8 +27,7 @@ describe("internal/route", () => {
   describe("applyRouteMetadata", () => {
     test("should apply array descriptor to metadata", () => {
       const metadata: RouteMetadata = {};
-      const container: Container = {};
-      container[kAppDescriptor] = [];
+      const container: Container = { [kAppDescriptor]: [] } as unknown as Container;
 
       const routeConfig: RouteConfig<unknown> = {
         app: { container } as unknown as App,
@@ -48,8 +46,7 @@ describe("internal/route", () => {
 
     test("should apply function descriptor to route config", () => {
       const metadata: RouteMetadata = {};
-      const container: Container = {};
-      container[kAppDescriptor] = [];
+      const container: Container = { [kAppDescriptor]: [] } as unknown as Container;
 
       const routeConfig: RouteConfig<unknown> = {
         app: { container } as unknown as App,
@@ -70,7 +67,7 @@ describe("internal/route", () => {
 
     test("should apply both app-level and route-level descriptors", () => {
       const metadata: RouteMetadata = {};
-      const container: Container = {};
+      const container: Container = {} as any;
       const appDescriptor: RouteMetaDescriptor<unknown> = [appKey, "appValue"];
       container[kAppDescriptor] = [appDescriptor];
 
@@ -92,8 +89,7 @@ describe("internal/route", () => {
 
     test("should apply mixed array and function descriptors", () => {
       const metadata: RouteMetadata = {};
-      const container: Container = {};
-      container[kAppDescriptor] = [];
+      const container: Container = { [kAppDescriptor]: [] } as unknown as Container;
 
       const routeConfig: RouteConfig<unknown> = {
         app: { container } as unknown as App,

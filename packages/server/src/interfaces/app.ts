@@ -4,8 +4,15 @@ import type { Plugin, PluginOptions, PluginSync, Register, RegisterOptions } fro
 import type { Context } from "./context.js";
 import type { PrefixOptions, RouteMetaDescriptor, RouteOptions } from "./route.js";
 import type { Logger } from "pino";
+import type { kAppDescriptor, kHooks, kModulesChain } from "../symbols.js";
+import type { HookStore } from "../interfaces/hooks.js";
 
-export type Container = Record<symbol, unknown>;
+export type Container<S = any> = {
+  [kHooks]: HookStore;
+  [kAppDescriptor]: RouteMetaDescriptor<S>[];
+  [kModulesChain]: App<S>[];
+  [key: symbol]: unknown;
+};
 
 export type RouteHandler<S = unknown> = (ctx: Context<S>) => unknown;
 

@@ -25,7 +25,7 @@ function cloneable(value: unknown): value is { clone(): unknown } {
  * Clones a container by iterating symbol properties and conditionally cloning values
  */
 function cloneContainer(container: Container): Container {
-  const newContainer: Container = {};
+  const newContainer: Container = {} as Container;
   // Iterate over symbol properties
   for (const key of Object.getOwnPropertySymbols(container)) {
     const value = container[key];
