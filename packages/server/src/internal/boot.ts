@@ -68,7 +68,7 @@ function pluginOverride(app: App, fn: Registerable, options: OverrideOptions = {
     },
   });
 
-  (child.container[kModulesChain] as App[])?.push(child);
+  child.container[kModulesChain].push(child);
   child.container[kModuleName] = plugin.getName(fn, options);
   return child;
 }

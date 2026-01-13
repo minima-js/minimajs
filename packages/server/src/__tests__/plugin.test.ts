@@ -271,33 +271,33 @@ describe("Plugin System", () => {
       const chains: App[][] = [];
 
       const child = async (c: App) => {
-        chains.push(c.container[kModulesChain] as App[]);
+        chains.push(c.container[kModulesChain]);
       };
 
       const parent = async (p: App) => {
-        chains.push(p.container[kModulesChain] as App[]);
+        chains.push(p.container[kModulesChain]);
         p.register(child);
       };
 
-      chains.push(app.container[kModulesChain] as App[]);
+      chains.push(app.container[kModulesChain]);
       app.register(parent);
       await app.ready();
 
       // Expect snapshots: root chain [root], parent chain [root, parent], child chain [root, parent, child]
       expect(chains.length).toBe(3);
-      const [rootChain, parentChain, childChain] = chains as [App[], App[], App[]];
+      const [rootChain, parentChain, childChain] = chains;
 
       expect(rootChain).toHaveLength(1);
-      expect(rootChain[0]).toBe(app);
+      expect(rootChain![0]).toBe(app);
 
       expect(parentChain).toHaveLength(2);
-      expect(parentChain[0]).toBe(app);
-      expect(parentChain[1]).not.toBe(app);
+      expect(parentChain![0]).toBe(app);
+      expect(parentChain![1]).not.toBe(app);
 
       expect(childChain).toHaveLength(3);
-      expect(childChain[0]).toBe(app);
-      expect(childChain[1]).not.toBe(app);
-      expect(childChain[2]).not.toBe(app);
+      expect(childChain![0]).toBe(app);
+      expect(childChain![1]).not.toBe(app);
+      expect(childChain![2]).not.toBe(app);
     });
   });
 });

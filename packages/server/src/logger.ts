@@ -34,7 +34,7 @@ export const loggerOptions: LoggerOptions = {
 };
 
 function getPluginNames(server: App): string {
-  const chain = server.container[kModulesChain] as App[];
+  const chain = server.container[kModulesChain];
   return chain
     .slice(-3)
     .map((app) => {
