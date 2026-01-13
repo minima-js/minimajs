@@ -20,7 +20,10 @@ export class BunServerAdapter<T = unknown> implements ServerAdapter<BunServer<T>
       port,
       hostname: host,
       development: this.serverOptions.development ?? process.env.NODE_ENV !== "production",
-      fetch: (request) => requestHandler(srv, request, {}),
+      fetch: (request) =>
+        requestHandler(srv, request, {
+          remoteAddr: server.requestIP(request)?.address || null,
+        }),
     });
 
     const address: AddressInfo = {

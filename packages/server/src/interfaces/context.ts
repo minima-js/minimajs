@@ -15,6 +15,7 @@ export interface ContextMetadata {
 }
 
 export interface Context<S = unknown> {
+  readonly remoteAddr: string | null;
   readonly app: App<S>;
   readonly server: S;
   readonly pathname: string;
@@ -28,4 +29,5 @@ export interface Context<S = unknown> {
   readonly serverResponse: S extends HttpServer | HttpsServer ? ServerResponse : undefined;
 }
 
-export type RequestHandlerContext<S = unknown> = Partial<Pick<Context<S>, "incomingMessage" | "serverResponse">>;
+export type RequestHandlerContext<S = unknown> = Partial<Pick<Context<S>, "incomingMessage" | "serverResponse">> &
+  Pick<Context<S>, "remoteAddr">;

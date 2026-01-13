@@ -639,6 +639,7 @@ describe("Http", () => {
     test("should configure with a callback function", () => {
       const app = createApp();
       const ipPlugin = proxy({
+        trustProxies: true,
         ip: (ctx) => {
           return ctx.request.headers.get("x-real-ip");
         },

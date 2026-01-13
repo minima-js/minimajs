@@ -52,6 +52,7 @@ export class NodeServerAdapter implements ServerAdapter<NodeServer> {
       const response = await requestHandler(srv, request, {
         incomingMessage: req,
         serverResponse: res,
+        remoteAddr: req.socket.remoteAddress || null,
       });
       await fromWebResponse(response, res);
     }

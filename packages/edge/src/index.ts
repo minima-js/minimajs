@@ -1,6 +1,6 @@
 import { type URL } from "node:url";
 import { Edge } from "edge.js";
-import { setHeader } from "@minimajs/server";
+import { headers } from "@minimajs/server";
 import type { EdgeOptions, LoaderTemplate } from "edge.js/types";
 
 export type Template = [path: string, template: LoaderTemplate];
@@ -28,7 +28,7 @@ export function createView(url: Mount, { templates = [], ...options }: ViewOptio
     edge.registerTemplate(path, tpl);
   }
   return function view(templatePath: string, state?: Record<string, any>) {
-    setHeader("content-type", "text/html");
+    headers.set("content-type", "text/html");
     return edge.render(templatePath, state);
   };
 }

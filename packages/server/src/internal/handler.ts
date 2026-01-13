@@ -49,6 +49,7 @@ export async function handleRequest<S>(server: App<S>, req: Request, partial: Re
       pathStart,
       pathEnd,
     },
+    remoteAddr: partial.remoteAddr,
     pathname,
     server: server.server!,
     route,

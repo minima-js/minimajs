@@ -58,6 +58,7 @@ describe("Node Server", () => {
       });
 
       const response = await app.handle(createRequest("/users"), {
+        remoteAddr: null,
         incomingMessage,
         serverResponse,
       });

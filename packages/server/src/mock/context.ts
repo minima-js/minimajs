@@ -48,6 +48,7 @@ export function mockContext<S = unknown, T = void>(
     server: null as any,
     app: null as any, // Mock app - users should use app.handle for full integration tests
     pathname,
+    remoteAddr: null,
     request: request,
     responseState: resInit,
     container: {} as Container,
