@@ -9,6 +9,7 @@ import { createResponse } from "./response.js";
 import { result2route } from "./route.js";
 import type { RouteFindResult } from "../interfaces/route.js";
 import { parseRequestURL } from "../utils/request.js";
+import type { Server } from "../core/index.js";
 
 async function finalizeSent(ctx: Context, response: Response) {
   await runHooks.safe(ctx.app, "sent", ctx);
@@ -31,12 +32,16 @@ export function getPathname(url: string): string {
   return q === -1 ? url.slice(i) : url.slice(i, q);
 }
 
-export async function handleRequest<S>(server: App<S>, req: Request, partial: RequestHandlerContext<S>): Promise<Response> {
+export async function handleRequest<S>(
+  server: Server<S>,
+  req: Request,
+  partial: RequestHandlerContext<S>
+): Promise<Response> {
   const { pathEnd, pathStart } = parseRequestURL(req);
   const pathname = req.url.slice(pathStart, pathEnd);
   const result: RouteFindResult<any> | null = server.router.find(req.method as HTTPMethod, pathname);
   let route: Route | null = null;
-  let app = server;
+  let app: App<S> = server;
 
   if (result) {
     route = result2route(result);
@@ -49,9 +54,9 @@ export async function handleRequest<S>(server: App<S>, req: Request, partial: Re
       pathStart,
       pathEnd,
     },
-    remoteAddr: partial.remoteAddr,
     pathname,
     server: server.server!,
+    serverAdapter: server.adapter,
     route,
     locals: {},
     container: app.container,

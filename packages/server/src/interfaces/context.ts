@@ -4,6 +4,7 @@ import type { Server as HttpsServer } from "node:https";
 import type { App, Container } from "./app.js";
 import type { ResponseState } from "./response.js";
 import type { Route } from "./route.js";
+import type { ServerAdapter } from "../index.js";
 
 export interface ContextMetadata {
   url?: URL;
@@ -17,9 +18,9 @@ export interface ContextMetadata {
 export type ContextLocals = Record<symbol, unknown>;
 
 export interface Context<S = unknown> {
-  readonly remoteAddr: string | null;
   readonly app: App<S>;
   readonly server: S;
+  readonly serverAdapter: ServerAdapter<S>;
   readonly pathname: string;
   readonly $metadata: ContextMetadata;
   readonly request: Request; // WebApi Request
@@ -31,5 +32,4 @@ export interface Context<S = unknown> {
   readonly serverResponse: S extends HttpServer | HttpsServer ? ServerResponse : undefined;
 }
 
-export type RequestHandlerContext<S = unknown> = Partial<Pick<Context<S>, "incomingMessage" | "serverResponse">> &
-  Pick<Context<S>, "remoteAddr">;
+export type RequestHandlerContext<S = unknown> = Partial<Pick<Context<S>, "incomingMessage" | "serverResponse">>;

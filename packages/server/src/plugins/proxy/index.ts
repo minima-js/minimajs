@@ -123,7 +123,8 @@ function createTrustValidator<S>(trustProxies: ProxyOptions<S>["trustProxies"]):
   const trustProxiesSet = new Set(trustProxies);
 
   return (ctx: Context<S>) => {
-    return ctx.remoteAddr ? trustProxiesSet.has(ctx.remoteAddr) : false;
+    const ip = ctx.serverAdapter.remoteAddr(ctx);
+    return ip ? trustProxiesSet.has(ip) : false;
   };
 }
 
@@ -163,7 +164,7 @@ function createIpExtractor<S>(config: ProxyOptions<S>["ip"]): IpExtractor<S> | n
     }
 
     // Fallback to socket IP (only available in Node.js HTTP server)
-    return ctx.remoteAddr;
+    return ctx.serverAdapter.remoteAddr(ctx);
   };
 }
 

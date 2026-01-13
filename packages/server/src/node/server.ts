@@ -8,11 +8,16 @@ import {
 import { toWebRequest, fromWebResponse } from "./utils.js";
 import type { AddressInfo, ServerAdapter, ListenOptions, RequestHandler, ListenResult } from "../interfaces/server.js";
 import type { Server } from "../core/index.js";
+import type { Context } from "../index.js";
 
 export type NodeServerOptions = ServerOptions<typeof IncomingMessage, typeof ServerResponse>;
 
 export class NodeServerAdapter implements ServerAdapter<NodeServer> {
   constructor(private readonly serverOptions?: NodeServerOptions) {}
+
+  remoteAddr(ctx: Context<NodeServer>): string | null {
+    return ctx.incomingMessage.socket.remoteAddress || null;
+  }
 
   getAddress(server: NodeServer): AddressInfo {
     const info = server.address();
@@ -52,7 +57,6 @@ export class NodeServerAdapter implements ServerAdapter<NodeServer> {
       const response = await requestHandler(srv, request, {
         incomingMessage: req,
         serverResponse: res,
-        remoteAddr: req.socket.remoteAddress || null,
       });
       await fromWebResponse(response, res);
     }

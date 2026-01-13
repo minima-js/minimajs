@@ -154,7 +154,7 @@ export class Server<T = any> implements App<T> {
   }
 
   // Testing utility
-  async handle(request: Request, ctx: RequestHandlerContext<T> = { remoteAddr: null }): Promise<Response> {
+  async handle(request: Request, ctx: RequestHandlerContext<T> = {}): Promise<Response> {
     await this.ready();
     return handleRequest(this, request, ctx);
   }

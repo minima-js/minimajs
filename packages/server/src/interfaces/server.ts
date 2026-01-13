@@ -1,4 +1,4 @@
-import type { RequestHandlerContext } from "./index.js";
+import type { Context, RequestHandlerContext } from "./index.js";
 import type { Server } from "../core/server.js";
 
 /**
@@ -81,6 +81,8 @@ export interface ServerAdapter<T> {
    * @returns Promise resolving to server instance and address info
    */
   listen(server: Server<T>, opts: ListenOptions, requestHandler: RequestHandler<T>): Promise<ListenResult<T>>;
+
+  remoteAddr(ctx: Context<T>): string | null;
 
   /**
    * Stops the server and closes all connections.

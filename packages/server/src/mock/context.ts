@@ -3,7 +3,7 @@ import { type Context } from "../interfaces/context.js";
 import { createRequest, type MockRequestOptions } from "./request.js";
 import { kBody } from "../symbols.js";
 import { parseRequestURL } from "../utils/request.js";
-import type { Container } from "../index.js";
+import type { Container, ServerAdapter } from "../index.js";
 
 export type MockContextCallback<T, S> = (ctx: Context<S>) => T;
 export interface MockContextOptions<S> extends MockRequestOptions {
@@ -48,8 +48,9 @@ export function mockContext<S = unknown, T = void>(
     server: null as any,
     app: null as any, // Mock app - users should use app.handle for full integration tests
     pathname,
-    remoteAddr: null,
+    serverAdapter: {} as ServerAdapter<S>,
     request: request,
+
     responseState: resInit,
     container: {} as Container,
     locals: {},

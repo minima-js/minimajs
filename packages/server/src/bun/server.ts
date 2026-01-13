@@ -1,11 +1,15 @@
 import { type Server as BunServer, type Serve } from "bun";
 import type { AddressInfo, ServerAdapter, ListenOptions, RequestHandler, ListenResult } from "../interfaces/server.js";
-import type { Server } from "../index.js";
+import type { Context, Server } from "../index.js";
 
 export type BunServeOptions<T = unknown> = Omit<Serve.Options<T>, "fetch" | "port" | "hostname">;
 
 export class BunServerAdapter<T = unknown> implements ServerAdapter<BunServer<T>> {
   constructor(private readonly serverOptions: BunServeOptions<T> = {}) {}
+
+  remoteAddr(ctx: Context<BunServer<T>>): string | null {
+    return ctx.server.requestIP(ctx.request)?.address || null;
+  }
 
   async listen(
     srv: Server,
@@ -20,10 +24,7 @@ export class BunServerAdapter<T = unknown> implements ServerAdapter<BunServer<T>
       port,
       hostname: host,
       development: this.serverOptions.development ?? process.env.NODE_ENV !== "production",
-      fetch: (request) =>
-        requestHandler(srv, request, {
-          remoteAddr: server.requestIP(request)?.address || null,
-        }),
+      fetch: (request) => requestHandler(srv, request, {}),
     });
 
     const address: AddressInfo = {

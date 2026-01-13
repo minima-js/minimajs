@@ -268,9 +268,6 @@ export namespace request {
    * ```ts
    * import { request } from '@minimajs/server';
    *
-   * // Configure the IP plugin first
-   * app.register(request.ip.configure({ trustProxy: true }));
-   *
    * // Then use it in handlers
    * app.get('/api/info', () => {
    *   const clientIp = request.ip();
@@ -284,6 +281,11 @@ export namespace request {
       abort("proxy() plugin is not configured. Please register proxy({ ip: { ... } }) to enable IP extraction.", 500);
     }
     return locals[kIpAddr] as string | null;
+  }
+
+  export function remoteAddr() {
+    const ctx = $context();
+    return ctx.serverAdapter.remoteAddr(ctx);
   }
 }
 
