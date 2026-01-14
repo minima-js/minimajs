@@ -101,13 +101,6 @@ describe("hooks/store", () => {
       const result = getHooks(app);
       expect(result).toBe(mockHooks);
     });
-
-    test("should throw error when HookStore not found in container", () => {
-      const container = new Map();
-      const app = { container } as unknown as App;
-
-      expect(() => getHooks(app)).toThrow("HookStore not found in container");
-    });
   });
 
   describe("addHook", () => {

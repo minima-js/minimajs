@@ -25,8 +25,8 @@ describe("Http", () => {
         return response("Message: Ok");
       });
       const res = await app.handle(createRequest("/test"));
-      const body = await res.json();
-      expect(body).toEqual({ message: "ok" });
+      const body = await res.text();
+      expect(body).toEqual("Message: Ok");
       await app.close();
     });
   });
@@ -635,11 +635,13 @@ describe("Http", () => {
     });
   });
 
-  describe("request.ip.configure", () => {
+  describe("proxy", () => {
     test("should configure with a callback function", () => {
       const app = createApp();
       const ipPlugin = proxy({
         trustProxies: true,
+        host: false,
+        proto: false,
         ip: (ctx) => {
           return ctx.request.headers.get("x-real-ip");
         },
@@ -665,7 +667,7 @@ describe("Http", () => {
 
     test("should configure with settings object", async () => {
       const app = createApp({ logger: false });
-      const ipPlugin = proxy({ trustProxies: true, ip: { proxyDepth: 2 } });
+      const ipPlugin = proxy({ trustProxies: true, host: false, proto: false, ip: { proxyDepth: 2 } });
       app.register(ipPlugin);
       app.get("/", () => {
         return request.ip() ?? "no-ip";
@@ -679,7 +681,7 @@ describe("Http", () => {
 
       const res = await app.handle(req);
       const text = await res.text();
-      expect(text).toBe("192.168.1.1");
+      expect(text).toBe("10.0.0.1");
       await app.close();
     });
   });

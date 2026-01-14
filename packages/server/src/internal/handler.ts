@@ -12,7 +12,7 @@ import { parseRequestURL } from "../utils/request.js";
 import type { Server } from "../core/index.js";
 
 async function finalizeSend(ctx: Context, response: Response) {
-  await runHooks.safe(ctx.app, "send", response, ctx);
+  await runHooks.send(ctx.app, response, ctx);
   return response;
 }
 

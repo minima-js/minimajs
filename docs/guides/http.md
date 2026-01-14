@@ -88,12 +88,10 @@ Before using `request.ip()`, configure the IP plugin:
 
 ```ts
 import { request } from "@minimajs/server";
-
-// Trust proxy headers
-app.register(request.ip.configure({ trustProxy: true }));
+import { proxy } from "@minimajs/server/plugins";
 
 // Use custom header (e.g., Cloudflare)
-app.register(request.ip.configure({ header: "CF-Connecting-IP" }));
+app.register(proxy({ trustProxies: true, ip: { header: "CF-Connecting-IP" } }));
 ```
 
 **Example:**

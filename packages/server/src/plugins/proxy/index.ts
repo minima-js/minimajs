@@ -3,6 +3,7 @@ import { kIpAddr } from "../../symbols.js";
 import { HttpError } from "../../error.js";
 import { isCallable } from "../../utils/callable.js";
 import type { ProxyOptions, IpExtractor, HostExtractor, ProtoExtractor } from "./types.js";
+import { createTrustValidator } from "./trust.js";
 
 /**
  * Proxy plugin that extracts client information from proxy headers.
@@ -109,23 +110,6 @@ function defaultExtractHost(request: Request): string {
     throw new HttpError("Missing Host header", 400);
   }
   return host;
-}
-
-function createTrustValidator<S>(trustProxies: ProxyOptions<S>["trustProxies"]): (ctx: Context<S>) => boolean {
-  if (typeof trustProxies === "function") {
-    return trustProxies;
-  }
-
-  if (typeof trustProxies === "boolean") {
-    return () => trustProxies;
-  }
-
-  const trustProxiesSet = new Set(trustProxies);
-
-  return (ctx: Context<S>) => {
-    const ip = ctx.serverAdapter.remoteAddr(ctx);
-    return ip ? trustProxiesSet.has(ip) : false;
-  };
 }
 
 function createIpExtractor<S>(config: ProxyOptions<S>["ip"]): IpExtractor<S> | null {
