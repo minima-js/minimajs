@@ -1,11 +1,12 @@
 import { describe, test, expect, beforeEach, afterEach } from "@jest/globals";
+import type { Server as BunServer } from "bun";
 import { createApp } from "../../bun/index.js";
 import { proxy } from "./index.js";
 import { kIpAddr } from "../../symbols.js";
-import type { App } from "../../interfaces/app.js";
+import type { Server } from "../../core/index.js";
 
 describe("plugins/proxy", () => {
-  let app: App;
+  let app: Server<BunServer<any>>;
 
   beforeEach(() => {
     app = createApp();
@@ -104,14 +105,15 @@ describe("plugins/proxy", () => {
 
   test("should not extract when trustProxies is false", async () => {
     app.register(proxy({ trustProxies: false, host: false, proto: false }));
-    app.get("/ip", (ctx) => ctx.locals[kIpAddr] || "none");
+    app.adapter.remoteAddr = () => "127.0.0.1";
+    app.get("/ip", (ctx) => ctx.locals[kIpAddr]);
 
     const req = new Request("http://localhost/ip", {
       headers: { "x-forwarded-for": "203.0.113.195" },
     });
 
     const res = await app.handle(req);
-    expect(await res.text()).toBe("none");
+    expect(await res.text()).toEqual("127.0.0.1");
   });
 
   test("should handle IP, host, and proto together", async () => {
