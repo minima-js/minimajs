@@ -16,8 +16,9 @@
  */
 
 import type { HeadersInit } from "./interfaces/response.js";
-import { toStatusCode, type StatusCode, createResponseFromState } from "./internal/response.js";
+import { toStatusCode, type StatusCode } from "./internal/response.js";
 import type { Context } from "./interfaces/context.js";
+import { response } from "./http.js";
 
 /**
  * Represents the response body of an HTTP error.
@@ -77,7 +78,7 @@ export class HttpError<R = unknown> extends BaseHttpError {
   }
 
   async render(ctx: Context): Promise<Response> {
-    return createResponseFromState(await ctx.app.serialize(this.toJSON(), ctx), {
+    return response(await ctx.app.serialize(this.toJSON(), ctx), {
       status: this.status,
       headers: this.headers,
     });
@@ -111,7 +112,7 @@ export class RedirectError extends BaseHttpError {
   render({ responseState }: Context): Response {
     // Merge instance headers with Location header
     responseState.headers.set("Location", this.url);
-    return createResponseFromState(null, {
+    return response(null, {
       status: this.status,
       headers: this.headers,
     });

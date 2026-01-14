@@ -581,12 +581,12 @@ describe("Bun Server", () => {
       expect(sendCalled).toBe(true);
     });
 
-    test("should register and run sent hook", async () => {
+    test("should register and run send hook", async () => {
       const { hook } = await import("../hooks/index.js");
       let sentCalled = false;
 
       app.register(
-        hook("sent", async () => {
+        hook("send", async () => {
           sentCalled = true;
         })
       );
@@ -617,24 +617,6 @@ describe("Bun Server", () => {
       const data = (await response.json()) as any;
       expect(data.customError).toBe(true);
       expect(data.originalError).toBe("Test error");
-    });
-
-    test("should register and run errorSent hook", async () => {
-      const { hook } = await import("../hooks/index.js");
-      let errorSentCalled = false;
-
-      app.register(
-        hook("errorSent", async () => {
-          errorSentCalled = true;
-        })
-      );
-
-      app.get("/error", () => {
-        throw new Error("Test error");
-      });
-
-      await app.handle(createRequest("/error"));
-      expect(errorSentCalled).toBe(true);
     });
 
     test("should register listen hook", async () => {

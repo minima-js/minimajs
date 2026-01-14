@@ -10,4 +10,4 @@ graph LR
     style Hook1 fill:#ffd43b
 ```
 
-**Note**: LIFO order applies to Child → Parent hooks: `send`, `sent`, `error`, `errorSent`, `close`, `timeout`. Parent → Child hooks like `request` and `transform` use FIFO order.
+**Note**: LIFO order applies to Child → Parent hooks: `transform`, `send`, `error`, `close`, `timeout`. Parent → Child hooks like `request` use FIFO order.

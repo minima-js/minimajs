@@ -33,8 +33,8 @@ app.register(hook("request", () => console.log("First registered")));
 app.register(hook("request", () => console.log("Second registered")));
 
 // Execution:
-// 1. "Second registered" → runs first
-// 2. "First registered" → runs second
+// 1. "First registered" → runs first
+// 2. "Second registered" → runs second
 ```
 
 ### Encapsulation and Scope Isolation

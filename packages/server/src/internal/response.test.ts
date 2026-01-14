@@ -72,29 +72,6 @@ describe("internal/response", () => {
       expect(res.status).toBe(200);
     });
 
-    test("should use Response from send hook if provided", async () => {
-      const { hook } = await import("../hooks/index.js");
-
-      const originalBody = "Original body content";
-      const customResponse = new Response("Intercepted by send hook", { status: 202 });
-
-      app.register(
-        hook("send", async (_body, _ctx) => {
-          return customResponse;
-        })
-      );
-
-      app.get("/test-path", () => originalBody);
-
-      // Mock a context to call createResponse directly
-      const response = await app.handle(createRequest("/test-path"));
-
-      // After context is mocked and createResponse is called, assert on the response
-      expect(response).toEqual(customResponse); // Expect the send hook's response
-      expect(await response?.text()).toBe("Intercepted by send hook");
-      expect(response?.status).toBe(202);
-    });
-
     test("should merge headers from options", async () => {
       // Import createResponse directly
       const { createResponse } = await import("./response.js");

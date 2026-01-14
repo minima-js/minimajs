@@ -2,7 +2,7 @@ import type { StatusCodes } from "http-status-codes";
 import type { IncomingHttpHeaders } from "node:http";
 import type { Context } from "../interfaces/index.js";
 
-export type ResponseBody = string | ReadableStream | ArrayBuffer | Blob | null;
+export type ResponseBody = string | ReadableStream | ArrayBuffer | Blob | FormData | URLSearchParams | null;
 export type Serializer<S = unknown> = (body: unknown, ctx: Context<S>) => ResponseBody | Promise<ResponseBody>;
 export type ErrorHandler<S = unknown> = (error: unknown, ctx: Context<S>) => Response | Promise<Response>;
 

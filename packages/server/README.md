@@ -236,6 +236,13 @@ app.register(
 );
 
 app.register(
+  hook("send", (response, _ctx) => {
+    // Called after response is sent - useful for logging and cleanup
+    console.log(`Response sent with status: ${response.status}`);
+  })
+);
+
+app.register(
   hook("error", (error, _ctx) => {
     console.error("Request error:", error);
     if (error instanceof HttpError) {
@@ -264,7 +271,7 @@ app.register(
 
 **Available Hooks:**
 
-- **Request Lifecycle**: `request`, `transform`, `send`, `error`, `errorSent`, `sent`, `timeout`
+- **Request Lifecycle**: `request`, `transform`, `send`, `error`, `timeout`
 - **Application Lifecycle**: `ready`, `listen`, `close`, `register`
 
 ### 5. Custom Context Values

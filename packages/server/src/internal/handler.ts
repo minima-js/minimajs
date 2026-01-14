@@ -11,13 +11,8 @@ import type { RouteFindResult } from "../interfaces/route.js";
 import { parseRequestURL } from "../utils/request.js";
 import type { Server } from "../core/index.js";
 
-async function finalizeSent(ctx: Context, response: Response) {
-  await runHooks.safe(ctx.app, "sent", ctx);
-  return response;
-}
-
-async function finalizeErrorSent(ctx: Context, response: Response, error: unknown) {
-  await runHooks.safe(ctx.app, "errorSent", error, ctx);
+async function finalizeSend(ctx: Context, response: Response) {
+  await runHooks.safe(ctx.app, "send", response, ctx);
   return response;
 }
 
@@ -68,9 +63,9 @@ export async function handleRequest<S>(
 
   return wrap(ctx, async () => {
     try {
-      return await finalizeSent(ctx, await prepare(route, ctx));
+      return await finalizeSend(ctx, await prepare(route, ctx));
     } catch (err) {
-      return await handleError(err, ctx);
+      return await finalizeSend(ctx, await handleError(err, ctx));
     }
   });
 }
@@ -97,14 +92,13 @@ async function handleError(err: unknown, ctx: Context): Promise<Response> {
 
   // No app-level error hooks - use default error handler
   if (hooks.error.size === 0) {
-    return finalizeErrorSent(ctx, await ctx.app.errorHandler(err, ctx), err);
+    return ctx.app.errorHandler(err, ctx);
   }
   // App-level error hook
   try {
-    // Create error response (handles transform, serialize, send, and sent hooks)
-    const response = await createResponse(await runHooks.error(ctx.app, err, ctx), {}, ctx);
-    return finalizeSent(ctx, response);
+    // Create error response (handles transform, serialize hooks)
+    return await createResponse(await runHooks.error(ctx.app, err, ctx), {}, ctx);
   } catch (e) {
-    return finalizeErrorSent(ctx, await ctx.app.errorHandler(e, ctx), e);
+    return ctx.app.errorHandler(e, ctx);
   }
 }

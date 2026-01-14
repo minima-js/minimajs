@@ -4,8 +4,6 @@ import type {
   OnTransformHook,
   OnSendHook,
   OnErrorHook,
-  OnErrorSentHook,
-  OnSentHook,
   OnTimeoutHook,
   OnCloseHook,
   OnListenHook,
@@ -28,8 +26,6 @@ export function hook<S>(name: "request", callback: OnRequestHook<S>): PluginSync
 export function hook<S>(name: "transform", callback: OnTransformHook<S>): PluginSync<S>;
 export function hook<S>(name: "send", callback: OnSendHook<S>): PluginSync<S>;
 export function hook<S>(name: "error", callback: OnErrorHook<S>): PluginSync<S>;
-export function hook<S>(name: "errorSent", callback: OnErrorSentHook<S>): PluginSync<S>;
-export function hook<S>(name: "sent", callback: OnSentHook<S>): PluginSync<S>;
 export function hook<S>(name: "timeout", callback: OnTimeoutHook<S>): PluginSync<S>;
 export function hook<S>(name: "close", callback: OnCloseHook): PluginSync<S>;
 export function hook<S>(name: "listen", callback: OnListenHook): PluginSync<S>;
@@ -69,8 +65,6 @@ export namespace hook {
       transform: OnTransformHook;
       send: OnSendHook;
       error: OnErrorHook;
-      errorSent: OnErrorSentHook;
-      sent: OnSentHook;
       timeout: OnTimeoutHook;
       close: OnCloseHook;
       listen: OnListenHook;
@@ -98,8 +92,6 @@ export type {
   OnTransformHook,
   OnSendHook,
   OnErrorHook,
-  OnSentHook,
-  OnErrorSentHook,
   OnTimeoutHook,
   OnCloseHook,
   OnListenHook,

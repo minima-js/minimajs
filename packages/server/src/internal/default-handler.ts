@@ -1,7 +1,7 @@
 import { BaseHttpError } from "../error.js";
-import type { Context } from "../index.js";
+import { response } from "../http.js";
+import type { Context } from "../interfaces/index.js";
 import type { ErrorHandler, Serializer } from "../interfaces/response.js";
-import { createResponseFromState } from "./response.js";
 
 export const serialize: Serializer<any> = (body: unknown, ctx) => {
   if (body instanceof ReadableStream) return body;
@@ -18,7 +18,7 @@ export const errorHandler: ErrorHandler<any> = async (error: unknown, ctx: Conte
   ctx.app.log.error(error);
   // For non-HTTP errors, return a generic message to avoid leaking internal details
   const errorBody = { message: "Unable to process request" };
-  return createResponseFromState(await ctx.app.serialize(errorBody, ctx), {
+  return response(await ctx.app.serialize(errorBody, ctx), {
     status: 500,
     headers: {
       "Content-Type": "application/json",

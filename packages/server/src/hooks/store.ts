@@ -2,7 +2,6 @@ import { type HookStore, type GenericHookCallback } from "../interfaces/hooks.js
 import type { App } from "../interfaces/app.js";
 import { kHooks } from "../symbols.js";
 import type { Context, OnErrorHook, OnRequestHook, OnSendHook, OnTransformHook } from "../interfaces/index.js";
-import type { ResponseBody } from "../interfaces/response.js";
 
 /**
  * Hook Execution Order and Direction
@@ -14,11 +13,9 @@ import type { ResponseBody } from "../interfaces/response.js";
  * ready        [Parent → Child]    FIFO (normal)
  * close        [Child → Parent]    LIFO (reversed)
  * request      [Parent → Child]    FIFO (normal)
- * transform    [Parent → Child]    FIFO (normal)
+ * transform    [Child → Parent]    LIFO (reversed)
  * send         [Child → Parent]    LIFO (reversed)
- * sent         [Child → Parent]    LIFO (reversed)
  * error        [Child → Parent]    LIFO (reversed)
- * errorSent    [Child → Parent]    LIFO (reversed)
  * timeout      [Child → Parent]    LIFO (reversed)
  */
 
@@ -30,11 +27,11 @@ export const SERVER_HOOKS = ["close", "listen", "ready", "register"] as const;
 /**
  * @internal
  */
-export const LIFECYCLE_HOOKS = ["request", "transform", "send", "error", "errorSent", "sent", "timeout"] as const;
+export const LIFECYCLE_HOOKS = ["request", "transform", "send", "error", "timeout"] as const;
 
 export type LifecycleHook = (typeof SERVER_HOOKS)[number] | (typeof LIFECYCLE_HOOKS)[number];
 
-const reversedHooks = new Set<LifecycleHook>(["close", "send", "sent", "error", "errorSent", "timeout"]);
+const reversedHooks = new Set<LifecycleHook>(["close", "transform", "send", "error", "timeout"]);
 
 // ============================================================================
 // HookStore Management
@@ -137,13 +134,10 @@ export namespace runHooks {
     }
   }
 
-  export async function send<S = unknown>(app: App<S>, serialized: ResponseBody, ctx: Context<S>): Promise<void | Response> {
+  export async function send<S = unknown>(app: App<S>, response: Response, ctx: Context<S>): Promise<void | Response> {
     const hooks = findHookToRun<OnSendHook<S>, S>(app, "send");
     for (const hook of hooks) {
-      const response = await hook(serialized, ctx);
-      if (response instanceof Response) {
-        return response;
-      }
+      await hook(response, ctx);
     }
   }
 

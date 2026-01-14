@@ -364,22 +364,20 @@ app.get("/users", () => {
 
 See [Transform Hook](/guides/hooks#transform) for more details.
 
-### Modifying the Final Response: `send` Hook
+### Post-Response Tasks: `send` Hook
 
-Use the `send` hook to modify the final `Response` object before sending.
+Use the `send` hook to execute tasks after the response is sent, such as logging or cleanup.
 
 ```ts
-import { hook, createResponseFromState } from "@minimajs/server";
+import { hook } from "@minimajs/server";
 
-// Add custom header to all responses
-hook("send", (response) => {
-  return createResponseFromState(response.body, {
-    headers: { ...response.headers, "X-Server": "Minima.js" },
-  });
+// Log all responses after they're sent
+hook("send", (response, ctx) => {
+  console.log(`Response sent: ${response.status} for ${ctx.pathname}`);
 });
 
 app.get("/", () => "Hello");
-// Response includes: X-Server: Minima.js
+// Logs: Response sent: 200 for /
 ```
 
 See [Send Hook](/guides/hooks#send) for more details.

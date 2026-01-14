@@ -300,9 +300,9 @@ test("send hook adds custom header", async () => {
   const app = createApp();
 
   app.register(
-    hook("send", (response) => {
-      return createResponseFromState(response.body, {
-        headers: { ...response.headers, "X-Custom": "value" },
+    hook("send", (ctx) => {
+      return response("hello world", {
+        headers: { "X-Custom": "value" },
       });
     })
   );

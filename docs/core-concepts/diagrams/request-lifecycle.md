@@ -5,25 +5,19 @@ graph TD
 
     CreateCtx --> ReqHook{"hook:request<br/><small>↓ FIFO</small>"}
 
-    ReqHook -->|Returns Response<br/><small>short-circuit</small>| FinalResponse
+    ReqHook -->|Returns Response<br/><small>short-circuit</small>| SendHook
     ReqHook -->|Continue| RouteMatch["Route Matching"]
 
     RouteMatch --> Handler["Route Handler<br/>Execution"]
 
-    Handler -->|Returns data| Transform["hook:transform<br/><small>↓ FIFO</small>"]
-    Handler -->|Returns Response| FinalResponse
+    Handler -->|Returns data| Transform["hook:transform<br/><small>↑ LIFO</small>"]
+    Handler -->|Returns Response| SendHook
 
     Transform --> Serialize["Serialize body<br/><small>JSON · text · stream</small>"]
 
     Serialize --> SendHook["hook:send<br/><small>↑ LIFO</small>"]
 
-    SendHook -->|Returns Response<br/><small>override</small>| FinalResponse
-    SendHook -->|No return| CreateResp["Create Response<br/><small>merge headers · status</small>"]
-
-    CreateResp --> FinalResponse["Dispatch Response"]
-
-    FinalResponse --> SentHook["hook:sent<br/><small>↑ LIFO</small>"]
-    SentHook --> Defer["defer()<br/><small>post-response tasks</small>"]
+    SendHook --> Defer["defer()<br/><small>post-response tasks</small>"]
     Defer --> Complete([Request Complete])
 
     %% Error Flow
@@ -34,8 +28,7 @@ graph TD
 
     ErrorHook["hook:error<br/><small>↑ LIFO</small>"]
         --> SerializeErr["Serialize error"]
-        --> DispatchErr["Dispatch error response"]
-        --> ErrorSent["hook:errorSent<br/><small>↑ LIFO</small>"]
+        --> ErrorSendHook["hook:send<br/><small>↑ LIFO</small>"]
         --> OnError["onError()<br/><small>request cleanup</small>"]
         --> Defer
 
@@ -47,15 +40,10 @@ graph TD
     style Transform fill:#ffe7f0
     style Serialize fill:#ffe7f0
     style SendHook fill:#e7f9e7
-    style CreateResp fill:#e1f5ff
-    style FinalResponse fill:#e1f5ff
-    style SentHook fill:#fff4e1
     style Defer fill:#f0f0f0
 
     style ErrorHook fill:#ffe1e1
     style SerializeErr fill:#ffe1e1
-    style DispatchErr fill:#ffe1e1
-    style ErrorSent fill:#ffe1e1
+    style ErrorSendHook fill:#e7f9e7
     style OnError fill:#ffe1e1
-
 ```

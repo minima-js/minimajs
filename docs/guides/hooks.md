@@ -16,10 +16,8 @@ Hooks in Minima.js allow you to **tap into the application and request lifecycle
 
 - [`request`](#request) - Intercept requests before route matching (auth, rate limiting)
 - [`transform`](#transform) - Modify response data before serialization
-- [`send`](#send) - Modify headers or override response before sending
-- [`sent`](#sent) - Post-response cleanup and logging
+- [`send`](#send) - Post-response logging and cleanup (called just before returning)
 - [`error`](/guides/error-handling#error-hook-behavior) - Handle and format errors
-- [`errorSent`](/guides/error-handling#errorsent-hook) - Post-error cleanup and monitoring
 - [`timeout`](#timeout) - Handle request timeouts
 
 ### Application Lifecycle Hooks
@@ -137,6 +135,9 @@ app.register(
 
 Request hooks execute for each incoming request, allowing you to intercept, modify, and extend the request-response cycle.
 
+Before calling the handler → forward (Parent → Child).
+After the handler → backward (Child → Parent).
+
 ### Defining Hooks
 
 There are two primary ways to define request hooks:
@@ -154,14 +155,14 @@ const app = createApp();
 app.register(
   hook.define({
     request({ request, pathname }) {
-      console.log("Incoming request:", request.url);
+      console.log("Incoming request:", request.url());
       if (pathname === "/maintenance") {
         // need to maintain headers in responseState
         return abort("Under maintenance", 503);
       }
     },
-    sent({ request }) {
-      console.log("Sent response for:", request.url);
+    send(response, { request }) {
+      console.log("Response sent for:", request.url());
     },
   })
 );
@@ -175,13 +176,11 @@ Minima.js provides several built-in hooks that fire at different stages of the r
 | ----------- | -------------------------- | -------------------------------------- | ------------------- |
 | `request`   | Before route matching      | Authentication, logging, rate limiting | ✅ Yes              |
 | `transform` | After handler returns data | Transform or enrich response payload   | ❌ No               |
-| `send`      | Before sending             | Modify headers, log response           | ✅ Yes              |
-| `sent`      | After response sent        | Cleanup, metrics                       | ❌ No               |
+| `send`      | After response sent        | Logging, cleanup, metrics              | ❌ No               |
 | `error`     | On error                   | Format/log errors                      | ✅ Yes              |
-| `errorSent` | After error sent           | Reporting or monitoring                | ❌ No               |
 | `timeout`   | Request timeout            | Handle slow requests                   | ✅ Yes              |
 
-> **Error Handling:** For detailed information on `error` and `errorSent` hooks, see the [Error Handling Guide](/guides/error-handling). For global error handling behavior, use [`app.errorHandler`](/guides/error-handling#custom-error-handler-apperrorhandler).
+> **Error Handling:** For detailed information on `error` hook, see the [Error Handling Guide](/guides/error-handling). For global error handling behavior, use [`app.errorHandler`](/guides/error-handling#custom-error-handler-apperrorhandler).
 
 ### Lifecycle Hook Examples
 
@@ -229,7 +228,7 @@ app.register(
 
 #### `transform`
 
-The `transform` hook modifies response data returned by a handler before it is serialized.
+The `transform` hook modifies response data returned by a handler before it is serialized. Transform hooks execute in **Child → Parent (LIFO) order**, meaning the last registered transform runs first.
 
 ```typescript
 app.register(
@@ -249,51 +248,43 @@ app.get("/users", () => {
 
 > `transform` hooks **cannot** return a `Response` object. They only modify data.
 >
+> **Important:** `transform` hooks execute in **Child → Parent (LIFO) order**. This allows child modules to transform data first, with parent transforms applying afterward.
+>
 > **Alternative:** For global serialization behavior (e.g., custom JSON formatting, MessagePack), use [`app.serialize`](/guides/http#custom-serializer-appserialize) instead.
 
 #### `send`
 
-The `send` hook executes **just before creating the final `Response` object**, after data has been transformed and serialized. It receives the serialized response body and can modify headers via context.
+The `send` hook executes **just before returning the final response**, after the response has been sent to the client. It receives the response object and context, making it ideal for logging, metrics, and cleanup tasks.
 
 ```typescript
-// Adding headers (recommended - preserves context state)
+// Logging response
 app.register(
-  hook("send", ({ response }) => {
-    response.headers.set("X-Custom-Header", "Minima.js");
-    response.headers.set("X-Response-Time", `${Date.now() - startTime}ms`);
+  hook("send", (response, { request, pathname }) => {
+    console.log(`[${request.method}] ${pathname}`, {
+      status: response.status,
+      timestamp: new Date().toISOString(),
+    });
   })
 );
 
-// Logging serialized output
+// Metrics collection
 app.register(
-  hook("send", (serialized, { request, pathname }) => {
-    console.log(`[${request.method}] ${pathname}`, {
-      bodySize: typeof serialized === "string" ? serialized.length : "stream",
-      timestamp: new Date().toISOString(),
+  hook("send", (response, ctx) => {
+    metrics.recordResponse({
+      status: response.status,
+      duration: Date.now() - ctx.startTime,
     });
   })
 );
 ```
 
-> **⚠️ Warning:** Returning a `Response` object bypasses the context's response state (headers, status). Only use for complete response overrides when absolutely necessary.
+> **Note:** The `send` hook cannot return a `Response` object or modify the response. It's strictly for post-response tasks like logging and cleanup.
 
 **Flow:**
 
 <!--@include: ./diagrams/send-hook-flow.md-->
 
-> **Important:** `send` hooks execute in **Child → Parent (LIFO) order**. Returning a `Response` terminates the chain immediately.
-
-#### `sent`
-
-The `sent` hook runs after the response is dispatched. Use it for cleanup or post-processing tasks that don't need to block the response.
-
-```typescript
-app.register(
-  hook("sent", ({ request }) => {
-    console.log(`Response sent for: ${request.url}`);
-  })
-);
-```
+> **Important:** `send` hooks execute in **Child → Parent (LIFO) order**.
 
 ## Request-Scoped Helpers
 
@@ -317,7 +308,7 @@ app.get("/", () => {
 });
 ```
 
-> `defer` is a request-scoped run after `sent` or `errorSent` hook.
+> `defer` callbacks execute after the `send` hook has completed.
 
 > **Note:** For request-specific error handling, see [`onError`](/guides/error-handling#request-scoped-error-handler-onerror) in the Error Handling Guide.
 
@@ -332,7 +323,7 @@ Minima.js uses two execution patterns for hooks based on their purpose: **Parent
 These hooks execute in **registration order**: parent hooks run first, then child hooks. This pattern is used for:
 
 - **Setup hooks**: `register`, `listen`, `ready`
-- **Incoming request hooks**: `request`, `transform`
+- **Incoming request hooks**: `request`
 
 ```typescript
 app.register(hook("request", () => console.log("Parent: Auth")));
@@ -353,8 +344,8 @@ app.register(async (app) => {
 
 These hooks execute in **reverse order**: child hooks run first, then parent hooks. This pattern is used for:
 
-- **Response hooks**: `send`, `sent`
-- **Error hooks**: `error`, `errorSent`
+- **Response hooks**: `transform`, `send`
+- **Error hooks**: `error`
 - **Cleanup hooks**: `close`, `timeout`
 
 ```typescript
@@ -383,11 +374,9 @@ app.register(async (app) => {
 | `ready`     | Parent → Child     | FIFO  | Global    | Initialize resources in order          |
 | `close`     | **Child → Parent** | LIFO  | Global    | Cleanup in reverse order               |
 | `request`   | Parent → Child     | FIFO  | Per-scope | Incoming request middleware            |
-| `transform` | Parent → Child     | FIFO  | Per-scope | Transform response data in order       |
-| `send`      | **Child → Parent** | LIFO  | Per-scope | Modify response before sending         |
-| `sent`      | **Child → Parent** | LIFO  | Per-scope | Post-response logging/cleanup          |
+| `transform` | **Child → Parent** | LIFO  | Per-scope | Transform response data (last first)   |
+| `send`      | **Child → Parent** | LIFO  | Per-scope | Post-response logging/cleanup          |
 | `error`     | **Child → Parent** | LIFO  | Per-scope | Error handling (specific → general)    |
-| `errorSent` | **Child → Parent** | LIFO  | Per-scope | Post-error logging/cleanup             |
 | `timeout`   | **Child → Parent** | LIFO  | Per-scope | Timeout handling (specific → fallback) |
 
 > **Global Scope**: SERVER_HOOKS (`close`, `listen`, `ready`, `register`) are shared across all modules - there's only one server instance.
@@ -523,6 +512,6 @@ Parent   (inherited from parent - runs second)
 - **Use `defer`** for non-blocking, post-response tasks like logging or analytics
 - **Use `onError`** for request-specific error handling that shouldn't be global
 - **Avoid returning `Response` objects** from hooks unless necessary for short-circuiting (authentication, rate-limiting)
-- **Prefer `createResponseFromState`** over `new Response()` to preserve context headers set by plugins
+- **Use `response()` helper** to create responses that preserve context headers set by plugins
 - **Register hooks in the appropriate scope** to ensure proper FIFO/LIFO ordering based on hook type
 - **Use `hook.define`** to organize multiple related hooks together

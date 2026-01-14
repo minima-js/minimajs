@@ -22,7 +22,7 @@ describe("Http", () => {
     test("should create response from data", async () => {
       const app = createApp({ logger: false });
       app.get("/test", async () => {
-        return await response({ message: "ok" });
+        return response("Message: Ok");
       });
       const res = await app.handle(createRequest("/test"));
       const body = await res.json();
@@ -530,7 +530,7 @@ describe("Http", () => {
     test("should create response with status code from ReasonPhrases", async () => {
       const app = createApp();
       app.get("/test", async () => {
-        return await response({ data: "ok" }, { status: "CREATED" });
+        return response("Data: Ok", { status: "CREATED" });
       });
 
       const res = await app.handle(createRequest("/test"));

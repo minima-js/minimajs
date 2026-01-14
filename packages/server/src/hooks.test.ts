@@ -31,6 +31,21 @@ describe("hooks", () => {
       const secondCallIndex = (deferred as jest.Mock).mock.invocationCallOrder[0];
       expect(firstCallIndex).toBeLessThan(secondCallIndex!);
     });
+
+    test("should call defer even when error occurs", async () => {
+      const deferred = jest.fn();
+
+      app.get("/error", () => {
+        defer(() => {
+          deferred();
+        });
+        throw new Error("Test error");
+      });
+
+      const res = await app.handle(createRequest("/error"));
+      expect(res.status).toBe(500);
+      expect(deferred).toHaveBeenCalled();
+    });
   });
 
   describe("onError", () => {
@@ -303,19 +318,12 @@ describe("hooks", () => {
       expect(readyOrder).toEqual(["root", "level1", "level2"]);
     });
 
-    test("Parent → Child (FIFO): request, transform", async () => {
+    test("request hooks run Parent → Child (FIFO)", async () => {
       const requestOrder: string[] = [];
-      const transformOrder: string[] = [];
 
       app.register(
         hook("request", function parentRequestHook() {
           requestOrder.push("parent");
-        })
-      );
-      app.register(
-        hook("transform", (data) => {
-          transformOrder.push("parent");
-          return data;
         })
       );
 
@@ -325,8 +333,27 @@ describe("hooks", () => {
             requestOrder.push("child");
           })
         );
+
+        app.get("/test", () => ({ result: "ok" }));
+      });
+      await app.handle(createRequest("/test"));
+
+      expect(requestOrder).toEqual(["parent", "child"]);
+    });
+
+    test("transform hooks run Child → Parent (LIFO)", async () => {
+      const transformOrder: string[] = [];
+
+      app.register(
+        hook("transform", async (data) => {
+          transformOrder.push("parent");
+          return data;
+        })
+      );
+
+      app.register(async (app) => {
         app.register(
-          hook("transform", (data) => {
+          hook("transform", async (data) => {
             transformOrder.push("child");
             return data;
           })
@@ -336,8 +363,7 @@ describe("hooks", () => {
       });
       await app.handle(createRequest("/test"));
 
-      expect(requestOrder).toEqual(["parent", "child"]);
-      // expect(transformOrder).toEqual(["parent", "child"]);
+      expect(transformOrder).toEqual(["child", "parent"]);
     });
 
     test("Child → Parent (LIFO): error, send, close", async () => {

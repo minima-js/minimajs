@@ -1,9 +1,15 @@
 import { $context } from "./internal/context.js";
 
 import { RedirectError, HttpError, BaseHttpError, NotFoundError, type HttpErrorOptions } from "./error.js";
-import type { Dict, HeadersInit, HttpHeader, HttpHeaderIncoming, ResponseOptions } from "./interfaces/response.js";
+import type {
+  Dict,
+  HeadersInit,
+  HttpHeader,
+  HttpHeaderIncoming,
+  ResponseBody,
+  ResponseOptions,
+} from "./interfaces/response.js";
 import { toStatusCode, type StatusCode } from "./internal/response.js";
-import { createResponse } from "./internal/response.js";
 import { isAbortError } from "./utils/errors.js";
 import { mergeHeaders } from "./utils/headers.js";
 import { kBody, kIpAddr } from "./symbols.js";
@@ -17,21 +23,24 @@ import { kBody, kIpAddr } from "./symbols.js";
  *
  * @example
  * ```ts
- * return response({ message: 'Hello' }, { status: 200 });
  * return response('Hello World');
- * return response({ data: 'test' }, {
+ * return response(new Blob(['data']));
+ * return response(stream, {
  *   status: 'CREATED',
  *   headers: { 'X-Custom': 'value' }
  * });
  * ```
  * @since v0.2.0
  */
-export async function response(body: unknown, options: ResponseOptions = {}): Promise<Response> {
-  let status: number | undefined = undefined;
+export function response(body: ResponseBody, options: ResponseOptions = {}): Response {
+  const { responseState } = $context();
   if (options.status) {
-    status = toStatusCode(options.status);
+    responseState.status = toStatusCode(options.status);
   }
-  return await createResponse(body, { status, headers: options.headers }, $context());
+  if (options.headers) {
+    mergeHeaders(responseState.headers, new Headers(options.headers));
+  }
+  return new Response(body, responseState);
 }
 
 /**
