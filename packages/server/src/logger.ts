@@ -74,8 +74,8 @@ export function mixin(data: Dict<unknown>) {
  * Creates a Pino logger instance with merged default options and mixin support.
  * Combines default logger options with user-provided options and adds module name context.
  */
-export function createLogger(option: LoggerOptions) {
+export function createLogger(option: LoggerOptions = {}) {
   return pino(merge({ ...loggerOptions, mixin }, option));
 }
 
-export const logger = createLogger({});
+export const logger = createLogger();

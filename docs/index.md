@@ -3,7 +3,7 @@ layout: home
 
 hero:
   name: "Minima.js"
-  text: "Built from Scratch for Modern Runtimes"
+  text: "Thoughtfully Designed for Modern Runtimes"
   tagline: TypeScript-first with pure ESM, Web API standards. Real types, no false assertions.
   image:
     src: /logo.svg
@@ -19,8 +19,8 @@ hero:
 features:
   - icon:
       src: /icon-lightning.svg
-    title: "Built from Scratch"
-    details: "Zero dependencies on legacy frameworks. Pure, optimized code designed for modern runtimes."
+    title: "Battle-Tested Foundation"
+    details: "Built on proven libraries like find-my-way and avvio. Modern API design meets production-ready reliability."
   - icon:
       src: /icon-bun.svg
     title: "100% Bun-Native Compatible"

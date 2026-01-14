@@ -1,6 +1,6 @@
 # @minimajs/server
 
-A groundbreaking, high-performance HTTP framework for Node.js and Bun - designed for modern developers seeking efficiency, elegance, and speed.
+A modern, high-performance HTTP framework for Node.js and Bun - combining proven routing and lifecycle libraries with a clean, TypeScript-first API designed for today's runtimes.
 
 [![npm version](https://img.shields.io/npm/v/@minimajs/server.svg)](https://www.npmjs.com/package/@minimajs/server)
 [![License](https://img.shields.io/npm/l/@minimajs/server.svg)](https://github.com/minima-js/minimajs/blob/main/LICENSE)
@@ -15,7 +15,7 @@ A groundbreaking, high-performance HTTP framework for Node.js and Bun - designed
 - **Zero Boilerplate**: Get started with minimal setup and configuration
 - **ESM-Only**: Modern ECMAScript Modules with full async/await support
 - **Powerful Plugin System**: Extend functionality with encapsulated, reusable plugins
-- **Comprehensive Hooks**: Full control over request/response lifecycle
+- **Battle-Tested Core**: Built on proven libraries (find-my-way, avvio, pino) with a modern API layer
 
 ## 📦 Installation
 

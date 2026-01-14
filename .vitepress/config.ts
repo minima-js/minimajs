@@ -33,6 +33,7 @@ const config = defineConfig({
       { text: "Guide", link: "/intro" },
       { text: "Architecture", link: "/core-concepts/architecture" },
       { text: "Cookbook", link: "/cookbook/jwt-authentication" },
+      { text: "Advanced", link: "/advanced/index" },
       { text: "API Reference", link: "/api/README" },
       { text: "Packages", link: "/packages/auth" },
     ],
@@ -85,6 +86,14 @@ const config = defineConfig({
           { text: "File Uploads", link: "/cookbook/file-uploads" },
           { text: "Database Integration", link: "/cookbook/database-integration" },
           { text: "Data Validation with Zod", link: "/cookbook/data-validation" },
+        ],
+      },
+      {
+        text: "Advanced",
+        items: [
+          { text: "Overview", link: "/advanced/index" },
+          { text: "Custom Runtime Adapters", link: "/advanced/custom-adapters" },
+          { text: "Container & Encapsulation", link: "/advanced/container-encapsulation" },
         ],
       },
       {
