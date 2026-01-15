@@ -16,6 +16,6 @@
  * }
  * ```
  */
-export function isCallable<T extends (...args: any[]) => any = (...args: any[]) => any>(v: unknown): v is T {
+export function isCallable(v: unknown): v is (...args: unknown[]) => unknown {
   return typeof v === "function";
 }
