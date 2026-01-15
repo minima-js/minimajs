@@ -1,6 +1,6 @@
 import type { Instance as Router, HTTPVersion } from "find-my-way";
 import type { ErrorHandler, Serializer } from "./response.js";
-import type { Plugin, PluginOptions, PluginSync, Register, RegisterOptions } from "./plugin.js";
+import type { Plugin, PluginOptions, PluginSync, Module, RegisterOptions, Registerable } from "./plugin.js";
 import type { Context } from "./context.js";
 import type { PrefixOptions, RouteMetaDescriptor, RouteOptions } from "./route.js";
 import type { Logger } from "pino";
@@ -63,11 +63,12 @@ export interface App<S = any> {
 
   prefix(prefix: string, options?: PrefixOptions): this;
 
-  // Register with plugin wrapper (prefix not allowed in opts)
-  register<T>(plugin: Plugin<PluginOptions<T>>, opts?: T): this;
-  register<T>(plugin: PluginSync<PluginOptions<T>>, opts?: T): this;
-  // Register with plain function (prefix allowed in opts)
-  register<T>(plugin: Register<RegisterOptions<T>>, opts?: T): this;
+  // Register plugins with generic options support
+  register<T extends PluginOptions>(plugin: Plugin<S, T>, opts?: T): this;
+  register(sync: PluginSync<S>): this;
+  register<T extends RegisterOptions>(module: Module<S, T>, opts?: T): this;
+  // Fallback for plugins with different server types
+  register(plugin: Registerable<any>, opts?: any): this;
 
   handle(request: Request): Promise<Response>;
 

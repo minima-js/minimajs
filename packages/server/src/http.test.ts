@@ -639,7 +639,6 @@ describe("Http", () => {
     test("should configure with a callback function", () => {
       const app = createApp();
       const ipPlugin = proxy({
-        trustProxies: true,
         host: false,
         proto: false,
         ip: (ctx) => {
@@ -667,7 +666,7 @@ describe("Http", () => {
 
     test("should configure with settings object", async () => {
       const app = createApp({ logger: false });
-      const ipPlugin = proxy({ trustProxies: true, host: false, proto: false, ip: { proxyDepth: 2 } });
+      const ipPlugin = proxy({ host: false, proto: false, ip: { depth: 2 } });
       app.register(ipPlugin);
       app.get("/", () => {
         return request.ip() ?? "no-ip";

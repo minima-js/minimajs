@@ -9,11 +9,6 @@ import { plugin } from "./plugins.js";
 
 export const METADATA_SYMBOLS = [kModuleName, kPlugin];
 
-type MetadataCarrier = CallableFunction & {
-  [kModuleName]?: string;
-  [kPlugin]?: boolean;
-};
-
 /**
  * Checks if a value has a clone method
  */
@@ -48,12 +43,12 @@ interface OverrideOptions {
   name?: string;
 }
 
-function pluginOverride(app: App, fn: Registerable, options: OverrideOptions = {}): App {
+function pluginOverride<S>(app: App<S>, fn: Registerable<S>, options: OverrideOptions = {}): App<S> {
   if (plugin.is(fn)) return app;
 
   const { $prefix: parentPrefix = "", $prefixExclude: parentExclude = [] } = app;
 
-  const child: App = Object.create(app, {
+  const child: App<S> = Object.create(app, {
     container: {
       value: cloneContainer(app.container),
     },
@@ -79,31 +74,28 @@ function pluginOverride(app: App, fn: Registerable, options: OverrideOptions = {
  * This ensures that when wrapping functions, all metadata symbols are preserved.
  * The metadata symbols are defined in METADATA_SYMBOLS registry.
  */
-export function copyMetadata<T extends MetadataCarrier, S extends MetadataCarrier>(source: S, target: T): T {
+export function copyMetadata(source: any, target: any): void {
   for (const symbol of METADATA_SYMBOLS) {
-    if (symbol in source && (source as any)[symbol] !== undefined) {
-      (target as any)[symbol] = (source as any)[symbol];
+    if (source[symbol] !== undefined) {
+      target[symbol] = source[symbol];
     }
   }
   if (!(kModuleName in target)) {
-    (target as any)[kModuleName] = source.name;
+    target[kModuleName] = source.name;
   }
-  return target;
 }
 
 /**
  * Wraps an async plugin to run register hooks and preserve metadata
  */
-export function wrapPlugin<T extends PluginOptions | RegisterOptions = PluginOptions>(
-  plugin: Registerable<T>
-): Registerable<T> {
-  async function wrapper(instance: App, wrapperOpts: T) {
+export function wrapPlugin<S>(plugin: Registerable<S>): Registerable<S> {
+  async function wrapper(instance: App<S>, wrapperOpts: PluginOptions | RegisterOptions) {
     await runHooks(instance, "register", plugin, wrapperOpts);
     await plugin(instance, wrapperOpts);
   }
-
   // Copy all metadata from original plugin to wrapper
-  return copyMetadata(plugin, wrapper);
+  copyMetadata(plugin, wrapper);
+  return wrapper;
 }
 
 /**

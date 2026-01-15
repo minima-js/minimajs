@@ -70,7 +70,7 @@ export namespace hook {
   /**
    * Creates a plugin that registers multiple hooks at once
    */
-  export function define(
+  export function define<S>(
     hooks: Partial<{
       request: OnRequestHook;
       transform: OnTransformHook;
@@ -82,7 +82,7 @@ export namespace hook {
       ready: OnReadyHook;
       register: OnRegisterHook;
     }>
-  ): PluginSync {
+  ): PluginSync<S> {
     return factory(function defineHooksPlugin(hookStore) {
       for (const [name, callback] of Object.entries(hooks)) {
         hookStore[name as LifecycleHook].add(callback);

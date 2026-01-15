@@ -1,16 +1,15 @@
 import { hook, type Context } from "../../index.js";
 import { kIpAddr } from "../../symbols.js";
-import { HttpError } from "../../error.js";
-import { isCallable } from "../../utils/callable.js";
-import type { ProxyOptions, IpExtractor, HostExtractor, ProtoExtractor } from "./types.js";
+import type { ProxyOptions, ProxyIpPluginOptions } from "./types.js";
 import { createTrustValidator } from "./trust.js";
+import { createHostExtractor, createIpExtractor, createProtoExtractor, defaultExtractProto } from "./extractors.js";
 
 /**
  * Proxy plugin that extracts client information from proxy headers.
  * Useful when your application is behind a reverse proxy or load balancer.
  *
- * By default, all features (IP, host, proto) are enabled when trustProxies is set.
- * Set individual options to false to disable specific features.
+ * By default, the plugin collects IP, host, and proto metadata even when not behind
+ * a trusted proxy. Disable individual features by setting them to false.
  *
  * @param options - Configuration for extracting IP, protocol, and hostname
  * @returns A request hook that processes proxy headers
@@ -67,9 +66,9 @@ import { createTrustValidator } from "./trust.js";
  * }));
  * ```
  */
-export function proxy<S>(options: ProxyOptions<S>) {
+export function proxy<S>(options: ProxyOptions<S> = {}) {
   // Determine trust validator
-  const trustValidator = createTrustValidator(options.trustProxies);
+  const isTrusted = createTrustValidator(options.trustProxies);
 
   // Build IP extractor
   const extractIp = createIpExtractor(options.ip);
@@ -78,147 +77,48 @@ export function proxy<S>(options: ProxyOptions<S>) {
   const extractHost = createHostExtractor(options.host);
 
   // Build proto extractor
-  const extractProto = createProtoExtractor(options.proto);
+  let extractProto = createProtoExtractor(options.proto);
+  if (extractHost && !extractProto) {
+    extractProto = defaultExtractProto;
+  }
 
   return hook("request", (ctx: Context<S>) => {
-    const isTrusted = trustValidator(ctx);
-
+    if (!isTrusted(ctx)) return;
     // Extract IP
     if (extractIp) {
-      const ip = extractIp(ctx, isTrusted);
+      const ip = extractIp(ctx);
       if (ip) {
         ctx.locals[kIpAddr] = ip;
       }
     }
 
-    // Extract host and proto (must be set together)
-    if (extractHost || extractProto) {
-      const { $metadata, request } = ctx;
-      $metadata.proto = extractProto ? extractProto(ctx, isTrusted) : defaultExtractProto(request);
-      $metadata.host = extractHost ? extractHost(ctx, isTrusted) : defaultExtractHost(request);
+    if (extractHost) {
+      const host = extractHost(ctx);
+      if (host) {
+        ctx.$metadata.host = host;
+      }
+    }
+
+    if (extractProto) {
+      ctx.$metadata.proto = extractProto(ctx);
     }
   });
 }
+export namespace proxy {
+  export function ip<S>(options: ProxyIpPluginOptions<S> = {}) {
+    const ipOptions = options.ip;
+    const trustOptions = options.trustProxies;
+    const extractIp = createIpExtractor(ipOptions);
+    const trustValidator = createTrustValidator(trustOptions);
 
-function defaultExtractProto(request: Request): string {
-  return request.url.charCodeAt(4) === 115 ? "https" : "http";
-}
-
-function defaultExtractHost(request: Request): string {
-  const host = request.headers.get("host");
-  if (!host) {
-    throw new HttpError("Missing Host header", 400);
-  }
-  return host;
-}
-
-function createIpExtractor<S>(config: ProxyOptions<S>["ip"]): IpExtractor<S> | null {
-  if (config === false) return null;
-
-  if (isCallable(config)) {
-    return (ctx: Context<S>) => config(ctx);
-  }
-
-  const { header, proxyDepth = 1 } = config || {};
-
-  return (ctx: Context<S>, isTrusted: boolean) => {
-    const { request } = ctx;
-
-    // Check custom header first
-    if (header && isTrusted) {
-      const customIp = request.headers.get(header);
-      if (customIp) return customIp;
-    }
-
-    // Check X-Forwarded-For
-    if (isTrusted) {
-      const forwardedFor = request.headers.get("x-forwarded-for");
-      if (forwardedFor) {
-        const ips = forwardedFor.split(",").map((ip) => ip.trim());
-        // X-Forwarded-For format: client, proxy1, proxy2, ...
-        // proxyDepth=1: get ips[0] (first IP = original client)
-        // proxyDepth=2: get ips[1] (second IP = first proxy, which added original client)
-        const index = Math.min(proxyDepth - 1, ips.length - 1);
-        return ips[index] || null;
+    return hook("request", (ctx: Context<S>) => {
+      const isTrusted = trustValidator(ctx);
+      if (!isTrusted) return;
+      if (!extractIp) return;
+      const ip = extractIp(ctx);
+      if (ip) {
+        ctx.locals[kIpAddr] = ip;
       }
-
-      // Check X-Real-IP
-      const realIp = request.headers.get("x-real-ip");
-      if (realIp) return realIp;
-    }
-
-    // Fallback to socket IP (only available in Node.js HTTP server)
-    return ctx.serverAdapter.remoteAddr(ctx);
-  };
-}
-
-function createHostExtractor<S>(config: ProxyOptions<S>["host"]): HostExtractor<S> | null {
-  if (config === false) return null;
-
-  if (isCallable(config)) {
-    return (ctx: Context<S>) => config(ctx);
+    });
   }
-
-  const { header = "x-forwarded-host", stripPort = false } = config || {};
-  const headers = Array.isArray(header) ? header : [header];
-
-  return (ctx: Context<S>, isTrusted: boolean) => {
-    const { request } = ctx;
-
-    // Check proxy headers if trusted
-    if (isTrusted) {
-      for (const h of headers) {
-        const value = request.headers.get(h);
-        if (value) {
-          return stripPort ? stripPortFromHost(value) : value;
-        }
-      }
-    }
-
-    // Fallback to Host header
-    const fallback = request.headers.get("host");
-    if (!fallback) {
-      throw new HttpError("Missing Host header", 400);
-    }
-
-    return stripPort ? stripPortFromHost(fallback) : fallback;
-  };
-}
-
-function createProtoExtractor<S>(config: ProxyOptions<S>["proto"]): ProtoExtractor<S> | null {
-  if (config === false) return null;
-
-  if (isCallable(config)) {
-    return (ctx: Context<S>) => config(ctx);
-  }
-
-  const { header = "x-forwarded-proto" } = config || {};
-  const headers = Array.isArray(header) ? header : [header];
-
-  return (ctx: Context<S>, isTrusted: boolean) => {
-    const { request } = ctx;
-
-    // Check proxy headers if trusted
-    if (isTrusted) {
-      for (const h of headers) {
-        const value = request.headers.get(h);
-        if (value) {
-          if (value === "on" || value === "https") return "https";
-          if (value === "http") return "http";
-        }
-      }
-
-      // Check SSL headers
-      const ssl = request.headers.get("x-forwarded-ssl") || request.headers.get("x-arr-ssl");
-      if (ssl === "on") return "https";
-    }
-
-    // Fallback to URL protocol
-    return request.url.charCodeAt(4) === 115 ? "https" : "http";
-  };
-}
-
-function stripPortFromHost(host: string): string {
-  const colonIndex = host.indexOf(":");
-  return colonIndex === -1 ? host : host.slice(0, colonIndex);
 }

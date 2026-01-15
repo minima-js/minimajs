@@ -433,34 +433,34 @@ describe("compose", () => {
 
     test("should pass options to all plugins and module", async () => {
       interface CustomOpts extends PluginOptions {
-        prefix: string;
+        customValue: string;
       }
 
-      let plugin1Prefix = "";
-      let plugin2Prefix = "";
-      let modulePrefix = "";
+      let plugin1Value = "";
+      let plugin2Value = "";
+      let moduleValue = "";
 
-      const plugin1 = plugin<CustomOpts>((_, opts) => {
-        plugin1Prefix = opts.prefix;
+      const plugin1 = plugin<any, CustomOpts>((_, opts) => {
+        plugin1Value = opts.customValue;
       });
 
-      const plugin2 = plugin<CustomOpts>((_, opts) => {
-        plugin2Prefix = opts.prefix;
+      const plugin2 = plugin<any, CustomOpts>((_, opts) => {
+        plugin2Value = opts.customValue;
       });
 
       const withPlugins = compose.create(plugin1, plugin2);
 
       const myModule = (_: any, opts: CustomOpts) => {
-        modulePrefix = opts.prefix;
+        moduleValue = opts.customValue;
       };
 
-      app.register(withPlugins(myModule), { prefix: "/api" });
+      app.register(withPlugins(myModule), { customValue: "test-value" });
 
       await app.ready();
 
-      expect(plugin1Prefix).toBe("/api");
-      expect(plugin2Prefix).toBe("/api");
-      expect(modulePrefix).toBe("/api");
+      expect(plugin1Value).toBe("test-value");
+      expect(plugin2Value).toBe("test-value");
+      expect(moduleValue).toBe("test-value");
     });
 
     test("should allow chaining multiple composers", async () => {

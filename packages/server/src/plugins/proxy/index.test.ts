@@ -17,7 +17,7 @@ describe("plugins/proxy", () => {
   });
 
   test("should extract IP from X-Forwarded-For header", async () => {
-    app.register(proxy({ trustProxies: true, host: false, proto: false }));
+    app.register(proxy({ host: false, proto: false }));
     app.get("/ip", (ctx) => ctx.locals[kIpAddr] || null);
 
     const req = new Request("http://localhost/ip", {
@@ -28,7 +28,7 @@ describe("plugins/proxy", () => {
   });
 
   test("should respect proxyDepth", async () => {
-    app.register(proxy({ trustProxies: true, ip: { proxyDepth: 2 }, host: false, proto: false }));
+    app.register(proxy({ ip: { depth: 2 }, host: false, proto: false }));
     app.get("/ip", (ctx) => ctx.locals[kIpAddr]);
 
     const req = new Request("http://localhost/ip", {
@@ -39,7 +39,7 @@ describe("plugins/proxy", () => {
   });
 
   test("should extract host from X-Forwarded-Host header", async () => {
-    app.register(proxy({ trustProxies: true, ip: false }));
+    app.register(proxy({ ip: false }));
     app.get("/host", (ctx) => ctx.$metadata.host);
 
     const req = new Request("http://localhost/host", {
@@ -53,7 +53,7 @@ describe("plugins/proxy", () => {
   });
 
   test("should strip port when stripPort is true", async () => {
-    app.register(proxy({ trustProxies: true, host: { stripPort: true }, ip: false }));
+    app.register(proxy({ ip: false }));
     app.get("/host", (ctx) => ctx.$metadata.host);
 
     const req = new Request("http://localhost/host", {
@@ -67,7 +67,7 @@ describe("plugins/proxy", () => {
   });
 
   test("should extract proto from X-Forwarded-Proto header", async () => {
-    app.register(proxy({ trustProxies: true, ip: false }));
+    app.register(proxy({ ip: false }));
     app.get("/proto", (ctx) => ctx.$metadata.proto);
 
     const req = new Request("http://localhost/proto", {
@@ -83,7 +83,6 @@ describe("plugins/proxy", () => {
   test("should use custom callbacks", async () => {
     app.register(
       proxy({
-        trustProxies: true,
         ip: () => "192.168.1.1",
         host: () => "custom.example.com",
         proto: () => "wss",
@@ -104,7 +103,7 @@ describe("plugins/proxy", () => {
   });
 
   test("should not extract when trustProxies is false", async () => {
-    app.register(proxy({ trustProxies: false, host: false, proto: false }));
+    app.register(proxy({ host: false, proto: false }));
     app.adapter.remoteAddr = () => "127.0.0.1";
     app.get("/ip", (ctx) => ctx.locals[kIpAddr]);
 
@@ -117,7 +116,7 @@ describe("plugins/proxy", () => {
   });
 
   test("should handle IP, host, and proto together", async () => {
-    app.register(proxy({ trustProxies: true }));
+    app.register(proxy());
     app.get("/all", (ctx) => ({
       ip: ctx.locals[kIpAddr],
       host: ctx.$metadata.host,

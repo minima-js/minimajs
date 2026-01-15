@@ -1,4 +1,4 @@
-import type { App, Context } from "../interfaces/index.js";
+import type { AddressInfo, App, Context } from "../interfaces/index.js";
 import type { LifecycleHook } from "../hooks/store.js";
 import type { Plugin, RegisterOptions } from "./plugin.js";
 export type { LifecycleHook };
@@ -13,10 +13,10 @@ export type OnErrorHook<S = unknown> = (err: unknown, ctx: Context<S>) => unknow
 export type OnTimeoutHook<S = unknown> = (ctx: Context<S>) => void | Promise<void>;
 
 // Server Hooks
-export type OnCloseHook = () => void | Promise<void>;
-export type OnListenHook = (address: { host: string; port: number }) => void | Promise<void>;
+export type OnCloseHook<S = unknown> = (app: App<S>) => void | Promise<void>;
+export type OnListenHook<S = unknown> = (address: AddressInfo, app: App<S>) => void | Promise<void>;
 export type OnReadyHook<S = unknown> = (app: App<S>) => void | Promise<void>;
-export type OnRegisterHook = (plugin: Plugin, opts: RegisterOptions) => void | Promise<void>;
+export type OnRegisterHook<S = unknown> = (plugin: Plugin<S>, opts: RegisterOptions) => void | Promise<void>;
 
 export type HookFactoryCallback<S> = (hooks: HookStore, app: App<S>) => void;
 export type LifeSpanCleanupCallback<S> = (app: App<S>) => void | Promise<void>;

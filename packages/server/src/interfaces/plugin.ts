@@ -4,36 +4,35 @@ import type { kPluginSync, kModuleName, kPlugin } from "../symbols.js";
 // Options for register callbacks with prefix support
 export type PluginCallback<T extends PluginOptions, S> = (app: App<S>, opts: T) => void | Promise<void>;
 
+// Base options for Module - allows prefix
 export type RegisterOptions<T = {}> = T & {
   prefix?: string;
   name?: string;
 };
-// Options for register callbacks with prefix support
+
+// Base options for Plugin
 export type PluginOptions<T = {}> = T & {
   name?: string;
 };
 
-// Alias for backward compatibility
-
 // Plugin function (created with plugin wrapper, no prefix in user opts)
-export interface Plugin<T extends PluginOptions = PluginOptions> {
-  (app: App, opts: T): void | Promise<void>;
+export interface Plugin<S, T extends PluginOptions = PluginOptions> {
+  (app: App<S>, opts: T): void | Promise<void>;
   [kModuleName]?: string;
-  [kPlugin]: true; // Wrapped plugins skip override
+  [kPlugin]: true; // Brand to identify Plugin
 }
 
-// Plugin function (created with plugin wrapper, no prefix in user opts)
-export interface PluginSync<T = any> {
-  (app: App, opts: T): void;
-  [kModuleName]?: string;
-  [kPluginSync]: true;
+// Sync plugin function - no opts needed
+export interface PluginSync<S> {
+  (app: App<S>): void;
+  [kPluginSync]: true; // Brand to identify PluginSync
 }
 
 // Register callback (plain function, prefix allowed in register options)
-export interface Register<T extends RegisterOptions = RegisterOptions> {
-  (app: App, opts: T): void | Promise<void>;
+export interface Module<S, T extends RegisterOptions = RegisterOptions> {
+  (app: App<S>, opts: T): void | Promise<void>;
   [kModuleName]?: string;
 }
 
 // Union of all supported plugin-like callables
-export type Registerable<T extends RegisterOptions = RegisterOptions> = Plugin<T> | PluginSync<T> | Register<T>;
+export type Registerable<S = any> = Plugin<S, any> | PluginSync<S> | Module<S, any>;
