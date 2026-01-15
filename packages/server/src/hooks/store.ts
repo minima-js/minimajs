@@ -69,21 +69,6 @@ export function createHooksStore(parent?: HookStore): HookStore {
   return store;
 }
 
-/**
- * Gets the HookStore from the app's container
- */
-export function getHooks<S = unknown>(app: App<S>): HookStore {
-  return app.container[kHooks];
-}
-
-/**
- * Adds a hook to the app
- */
-export function addHook<S = unknown>(app: App<S>, name: LifecycleHook, callback: GenericHookCallback): void {
-  const hooks = getHooks(app);
-  hooks[name].add(callback);
-}
-
 // ============================================================================
 // Run Hooks
 // ============================================================================

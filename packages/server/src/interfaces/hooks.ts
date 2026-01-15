@@ -18,6 +18,8 @@ export type OnListenHook = (address: { host: string; port: number }) => void | P
 export type OnReadyHook<S = unknown> = (app: App<S>) => void | Promise<void>;
 export type OnRegisterHook = (plugin: Plugin, opts: RegisterOptions) => void | Promise<void>;
 
+export type HookFactoryCallback<S> = (hooks: HookStore, app: App<S>) => void;
+export type LifeSpanCleanupCallback<S> = (app: App<S>) => void | Promise<void>;
 // Generic hook callback type
 export type GenericHookCallback = (...args: any[]) => any | Promise<any>;
 

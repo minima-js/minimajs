@@ -42,9 +42,9 @@ export namespace plugin {
     return kPluginSync in fn;
   }
 
-  export function sync<T>(synced: (app: App<T>) => void) {
+  export function sync<S>(synced: (app: App<S>) => void): PluginSync<S> {
     (synced as unknown as PluginSync)[kPluginSync] = true;
-    return synced;
+    return synced as unknown as PluginSync;
   }
 
   export function getName(fn: Registerable, opts?: { name?: string }): string {

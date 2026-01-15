@@ -1,7 +1,7 @@
 import { type HTTPMethod } from "find-my-way";
 import { type App } from "../interfaces/app.js";
 import { type Route } from "../interfaces/route.js";
-import { runHooks, getHooks } from "../hooks/store.js";
+import { runHooks } from "../hooks/store.js";
 import { wrap } from "./context.js";
 import { type Context, type RequestHandlerContext } from "../interfaces/context.js";
 import { NotFoundError, RedirectError } from "../error.js";
@@ -10,6 +10,7 @@ import { result2route } from "./route.js";
 import type { RouteFindResult } from "../interfaces/route.js";
 import { parseRequestURL } from "../utils/request.js";
 import type { Server } from "../core/index.js";
+import { kHooks } from "../symbols.js";
 
 async function finalizeSend(ctx: Context, response: Response) {
   await runHooks.send(ctx.app, response, ctx);
@@ -88,7 +89,7 @@ async function prepare(route: Route | null, ctx: Context): Promise<Response> {
 
 async function handleError(err: unknown, ctx: Context): Promise<Response> {
   if (err instanceof RedirectError) return err.render(ctx);
-  const hooks = getHooks(ctx.app);
+  const hooks = ctx.app.container[kHooks];
 
   // No app-level error hooks - use default error handler
   if (hooks.error.size === 0) {

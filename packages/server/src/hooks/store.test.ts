@@ -1,7 +1,5 @@
 import { describe, test, expect } from "@jest/globals";
-import { createHooksStore, getHooks, addHook } from "./store.js";
-import type { App, Container } from "../interfaces/app.js";
-import { kHooks } from "../symbols.js";
+import { createHooksStore } from "./store.js";
 
 describe("hooks/store", () => {
   describe("createHooksStore", () => {
@@ -88,48 +86,6 @@ describe("hooks/store", () => {
       // Both should have the root hook
       expect(siblingA.request.size).toBe(2); // root + callbackA
       expect(siblingB.request.size).toBe(2); // root + callbackB
-    });
-  });
-
-  describe("getHooks", () => {
-    test("should return hooks from app container", () => {
-      const mockHooks = createHooksStore();
-      const container: Container = { [kHooks]: mockHooks } as any;
-
-      const app = { container } as unknown as App;
-
-      const result = getHooks(app);
-      expect(result).toBe(mockHooks);
-    });
-  });
-
-  describe("addHook", () => {
-    test("should add hook callback to the specified hook set", () => {
-      const mockHooks = createHooksStore();
-      const container: Container = { [kHooks]: mockHooks } as any;
-
-      const app = { container } as unknown as App;
-      const callback = () => {};
-
-      addHook(app, "request", callback);
-
-      expect(mockHooks.request.has(callback)).toBe(true);
-    });
-
-    test("should add multiple hooks to the same set", () => {
-      const mockHooks = createHooksStore();
-      const container: Container = { [kHooks]: mockHooks } as any;
-
-      const app = { container } as unknown as App;
-      const callback1 = () => {};
-      const callback2 = () => {};
-
-      addHook(app, "error", callback1);
-      addHook(app, "error", callback2);
-
-      expect(mockHooks.error.has(callback1)).toBe(true);
-      expect(mockHooks.error.has(callback2)).toBe(true);
-      expect(mockHooks.error.size).toBe(2);
     });
   });
 });
