@@ -255,14 +255,13 @@ export namespace request {
 
   export function url(): URL {
     const { $metadata: metadata, request } = $context();
-    if (!metadata.url) {
-      if (metadata.host) {
-        const path = request.url.slice(metadata.pathStart);
-        metadata.url = new URL(`${metadata.proto}://${metadata.host}${path}`);
-      } else {
-        metadata.url = new URL(request.url);
-      }
+    if (metadata.url) return metadata.url;
+    metadata.proto ??= "http";
+    if (!metadata.host) {
+      metadata.host = request.headers.get("host")!;
     }
+    const path = request.url.slice(metadata.pathStart);
+    metadata.url = new URL(`${metadata.proto}://${metadata.host}${path}`);
     return metadata.url;
   }
 
@@ -286,13 +285,15 @@ export namespace request {
    */
   export function ip(): string | null {
     const { locals } = $context();
-    const ipAddr = locals[kIpAddr];
-    if (ipAddr === undefined)
-      abort("proxy() plugin is not configured. Please register proxy({ ip: { ... } }) to enable IP extraction.", 500);
+    let ipAddr = locals[kIpAddr];
+    if (ipAddr === undefined) {
+      ipAddr = request.remoteAddr();
+      locals[kIpAddr] = ipAddr;
+    }
     return ipAddr;
   }
 
-  export function remoteAddr() {
+  export function remoteAddr(): string | null {
     const ctx = $context();
     return ctx.serverAdapter.remoteAddr(ctx);
   }
