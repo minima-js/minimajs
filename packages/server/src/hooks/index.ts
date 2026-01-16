@@ -11,8 +11,8 @@ import type {
   OnRegisterHook,
 } from "./types.js";
 import type { App } from "../interfaces/index.js";
-import type { PluginSync } from "../interfaces/plugin.js";
-import { plugin } from "../internal/plugins.js";
+import type { PluginSync } from "../plugin.js";
+import { plugin } from "../plugin.js";
 import { kHooks } from "../symbols.js";
 
 // ============================================================================

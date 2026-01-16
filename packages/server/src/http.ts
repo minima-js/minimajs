@@ -1,18 +1,12 @@
 import { $context } from "./internal/context.js";
 
 import { RedirectError, HttpError, BaseHttpError, NotFoundError, type HttpErrorOptions } from "./error.js";
-import type {
-  Dict,
-  HeadersInit,
-  HttpHeader,
-  HttpHeaderIncoming,
-  ResponseBody,
-  ResponseOptions,
-} from "./interfaces/response.js";
+import type { HeadersInit, HttpHeader, HttpHeaderIncoming, ResponseBody, ResponseOptions } from "./interfaces/response.js";
 import { toStatusCode, type StatusCode } from "./internal/response.js";
 import { isAbortError } from "./utils/errors.js";
 import { mergeHeaders } from "./utils/headers.js";
 import { kBody, kIpAddr } from "./symbols.js";
+import type { Dict } from "./interfaces/index.js";
 
 // ============================================================================
 //  Response

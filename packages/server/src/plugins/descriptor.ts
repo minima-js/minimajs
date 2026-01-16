@@ -1,6 +1,6 @@
 import type { RouteMetaDescriptor } from "../interfaces/route.js";
 import { getAppRouteDescriptors } from "../internal/route.js";
-import { plugin } from "../internal/plugins.js";
+import { plugin } from "../plugin.js";
 
 /**
  * Creates a plugin that adds metadata to all routes registered within its scope.

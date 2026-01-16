@@ -1,11 +1,10 @@
 import "./avvio-patch.js";
 import avvio, { type Avvio } from "avvio";
-import type { App, Container, Registerable } from "../interfaces/index.js";
+import type { App, Container } from "../interfaces/index.js";
 import { runHooks } from "../hooks/store.js";
-import type { PluginOptions, RegisterOptions } from "../interfaces/plugin.js";
 import { kModuleName, kModulesChain, kPlugin } from "../symbols.js";
 import { isCallable } from "../utils/callable.js";
-import { plugin } from "./plugins.js";
+import { plugin, type PluginOptions, type RegisterOptions, type Registerable } from "../plugin.js";
 
 export const METADATA_SYMBOLS = [kModuleName, kPlugin];
 
@@ -19,8 +18,8 @@ function cloneable(value: unknown): value is { clone(): unknown } {
 /**
  * Clones a container by iterating symbol properties and conditionally cloning values
  */
-function cloneContainer(container: Container): Container {
-  const newContainer: Container = {} as Container;
+function cloneContainer<S>(container: Container<S>): Container<S> {
+  const newContainer: Container<S> = {} as Container<S>;
   // Iterate over symbol properties
   for (const key of Object.getOwnPropertySymbols(container)) {
     const value = container[key];

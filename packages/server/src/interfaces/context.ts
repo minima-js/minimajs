@@ -29,7 +29,7 @@ export interface Context<S = unknown> {
   readonly $metadata: ContextMetadata;
   readonly request: Request; // WebApi Request
   readonly responseState: ResponseState; // Mutable response headers/status
-  readonly container: Container; // app.container
+  readonly container: Container<S>; // app.container
   readonly locals: ContextLocals;
   readonly route: Route<S> | null;
   readonly incomingMessage: S extends HttpServer | HttpsServer ? IncomingMessage : undefined;

@@ -1,5 +1,5 @@
 import type { Signals } from "../interfaces/index.js";
-import { plugin } from "../internal/plugins.js";
+import { plugin } from "../plugin.js";
 
 export interface ShutdownOptions {
   /** Array of signals to listen for (e.g., ['SIGINT', 'SIGTERM']) */

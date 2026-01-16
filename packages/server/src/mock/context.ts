@@ -48,7 +48,7 @@ export function mockContext<S, T = void>(callback: MockContextCallback<T, S>, op
     serverAdapter: null as unknown as ServerAdapter<S>,
     request: request,
     responseState: resInit,
-    container: {} as Container,
+    container: {} as Container<S>,
     locals: {},
     route: (Object.keys(params).length > 0 ? { params, store: { handler: () => {} } } : null) as any,
     incomingMessage: undefined as any,

@@ -1,10 +1,10 @@
 import { describe, test, expect, beforeEach, afterEach, jest } from "@jest/globals";
-import { plugin } from "./plugins.js";
-import { compose } from "../compose.js";
-import { createApp } from "../bun/index.js";
-import type { App } from "../interfaces/app.js";
-import { kModuleName, kPlugin } from "../symbols.js";
-import { createRequest } from "../mock/request.js";
+import { plugin } from "./plugin.js";
+import { compose } from "./compose.js";
+import { createApp } from "./bun/index.js";
+import type { App } from "./interfaces/app.js";
+import { kModuleName, kPlugin } from "./symbols.js";
+import { createRequest } from "./mock/request.js";
 
 describe("plugins", () => {
   describe("createPlugin", () => {
@@ -34,7 +34,7 @@ describe("plugins", () => {
 
     test("should return fn.name when available", () => {
       function namedFunction() {}
-      const name = plugin.getName(namedFunction as any);
+      const name = plugin.getName(namedFunction);
       expect(name).toBe("namedFunction");
     });
 

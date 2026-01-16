@@ -34,11 +34,3 @@ export type OmitIndexSignature<T> = {
 export type HttpHeader = string;
 export type HttpCodes = number;
 export type HttpHeaderIncoming = keyof OmitIndexSignature<IncomingHttpHeaders> | (string & Record<never, never>);
-
-// ============================================================================
-// Utility Types
-// ============================================================================
-
-export type Dict<T = unknown> = NodeJS.Dict<T>;
-export type Next = (error?: unknown, response?: unknown) => void;
-export type GenericCallback = (...args: any[]) => any;

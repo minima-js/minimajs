@@ -1,8 +1,17 @@
 import { describe, test, beforeEach, afterEach, expect, jest } from "@jest/globals";
-import { createApp } from "./bun/index.js";
-import { hook, compose, type App, type OnReadyHook, type OnCloseHook } from "./index.js";
-import { defer, onError, type ErrorCallback } from "./plugins/minimajs.js";
-import { createRequest } from "./mock/request.js";
+import { createApp } from "../bun/index.js";
+import { createRequest } from "../mock/index.js";
+
+import {
+  hook,
+  onError,
+  defer,
+  compose,
+  type App,
+  type OnReadyHook,
+  type OnCloseHook,
+  type ErrorCallback,
+} from "../index.js";
 
 describe("hooks", () => {
   let app: App;

@@ -1,11 +1,12 @@
 import { describe, test, expect, beforeEach, afterEach, jest } from "@jest/globals";
 import type { Server } from "node:http";
 import { compose } from "./compose.js";
-import { plugin } from "./internal/plugins.js";
+import { plugin } from "./plugin.js";
 import { hook } from "./hooks/index.js";
 import { createApp } from "./node/index.js";
 import { createRequest } from "./mock/request.js";
-import type { App, PluginOptions } from "./interfaces/index.js";
+import type { App } from "./interfaces/index.js";
+import type { PluginOptions } from "./plugin.js";
 
 describe("compose", () => {
   let app: App<Server>;

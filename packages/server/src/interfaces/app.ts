@@ -1,13 +1,13 @@
 import type { Instance as Router, HTTPVersion } from "find-my-way";
 import type { ErrorHandler, Serializer } from "./response.js";
-import type { Plugin, PluginOptions, PluginSync, Module, RegisterOptions, Registerable } from "./plugin.js";
+import type { Plugin, PluginOptions, PluginSync, Module, RegisterOptions, Registerable } from "../plugin.js";
 import type { Context } from "./context.js";
 import type { PrefixOptions, RouteMetaDescriptor, RouteOptions } from "./route.js";
 import type { Logger } from "pino";
 import type { kAppDescriptor, kHooks, kModulesChain } from "../symbols.js";
 import type { HookStore } from "../hooks/types.js";
 
-export type Container<S = any> = {
+export type Container<S = unknown> = {
   [kHooks]: HookStore;
   [kAppDescriptor]: RouteMetaDescriptor<S>[];
   [kModulesChain]: App<S>[];

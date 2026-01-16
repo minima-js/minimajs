@@ -1,7 +1,7 @@
 import type { App } from "./interfaces/index.js";
-import type { RegisterOptions, Registerable, Plugin, PluginOptions } from "./interfaces/plugin.js";
+import type { RegisterOptions, Registerable, Plugin, PluginOptions } from "./plugin.js";
 import { copyMetadata } from "./internal/boot.js";
-import { plugin } from "./internal/plugins.js";
+import { plugin } from "./plugin.js";
 
 /**
  * Composes multiple plugins/modules into a single plugin that registers all of them sequentially.

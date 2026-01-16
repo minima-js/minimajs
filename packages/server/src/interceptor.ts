@@ -1,6 +1,6 @@
 import type { OnRequestHook } from "./hooks/types.js";
 import type { App } from "./interfaces/app.js";
-import type { Plugin, RegisterOptions, Module } from "./interfaces/plugin.js";
+import type { Plugin, RegisterOptions, Module } from "./plugin.js";
 import { hook } from "./hooks/index.js";
 import type { InterceptorFilter, InterceptorRegisterOptions } from "./utils/decorators/helpers.js";
 
