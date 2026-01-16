@@ -52,20 +52,6 @@ describe("plugins/proxy", () => {
     expect(await res.text()).toBe("proxy.example.com");
   });
 
-  test("should strip port when stripPort is true", async () => {
-    app.register(proxy({ ip: false }));
-    app.get("/host", (ctx) => ctx.$metadata.host);
-
-    const req = new Request("http://localhost/host", {
-      headers: {
-        "x-forwarded-host": "proxy.example.com:8080",
-        "x-forwarded-proto": "https",
-      },
-    });
-    const res = await app.handle(req);
-    expect(await res.text()).toBe("proxy.example.com");
-  });
-
   test("should extract proto from X-Forwarded-Proto header", async () => {
     app.register(proxy({ ip: false }));
     app.get("/proto", (ctx) => ctx.$metadata.proto);
@@ -112,7 +98,7 @@ describe("plugins/proxy", () => {
     });
 
     const res = await app.handle(req);
-    expect(await res.text()).toEqual("127.0.0.1");
+    expect(await res.text()).toEqual("203.0.113.195");
   });
 
   test("should handle IP, host, and proto together", async () => {

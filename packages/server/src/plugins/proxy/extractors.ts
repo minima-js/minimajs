@@ -1,6 +1,17 @@
 import { type Context } from "../../index.js";
 import { isCallable } from "../../utils/callable.js";
-import type { ProxyOptions, IpExtractor, HostExtractor, ProtoExtractor } from "./types.js";
+import type { ProxyOptions, IpExtractor, HostExtractor, ProtoExtractor, IpStrategy } from "./types.js";
+
+function createIpSelector(strategy: IpStrategy, depth?: number): (ips: string[]) => string | null {
+  if (depth !== undefined) {
+    const depthIndex = Math.max(0, depth - 1);
+    return (ips) => ips[Math.min(depthIndex, ips.length - 1)] ?? null;
+  }
+  if (strategy === "last") {
+    return (ips) => ips[ips.length - 1] ?? null;
+  }
+  return (ips) => ips[0] ?? null;
+}
 
 export function createIpExtractor<S>(config: ProxyOptions<S>["ip"]): IpExtractor<S> | null {
   if (config === false) return null;
@@ -9,8 +20,11 @@ export function createIpExtractor<S>(config: ProxyOptions<S>["ip"]): IpExtractor
     return (ctx: Context<S>) => config(ctx);
   }
 
-  const { header, depth: proxyDepth = 1, strategy = "first" } = config || {};
+  const { header, depth, strategy = "first" } = config || {};
   const headers = header ? (Array.isArray(header) ? header : [header]) : [];
+
+  // Pre-calculate the IP selection function based on strategy
+  const selectIp = createIpSelector(strategy, depth);
 
   return (ctx: Context<S>): string | null => {
     const { request } = ctx;
@@ -37,17 +51,7 @@ export function createIpExtractor<S>(config: ProxyOptions<S>["ip"]): IpExtractor
         .filter(Boolean);
 
       if (ips.length) {
-        if (strategy === "last") {
-          return ips[ips.length - 1] ?? null;
-        }
-
-        if (strategy === "depth") {
-          const depthIndex = Math.max(0, proxyDepth - 1);
-          return ips[Math.min(depthIndex, ips.length - 1)] ?? null;
-        }
-
-        // default to first entry
-        return ips[0] ?? null;
+        return selectIp(ips);
       }
     }
 

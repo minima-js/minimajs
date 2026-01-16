@@ -75,6 +75,8 @@ const config = defineConfig({
           { text: "Introduction", link: "/plugins/index" },
           { text: "Body Parser", link: "/plugins/body-parser" },
           { text: "CORS", link: "/plugins/cors" },
+          { text: "Proxy", link: "/plugins/proxy" },
+          { text: "Express", link: "/plugins/express" },
           { text: "Route Logger", link: "/plugins/route-logger" },
           { text: "Graceful Shutdown", link: "/plugins/shutdown" },
         ],

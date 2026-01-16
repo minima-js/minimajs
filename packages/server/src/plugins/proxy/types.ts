@@ -1,6 +1,6 @@
 import type { Context } from "../../index.js";
 
-export type IpStrategy = "first" | "last" | "depth";
+export type IpStrategy = "first" | "last";
 
 export interface IpSettings {
   header?: string | string[];
