@@ -12,7 +12,7 @@ export class BunServerAdapter<T = unknown> implements ServerAdapter<BunServer<T>
   }
 
   async listen(
-    srv: Server,
+    srv: Server<BunServer<T>>,
     opts: ListenOptions,
     requestHandler: RequestHandler<BunServer<T>>
   ): Promise<ListenResult<BunServer<T>>> {

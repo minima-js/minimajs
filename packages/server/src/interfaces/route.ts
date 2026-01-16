@@ -3,7 +3,7 @@ import type { App, RouteHandler } from "./app.js";
 
 export type RouteMetadata = Record<symbol, unknown>;
 
-export interface Route<S = unknown> {
+export interface Route<S> {
   methods: HTTPMethod[];
   params: { [key: string]: string | undefined } | undefined;
   handler: RouteHandler<S>;
@@ -11,7 +11,7 @@ export interface Route<S = unknown> {
   metadata: RouteMetadata;
 }
 
-export interface RouteConfig<S = unknown> extends Omit<Route<S>, "params"> {
+export interface RouteConfig<S> extends Omit<Route<S>, "params"> {
   app: App<S>;
 }
 

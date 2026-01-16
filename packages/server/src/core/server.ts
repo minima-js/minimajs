@@ -21,7 +21,7 @@ export interface ServerOptions {
   router: Router.Instance<HTTPVersion.V1>;
 }
 
-export class Server<S = any> implements App<S> {
+export class Server<S> implements App<S> {
   server?: S;
   readonly router: Router.Instance<HTTPVersion.V1>;
   readonly container: Container<S>;

@@ -35,4 +35,4 @@ export interface Module<S, T extends RegisterOptions = RegisterOptions> {
 }
 
 // Union of all supported plugin-like callables
-export type Registerable<S = any> = Plugin<S, any> | PluginSync<S> | Module<S, any>;
+export type Registerable<S = any> = (app: App<S>, opts?: any) => void | Promise<void>;

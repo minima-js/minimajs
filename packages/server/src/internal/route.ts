@@ -2,7 +2,7 @@ import type { Route, RouteConfig, RouteFindResult, RouteMetaDescriptor } from ".
 import type { Container } from "../interfaces/app.js";
 import { kAppDescriptor } from "../symbols.js";
 
-export function getAppRouteDescriptors<S = unknown>(container: Container<S>) {
+export function getAppRouteDescriptors<S>(container: Container<S>) {
   return container[kAppDescriptor];
 }
 

@@ -33,10 +33,7 @@ export interface MockContextOptions<S> extends MockRequestOptions {
  *
  * @since v0.2.0
  */
-export function mockContext<S = unknown, T = void>(
-  callback: MockContextCallback<T, S>,
-  options: MockContextOptions<S> = {}
-): T {
+export function mockContext<S, T = void>(callback: MockContextCallback<T, S>, options: MockContextOptions<S> = {}): T {
   const { params = {}, url = "/", context: partialContext = {}, ...reqOptions } = options;
   const request = createRequest(url, reqOptions);
   const resInit = { status: 200, headers: new Headers() };

@@ -5,7 +5,7 @@ import type { Context } from "./context.js";
 import type { PrefixOptions, RouteMetaDescriptor, RouteOptions } from "./route.js";
 import type { Logger } from "pino";
 import type { kAppDescriptor, kHooks, kModulesChain } from "../symbols.js";
-import type { HookStore } from "../interfaces/hooks.js";
+import type { HookStore } from "../hooks/types.js";
 
 export type Container<S = any> = {
   [kHooks]: HookStore;
@@ -18,7 +18,7 @@ export type RouteHandler<S = unknown> = (ctx: Context<S>) => unknown;
 
 export interface App<S = any> {
   server?: S;
-  readonly container: Container;
+  readonly container: Container<S>;
   readonly router: Router<HTTPVersion.V1>;
 
   readonly $root: App<S>;

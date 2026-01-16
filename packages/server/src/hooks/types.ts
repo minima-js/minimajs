@@ -1,6 +1,6 @@
 import type { AddressInfo, App, Context } from "../interfaces/index.js";
-import type { LifecycleHook } from "../hooks/store.js";
-import type { Plugin, RegisterOptions } from "./plugin.js";
+import type { LifecycleHook } from "./store.js";
+import type { Plugin, RegisterOptions } from "../interfaces/plugin.js";
 export type { LifecycleHook };
 
 // Derive the union type from the constant array

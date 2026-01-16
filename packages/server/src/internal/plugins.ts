@@ -22,10 +22,7 @@ function setName(fn: any, name: string) {
  * Wraps a plain function into a Plugin with automatic kPluginSkipOverride
  * This prevents the plugin from being encapsulated and allows direct registration
  */
-export function plugin<S = any, T extends PluginOptions = PluginOptions>(
-  fn: PluginCallback<T, S>,
-  name?: string
-): Plugin<S, T> {
+export function plugin<S, T extends PluginOptions = PluginOptions>(fn: PluginCallback<T, S>, name?: string): Plugin<S, T> {
   skipOverride(fn);
   if (name !== undefined) {
     setName(fn, name);
@@ -37,11 +34,11 @@ export function plugin<S = any, T extends PluginOptions = PluginOptions>(
  * Plugin utilities namespace providing helper functions for creating and composing plugins.
  */
 export namespace plugin {
-  export function is<S = any>(fn: Registerable): fn is Plugin<S> {
+  export function is<S>(fn: Registerable): fn is Plugin<S> {
     return kPlugin in fn && fn[kPlugin] === true;
   }
 
-  export function isSync<S = any>(fn: Registerable): fn is PluginSync<S> {
+  export function isSync<S>(fn: Registerable<S>): fn is PluginSync<S> {
     return kPluginSync in fn;
   }
 

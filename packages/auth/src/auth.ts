@@ -105,14 +105,14 @@ export interface AuthResourceOptional<T> {
  * });
  * ```
  */
-export function createAuth<T, S = any>(
+export function createAuth<T, S>(
   callback: AuthCallback<T>,
   option: { required: true }
 ): [PluginSync<S>, AuthResourceWithRequired<T>];
 
-export function createAuth<T, S = any>(callback: AuthCallback<T>): [PluginSync<S>, AuthResourceOptional<T>];
+export function createAuth<T, S>(callback: AuthCallback<T>): [PluginSync<S>, AuthResourceOptional<T>];
 
-export function createAuth<T, S = any>(
+export function createAuth<T, S>(
   callback: AuthCallback<T>,
   option?: AuthOption
 ): [PluginSync<S>, AuthResourceWithRequired<T> | AuthResourceOptional<T>] {
@@ -130,7 +130,7 @@ export function createAuth<T, S = any>(
     return data!;
   };
 
-  const plugin = hook("request", async function middleware() {
+  const plugin = hook<S>("request", async function middleware() {
     try {
       const data = await callback();
       setAuth({ data });

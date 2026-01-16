@@ -48,7 +48,7 @@ export class NodeServerAdapter implements ServerAdapter<NodeServer> {
   }
 
   async listen(
-    srv: Server,
+    srv: Server<NodeServer>,
     opts: ListenOptions,
     requestHandler: RequestHandler<NodeServer>
   ): Promise<ListenResult<NodeServer>> {

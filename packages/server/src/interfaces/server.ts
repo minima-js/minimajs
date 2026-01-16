@@ -31,7 +31,7 @@ export interface ListenOptions {
  * Handler function that processes HTTP requests.
  * Takes a Web standard Request and returns a Web standard Response.
  */
-export type RequestHandler<S = unknown> = (
+export type RequestHandler<S> = (
   server: Server<S>,
   request: Request,
   partial: RequestHandlerContext<S>

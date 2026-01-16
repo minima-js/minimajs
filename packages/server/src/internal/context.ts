@@ -15,12 +15,12 @@ export function safe<T, U extends unknown[]>(cb: (...args: U) => T) {
   return (...args: U) => contextStorage.run(null as any, cb, ...args) as T;
 }
 
-export function $context<S = unknown>() {
+export function $context<S>() {
   const context = contextStorage.getStore();
   assert.ok(context, "context() was called outside of a request scope");
   return context as Context<S>;
 }
 
-export function maybeContext<S = unknown>() {
+export function maybeContext<S>() {
   return (contextStorage.getStore() as Context<S>) || null;
 }

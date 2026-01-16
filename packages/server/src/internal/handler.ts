@@ -36,7 +36,7 @@ export async function handleRequest<S>(
   const { pathEnd, pathStart } = parseRequestURL(req);
   const pathname = req.url.slice(pathStart, pathEnd);
   const result: RouteFindResult<any> | null = server.router.find(req.method as HTTPMethod, pathname);
-  let route: Route | null = null;
+  let route: Route<S> | null = null;
   let app: App<S> = server;
 
   if (result) {
@@ -71,7 +71,7 @@ export async function handleRequest<S>(
   });
 }
 
-async function prepare(route: Route | null, ctx: Context): Promise<Response> {
+async function prepare(route: Route<any> | null, ctx: Context): Promise<Response> {
   {
     // 1. request hook (runs for all requests, even not-found routes)
     const response = await runHooks.request(ctx.app, ctx);

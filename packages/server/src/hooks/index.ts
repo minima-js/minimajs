@@ -1,9 +1,4 @@
-import type {
-  LifecycleHook,
-  GenericHookCallback,
-  HookFactoryCallback,
-  LifeSpanCleanupCallback,
-} from "../interfaces/hooks.js";
+import type { LifecycleHook, GenericHookCallback, HookFactoryCallback, LifeSpanCleanupCallback } from "./types.js";
 import type {
   OnRequestHook,
   OnTransformHook,
@@ -14,7 +9,7 @@ import type {
   OnListenHook,
   OnReadyHook,
   OnRegisterHook,
-} from "../interfaces/hooks.js";
+} from "./types.js";
 import type { App } from "../interfaces/index.js";
 import type { PluginSync } from "../interfaces/plugin.js";
 import { plugin } from "../internal/plugins.js";
@@ -110,4 +105,4 @@ export type {
   OnRegisterHook,
   GenericHookCallback as HookCallback,
   HookStore,
-} from "../interfaces/hooks.js";
+} from "./types.js";
