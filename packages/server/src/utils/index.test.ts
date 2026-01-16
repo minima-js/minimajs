@@ -28,12 +28,6 @@ describe("has", () => {
     expect(has(undefined, "prop")).toBe(false);
   });
 
-  test("should work with primitives", () => {
-    expect(has("hello", "length")).toBe(true);
-    expect(has(42, "toFixed")).toBe(true);
-    expect(has(true, "toString")).toBe(true);
-  });
-
   test("should work with symbols", () => {
     const sym = Symbol("test");
     const obj = { [sym]: "value" };

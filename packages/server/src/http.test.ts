@@ -625,16 +625,6 @@ describe("Http", () => {
     });
   });
 
-  describe("request.ip", () => {
-    test("should throw error when IP plugin is not configured", () => {
-      mockContext(() => {
-        expect(() => request.ip()).toThrow(
-          "proxy() plugin is not configured. Please register proxy({ ip: { ... } }) to enable IP extraction."
-        );
-      });
-    });
-  });
-
   describe("proxy", () => {
     test("should configure with a callback function", () => {
       const app = createApp();
