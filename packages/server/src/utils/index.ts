@@ -22,7 +22,7 @@ export * from "./iterable.js";
 export * from "./headers.js";
 
 export function has<K extends string | symbol>(obj: unknown, property: K): obj is Record<K, unknown> {
-  return typeof obj === "object" && obj !== null && property in obj;
+  return obj != null && obj !== undefined && property in (obj as object);
 }
 
 export namespace has {

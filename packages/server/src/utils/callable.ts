@@ -1,6 +1,7 @@
 /**
  * Type guard to check if a value is a callable function.
  * Useful for runtime type checking before invoking a value as a function.
+ * Preserves the original function type when used with union types.
  *
  * @example
  * ```ts
@@ -9,13 +10,17 @@
  *   value(); // value is (...args: any[]) => any
  * }
  *
- * // With specific function type
- * type Options = Settings | ((ctx: Context) => string);
- * if (isCallable<(ctx: Context) => string>(options)) {
- *   // options is now typed as (ctx: Context) => string
+ * // Preserves union function type
+ * type Config = { name: string } | ((ctx: Context) => { name: string });
+ * declare const config: Config;
+ *
+ * if (isCallable(config)) {
+ *   const result = config(ctx); // result is { name: string }
+ * } else {
+ *   config.name; // config is { name: string }
  * }
  * ```
  */
-export function isCallable(v: unknown): v is (...args: unknown[]) => unknown {
+export function isCallable<T>(v: T): v is Extract<NonNullable<T>, (...args: any[]) => any> {
   return typeof v === "function";
 }

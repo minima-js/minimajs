@@ -17,7 +17,7 @@ export function createIpExtractor<S>(config: ProxyOptions<S>["ip"]): IpExtractor
   if (config === false) return null;
 
   if (isCallable(config)) {
-    return (ctx: Context<S>) => config(ctx);
+    return config;
   }
 
   const { header, depth, strategy = "first" } = config || {};
