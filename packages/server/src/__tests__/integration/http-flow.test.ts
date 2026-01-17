@@ -217,7 +217,7 @@ describe("HTTP Integration Tests", () => {
       const res = await testRoute(
         () => {
           const userData = body<{ name: string; email: string }>();
-          const userId = params.get("id");
+          const userId = params.get("userId");
           const page = searchParams.get("page");
           const authToken = headers.get("authorization");
 

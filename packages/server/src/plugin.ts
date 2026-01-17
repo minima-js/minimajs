@@ -2,7 +2,7 @@ import { kModuleName, kPlugin, kPluginSync } from "./symbols.js";
 import type { App } from "./interfaces/app.js";
 
 // Options for register callbacks with prefix support
-export type PluginCallback<T extends PluginOptions, S> = (app: App<S>, opts: T) => void | Promise<void>;
+export type PluginCallback< S, T extends PluginOptions> = (app: App<S>, opts: T) => void | Promise<void>;
 
 // Base options for Module - allows prefix
 export type RegisterOptions<T = {}> = T & {
@@ -16,20 +16,20 @@ export type PluginOptions<T = {}> = T & {
 };
 
 // Plugin function (created with plugin wrapper, no prefix in user opts)
-export interface Plugin<S, T extends PluginOptions = PluginOptions> {
+export interface Plugin<S = unknown, T extends PluginOptions = PluginOptions> {
   (app: App<S>, opts: T): void | Promise<void>;
   [kModuleName]?: string;
   [kPlugin]: true; // Brand to identify Plugin
 }
 
 // Sync plugin function - no opts needed
-export interface PluginSync<S> {
+export interface PluginSync<S = unknown> {
   (app: App<S>): void;
   [kPluginSync]: true; // Brand to identify PluginSync
 }
 
 // Register callback (plain function, prefix allowed in register options)
-export interface Module<S, T extends RegisterOptions = RegisterOptions> {
+export interface Module<S = unknown, T extends RegisterOptions = RegisterOptions> {
   (app: App<S>, opts: T): void | Promise<void>;
   [kModuleName]?: string;
 }
@@ -57,7 +57,7 @@ function setName(fn: any, name: string) {
  * Wraps a plain function into a Plugin with automatic kPluginSkipOverride
  * This prevents the plugin from being encapsulated and allows direct registration
  */
-export function plugin<S, T extends PluginOptions = PluginOptions>(fn: PluginCallback<T, S>, name?: string): Plugin<S, T> {
+export function plugin<S, T extends PluginOptions = PluginOptions>(fn: PluginCallback<S, T>, name?: string): Plugin<S, T> {
   skipOverride(fn);
   if (name !== undefined) {
     setName(fn, name);

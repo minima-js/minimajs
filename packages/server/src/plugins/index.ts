@@ -21,6 +21,8 @@
 
 export * from "./body-parser/index.js";
 export * from "./router/index.js";
-export { shutdown, type ShutdownOptions as GracefulShutdownOptions } from "./shutdown/index.js";
-export { cors, type CorsOptions } from "./cors/index.js";
+export * from "./shutdown/index.js";
+export * from "./cors/index.js";
 export * from "./proxy/index.js";
+export * from "./descriptor/index.js";
+export * from './express/index.js';
