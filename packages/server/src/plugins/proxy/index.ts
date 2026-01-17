@@ -3,7 +3,7 @@ import { kIpAddr } from "../../symbols.js";
 import type { ProxyOptions, ProxyIpPluginOptions } from "./types.js";
 import { createTrustValidator } from "./trust.js";
 import { createHostExtractor, createIpExtractor, createProtoExtractor, defaultExtractProto } from "./extractors.js";
-
+export * from "./types.js";
 /**
  * Proxy plugin that extracts client information from proxy headers.
  * Useful when your application is behind a reverse proxy or load balancer.

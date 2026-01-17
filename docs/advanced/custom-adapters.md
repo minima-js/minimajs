@@ -333,5 +333,4 @@ await app.listen({ port: 3000, host: "localhost" });
 ## Next Steps
 
 - Learn about [Container and Encapsulation](./container-encapsulation.md)
-- Explore [Plugin Development](../guides/plugins.md)
 - See [Architecture Overview](../core-concepts/architecture.md)

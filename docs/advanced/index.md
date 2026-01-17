@@ -42,7 +42,6 @@ These guides are for:
 Before diving into these topics, you should be familiar with:
 
 - [Core Concepts](../core-concepts/architecture.md)
-- [Plugin Development](../guides/plugins.md)
 - [Hooks System](../guides/hooks.md)
 - TypeScript and advanced JavaScript concepts
 

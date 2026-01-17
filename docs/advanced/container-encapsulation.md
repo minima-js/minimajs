@@ -425,7 +425,5 @@ app.register("/other", (other) => {
 - Learn about [Custom Adapters](./custom-adapters.md)
 - Explore [Plugin Development](../core-concepts/plugins.md)
 - See [Architecture Overview](../core-concepts/architecture.md)
-
 - Learn about [Custom Adapters](./custom-adapters.md)
-- Explore [Plugin Development](../guides/plugins.md)
 - See [Encapsulation Diagrams](../core-concepts/diagrams/encapsulation.md)

@@ -10,7 +10,7 @@ describe("plugins/proxy", () => {
   let app: Server<BunServer<any>>;
 
   beforeEach(() => {
-    app = createApp({logger: logger});
+    app = createApp({ logger: logger });
   });
 
   afterEach(async () => {
@@ -141,7 +141,7 @@ describe("plugins/proxy", () => {
       },
     });
     const res = await app.handle(req);
-    const body : any= await res.json();
+    const body: any = await res.json();
     expect(body.ip).toBeUndefined();
     expect(body.host).toBeUndefined();
     expect(body.proto).toBeUndefined();
@@ -192,7 +192,7 @@ describe("plugins/proxy", () => {
       proxy({
         ip: () => null,
         host: () => null,
-        proto: () => 'http'
+        proto: () => "http",
       })
     );
     app.get("/all", (ctx) => ({
@@ -203,13 +203,12 @@ describe("plugins/proxy", () => {
 
     const res = await app.handle(new Request("http://localhost/all"));
     if (!res.ok) {
-     throw new Error(await res.text());
+      throw new Error(await res.text());
     }
     const body: any = await res.json();
 
-
-    expect(body.ip).toBeUndefined(); 
+    expect(body.ip).toBeUndefined();
     expect(body.host).toBeUndefined();
-    expect(body.proto).toBe('http');
+    expect(body.proto).toBe("http");
   });
 });
