@@ -17,7 +17,7 @@
 import Router, { type HTTPVersion, type Config as RouterConfig } from "find-my-way";
 import { type Logger } from "pino";
 import type { ServerAdapter } from "../interfaces/server.js";
-import { minimajs } from "../plugins/minimajs.js";
+import { minimajs } from "../plugins/minimajs/index.js";
 import { Server } from "./server.js";
 import { createLogger, logger as defaultLogger } from "../logger.js";
 

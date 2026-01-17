@@ -4,12 +4,13 @@ import { createApp } from "../../bun/index.js";
 import { proxy } from "./index.js";
 import { kIpAddr } from "../../symbols.js";
 import type { Server } from "../../core/index.js";
+import { logger } from "../../index.js";
 
 describe("plugins/proxy", () => {
   let app: Server<BunServer<any>>;
 
   beforeEach(() => {
-    app = createApp();
+    app = createApp({logger: logger});
   });
 
   afterEach(async () => {
@@ -122,5 +123,93 @@ describe("plugins/proxy", () => {
       host: "proxy.example.com",
       proto: "https",
     });
+  });
+
+  test("should not extract when not trusted", async () => {
+    app.register(proxy({ trustProxies: [] })); // Empty array means no trust
+    app.get("/all", (ctx) => ({
+      ip: ctx.locals[kIpAddr],
+      host: ctx.$metadata.host,
+      proto: ctx.$metadata.proto,
+    }));
+
+    const req = new Request("http://localhost/all", {
+      headers: {
+        "x-forwarded-for": "203.0.113.195",
+        "x-forwarded-host": "proxy.example.com",
+        "x-forwarded-proto": "https",
+      },
+    });
+    const res = await app.handle(req);
+    const body : any= await res.json();
+    expect(body.ip).toBeUndefined();
+    expect(body.host).toBeUndefined();
+    expect(body.proto).toBeUndefined();
+  });
+
+  test("should extract proto when host is enabled", async () => {
+    app.register(proxy({ ip: false }));
+    app.get("/proto", (ctx) => ctx.$metadata.proto);
+
+    const req = new Request("http://localhost/proto", {
+      headers: { "x-forwarded-host": "example.com" },
+    });
+    const res = await app.handle(req);
+    expect(await res.text()).toBeTruthy();
+  });
+
+  test("proxy.ip should extract IP only", async () => {
+    app.register(proxy.ip());
+    app.adapter.remoteAddr = () => "127.0.0.1";
+    app.get("/ip", (ctx) => ctx.locals[kIpAddr] || "null");
+
+    const req = new Request("http://localhost/ip", {
+      headers: { "x-forwarded-for": "203.0.113.195" },
+    });
+    const res = await app.handle(req);
+    expect(await res.text()).toBe("203.0.113.195");
+  });
+
+  test("proxy.ip should not extract when not trusted", async () => {
+    // Empty array means no proxies are trusted
+    app.register(proxy.ip({ trustProxies: [] }));
+    app.adapter.remoteAddr = () => "192.168.1.1"; // Not in trust list
+    app.get("/ip", (ctx) => {
+      const ip = ctx.locals[kIpAddr];
+      return ip ? ip : "null";
+    });
+
+    const req = new Request("http://localhost/ip", {
+      headers: { "x-forwarded-for": "203.0.113.195" },
+    });
+    const res = await app.handle(req);
+    expect(await res.text()).toBe("null");
+  });
+
+  test("should handle null/undefined extractor results", async () => {
+    app.adapter.remoteAddr = () => "127.0.0.1";
+    app.register(
+      proxy({
+        ip: () => null,
+        host: () => null,
+        proto: () => 'http'
+      })
+    );
+    app.get("/all", (ctx) => ({
+      ip: ctx.locals[kIpAddr],
+      host: ctx.$metadata.host,
+      proto: ctx.$metadata.proto,
+    }));
+
+    const res = await app.handle(new Request("http://localhost/all"));
+    if (!res.ok) {
+     throw new Error(await res.text());
+    }
+    const body: any = await res.json();
+
+
+    expect(body.ip).toBeUndefined(); 
+    expect(body.host).toBeUndefined();
+    expect(body.proto).toBe('http');
   });
 });

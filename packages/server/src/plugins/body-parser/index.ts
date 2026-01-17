@@ -1,7 +1,7 @@
-import { hook } from "../hooks/index.js";
-import type { Context, RouteMetaDescriptor } from "../interfaces/index.js";
-import { plugin } from "../plugin.js";
-import { kBody, kBodySkip } from "../symbols.js";
+import { hook } from "../../hooks/index.js";
+import type { Context, RouteMetaDescriptor } from "../../interfaces/index.js";
+import { plugin } from "../../plugin.js";
+import { kBody, kBodySkip } from "../../symbols.js";
 
 export type BodyParserType = "json" | "text" | "form" | "arrayBuffer" | "blob";
 

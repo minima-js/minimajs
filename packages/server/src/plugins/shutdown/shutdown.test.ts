@@ -1,7 +1,8 @@
 import { describe, test, expect, beforeEach, afterEach, jest } from "@jest/globals";
-import { shutdownListener, shutdown, type QuitHandler } from "./shutdown.js";
-import type { Signals } from "../interfaces/index.js";
-import { createApp } from "../bun/index.js";
+import { shutdown, type QuitHandler } from "./index.js";
+import { shutdownListener } from "./listener.js";
+import type { Signals } from "../../interfaces/index.js";
+import { createApp } from "../../bun/index.js";
 
 describe("shutdownListener", () => {
   let quitHandler: QuitHandler;

@@ -19,8 +19,8 @@
  * ```
  */
 
-export * from "./body-parser.js";
-export * from "./router.js";
-export { shutdown, type ShutdownOptions as GracefulShutdownOptions } from "./shutdown.js";
-export { cors, type CorsOptions } from "./cors.js";
+export * from "./body-parser/index.js";
+export * from "./router/index.js";
+export { shutdown, type ShutdownOptions as GracefulShutdownOptions } from "./shutdown/index.js";
+export { cors, type CorsOptions } from "./cors/index.js";
 export * from "./proxy/index.js";

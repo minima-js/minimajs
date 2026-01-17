@@ -1,5 +1,5 @@
-import { hook } from "../hooks/index.js";
-import { createContext } from "../context.js";
+import { hook } from "../../hooks/index.js";
+import { createContext } from "../../context.js";
 
 export type ErrorCallback = (response: Response) => void | Promise<void>;
 export type DeferCallback = (response: Response) => void | Promise<void>;

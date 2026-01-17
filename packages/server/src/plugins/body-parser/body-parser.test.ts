@@ -1,9 +1,9 @@
 import { describe, test, expect, beforeEach, afterEach, jest } from "@jest/globals";
-import { createApp } from "../bun/index.js";
-import type { App } from "../interfaces/app.js";
-import { bodyParser } from "./body-parser.js";
-import { body } from "../http.js";
-import { createRequest } from "../mock/request.js";
+import { createApp } from "../../bun/index.js";
+import type { App } from "../../interfaces/app.js";
+import { bodyParser } from "./index.js";
+import { body } from "../../http.js";
+import { createRequest } from "../../mock/request.js";
 
 describe("bodyParser", () => {
   let app: App;

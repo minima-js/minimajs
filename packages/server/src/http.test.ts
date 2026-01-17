@@ -3,7 +3,7 @@ import { HttpError, NotFoundError, RedirectError } from "./error.js";
 import { abort, body, headers, params, redirect, request, response, searchParams } from "./http.js";
 import { mockContext } from "./mock/index.js";
 import { createApp } from "./bun/index.js";
-import { bodyParser } from "./plugins/body-parser.js";
+import { bodyParser } from "./plugins/body-parser/index.js";
 import { createRequest } from "./mock/request.js";
 import { proxy } from "./plugins/proxy/index.js";
 
