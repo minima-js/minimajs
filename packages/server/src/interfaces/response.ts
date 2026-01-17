@@ -16,6 +16,7 @@ export interface ResponseState {
 
 export interface ResponseOptions {
   status?: keyof typeof StatusCodes | number;
+  statusText?: string;
   headers?: HeadersInit;
 }
 

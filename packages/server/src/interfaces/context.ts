@@ -9,7 +9,6 @@ import type { kIpAddr } from "../symbols.js";
 
 export interface ContextMetadata {
   url?: URL;
-  searchParams?: unknown;
   host?: string;
   proto?: string;
   pathStart: number;

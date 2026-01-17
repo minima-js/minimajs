@@ -17,16 +17,6 @@ async function finalizeSend(ctx: Context, response: Response) {
   return response;
 }
 
-export function getPathname(url: string): string {
-  let i = 8; // after "https://"
-  if (url.charCodeAt(4) !== 115) i = 7; // "http://"
-
-  // find first /
-  for (; url.charCodeAt(i) !== 47; i++);
-
-  const q = url.indexOf("?", i);
-  return q === -1 ? url.slice(i) : url.slice(i, q);
-}
 
 export async function handleRequest<S>(
   server: Server<S>,

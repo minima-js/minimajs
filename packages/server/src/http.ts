@@ -34,6 +34,9 @@ export function response(body: ResponseBody, options: ResponseOptions = {}): Res
   if (options.headers) {
     mergeHeaders(responseState.headers, new Headers(options.headers));
   }
+  if (options.statusText !== undefined) {
+    responseState.statusText = options.statusText;
+  }
   return new Response(body, responseState);
 }
 
@@ -568,6 +571,7 @@ export namespace headers {
 // Search Params / Queries
 // ============================================================================
 
+const kSearchParams = Symbol();
 /**
  * Retrieves the search params (query string).
  *
@@ -581,13 +585,14 @@ export namespace headers {
  * ```
  * @since v0.2.0
  */
-export function searchParams<T>(): T {
+export function searchParams<T extends Record<string, string>>(): T {
   const ctx = $context();
-  const { $metadata: metadata } = ctx;
-  if (!metadata.searchParams) {
-    metadata.searchParams = Object.fromEntries(request.url().searchParams);
+  let queries = ctx.locals[kSearchParams] as T;
+  if (!queries) {
+    queries = Object.fromEntries(request.url().searchParams) as T;
+    ctx.locals[kSearchParams] = queries;
   }
-  return metadata.searchParams as T;
+  return queries;
 }
 
 /**
