@@ -25,4 +25,4 @@ export * from "./shutdown/index.js";
 export * from "./cors/index.js";
 export * from "./proxy/index.js";
 export * from "./descriptor/index.js";
-export * from './express/index.js';
+export * from "./express/index.js";

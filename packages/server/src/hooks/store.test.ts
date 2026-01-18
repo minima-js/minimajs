@@ -87,7 +87,7 @@ describe("hooks/store", () => {
       const cb1 = () => order.push(1);
       const cb2 = () => order.push(2);
       const cb3 = () => order.push(3);
-      
+
       // Use transform hook which is reversed and doesn't interfere with minimajs
       app.container[kHooks].transform.clear();
       app.container[kHooks].transform.add(cb1);

@@ -34,8 +34,8 @@ You can configure the plugin to parse different content types by passing an opti
 
 Specifies the content types to parse.
 
--   **Type**: `("json" | "text" | "form" | "arrayBuffer" | "blob")[]`
--   **Default**: `["json"]`
+- **Type**: `("json" | "text" | "form" | "arrayBuffer" | "blob")[]`
+- **Default**: `["json"]`
 
 ```typescript
 // Configure the plugin to parse JSON and plain text
@@ -52,8 +52,8 @@ app.post("/text-log", () => {
 
 Clones the request object before parsing the body. This can be useful if you need to read the raw request body stream more than once.
 
--   **Type**: `boolean`
--   **Default**: `false`
+- **Type**: `boolean`
+- **Default**: `false`
 
 ```typescript
 app.register(bodyParser({ clone: true }));

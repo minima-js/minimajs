@@ -17,7 +17,6 @@ async function finalizeSend(ctx: Context, response: Response) {
   return response;
 }
 
-
 export async function handleRequest<S>(
   server: Server<S>,
   req: Request,

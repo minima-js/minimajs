@@ -2,7 +2,7 @@ import { kModuleName, kPlugin, kPluginSync } from "./symbols.js";
 import type { App } from "./interfaces/app.js";
 
 // Options for register callbacks with prefix support
-export type PluginCallback< S, T extends PluginOptions> = (app: App<S>, opts: T) => void | Promise<void>;
+export type PluginCallback<S, T extends PluginOptions> = (app: App<S>, opts: T) => void | Promise<void>;
 
 // Base options for Module - allows prefix
 export type RegisterOptions<T = {}> = T & {

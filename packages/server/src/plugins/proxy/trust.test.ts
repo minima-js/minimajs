@@ -4,10 +4,9 @@ import type { Context } from "../../interfaces/index.js";
 import { mockContext } from "../../mock/context.js";
 
 describe("trust", () => {
-
   function mockCtx(remoteAddr?: string | null): Context<unknown> {
-    const ctx =  mockContext((ctx) => {
-      return {...ctx, serverAdapter: {remoteAddr: () => remoteAddr ?? null}} as unknown as Context<unknown>;
+    const ctx = mockContext((ctx) => {
+      return { ...ctx, serverAdapter: { remoteAddr: () => remoteAddr ?? null } } as unknown as Context<unknown>;
     });
     return ctx;
   }

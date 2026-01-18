@@ -1,7 +1,6 @@
 import type { Signals } from "../../interfaces/index.js";
 import type { QuitHandler } from "./index.js";
 
-
 /**
  * Registers shutdown signal handlers for graceful server termination.
  * Listens for specified kill signals and executes cleanup before process exit.

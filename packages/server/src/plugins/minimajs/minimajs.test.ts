@@ -1,7 +1,7 @@
-import { describe, test, expect, beforeEach, afterEach,  } from "@jest/globals";
+import { describe, test, expect, beforeEach, afterEach } from "@jest/globals";
 import { createApp } from "../../bun/index.js";
 import { createRequest } from "../../mock/request.js";
-import { defer, onError,  } from "./index.js";
+import { defer, onError } from "./index.js";
 import { HttpError } from "../../error.js";
 import type { Server } from "../../core/index.js";
 import type { Server as BunServer } from "bun";

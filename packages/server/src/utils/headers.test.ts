@@ -45,8 +45,8 @@ describe("mergeHeaders", () => {
   });
 
   test("should override existing headers with new values", () => {
-    const base = new Headers({ "Authorization": "Bearer token1" });
-    const override = new Headers({ "Authorization": "Bearer token2" });
+    const base = new Headers({ Authorization: "Bearer token1" });
+    const override = new Headers({ Authorization: "Bearer token2" });
 
     mergeHeaders(base, override);
 

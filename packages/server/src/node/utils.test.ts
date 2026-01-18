@@ -172,7 +172,7 @@ describe("node/utils", () => {
       mockSocket = new Socket();
       mockRes = new ServerResponse(new IncomingMessage(mockSocket));
       responseBody = "";
-      
+
       mockRes.write = function (chunk: any) {
         responseBody += chunk.toString();
         return true;
@@ -182,7 +182,7 @@ describe("node/utils", () => {
           responseBody += chunk.toString();
         }
         // Emit finish event to properly complete the pipeline
-        setImmediate(() => this.emit('finish'));
+        setImmediate(() => this.emit("finish"));
         return this;
       };
     });

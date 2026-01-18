@@ -13,7 +13,7 @@ import { bodyParser } from "../../plugins/body-parser/index.js";
 
 export async function testRoute(
   handler: () => any,
-  { url = "/test", path = url,  ...options }: MockRequestOptions & { url?: string, path?: string } = {}
+  { url = "/test", path = url, ...options }: MockRequestOptions & { url?: string; path?: string } = {}
 ): Promise<Response> {
   const app = createApp({ logger: false });
   app.register(bodyParser());

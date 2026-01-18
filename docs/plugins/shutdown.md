@@ -28,15 +28,15 @@ With the plugin registered, pressing `Ctrl+C` in your terminal will now trigger 
 
 An array of process signals to listen for.
 
--   **Type**: `Signals[]` (e.g., `'SIGINT'`, `'SIGTERM'`)
--   **Default**: `['SIGINT', 'SIGTERM']`
+- **Type**: `Signals[]` (e.g., `'SIGINT'`, `'SIGTERM'`)
+- **Default**: `['SIGINT', 'SIGTERM']`
 
 ### `timeout`
 
 The maximum time in milliseconds to wait for the graceful shutdown to complete before forcefully terminating the process. This prevents your application from hanging indefinitely during shutdown.
 
--   **Type**: `number`
--   **Default**: `30000` (30 seconds)
+- **Type**: `number`
+- **Default**: `30000` (30 seconds)
 
 **Example with custom options:**
 

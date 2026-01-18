@@ -285,12 +285,7 @@ describe("HTTP Integration Tests", () => {
 
       expect(res.status).toBe(200);
       expect(res.headers.get("x-action")).toBe("create");
-      expect(executionOrder).toEqual([
-        "handler-start",
-        "auth-check-passed",
-        "body-parsed",
-        "validation-passed",
-      ]);
+      expect(executionOrder).toEqual(["handler-start", "auth-check-passed", "body-parsed", "validation-passed"]);
     });
 
     test("should handle error recovery and fallback responses", async () => {

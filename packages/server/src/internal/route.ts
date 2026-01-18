@@ -21,7 +21,6 @@ export function applyRouteMetadata<T>(route: RouteConfig<T>, descriptors: RouteM
   }
 }
 
-
 /**
  * Applies prefix to a path, considering exclusions
  */

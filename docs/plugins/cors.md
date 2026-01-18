@@ -27,8 +27,8 @@ For production environments, you should configure the plugin with more restricti
 
 Controls the `Access-Control-Allow-Origin` header.
 
--   **Type**: `string | string[] | ((origin: string) => boolean | Promise<boolean>)`
--   **Default**: `*`
+- **Type**: `string | string[] | ((origin: string) => boolean | Promise<boolean>)`
+- **Default**: `*`
 
 ```typescript
 // Allow a single origin
@@ -50,12 +50,12 @@ app.register(
 
 ### Other Options
 
--   **`methods`**: Configures `Access-Control-Allow-Methods`. Default: `'GET,HEAD,PUT,PATCH,POST,DELETE'`.
--   **`allowedHeaders`**: Configures `Access-Control-Allow-Headers`.
--   **`exposedHeaders`**: Configures `Access-Control-Expose-Headers`.
--   **`credentials`**: Configures `Access-Control-Allow-Credentials`. Default: `false`.
--   **`maxAge`**: Configures `Access-Control-Max-Age` (in seconds).
--   **`optionsSuccessStatus`**: Status code to use for successful `OPTIONS` requests. Default: `204`.
+- **`methods`**: Configures `Access-Control-Allow-Methods`. Default: `'GET,HEAD,PUT,PATCH,POST,DELETE'`.
+- **`allowedHeaders`**: Configures `Access-Control-Allow-Headers`.
+- **`exposedHeaders`**: Configures `Access-Control-Expose-Headers`.
+- **`credentials`**: Configures `Access-Control-Allow-Credentials`. Default: `false`.
+- **`maxAge`**: Configures `Access-Control-Max-Age` (in seconds).
+- **`optionsSuccessStatus`**: Status code to use for successful `OPTIONS` requests. Default: `204`.
 
 **Example with multiple options:**
 

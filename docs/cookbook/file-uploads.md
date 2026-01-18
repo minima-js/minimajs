@@ -30,7 +30,7 @@ const app = createApp();
 app.post("/upload/single", async () => {
   // If multiple files are uploaded on different fields, you can specify the field name.
   // const file = await multipart.file("my-specific-field");
-  
+
   const file = await multipart.file(); // Gets the first file from the request
 
   if (!file) {
@@ -47,11 +47,13 @@ await app.listen({ port: 3000 });
 ```
 
 In this example:
+
 - We use `multipart.file()` to get the uploaded file from the request.
 - The `multipart.file()` function returns a `Promise<File>`.
 - We then use `stream/promises`'s `pipeline` to save the file stream to the `uploads` directory.
 
 You can test this route using `curl`:
+
 ```bash
 curl -X POST -F "file=@/path/to/your/file.txt" http://localhost:3000/upload/single
 ```
@@ -80,6 +82,7 @@ await app.listen({ port: 3000 });
 ```
 
 You can test this route using `curl`:
+
 ```bash
 curl -X POST \
   -F "file1=@/path/to/your/file1.txt" \
@@ -117,4 +120,5 @@ app.post("/upload/with-fields", async () => {
   return { message: "Form processed successfully", fields };
 });
 ```
+
 This is the most flexible way to process complex forms with mixed data types.

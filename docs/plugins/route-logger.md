@@ -36,8 +36,8 @@ When you start your application, you will see output similar to this in your con
 
 Allows you to provide a custom logging function to display the route tree.
 
--   **Type**: `(message: string) => void`
--   **Default**: A function that logs to the console using `chalk` for color.
+- **Type**: `(message: string) => void`
+- **Default**: A function that logs to the console using `chalk` for color.
 
 ```typescript
 app.register(
@@ -55,5 +55,5 @@ app.register(
 
 Determines whether to display routes with their full path or with the common prefix removed for a more compact view.
 
--   **Type**: `boolean`
--   **Default**: `false`
+- **Type**: `boolean`
+- **Default**: `false`
