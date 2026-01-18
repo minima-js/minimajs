@@ -1,3 +1,6 @@
+import type { Context, RequestHandlerContext } from "./index.js";
+import type { Server } from "../core/server.js";
+
 /**
  * Information about the server's network address and binding.
  */
@@ -28,7 +31,11 @@ export interface ListenOptions {
  * Handler function that processes HTTP requests.
  * Takes a Web standard Request and returns a Web standard Response.
  */
-export type RequestHandler = (request: Request) => Promise<Response>;
+export type RequestHandler<S> = (
+  server: Server<S>,
+  request: Request,
+  partial: RequestHandlerContext<S>
+) => Promise<Response>;
 
 /**
  * Result returned when a server starts listening.
@@ -73,7 +80,9 @@ export interface ServerAdapter<T> {
    * @param requestHandler - Function to handle incoming requests
    * @returns Promise resolving to server instance and address info
    */
-  listen(opts: ListenOptions, requestHandler: RequestHandler): Promise<ListenResult<T>>;
+  listen(server: Server<T>, opts: ListenOptions, requestHandler: RequestHandler<T>): Promise<ListenResult<T>>;
+
+  remoteAddr(ctx: Context<T>): string | null;
 
   /**
    * Stops the server and closes all connections.

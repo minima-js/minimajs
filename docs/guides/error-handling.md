@@ -22,7 +22,7 @@ By default, uncaught exceptions result in a generic `500 Internal Server Error` 
 - [`error` hook](#error-hook-behavior) - Handle errors at different scopes
 - [`app.errorHandler`](#custom-error-handler-apperrorhandler) - Global error fallback
 - [`HttpError.toJSON`](#overriding-tojson-method) - Customize error response format
-- [`errorSent` hook](#errorsent-hook) - Post-error cleanup
+- [`send` hook](#send-hook) - Post-response cleanup (for both success and errors)
 - [`onError`](#request-scoped-error-handler-onerror) - Request-specific error handling
 
 ---
@@ -170,7 +170,7 @@ app.get("/risky", () => {
 The `app.errorHandler` is the global fallback when no error hooks handle the error.
 
 ```typescript
-import { createApp, createResponseFromState } from "@minimajs/server";
+import { createApp, response } from "@minimajs/server";
 
 const app = createApp();
 
@@ -187,15 +187,15 @@ app.errorHandler = async (error, ctx) => {
     ...(isDev && error instanceof Error && { stack: error.stack }),
   });
 
-  // Use createResponseFromState to preserve plugin headers (CORS, etc.)
-  return createResponseFromState(errorBody, {
+  // Use response() to create response with proper status and headers
+  return response(errorBody, {
     status: statusCode,
     headers: { "Content-Type": "application/json" },
   });
 };
 ```
 
-> **Important:** Always use `createResponseFromState` instead of `new Response()` to preserve headers set by plugins.
+> **Important:** Use `response()` helper to create responses that preserve headers and context state.
 
 ## Customizing Error Responses
 
@@ -328,18 +328,21 @@ app.get("/special", () => {
 > - Maintains type safety and code organization
 > - Can be set once globally at application startup
 
-## `errorSent` Hook
+## `send` Hook
 
-Execute cleanup tasks after an error response is sent:
+Execute cleanup tasks after a response is sent (for both successful and error responses):
 
 ```typescript
 app.register(
-  hook("errorSent", (error, ctx) => {
-    // Report to monitoring service
-    reportToSentry(error, {
-      url: ctx.request.url,
-      method: ctx.request.method,
-    });
+  hook("send", (response, ctx) => {
+    // Report errors to monitoring service
+    if (response.status >= 400) {
+      reportToSentry(ctx.error, {
+        url: ctx.request.url,
+        method: ctx.request.method,
+        status: response.status,
+      });
+    }
   })
 );
 ```

@@ -21,7 +21,7 @@
  * ```
  */
 
-import type { Server } from "node:http";
+import type { Server as NodeServer } from "node:http";
 import type { CreateBaseSeverOptions } from "../core/index.js";
 import { createBaseServer } from "../core/index.js";
 import { NodeServerAdapter, type NodeServerOptions } from "./server.js";
@@ -56,5 +56,5 @@ export interface NodeAppOptions extends CreateBaseSeverOptions {
  * ```
  */
 export function createApp({ server, ...options }: NodeAppOptions = {}) {
-  return createBaseServer<Server>(new NodeServerAdapter(server), options);
+  return createBaseServer<NodeServer>(new NodeServerAdapter(server), options);
 }

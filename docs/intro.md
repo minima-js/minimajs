@@ -6,7 +6,7 @@ title: "Introduction"
 
 # Introduction to Minima.js
 
-Minima.js is a **TypeScript-first, high-performance web framework** built for modern JavaScript runtimes like **Node.js** and **Bun**. It avoids legacy abstractions and framework wrappers in favor of **pure ESM, Web-native APIs, and minimal, explicit primitives —** giving you performance, portability, and clarity without hidden behavior.
+Minima.js is a **TypeScript-first, high-performance web framework** built for modern JavaScript runtimes like **Node.js** and **Bun**. Built on battle-tested libraries like find-my-way and avvio, it combines production-ready reliability with a **clean, modern API** that embraces **pure ESM, Web-native standards, and context-aware design** — giving you performance and clarity without hidden behavior.
 
 ### Context Functions
 
@@ -75,8 +75,8 @@ import { hook } from "@minimajs/server";
 
 // Example: A request hook for logging
 app.register(
-  hook("request", ({ request }) => {
-    console.log(`${request.method} ${request.url}`);
+  hook("request", ({ request, pathname }) => {
+    console.log(`${request.method} ${pathname}`);
   })
 );
 

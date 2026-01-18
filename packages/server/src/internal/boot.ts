@@ -1,17 +1,71 @@
 import "./avvio-patch.js";
 import avvio, { type Avvio } from "avvio";
-import type { App } from "../interfaces/app.js";
-import { pluginOverride } from "./override.js";
+import type { App, Container } from "../interfaces/index.js";
 import { runHooks } from "../hooks/store.js";
-import type { PluginOptions, RegisterOptions, Registerable } from "../interfaces/plugin.js";
-import { kModuleName, kPlugin } from "../symbols.js";
+import { kModuleName, kModulesChain, kPlugin } from "../symbols.js";
+import { isCallable } from "../utils/callable.js";
+import { plugin, type PluginOptions, type RegisterOptions, type Registerable } from "../plugin.js";
 
 export const METADATA_SYMBOLS = [kModuleName, kPlugin];
 
-type MetadataCarrier = CallableFunction & {
-  [kModuleName]?: string;
-  [kPlugin]?: boolean;
-};
+/**
+ * Checks if a value has a clone method
+ */
+function cloneable(value: unknown): value is { clone(): unknown } {
+  return isCallable((value as any)?.clone);
+}
+
+/**
+ * Clones a container by iterating symbol properties and conditionally cloning values
+ */
+function cloneContainer<S>(container: Container<S>): Container<S> {
+  const newContainer: Container<S> = {} as Container<S>;
+  // Iterate over symbol properties
+  for (const key of Object.getOwnPropertySymbols(container)) {
+    const value = container[key];
+    if (Array.isArray(value)) {
+      newContainer[key] = [...value];
+      continue;
+    }
+    if (cloneable(value)) {
+      newContainer[key] = value.clone();
+      continue;
+    }
+    newContainer[key] = value;
+  }
+
+  return newContainer;
+}
+
+interface OverrideOptions {
+  prefix?: string;
+  name?: string;
+}
+
+function pluginOverride<S>(app: App<S>, fn: Registerable<S>, options: OverrideOptions = {}): App<S> {
+  if (plugin.is(fn)) return app;
+
+  const { $prefix: parentPrefix = "", $prefixExclude: parentExclude = [] } = app;
+
+  const child: App<S> = Object.create(app, {
+    container: {
+      value: cloneContainer(app.container),
+    },
+    $prefix: {
+      value: options.prefix ? parentPrefix + options.prefix : parentPrefix,
+    },
+    $prefixExclude: {
+      value: [...parentExclude],
+    },
+    $parent: {
+      value: app,
+    },
+  });
+
+  child.container[kModulesChain].push(child);
+  child.container[kModuleName] = plugin.getName(fn, options);
+  return child;
+}
 
 /**
  * Copies all registered metadata from source function to target function
@@ -19,31 +73,28 @@ type MetadataCarrier = CallableFunction & {
  * This ensures that when wrapping functions, all metadata symbols are preserved.
  * The metadata symbols are defined in METADATA_SYMBOLS registry.
  */
-export function copyMetadata<T extends MetadataCarrier, S extends MetadataCarrier>(source: S, target: T): T {
+export function copyMetadata(source: any, target: any): void {
   for (const symbol of METADATA_SYMBOLS) {
-    if (symbol in source && (source as any)[symbol] !== undefined) {
-      (target as any)[symbol] = (source as any)[symbol];
+    if (source[symbol] !== undefined) {
+      target[symbol] = source[symbol];
     }
   }
   if (!(kModuleName in target)) {
-    (target as any)[kModuleName] = source.name;
+    target[kModuleName] = source.name;
   }
-  return target;
 }
 
 /**
  * Wraps an async plugin to run register hooks and preserve metadata
  */
-export function wrapPlugin<T extends PluginOptions | RegisterOptions = PluginOptions>(
-  plugin: Registerable<T>
-): Registerable<T> {
-  async function wrapper(instance: App, wrapperOpts: T) {
+export function wrapPlugin<S>(plugin: Registerable<S>): Registerable<S> {
+  async function wrapper(instance: App<S>, wrapperOpts: PluginOptions | RegisterOptions) {
     await runHooks(instance, "register", plugin, wrapperOpts);
     await plugin(instance, wrapperOpts);
   }
-
   // Copy all metadata from original plugin to wrapper
-  return copyMetadata(plugin, wrapper);
+  copyMetadata(plugin, wrapper);
+  return wrapper;
 }
 
 /**

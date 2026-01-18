@@ -1,166 +1,167 @@
-import { describe, test, expect } from "@jest/globals";
-import { createHooksStore, getHooks, addHook } from "./store.js";
-import type { App } from "../interfaces/app.js";
+import { describe, test, expect, beforeEach, afterEach } from "@jest/globals";
+import { createHooksStore, runHooks } from "./store.js";
+import { createApp } from "../node/index.js";
+import type { Context } from "../interfaces/index.js";
 import { kHooks } from "../symbols.js";
 
 describe("hooks/store", () => {
   describe("createHooksStore", () => {
-    test("should create a store with all hook sets", () => {
-      const store = createHooksStore();
-
-      // Server hooks
-      expect(store.close).toBeInstanceOf(Set);
-      expect(store.listen).toBeInstanceOf(Set);
-      expect(store.ready).toBeInstanceOf(Set);
-      expect(store.register).toBeInstanceOf(Set);
-
-      // Lifecycle hooks
-      expect(store.request).toBeInstanceOf(Set);
-      expect(store.transform).toBeInstanceOf(Set);
-      expect(store.send).toBeInstanceOf(Set);
-      expect(store.error).toBeInstanceOf(Set);
-      expect(store.errorSent).toBeInstanceOf(Set);
-      expect(store.sent).toBeInstanceOf(Set);
-      expect(store.timeout).toBeInstanceOf(Set);
-    });
-
     test("should have a clone method that clones lifecycle hooks", () => {
       const store = createHooksStore();
       const callback = () => {};
       store.request.add(callback);
       store.close.add(callback);
-
       const cloned = store.clone();
-
-      // Lifecycle hooks should be cloned (new Set)
       expect(cloned.request).not.toBe(store.request);
       expect(cloned.request.has(callback)).toBe(true);
-
-      // Server hooks should be shared reference
       expect(cloned.close).toBe(store.close);
     });
 
-    test("should handle nested cloning (clone().clone())", () => {
+    test("should handle nested cloning", () => {
       const store = createHooksStore();
-      const callback1 = () => {};
-      const callback2 = () => {};
-      const callback3 = () => {};
-
-      // Add hooks to root
-      store.request.add(callback1);
-      store.close.add(callback1);
-
-      // First level clone
+      const [cb1, cb2, cb3] = [() => {}, () => {}, () => {}];
+      store.request.add(cb1);
       const level1 = store.clone();
-      level1.request.add(callback2);
-      level1.close.add(callback2);
-
-      // Second level clone
+      level1.request.add(cb2);
       const level2 = level1.clone();
-      level2.request.add(callback3);
-      level2.close.add(callback3);
+      level2.request.add(cb3);
 
-      // Lifecycle hooks should be independent at each level
       expect(store.request.size).toBe(1);
-      expect(store.request.has(callback1)).toBe(true);
-      expect(store.request.has(callback2)).toBe(false);
-      expect(store.request.has(callback3)).toBe(false);
-
       expect(level1.request.size).toBe(2);
-      expect(level1.request.has(callback1)).toBe(true);
-      expect(level1.request.has(callback2)).toBe(true);
-      expect(level1.request.has(callback3)).toBe(false);
-
       expect(level2.request.size).toBe(3);
-      expect(level2.request.has(callback1)).toBe(true);
-      expect(level2.request.has(callback2)).toBe(true);
-      expect(level2.request.has(callback3)).toBe(true);
-
-      // Server hooks should all share the same reference
       expect(level1.close).toBe(store.close);
       expect(level2.close).toBe(store.close);
-      expect(level2.close.size).toBe(3); // All callbacks added to same Set
     });
 
     test("should maintain isolation between sibling clones", () => {
       const store = createHooksStore();
-      const callbackA = () => {};
-      const callbackB = () => {};
-
-      // Add hook to root
-      store.request.add(() => {});
-
-      // Create two sibling clones
+      const [cbA, cbB] = [() => {}, () => {}];
       const siblingA = store.clone();
       const siblingB = store.clone();
+      siblingA.request.add(cbA);
+      siblingB.request.add(cbB);
 
-      // Add different hooks to each sibling
-      siblingA.request.add(callbackA);
-      siblingB.request.add(callbackB);
+      expect(siblingA.request.has(cbA)).toBe(true);
+      expect(siblingA.request.has(cbB)).toBe(false);
+      expect(siblingB.request.has(cbB)).toBe(true);
+      expect(siblingB.request.has(cbA)).toBe(false);
+    });
 
-      // Sibling A should not have sibling B's hook
-      expect(siblingA.request.has(callbackA)).toBe(true);
-      expect(siblingA.request.has(callbackB)).toBe(false);
-
-      // Sibling B should not have sibling A's hook
-      expect(siblingB.request.has(callbackB)).toBe(true);
-      expect(siblingB.request.has(callbackA)).toBe(false);
-
-      // Both should have the root hook
-      expect(siblingA.request.size).toBe(2); // root + callbackA
-      expect(siblingB.request.size).toBe(2); // root + callbackB
+    test("should initialize all hooks when no parent", () => {
+      const store = createHooksStore();
+      expect(store.register).toBeInstanceOf(Set);
+      expect(store.listen).toBeInstanceOf(Set);
+      expect(store.ready).toBeInstanceOf(Set);
+      expect(store.close).toBeInstanceOf(Set);
+      expect(store.request).toBeInstanceOf(Set);
+      expect(store.transform).toBeInstanceOf(Set);
+      expect(store.send).toBeInstanceOf(Set);
+      expect(store.error).toBeInstanceOf(Set);
+      expect(store.timeout).toBeInstanceOf(Set);
     });
   });
 
-  describe("getHooks", () => {
-    test("should return hooks from app container", () => {
-      const mockHooks = createHooksStore();
-      const container = new Map();
-      container.set(kHooks, mockHooks);
+  describe("runHooks", () => {
+    let app: any;
 
-      const app = { container } as unknown as App;
-
-      const result = getHooks(app);
-      expect(result).toBe(mockHooks);
+    beforeEach(() => {
+      app = createApp({ logger: false });
     });
 
-    test("should throw error when HookStore not found in container", () => {
-      const container = new Map();
-      const app = { container } as unknown as App;
-
-      expect(() => getHooks(app)).toThrow("HookStore not found in container");
-    });
-  });
-
-  describe("addHook", () => {
-    test("should add hook callback to the specified hook set", () => {
-      const mockHooks = createHooksStore();
-      const container = new Map();
-      container.set(kHooks, mockHooks);
-
-      const app = { container } as unknown as App;
-      const callback = () => {};
-
-      addHook(app, "request", callback);
-
-      expect(mockHooks.request.has(callback)).toBe(true);
+    afterEach(async () => {
+      if (app) await app.close();
     });
 
-    test("should add multiple hooks to the same set", () => {
-      const mockHooks = createHooksStore();
-      const container = new Map();
-      container.set(kHooks, mockHooks);
+    test("should run hooks in FIFO order for normal hooks", async () => {
+      const order: number[] = [];
+      app.container[kHooks].ready.add(() => order.push(1));
+      app.container[kHooks].ready.add(() => order.push(2));
+      app.container[kHooks].ready.add(() => order.push(3));
 
-      const app = { container } as unknown as App;
-      const callback1 = () => {};
-      const callback2 = () => {};
+      await runHooks(app, "ready");
+      expect(order).toEqual([1, 2, 3]);
+    });
 
-      addHook(app, "error", callback1);
-      addHook(app, "error", callback2);
+    test("should run hooks in LIFO order for reversed hooks", async () => {
+      const order: number[] = [];
+      const cb1 = () => order.push(1);
+      const cb2 = () => order.push(2);
+      const cb3 = () => order.push(3);
 
-      expect(mockHooks.error.has(callback1)).toBe(true);
-      expect(mockHooks.error.has(callback2)).toBe(true);
-      expect(mockHooks.error.size).toBe(2);
+      // Use transform hook which is reversed and doesn't interfere with minimajs
+      app.container[kHooks].transform.clear();
+      app.container[kHooks].transform.add(cb1);
+      app.container[kHooks].transform.add(cb2);
+      app.container[kHooks].transform.add(cb3);
+
+      await runHooks.transform(app, "test", {} as Context);
+      // LIFO: last added runs first (reversed order)
+      expect(order).toEqual([3, 2, 1]);
+    });
+
+    test("runHooks.safe should catch errors", async () => {
+      const order: number[] = [];
+      app.container[kHooks].ready.add(() => {
+        order.push(1);
+        throw new Error("test");
+      });
+      app.container[kHooks].ready.add(() => order.push(2));
+
+      await runHooks.safe(app, "ready");
+      expect(order).toEqual([1, 2]);
+    });
+
+    test("runHooks.request should return Response if hook returns one", async () => {
+      const response = new Response("test");
+      app.container[kHooks].request.add(() => response);
+      app.container[kHooks].request.add(() => {});
+
+      const result = await runHooks.request(app, {} as Context);
+      expect(result).toBe(response);
+    });
+
+    test("runHooks.request should return undefined if no hook returns Response", async () => {
+      app.container[kHooks].request.add(() => {});
+      app.container[kHooks].request.add(() => {});
+
+      const result = await runHooks.request(app, {} as Context);
+      expect(result).toBeUndefined();
+    });
+
+    test("runHooks.transform should chain transformations in LIFO order", async () => {
+      app.container[kHooks].transform.add((data: number) => data * 2);
+      app.container[kHooks].transform.add((data: number) => data + 1);
+
+      const result = await runHooks.transform(app, 5, {} as Context);
+      // LIFO: last added runs first, so: 5 -> 5+1=6 -> 6*2=12
+      expect(result).toBe(12);
+    });
+
+    test("runHooks.error should return response if hook returns one", async () => {
+      const response = new Response("error");
+      app.container[kHooks].error.add(() => response);
+      app.container[kHooks].error.add(() => {});
+
+      const result = await runHooks.error(app, new Error("test"), {} as Context);
+      expect(result).toBe(response);
+    });
+
+    test("runHooks.error should throw if no hook handles error", async () => {
+      const error = new Error("test");
+      app.container[kHooks].error.add(() => {});
+
+      await expect(runHooks.error(app, error, {} as Context)).rejects.toBe(error);
+    });
+
+    test("runHooks.error should use new error if hook throws", async () => {
+      const originalError = new Error("original");
+      const newError = new Error("new");
+      app.container[kHooks].error.add(() => {
+        throw newError;
+      });
+      app.container[kHooks].error.add(() => {});
+
+      await expect(runHooks.error(app, originalError, {} as Context)).rejects.toBe(newError);
     });
   });
 });

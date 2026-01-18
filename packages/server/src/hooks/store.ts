@@ -1,8 +1,7 @@
-import { type HookStore, type GenericHookCallback } from "../interfaces/hooks.js";
+import { type HookStore, type GenericHookCallback } from "./types.js";
 import type { App } from "../interfaces/app.js";
 import { kHooks } from "../symbols.js";
 import type { Context, OnErrorHook, OnRequestHook, OnSendHook, OnTransformHook } from "../interfaces/index.js";
-import type { ResponseBody } from "../interfaces/response.js";
 
 /**
  * Hook Execution Order and Direction
@@ -14,11 +13,9 @@ import type { ResponseBody } from "../interfaces/response.js";
  * ready        [Parent → Child]    FIFO (normal)
  * close        [Child → Parent]    LIFO (reversed)
  * request      [Parent → Child]    FIFO (normal)
- * transform    [Parent → Child]    FIFO (normal)
+ * transform    [Child → Parent]    LIFO (reversed)
  * send         [Child → Parent]    LIFO (reversed)
- * sent         [Child → Parent]    LIFO (reversed)
  * error        [Child → Parent]    LIFO (reversed)
- * errorSent    [Child → Parent]    LIFO (reversed)
  * timeout      [Child → Parent]    LIFO (reversed)
  */
 
@@ -30,11 +27,11 @@ export const SERVER_HOOKS = ["close", "listen", "ready", "register"] as const;
 /**
  * @internal
  */
-export const LIFECYCLE_HOOKS = ["request", "transform", "send", "error", "errorSent", "sent", "timeout"] as const;
+export const LIFECYCLE_HOOKS = ["request", "transform", "send", "error", "timeout"] as const;
 
 export type LifecycleHook = (typeof SERVER_HOOKS)[number] | (typeof LIFECYCLE_HOOKS)[number];
 
-const reversedHooks = new Set<LifecycleHook>(["close", "send", "sent", "error", "errorSent", "timeout"]);
+const reversedHooks = new Set<LifecycleHook>(["close", "transform", "send", "error", "timeout"]);
 
 // ============================================================================
 // HookStore Management
@@ -72,25 +69,6 @@ export function createHooksStore(parent?: HookStore): HookStore {
   return store;
 }
 
-/**
- * Gets the HookStore from the app's container
- */
-export function getHooks<S = unknown>(app: App<S>): HookStore {
-  const hooks = app.container.get(kHooks) as HookStore;
-  if (!hooks) {
-    throw new Error("HookStore not found in container");
-  }
-  return hooks;
-}
-
-/**
- * Adds a hook to the app
- */
-export function addHook<S = unknown>(app: App<S>, name: LifecycleHook, callback: GenericHookCallback): void {
-  const hooks = getHooks(app);
-  hooks[name].add(callback);
-}
-
 // ============================================================================
 // Run Hooks
 // ============================================================================
@@ -99,8 +77,8 @@ export function addHook<S = unknown>(app: App<S>, name: LifecycleHook, callback:
  * Retrieves hooks for a lifecycle event from the app's store
  * @returns Hooks in correct execution order (FIFO or LIFO based on hook type)
  */
-function findHookToRun<T = GenericHookCallback, S = unknown>(app: App<S>, name: LifecycleHook): Iterable<T> {
-  const store = app.container.get(kHooks) as HookStore;
+function findHookToRun<S, T = GenericHookCallback>(app: App<S>, name: LifecycleHook): Iterable<T> {
+  const store = app.container[kHooks];
   const hooks = store[name] as Set<T>;
 
   // LIFO hooks (Child → Parent) need reversed execution order
@@ -112,7 +90,7 @@ function findHookToRun<T = GenericHookCallback, S = unknown>(app: App<S>, name: 
  * - Parent → Child hooks run in FIFO order (normal)
  * - Child → Parent hooks run in LIFO order (reversed)
  */
-export async function runHooks<S = unknown>(app: App<S>, name: LifecycleHook, ...args: any[]): Promise<void> {
+export async function runHooks<S>(app: App<S>, name: LifecycleHook, ...args: any[]): Promise<void> {
   const hooks = findHookToRun(app, name);
   for (const hook of hooks) {
     await hook(...args);
@@ -120,7 +98,7 @@ export async function runHooks<S = unknown>(app: App<S>, name: LifecycleHook, ..
 }
 
 export namespace runHooks {
-  export async function safe<S = unknown>(app: App<S>, name: LifecycleHook, ...args: any[]): Promise<void> {
+  export async function safe<S>(app: App<S>, name: LifecycleHook, ...args: any[]): Promise<void> {
     const hooks = findHookToRun(app, name);
     for (const hook of hooks) {
       try {
@@ -131,8 +109,8 @@ export namespace runHooks {
     }
   }
 
-  export async function request<S = unknown>(app: App<S>, ctx: Context<S>): Promise<void | Response> {
-    const hooks = findHookToRun<OnRequestHook<S>, S>(app, "request");
+  export async function request<S>(app: App<S>, ctx: Context<S>): Promise<void | Response> {
+    const hooks = findHookToRun<S, OnRequestHook<S>>(app, "request");
     for (const hook of hooks) {
       const response = await hook(ctx);
       if (response instanceof Response) {
@@ -141,18 +119,15 @@ export namespace runHooks {
     }
   }
 
-  export async function send<S = unknown>(app: App<S>, serialized: ResponseBody, ctx: Context<S>): Promise<void | Response> {
-    const hooks = findHookToRun<OnSendHook<S>, S>(app, "send");
+  export async function send<S>(app: App<S>, response: Response, ctx: Context<S>): Promise<void | Response> {
+    const hooks = findHookToRun<S, OnSendHook<S>>(app, "send");
     for (const hook of hooks) {
-      const response = await hook(serialized, ctx);
-      if (response instanceof Response) {
-        return response;
-      }
+      await hook(response, ctx);
     }
   }
 
-  export async function transform<S = unknown>(app: App<S>, data: unknown, ctx: Context<S>) {
-    const hooks = findHookToRun<OnTransformHook<S>, S>(app, "transform");
+  export async function transform<S>(app: App<S>, data: unknown, ctx: Context<S>) {
+    const hooks = findHookToRun<S, OnTransformHook<S>>(app, "transform");
     let result = data;
     for (const hook of hooks) {
       result = await hook(result, ctx);
@@ -160,8 +135,8 @@ export namespace runHooks {
     return result;
   }
 
-  export async function error<S = unknown>(app: App<S>, error: unknown, ctx: Context<S>): Promise<any> {
-    const hooks = findHookToRun<OnErrorHook<S>, S>(app, "error");
+  export async function error<S>(app: App<S>, error: unknown, ctx: Context<S>): Promise<any> {
+    const hooks = findHookToRun<S, OnErrorHook<S>>(app, "error");
     let err = error;
     for (const hook of hooks) {
       try {

@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach, jest } from "@jest/globals";
-import { createApp } from "../bun/index.js";
-import type { App } from "../interfaces/app.js";
-import { routeLogger } from "./router.js";
+import { createApp } from "../../bun/index.js";
+import type { App } from "../../interfaces/index.js";
+import { routeLogger } from "./index.js";
 import chalk from "chalk";
 import { EOL } from "node:os";
 

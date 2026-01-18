@@ -1,6 +1,6 @@
 import { describe, test, expect } from "@jest/globals";
 import { applyRoutePrefix, applyRouteMetadata, getAppRouteDescriptors, result2route } from "./route.js";
-import type { RouteFindResult, RouteConfig, RouteMetaDescriptor } from "../interfaces/route.js";
+import type { RouteFindResult, RouteConfig, RouteMetaDescriptor, RouteMetadata } from "../interfaces/route.js";
 import { kAppDescriptor } from "../symbols.js";
 import type { App, Container } from "../interfaces/app.js";
 
@@ -17,8 +17,7 @@ describe("internal/route", () => {
   describe("getAppRouteDescriptors", () => {
     test("should return route descriptors from container", () => {
       const descriptors = [[tag, "value"] as [symbol, string]];
-      const container = new Map() as unknown as Container;
-      container.set(kAppDescriptor, descriptors);
+      const container: Container = { [kAppDescriptor]: descriptors } as unknown as Container;
 
       const result = getAppRouteDescriptors(container);
       expect(result).toBe(descriptors);
@@ -27,9 +26,8 @@ describe("internal/route", () => {
 
   describe("applyRouteMetadata", () => {
     test("should apply array descriptor to metadata", () => {
-      const metadata = new Map();
-      const container = new Map() as unknown as Container;
-      container.set(kAppDescriptor, []);
+      const metadata: RouteMetadata = {};
+      const container: Container = { [kAppDescriptor]: [] } as unknown as Container;
 
       const routeConfig: RouteConfig<unknown> = {
         app: { container } as unknown as App,
@@ -43,13 +41,12 @@ describe("internal/route", () => {
 
       applyRouteMetadata(routeConfig, [arrayDescriptor]);
 
-      expect(metadata.get(myKey)).toBe("myValue");
+      expect(metadata[myKey]).toBe("myValue");
     });
 
     test("should apply function descriptor to route config", () => {
-      const metadata = new Map();
-      const container = new Map() as unknown as Container;
-      container.set(kAppDescriptor, []);
+      const metadata: RouteMetadata = {};
+      const container: Container = { [kAppDescriptor]: [] } as unknown as Container;
 
       const routeConfig: RouteConfig<unknown> = {
         app: { container } as unknown as App,
@@ -60,19 +57,19 @@ describe("internal/route", () => {
       };
 
       const functionDescriptor: RouteMetaDescriptor<unknown> = (config) => {
-        config.metadata.set(funcKey, "funcValue");
+        config.metadata[funcKey] = "funcValue";
       };
 
       applyRouteMetadata(routeConfig, [functionDescriptor]);
 
-      expect(metadata.get(funcKey)).toBe("funcValue");
+      expect(metadata[funcKey]).toBe("funcValue");
     });
 
     test("should apply both app-level and route-level descriptors", () => {
-      const metadata = new Map();
-      const container = new Map() as unknown as Container;
+      const metadata: RouteMetadata = {};
+      const container: Container = {} as any;
       const appDescriptor: RouteMetaDescriptor<unknown> = [appKey, "appValue"];
-      container.set(kAppDescriptor, [appDescriptor]);
+      container[kAppDescriptor] = [appDescriptor];
 
       const routeConfig: RouteConfig<unknown> = {
         app: { container } as unknown as App,
@@ -86,14 +83,13 @@ describe("internal/route", () => {
 
       applyRouteMetadata(routeConfig, [routeDescriptor]);
 
-      expect(metadata.get(appKey)).toBe("appValue");
-      expect(metadata.get(routeKey)).toBe("routeValue");
+      expect(metadata[appKey]).toBe("appValue");
+      expect(metadata[routeKey]).toBe("routeValue");
     });
 
     test("should apply mixed array and function descriptors", () => {
-      const metadata = new Map();
-      const container = new Map() as unknown as Container;
-      container.set(kAppDescriptor, []);
+      const metadata: RouteMetadata = {};
+      const container: Container = { [kAppDescriptor]: [] } as unknown as Container;
 
       const routeConfig: RouteConfig<unknown> = {
         app: { container } as unknown as App,
@@ -105,15 +101,17 @@ describe("internal/route", () => {
 
       const descriptors: RouteMetaDescriptor<unknown>[] = [
         [key1, "value1"],
-        (config) => config.metadata.set(key2, "value2"),
+        (config) => {
+          config.metadata[key2] = "value2";
+        },
         [key3, "value3"],
       ];
 
       applyRouteMetadata(routeConfig, descriptors);
 
-      expect(metadata.get(key1)).toBe("value1");
-      expect(metadata.get(key2)).toBe("value2");
-      expect(metadata.get(key3)).toBe("value3");
+      expect(metadata[key1]).toBe("value1");
+      expect(metadata[key2]).toBe("value2");
+      expect(metadata[key3]).toBe("value3");
     });
   });
 
@@ -162,8 +160,8 @@ describe("internal/route", () => {
   describe("result2route", () => {
     test("should convert route find result to route", () => {
       const handler = () => "test";
-      const metadata = new Map();
-      metadata.set(tag, new Set(["api"]));
+      const metadata: RouteMetadata = {};
+      metadata[tag] = new Set(["api"]);
 
       const routeFindResult: RouteFindResult<any> = {
         params: { id: "123" },

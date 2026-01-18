@@ -1,6 +1,6 @@
-import { hook } from "../hooks/index.js";
-import { response } from "../http.js";
-import { isCallable } from "../utils/callable.js";
+import { hook } from "../../hooks/index.js";
+import { response } from "../../http.js";
+import { isCallable } from "../../utils/index.js";
 
 export interface CorsOptions {
   /** Configures the Access-Control-Allow-Origin header. Default: '*' */

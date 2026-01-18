@@ -14,14 +14,14 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "turbo dev",
-    "build": "turbo build",
-    "test": "turbo test",
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
     "lint": "bun eslint .",
     "format": "prettier --write --cache .",
-    "coverage": "turbo coverage",
-    "clean": "turbo clean",
-    "release": "turbo build && changeset publish",
+    "coverage": "turbo run coverage",
+    "clean": "turbo run clean",
+    "release": "turbo run build && changeset publish",
     "docs": "vitepress dev",
     "docs:build": "vitepress build",
     "docs:api": "typedoc"

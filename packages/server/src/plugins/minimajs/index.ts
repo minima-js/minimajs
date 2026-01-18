@@ -1,19 +1,18 @@
-import { hook, type OnErrorSentHook } from "../hooks/index.js";
-import { createContext } from "../context.js";
-import type { Context } from "../interfaces/context.js";
+import { hook } from "../../hooks/index.js";
+import { createContext } from "../../context.js";
 
-export type ErrorCallback = OnErrorSentHook;
-export type DeferCallback = () => void | Promise<void>;
+export type ErrorCallback = (response: Response) => void | Promise<void>;
+export type DeferCallback = (response: Response) => void | Promise<void>;
 
 // Create context for storing deferred callbacks
 const [getDeferredCallbacks] = createContext<Set<DeferCallback>>(() => new Set());
 const [getErrorCallbacks] = createContext<Set<ErrorCallback>>(() => new Set());
 
 /**
- * Registers a callback to execute after the response has been sent.
+ * Registers a callback to execute after the response.
  * Useful for cleanup tasks, logging, or post-response processing.
  *
- * @param cb - The callback function to execute after response is sent
+ * @param cb - The callback function to execute after response
  *
  * @example
  * ```typescript
@@ -23,7 +22,7 @@ const [getErrorCallbacks] = createContext<Set<ErrorCallback>>(() => new Set());
  *   const user = await getUser(params.get('id'));
  *
  *   defer(() => {
- *     console.log('Response sent, logging metrics...');
+ *     console.log('Response send, logging metrics...');
  *     logMetrics('user-fetched', { userId: user.id });
  *   });
  *
@@ -76,26 +75,26 @@ export function onError(cb: ErrorCallback) {
  * ```
  */
 export function minimajs() {
-  async function sent() {
+  async function send(response: Response) {
+    if (!response.ok) await sendError(response);
     for (const cb of getDeferredCallbacks()) {
       try {
-        await cb();
+        await cb(response);
       } catch {
         // pass
       }
     }
   }
 
-  async function errorSent(err: unknown, ctx: Context) {
+  async function sendError(response: Response) {
     for (const cb of getErrorCallbacks()) {
       try {
-        await cb(err, ctx);
+        await cb(response);
       } catch {
         // pass
       }
     }
-    await sent();
   }
 
-  return hook.define({ sent, errorSent });
+  return hook("send", send);
 }

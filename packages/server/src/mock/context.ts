@@ -2,9 +2,15 @@ import { wrap } from "../internal/context.js";
 import { type Context } from "../interfaces/context.js";
 import { createRequest, type MockRequestOptions } from "./request.js";
 import { kBody } from "../symbols.js";
+import { parseRequestURL } from "../utils/request.js";
+import type { Container, ServerAdapter } from "../index.js";
 
 export type MockContextCallback<T, S> = (ctx: Context<S>) => T;
-
+export interface MockContextOptions<S> extends MockRequestOptions {
+  url?: string;
+  params?: Record<string, string>;
+  context?: Partial<Omit<Context<S>, "$metadata">> & { $metadata?: Partial<Context<S>["$metadata"]> };
+}
 /**
  * Creates a mock context for testing context-based functions.
  * This allows you to test route handlers and context functions in isolation.
@@ -27,31 +33,32 @@ export type MockContextCallback<T, S> = (ctx: Context<S>) => T;
  *
  * @since v0.2.0
  */
-export function mockContext<S = unknown, T = void>(
-  callback: MockContextCallback<T, S>,
-  options: MockRequestOptions & { url?: string; params?: Record<string, string> } = {}
-): T {
-  const { params = {}, url = "/", ...reqOptions } = options;
+export function mockContext<S, T = void>(callback: MockContextCallback<T, S>, options: MockContextOptions<S> = {}): T {
+  const { params = {}, url = "/", context: partialContext = {}, ...reqOptions } = options;
   const request = createRequest(url, reqOptions);
   const resInit = { status: 200, headers: new Headers() };
-  const urlObj = new URL(request.url);
+  const { pathStart, pathEnd } = parseRequestURL(request);
+  const pathname = request.url.slice(pathStart, pathEnd);
 
   // Create mock context
   const context: Context<S> = {
     server: null as any,
     app: null as any, // Mock app - users should use app.handle for full integration tests
-    url: urlObj,
+    pathname,
+    serverAdapter: null as unknown as ServerAdapter<S>,
     request: request,
     responseState: resInit,
-    container: new Map(),
-    locals: new Map(),
+    container: {} as Container<S>,
+    locals: {},
     route: (Object.keys(params).length > 0 ? { params, store: { handler: () => {} } } : null) as any,
     incomingMessage: undefined as any,
     serverResponse: undefined as any,
+    ...partialContext,
+    $metadata: { pathEnd, pathStart, ...partialContext.$metadata },
   };
 
   if (reqOptions.body) {
-    context.locals.set(kBody, reqOptions.body);
+    context.locals[kBody] = reqOptions.body;
   }
 
   return wrap(context, () => callback(context));

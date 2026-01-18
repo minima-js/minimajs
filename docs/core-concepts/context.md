@@ -32,11 +32,9 @@ import { createApp, compose, plugin, hook } from "@minimajs/server";
 import { randomUUID } from "crypto";
 
 // 1. Define the middleware as a plugin that registers a 'request' hook.
-const traceIdPlugin = plugin(async (app) => {
-  app.register(hook('request', () => {
-    const traceId = randomUUID();
-    setTraceId(traceId);
-  }));
+const traceIdPlugin = hook("request", () => {
+  const traceId = randomUUID();
+  setTraceId(traceId);
 });
 
 function someDeeplyNestedFunction() {
@@ -53,12 +51,10 @@ async function mainModule(app) {
 }
 
 const app = createApp();
+// 2. Apply the middleware plugin to your app.
+app.register(traceIdPlugin);
 
-// 2. Apply the middleware plugin to your module.
-const withTraceId = compose.create(traceIdPlugin);
-const appModule = withTraceId(mainModule);
-app.register(appModule);
-
+app.register(mainModule);
 await app.listen({ port: 3000 });
 ```
 
@@ -66,14 +62,9 @@ As you can see, `someDeeplyNestedFunction` can access the `traceId` without havi
 
 ## Practical Example: Request-Scoped Logger with Pino
 
+<!-- TODO: We already ships logger, change this example -->
+
 The context system is perfect for integrating third-party libraries. Let's create a request-specific logger with `pino` that automatically includes a `traceId` in every log message.
-
-### Prerequisites
-
-First, install `pino`:
-```bash
-npm install pino
-```
 
 ### 1. Create a Context for the Logger
 
@@ -98,11 +89,13 @@ import { randomUUID } from "crypto";
 import { plugin, hook } from "@minimajs/server";
 
 export const loggerPlugin = plugin(async (app) => {
-  app.register(hook('request', () => {
-    const traceId = randomUUID();
-    const requestLogger = getLogger().child({ traceId });
-    setLogger(requestLogger);
-  }));
+  app.register(
+    hook("request", () => {
+      const traceId = randomUUID();
+      const requestLogger = getLogger().child({ traceId });
+      setLogger(requestLogger);
+    })
+  );
 });
 ```
 

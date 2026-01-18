@@ -7,11 +7,17 @@ import {
 } from "node:http";
 import { toWebRequest, fromWebResponse } from "./utils.js";
 import type { AddressInfo, ServerAdapter, ListenOptions, RequestHandler, ListenResult } from "../interfaces/server.js";
+import type { Server } from "../core/index.js";
+import type { Context } from "../index.js";
 
 export type NodeServerOptions = ServerOptions<typeof IncomingMessage, typeof ServerResponse>;
 
 export class NodeServerAdapter implements ServerAdapter<NodeServer> {
   constructor(private readonly serverOptions?: NodeServerOptions) {}
+
+  remoteAddr(ctx: Context<NodeServer>): string | null {
+    return ctx.incomingMessage.socket.remoteAddress || null;
+  }
 
   getAddress(server: NodeServer): AddressInfo {
     const info = server.address();
@@ -41,10 +47,17 @@ export class NodeServerAdapter implements ServerAdapter<NodeServer> {
     };
   }
 
-  async listen(opts: ListenOptions, requestHandler: RequestHandler): Promise<ListenResult<NodeServer>> {
+  async listen(
+    srv: Server<NodeServer>,
+    opts: ListenOptions,
+    requestHandler: RequestHandler<NodeServer>
+  ): Promise<ListenResult<NodeServer>> {
     async function onRequest(req: IncomingMessage, res: ServerResponse) {
       const request = toWebRequest(req);
-      const response = await requestHandler(request);
+      const response = await requestHandler(srv, request, {
+        incomingMessage: req,
+        serverResponse: res,
+      });
       await fromWebResponse(response, res);
     }
 

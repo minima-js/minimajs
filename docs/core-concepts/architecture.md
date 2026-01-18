@@ -33,8 +33,8 @@ app.register(hook("request", () => console.log("First registered")));
 app.register(hook("request", () => console.log("Second registered")));
 
 // Execution:
-// 1. "Second registered" → runs first
-// 2. "First registered" → runs second
+// 1. "First registered" → runs first
+// 2. "Second registered" → runs second
 ```
 
 ### Encapsulation and Scope Isolation
@@ -119,8 +119,8 @@ For more details, see the [Error Handling Guide](/guides/error-handling).
 ```ts
 // Ultra-fast health check (Path 3)
 app.register(
-  hook("request", ({ url, responseState }) => {
-    if (url.pathname === "/health") {
+  hook("request", ({ pathname, responseState }) => {
+    if (pathname === "/health") {
       // carry global response
       return new Response("OK", responseState);
     }

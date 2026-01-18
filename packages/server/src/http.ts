@@ -1,17 +1,12 @@
 import { $context } from "./internal/context.js";
-import type { Context } from "./interfaces/context.js";
-import { extractIpAddress } from "./internal/request.js";
 
 import { RedirectError, HttpError, BaseHttpError, NotFoundError, type HttpErrorOptions } from "./error.js";
-import type { Dict, HeadersInit, HttpHeader, HttpHeaderIncoming, ResponseOptions } from "./interfaces/response.js";
-
+import type { HeadersInit, HttpHeader, HttpHeaderIncoming, ResponseBody, ResponseOptions } from "./interfaces/response.js";
 import { toStatusCode, type StatusCode } from "./internal/response.js";
-import { createResponse } from "./internal/response.js";
 import { isAbortError } from "./utils/errors.js";
-import { isCallable } from "./utils/callable.js";
 import { mergeHeaders } from "./utils/headers.js";
-import { kBody } from "./symbols.js";
-import { hook } from "./hooks/index.js";
+import { kBody, kIpAddr } from "./symbols.js";
+import type { Dict } from "./interfaces/index.js";
 
 // ============================================================================
 //  Response
@@ -22,21 +17,27 @@ import { hook } from "./hooks/index.js";
  *
  * @example
  * ```ts
- * return response({ message: 'Hello' }, { status: 200 });
  * return response('Hello World');
- * return response({ data: 'test' }, {
+ * return response(new Blob(['data']));
+ * return response(stream, {
  *   status: 'CREATED',
  *   headers: { 'X-Custom': 'value' }
  * });
  * ```
  * @since v0.2.0
  */
-export async function response(body: unknown, options: ResponseOptions = {}): Promise<Response> {
-  let status: number | undefined = undefined;
+export function response(body: ResponseBody, options: ResponseOptions = {}): Response {
+  const { responseState } = $context();
   if (options.status) {
-    status = toStatusCode(options.status);
+    responseState.status = toStatusCode(options.status);
   }
-  return await createResponse(body, { status, headers: options.headers }, $context());
+  if (options.headers) {
+    mergeHeaders(responseState.headers, new Headers(options.headers));
+  }
+  if (options.statusText !== undefined) {
+    responseState.statusText = options.statusText;
+  }
+  return new Response(body, responseState);
 }
 
 /**
@@ -248,12 +249,18 @@ export namespace request {
    * ```
    * @since v0.2.0
    */
-  export function url(): URL {
-    const { url } = $context();
-    return url;
-  }
 
-  const kIp = Symbol("ipAddr");
+  export function url(): URL {
+    const { $metadata: metadata, request } = $context();
+    if (metadata.url) return metadata.url;
+    metadata.proto ??= "http";
+    if (!metadata.host) {
+      metadata.host = request.headers.get("host")!;
+    }
+    const path = request.url.slice(metadata.pathStart);
+    metadata.url = new URL(`${metadata.proto}://${metadata.host}${path}`);
+    return metadata.url;
+  }
 
   /**
    * Retrieves the client IP address from the request.
@@ -266,9 +273,6 @@ export namespace request {
    * ```ts
    * import { request } from '@minimajs/server';
    *
-   * // Configure the IP plugin first
-   * app.register(request.ip.configure({ trustProxy: true }));
-   *
    * // Then use it in handlers
    * app.get('/api/info', () => {
    *   const clientIp = request.ip();
@@ -278,94 +282,17 @@ export namespace request {
    */
   export function ip(): string | null {
     const { locals } = $context();
-    if (!locals.has(kIp)) {
-      throw new Error("Ip Address Plugin is not configured, please configure using request.ip.configure()");
+    let ipAddr = locals[kIpAddr];
+    if (ipAddr === undefined) {
+      ipAddr = request.remoteAddr();
+      locals[kIpAddr] = ipAddr;
     }
-    return locals.get(kIp) as string | null;
+    return ipAddr;
   }
 
-  export namespace ip {
-    /**
-     * Configuration options for IP address extraction
-     */
-    export interface Settings {
-      /**
-       * Trust proxy headers (X-Forwarded-For, X-Real-IP, etc.)
-       * Default: false
-       */
-      trustProxy?: boolean;
-
-      /**
-       * Custom header to read IP from
-       * Default: tries X-Forwarded-For, X-Real-IP, then falls back to socket address
-       */
-      header?: string;
-
-      /**
-       * Number of proxy hops to trust when using X-Forwarded-For
-       * Default: 1 (trust the last proxy)
-       */
-      proxyDepth?: number;
-    }
-
-    /**
-     * Callback function type for custom IP extraction
-     */
-    export type IpCallback<S = unknown> = (ctx: Context<S>) => string | null;
-
-    /**
-     * Configures IP address extraction from requests.
-     * Returns a hook that extracts and stores the client IP address.
-     *
-     * @param options - Configuration options for IP extraction, or a callback function for custom extraction
-     * @returns A request hook that populates the IP address in locals
-     *
-     * @example
-     * ```ts
-     * // Basic usage - trust proxy headers
-     * app.register(request.ip.configure({ trustProxy: true }));
-     *
-     * // Custom header
-     * app.register(request.ip.configure({
-     *   trustProxy: true,
-     *   header: 'CF-Connecting-IP' // Cloudflare
-     * }));
-     *
-     * // Multiple proxies
-     * app.register(request.ip.configure({
-     *   trustProxy: true,
-     *   proxyDepth: 2 // trust 2 proxy hops
-     * }));
-     *
-     * // Custom callback with full context access
-     * app.register(request.ip.configure((ctx) => {
-     *   // Custom logic to extract IP
-     *   const customHeader = ctx.request.headers.get('x-custom-ip');
-     *   if (customHeader) return customHeader;
-     *
-     *   // Access socket directly
-     *   if (ctx.incomingMessage) {
-     *     return ctx.incomingMessage.socket.remoteAddress || null;
-     *   }
-     *   return null;
-     * }));
-     * ```
-     */
-    export function configure<S = unknown>(options: Settings | IpCallback<S> = {}) {
-      // If options is a function, use it as the callback
-      if (isCallable<IpCallback<S>>(options)) {
-        return hook<S>("request", (ctx) => {
-          const ipAddress = options(ctx);
-          ctx.locals.set(kIp, ipAddress);
-        });
-      }
-
-      // Otherwise, use the settings-based approach
-      return hook("request", (ctx) => {
-        const ipAddress = extractIpAddress(ctx, options);
-        ctx.locals.set(kIp, ipAddress);
-      });
-    }
+  export function remoteAddr(): string | null {
+    const ctx = $context();
+    return ctx.serverAdapter.remoteAddr(ctx);
   }
 }
 
@@ -392,10 +319,10 @@ export namespace request {
  */
 export function body<T = unknown>(): T {
   const { locals } = $context();
-  if (!locals.has(kBody)) {
+  if (!(kBody in locals)) {
     throw new Error("Body parser is not registered. Please register bodyParser plugin first.");
   }
-  return locals.get(kBody) as T;
+  return locals[kBody] as T;
 }
 
 /**
@@ -644,6 +571,7 @@ export namespace headers {
 // Search Params / Queries
 // ============================================================================
 
+const kSearchParams = Symbol();
 /**
  * Retrieves the search params (query string).
  *
@@ -657,9 +585,14 @@ export namespace headers {
  * ```
  * @since v0.2.0
  */
-export function searchParams<T>() {
-  const { url } = $context();
-  return Object.fromEntries(url.searchParams) as T;
+export function searchParams<T extends Record<string, string>>(): T {
+  const ctx = $context();
+  let queries = ctx.locals[kSearchParams] as T;
+  if (!queries) {
+    queries = Object.fromEntries(request.url().searchParams) as T;
+    ctx.locals[kSearchParams] = queries;
+  }
+  return queries;
 }
 
 /**
@@ -681,10 +614,10 @@ export namespace searchParams {
   export function get(name: string): string | undefined;
   export function get<R>(name: string, transform: (value: string) => R): R;
   export function get(name: string, transform?: (value: string) => unknown): unknown {
-    const { searchParams } = request.url();
-    const value = searchParams.get(name);
+    const url = request.url();
+    const value = url.searchParams.get(name);
     if (value === null) {
-      return value;
+      return null;
     }
     if (!transform) return value;
     return transform(value);
@@ -704,8 +637,8 @@ export namespace searchParams {
   export function getAll(name: string): string[];
   export function getAll<R>(name: string, transform: (value: string) => R): R[];
   export function getAll(name: string, transform?: (value: string) => unknown): unknown[] {
-    const { searchParams } = request.url();
-    const values = searchParams.getAll(name);
+    const url = request.url();
+    const values = url.searchParams.getAll(name);
     if (!transform) return values;
     return values.map(transform);
   }

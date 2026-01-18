@@ -1,7 +1,7 @@
 import type { App } from "./interfaces/index.js";
-import type { RegisterOptions, Registerable, Plugin } from "./interfaces/plugin.js";
+import type { RegisterOptions, Registerable, Plugin, PluginOptions } from "./plugin.js";
 import { copyMetadata } from "./internal/boot.js";
-import { plugin } from "./internal/plugins.js";
+import { plugin } from "./plugin.js";
 
 /**
  * Composes multiple plugins/modules into a single plugin that registers all of them sequentially.
@@ -31,11 +31,16 @@ import { plugin } from "./internal/plugins.js";
  * app.register(apiModule);
  * ```
  */
-export function compose<T extends RegisterOptions = RegisterOptions>(...plugins: Registerable<T>[]): Plugin<T> {
+export function compose<S, T extends PluginOptions = PluginOptions>(...plugins: Registerable<S>[]): Plugin<S, T> {
   const composedName = `compose(${plugins.map((p) => p.name || "anonymous").join(",")})`;
-  return plugin<T>(async function composed(app, opts) {
+  return plugin<S, T>(async function composed(app, opts) {
     for (const plg of plugins) {
-      await plg(app, opts);
+      // Check if plugin is sync (no opts) or async (with opts)
+      if (plugin.isSync(plg)) {
+        plg(app);
+      } else {
+        await plg(app, opts);
+      }
     }
   }, composedName);
 }
@@ -64,14 +69,24 @@ export namespace compose {
    * app.register(withAuth(usersModule));
    * ```
    */
-  export function create<T extends RegisterOptions = RegisterOptions>(...plugins: Registerable<T>[]) {
-    return function applyPlugins(module: Registerable<T>) {
-      function composed(app: App, opts: T) {
-        plugins.forEach((plug) => app.register(plug, opts));
-        return module(app, opts);
+  export function create<S>(...plugins: Registerable<S>[]) {
+    return function applyPlugins(mod: Registerable<S>): Registerable<S> {
+      function composed(app: App<S>, opts: PluginOptions | RegisterOptions) {
+        plugins.forEach((plug) => {
+          if (plugin.isSync(plug)) {
+            app.register(plug);
+          } else {
+            app.register(plug, opts);
+          }
+        });
+
+        if (plugin.isSync(mod)) {
+          return mod(app);
+        }
+        return mod(app, opts);
       }
-      copyMetadata(module, composed);
-      return composed as Registerable<T>;
+      copyMetadata(mod, composed);
+      return composed as Registerable<S>;
     };
   }
 }

@@ -11,11 +11,10 @@ graph TB
     HookChain -->|Unhandled| FallbackHandler
 
     FallbackHandler --> CreateResp
-    CreateResp --> ErrorSent[errorSent Hook]
-    ErrorSent --> End[Send Error Response]
+    CreateResp --> SendHook[send Hook]
+    SendHook --> End[Send Response]
 
-    Response --> SentHook[sent Hook]
-    SentHook --> End2[Send Response]
+    Response --> SendHook
 
     style Start fill:#e3f2fd
     style Handler fill:#fff3e0
@@ -23,6 +22,5 @@ graph TB
     style HookChain fill:#f3e5f5
     style FallbackHandler fill:#fce4ec
     style CreateResp fill:#ffebee
-    style End fill:#ffcdd2
-    style End2 fill:#c8e6c9
+    style End fill:#c8e6c9
 ```

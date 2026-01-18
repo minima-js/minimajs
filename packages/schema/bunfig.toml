@@ -2,6 +2,12 @@
 root = "src"
 smol = true
 
+# Exclude files from test execution
+exclude = [
+  "**/lib/**",
+  "**/*.d.ts",
+]
+
 # Exclude other packages from coverage
 coveragePathIgnorePatterns = [
   "../**"

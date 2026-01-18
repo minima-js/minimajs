@@ -2,8 +2,8 @@ import type { Route, RouteConfig, RouteFindResult, RouteMetaDescriptor } from ".
 import type { Container } from "../interfaces/app.js";
 import { kAppDescriptor } from "../symbols.js";
 
-export function getAppRouteDescriptors<S = unknown>(container: Container) {
-  return container.get(kAppDescriptor) as RouteMetaDescriptor<S>[];
+export function getAppRouteDescriptors<S>(container: Container<S>) {
+  return container[kAppDescriptor];
 }
 
 /**
@@ -14,34 +14,11 @@ export function applyRouteMetadata<T>(route: RouteConfig<T>, descriptors: RouteM
   for (const descriptor of [...getAppRouteDescriptors<T>(app.container), ...descriptors]) {
     if (Array.isArray(descriptor)) {
       const [name, value] = descriptor;
-      metadata.set(name, value);
+      metadata[name] = value;
       continue;
     }
     descriptor(route);
   }
-}
-
-export function normalizePath(path: string): `/${string}` {
-  // Empty or falsy → root
-  if (!path) return "/";
-
-  // Ensure string
-  let p = path;
-
-  // Add leading slash if missing
-  if (p[0] !== "/") {
-    p = "/" + p;
-  }
-
-  // Collapse multiple slashes: ///a//b → /a/b
-  p = p.replace(/\/{2,}/g, "/");
-
-  // Remove trailing slash except root
-  if (p.length > 1 && p.endsWith("/")) {
-    p = p.slice(0, -1);
-  }
-
-  return p as `/${string}`;
 }
 
 /**

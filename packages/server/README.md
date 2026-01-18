@@ -224,14 +224,21 @@ const app = createApp();
 
 // Request lifecycle hooks
 app.register(
-  hook("request", ({ request, url }) => {
-    console.log(`${request.method} ${url.pathname}`);
+  hook("request", ({ request, pathname }) => {
+    console.log(`${request.method} ${pathname}`);
   })
 );
 
 app.register(
   hook("transform", (data, _ctx) => {
     return { ...data, timestamp: Date.now() };
+  })
+);
+
+app.register(
+  hook("send", (response, _ctx) => {
+    // Called after response is sent - useful for logging and cleanup
+    console.log(`Response sent with status: ${response.status}`);
   })
 );
 
@@ -264,7 +271,7 @@ app.register(
 
 **Available Hooks:**
 
-- **Request Lifecycle**: `request`, `transform`, `send`, `error`, `errorSent`, `sent`, `timeout`
+- **Request Lifecycle**: `request`, `transform`, `send`, `error`, `timeout`
 - **Application Lifecycle**: `ready`, `listen`, `close`, `register`
 
 ### 5. Custom Context Values

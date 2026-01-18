@@ -30,10 +30,10 @@ export * from "./interceptor.js";
 export * from "./http.js";
 export * from "./hooks/index.js";
 
-export { createResponseFromState, type StatusCode } from "./internal/response.js";
-export { defer, onError, type DeferCallback, type ErrorCallback } from "./plugins/minimajs.js";
+export { type StatusCode } from "./internal/response.js";
+export { defer, onError, type DeferCallback, type ErrorCallback } from "./plugins/minimajs/index.js";
 
-export { plugin } from "./internal/plugins.js";
+export * from "./plugin.js";
 export { compose } from "./compose.js";
 
 export { createApp } from "./node/index.js";

@@ -33,17 +33,15 @@ bun test
 **Example test file** (`app.test.ts`):
 
 ```ts
-import { describe, test, expect } from "bun:test";
+import { describe, test, expect } from "@jest/globals";
 import { createApp } from "@minimajs/server/bun";
-import { createRequest } from "@minimajs/server/mock";
 
 describe("App", () => {
   test("GET /health returns 200", async () => {
     const app = createApp();
     app.get("/health", () => ({ status: "ok" }));
 
-    // Using createRequest helper
-    const response = await app.inject(createRequest("/health"));
+    const response = await app.handle(new Request("http://localhost/health"));
     expect(response.status).toBe(200);
 
     const data = await response.json();
@@ -98,7 +96,7 @@ describe("User Routes", () => {
       return { id, name: "Alice" };
     });
 
-    const response = await app.inject(createRequest("/users/123"));
+    const response = await app.handle(createRequest("/users/123"));
 
     expect(response.status).toBe(200);
     const data = await response.json();
@@ -113,7 +111,7 @@ describe("User Routes", () => {
       return { id: "456", ...userData };
     });
 
-    const response = await app.inject(
+    const response = await app.handle(
       createRequest("/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -144,7 +142,7 @@ test("GET /search with query params", async () => {
     return { results: [], query };
   });
 
-  const response = await app.inject(createRequest("/search?q=test"));
+  const response = await app.handle(createRequest("/search?q=test"));
 
   const data = await response.json();
   expect(data.query).toBe("test");
@@ -169,11 +167,11 @@ test("requires authorization header", async () => {
   });
 
   // Without auth
-  const res1 = await app.inject(createRequest("/protected"));
+  const res1 = await app.handle(createRequest("/protected"));
   expect(res1.status).toBe(401);
 
   // With auth
-  const res2 = await app.inject(
+  const res2 = await app.handle(
     createRequest("/protected", {
       headers: { Authorization: "Bearer token" },
     })
@@ -202,7 +200,7 @@ test("full app with plugins", async () => {
     return { received: data };
   });
 
-  const response = await app.inject(
+  const response = await app.handle(
     createRequest("/data", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -230,12 +228,12 @@ test("module routes are isolated", async () => {
   apiModule.get("/users", () => ({ data: [] }));
 
   // Test admin module
-  const res1 = await app.inject(createRequest("/admin/users"));
+  const res1 = await app.handle(createRequest("/admin/users"));
   const data1 = await res1.json();
   expect(data1).toHaveProperty("users");
 
   // Test api module
-  const res2 = await app.inject(createRequest("/api/users"));
+  const res2 = await app.handle(createRequest("/api/users"));
   const data2 = await res2.json();
   expect(data2).toHaveProperty("data");
 });
@@ -262,7 +260,7 @@ test("request hook modifies context", async () => {
     return { requestId };
   });
 
-  const response = await app.inject(createRequest("/"));
+  const response = await app.handle(createRequest("/"));
   const data = await response.json();
   expect(data.requestId).toBe("test-123");
 });
@@ -284,7 +282,7 @@ test("transform hook wraps response", async () => {
 
   app.get("/users", () => [{ id: 1 }]);
 
-  const response = await app.inject(createRequest("/users"));
+  const response = await app.handle(createRequest("/users"));
   const data = await response.json();
   expect(data).toEqual({
     success: true,
@@ -302,16 +300,16 @@ test("send hook adds custom header", async () => {
   const app = createApp();
 
   app.register(
-    hook("send", (response) => {
-      return createResponseFromState(response.body, {
-        headers: { ...response.headers, "X-Custom": "value" },
+    hook("send", (ctx) => {
+      return response("hello world", {
+        headers: { "X-Custom": "value" },
       });
     })
   );
 
   app.get("/", () => "ok");
 
-  const response = await app.inject(createRequest("/"));
+  const response = await app.handle(createRequest("/"));
   expect(response.headers.get("X-Custom")).toBe("value");
 });
 ```
@@ -341,7 +339,7 @@ test("custom plugin sets context", async () => {
     return { data: context.get("pluginData") };
   });
 
-  const response = await app.inject(createRequest("/"));
+  const response = await app.handle(createRequest("/"));
   const data = await response.json();
   expect(data.data).toBe("test");
 });
@@ -367,7 +365,7 @@ test("mocked database query", async () => {
     return users;
   });
 
-  const response = await app.inject(createRequest("/users"));
+  const response = await app.handle(createRequest("/users"));
   const data = await response.json();
 
   expect(mockDb.query).toHaveBeenCalled();
@@ -395,7 +393,7 @@ test("mock context for testing", async () => {
     return { userId };
   });
 
-  const response = await app.inject(createRequest("/profile"));
+  const response = await app.handle(createRequest("/profile"));
   const data = await response.json();
   expect(data.userId).toBe("mock-user-123");
 });
@@ -436,7 +434,7 @@ describe("User API", () => {
 import { createRequest } from "@minimajs/server/mock";
 
 export async function makeRequest(app: App, path: string, options?: RequestInit) {
-  const response = await app.inject(createRequest(path, options));
+  const response = await app.handle(createRequest(path, options));
   const data = await response.json();
   return { response, data };
 }
@@ -463,7 +461,7 @@ test("handles errors gracefully", async () => {
     throw new Error("Something went wrong");
   });
 
-  const response = await app.inject(createRequest("/error"));
+  const response = await app.handle(createRequest("/error"));
   expect(response.status).toBe(500);
 });
 ```
@@ -485,7 +483,7 @@ describe("Edge cases", () => {
       return { id };
     });
 
-    const response = await app.inject(createRequest("/users/"));
+    const response = await app.handle(createRequest("/users/"));
     expect(response.status).toBe(404); // Route doesn't match
   });
 
@@ -503,7 +501,7 @@ describe("Edge cases", () => {
       }
     });
 
-    const response = await app.inject(
+    const response = await app.handle(
       createRequest("/data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

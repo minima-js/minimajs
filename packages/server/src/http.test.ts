@@ -3,8 +3,9 @@ import { HttpError, NotFoundError, RedirectError } from "./error.js";
 import { abort, body, headers, params, redirect, request, response, searchParams } from "./http.js";
 import { mockContext } from "./mock/index.js";
 import { createApp } from "./bun/index.js";
-import { bodyParser } from "./plugins/body-parser.js";
+import { bodyParser } from "./plugins/body-parser/index.js";
 import { createRequest } from "./mock/request.js";
+import { proxy } from "./plugins/proxy/index.js";
 
 const setHeader = headers.set;
 
@@ -21,27 +22,32 @@ describe("Http", () => {
     test("should create response from data", async () => {
       const app = createApp({ logger: false });
       app.get("/test", async () => {
-        return await response({ message: "ok" });
+        return response("Message: Ok");
       });
       const res = await app.handle(createRequest("/test"));
-      const body = await res.json();
-      expect(body).toEqual({ message: "ok" });
+      const body = await res.text();
+      expect(body).toEqual("Message: Ok");
       await app.close();
     });
   });
 
   describe("request.url", () => {
     test("should retrieve request URL", () => {
-      mockContext((req) => {
-        const url1 = request.url();
-        const url2 = request.url();
-        const reqUrl = new URL(req.url);
-        expect(url1.host).toBe(reqUrl.host);
-        expect(url1.protocol).toBe("http:");
-        expect(url2.host).toBe(reqUrl.host);
-        expect(url2.protocol).toBe("http:");
-        expect(url1).toBe(url2); // should be memoized
-      });
+      mockContext(
+        () => {
+          const url1 = request.url();
+          const url2 = request.url();
+          const reqUrl = new URL("http://example.com");
+          expect(url1.host).toBe(reqUrl.host);
+          expect(url1.protocol).toBe("http:");
+          expect(url2.host).toBe(reqUrl.host);
+          expect(url2.protocol).toBe("http:");
+          expect(url1).toBe(url2); // should be memoized
+        },
+        {
+          context: { $metadata: { url: new URL("http://example.com/test") } },
+        }
+      );
     });
 
     test("should handle custom URL paths", () => {
@@ -51,7 +57,7 @@ describe("Http", () => {
           expect(url.pathname).toBe("/users/123");
           expect(url.search).toBe("?page=1");
         },
-        { url: "/users/123?page=1" }
+        { context: { $metadata: { url: new URL("http://example.com/users/123?page=1") } } }
       );
     });
   });
@@ -524,7 +530,7 @@ describe("Http", () => {
     test("should create response with status code from ReasonPhrases", async () => {
       const app = createApp();
       app.get("/test", async () => {
-        return await response({ data: "ok" }, { status: "CREATED" });
+        return response("Data: Ok", { status: "CREATED" });
       });
 
       const res = await app.handle(createRequest("/test"));
@@ -619,19 +625,15 @@ describe("Http", () => {
     });
   });
 
-  describe("request.ip", () => {
-    test("should throw error when IP plugin is not configured", () => {
-      mockContext(() => {
-        expect(() => request.ip()).toThrow("Ip Address Plugin is not configured");
-      });
-    });
-  });
-
-  describe("request.ip.configure", () => {
+  describe("proxy", () => {
     test("should configure with a callback function", () => {
       const app = createApp();
-      const ipPlugin = request.ip.configure((ctx) => {
-        return ctx.request.headers.get("x-real-ip");
+      const ipPlugin = proxy({
+        host: false,
+        proto: false,
+        ip: (ctx) => {
+          return ctx.request.headers.get("x-real-ip");
+        },
       });
       app.register(ipPlugin);
       app.get("/", () => {
@@ -654,7 +656,7 @@ describe("Http", () => {
 
     test("should configure with settings object", async () => {
       const app = createApp({ logger: false });
-      const ipPlugin = request.ip.configure({ trustProxy: true, proxyDepth: 2 });
+      const ipPlugin = proxy({ host: false, proto: false, ip: { depth: 2 } });
       app.register(ipPlugin);
       app.get("/", () => {
         return request.ip() ?? "no-ip";
@@ -668,7 +670,7 @@ describe("Http", () => {
 
       const res = await app.handle(req);
       const text = await res.text();
-      expect(text).toBe("192.168.1.1");
+      expect(text).toBe("10.0.0.1");
       await app.close();
     });
   });

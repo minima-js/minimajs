@@ -3,8 +3,11 @@ layout: home
 
 hero:
   name: "Minima.js"
-  text: "Built from Scratch for Modern Runtimes"
-  tagline: TypeScript-first with pure ESM, Web API standards. Real types, no false assertions.
+  text: "Thoughtfully Designed for Modern Runtimes"
+  tagline: |
+    Most frameworks optimize features.
+    Minima.js optimizes how it feels to work every day.
+
   image:
     src: /logo.svg
     alt: Minima.js
@@ -19,8 +22,8 @@ hero:
 features:
   - icon:
       src: /icon-lightning.svg
-    title: "Built from Scratch"
-    details: "Zero dependencies on legacy frameworks. Pure, optimized code designed for modern runtimes."
+    title: Designed from scratch for modern runtimes
+    details: with carefully selected, battle-tested primitives where they make sense
   - icon:
       src: /icon-bun.svg
     title: "100% Bun-Native Compatible"
@@ -31,16 +34,17 @@ features:
     details: "Native Request/Response objects and pure ESM modules. No wrappers, no abstractions—just standardized, future-proof APIs."
   - icon:
       src: /icon-typescript.svg
-    title: "100% Type Safety"
-    details: "TypeScript-first with zero type assertions. Real generics, and full inference — no 'as any' shortcuts."
+    title: TypeScript works with you
+    details: |
+      APIs are designed for inference, so types flow naturally from usage. You write logic, not generics or config.
   - icon:
       src: /icon-context.svg
     title: "Context-Aware Design"
-    details: "AsyncLocalStorage-based context. Access request data anywhere without prop drilling."
+    details: "AsyncLocalStorage based context. Access request data anywhere without prop drilling."
   - icon:
       src: /icon-function.svg
-    title: "Function-First Philosophy"
-    details: "Pure functional approach. Plain async functions, composable plugins, zero boilerplate."
+    title: Composable, but Never Entangled
+    details: Powerful hooks, plugins, and isolated modules—compose freely while keeping boundaries explicit and predictable.
 ---
 
 ## Quick Example
@@ -48,23 +52,29 @@ features:
 ::: code-group
 
 ```typescript [Bun]
-import { createApp } from "@minimajs/server/bun"; // [!code highlight]
-import { params } from "@minimajs/server";
+import { createApp } from "@minimajs/server/bun";
+import { body } from "@minimajs/server"; // [!code highlight]
 
 const app = createApp();
 
-app.get("/:name", () => `Hello, ${params.get("name")}!`);
+app.post("/users", async () => {
+  const data = await body(); // [!code highlight]
+  return { message: "User created", data };
+});
 
 await app.listen({ port: 3000 });
 ```
 
 ```typescript [Node.js]
-import { createApp } from "@minimajs/server/node"; // [!code highlight]
-import { params } from "@minimajs/server";
+import { createApp } from "@minimajs/server/node";
+import { body } from "@minimajs/server"; // [!code highlight]
 
 const app = createApp();
 
-app.get("/:name", () => `Hello, ${params.get("name")}!`);
+app.post("/users", async () => {
+  const data = await body(); // [!code highlight]
+  return { message: "User created", data };
+});
 
 await app.listen({ port: 3000 });
 ```
@@ -81,7 +91,7 @@ await app.listen({ port: 3000 });
           <article class="VPFeature">
             <h2 class="title">Why Minima.js?</h2>
             <p class="details">
-              Traditional frameworks carry decades of compatibility baggage and outdated patterns. Minima.js takes a different path: built entirely from scratch for modern JavaScript runtimes, using Web API standards, with zero legacy overhead. The result? Blazing performance, exceptional developer experience, and code that's portable and future-proof.
+              Minima.js removes the friction you’ve learned to tolerate—slow feedback, noisy types, hidden lifecycles, and tangled modules—so building backends feels fast, clear, and predictable again.
             </p>
             <div style="height: 1rem;"></div>
             <a href="/intro" class="VPButton" role="button" style="background-color: var(--vp-c-brand-1); color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.25rem;">

@@ -99,6 +99,7 @@ export async function userModule(app: App) {
 ```
 
 When `userModule` is registered with a prefix like `/users`, the routes will be:
+
 - `GET /users/:id`
 - `GET /users/:id/posts`
 

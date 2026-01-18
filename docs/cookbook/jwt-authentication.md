@@ -65,10 +65,12 @@ import { getUser } from "./tools";
 
 // This is our guard middleware, wrapped in a plugin
 export const guardPlugin = plugin((app) => {
-  app.register(hook("request", () => {
-    // .required() throws an UnauthorizedError if the user is not authenticated
-    getUser.required();
-  }));
+  app.register(
+    hook("request", () => {
+      // .required() throws an UnauthorizedError if the user is not authenticated
+      getUser.required();
+    })
+  );
 });
 ```
 
@@ -155,6 +157,7 @@ await app.listen({ port: 3000 });
 ```
 
 In this setup:
+
 - The `/login` route is public.
 - The `/profile` route is protected and will return a 401 error if a valid JWT is not provided.
 

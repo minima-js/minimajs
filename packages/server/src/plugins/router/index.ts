@@ -1,5 +1,5 @@
 import { EOL } from "node:os";
-import { hook } from "../hooks/index.js";
+import { hook } from "../../hooks/index.js";
 
 export interface RouteLoggerOptions {
   /** Custom logger function to output routes. Defaults to console.log with magenta color */

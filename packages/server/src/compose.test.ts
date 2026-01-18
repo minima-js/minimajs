@@ -1,13 +1,15 @@
 import { describe, test, expect, beforeEach, afterEach, jest } from "@jest/globals";
+import type { Server } from "node:http";
 import { compose } from "./compose.js";
-import { plugin } from "./internal/plugins.js";
+import { plugin } from "./plugin.js";
 import { hook } from "./hooks/index.js";
-import { createApp } from "./bun/index.js";
+import { createApp } from "./node/index.js";
 import { createRequest } from "./mock/request.js";
-import type { App, PluginOptions } from "./interfaces/index.js";
+import type { App } from "./interfaces/index.js";
+import type { PluginOptions } from "./plugin.js";
 
 describe("compose", () => {
-  let app: App;
+  let app: App<Server>;
 
   beforeEach(() => {
     app = createApp({ logger: false });
@@ -433,34 +435,34 @@ describe("compose", () => {
 
     test("should pass options to all plugins and module", async () => {
       interface CustomOpts extends PluginOptions {
-        prefix: string;
+        customValue: string;
       }
 
-      let plugin1Prefix = "";
-      let plugin2Prefix = "";
-      let modulePrefix = "";
+      let plugin1Value = "";
+      let plugin2Value = "";
+      let moduleValue = "";
 
-      const plugin1 = plugin<CustomOpts>((_, opts) => {
-        plugin1Prefix = opts.prefix;
+      const plugin1 = plugin<any, CustomOpts>((_, opts) => {
+        plugin1Value = opts.customValue;
       });
 
-      const plugin2 = plugin<CustomOpts>((_, opts) => {
-        plugin2Prefix = opts.prefix;
+      const plugin2 = plugin<any, CustomOpts>((_, opts) => {
+        plugin2Value = opts.customValue;
       });
 
       const withPlugins = compose.create(plugin1, plugin2);
 
       const myModule = (_: any, opts: CustomOpts) => {
-        modulePrefix = opts.prefix;
+        moduleValue = opts.customValue;
       };
 
-      app.register(withPlugins(myModule), { prefix: "/api" });
+      app.register(withPlugins(myModule), { customValue: "test-value" });
 
       await app.ready();
 
-      expect(plugin1Prefix).toBe("/api");
-      expect(plugin2Prefix).toBe("/api");
-      expect(modulePrefix).toBe("/api");
+      expect(plugin1Value).toBe("test-value");
+      expect(plugin2Value).toBe("test-value");
+      expect(moduleValue).toBe("test-value");
     });
 
     test("should allow chaining multiple composers", async () => {

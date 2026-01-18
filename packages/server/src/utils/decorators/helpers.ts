@@ -1,5 +1,5 @@
 import type { Context } from "../../interfaces/index.js";
-import type { PluginOptions } from "../../interfaces/plugin.js";
+import type { PluginOptions } from "../../plugin.js";
 
 export type InterceptorFilter = (ctx: Context) => boolean | Promise<boolean>;
 /**

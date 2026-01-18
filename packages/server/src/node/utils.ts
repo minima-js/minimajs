@@ -1,15 +1,18 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 
 export function toWebHeaders(nodeHeaders: IncomingMessage["headers"]): Headers {
   const headers = new Headers();
-  for (const [key, value] of Object.entries(nodeHeaders)) {
+  for (const key in nodeHeaders) {
+    const value = nodeHeaders[key];
     if (value === undefined) continue;
-    if (Array.isArray(value)) {
-      for (const v of value) {
-        headers.append(key, v);
-      }
-    } else {
+    if (typeof value === "string") {
       headers.set(key, value);
+      continue;
+    }
+    for (let i = 0; i < value.length; i++) {
+      headers.append(key, value[i]!);
     }
   }
   return headers;
@@ -41,10 +44,18 @@ export function toWebRequest(req: IncomingMessage, domain: string = "http://loca
 
 export async function fromWebResponse(webResponse: Response, nodeResponse: ServerResponse): Promise<void> {
   nodeResponse.statusCode = webResponse.status;
-  webResponse.headers.forEach((value, key) => {
-    nodeResponse.setHeader(key, value);
-  });
+  nodeResponse.setHeaders(webResponse.headers);
+  if (!webResponse.body) {
+    nodeResponse.end();
+    return;
+  }
 
-  const body = await webResponse.text();
-  nodeResponse.end(body);
+  try {
+    await pipeline(Readable.fromWeb(webResponse.body), nodeResponse);
+  } catch (err) {
+    if (!nodeResponse.headersSent) {
+      nodeResponse.statusCode = 500;
+    }
+    nodeResponse.destroy(err as Error);
+  }
 }

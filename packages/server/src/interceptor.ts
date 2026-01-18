@@ -1,6 +1,6 @@
-import type { OnRequestHook } from "./interfaces/hooks.js";
+import type { OnRequestHook } from "./hooks/types.js";
 import type { App } from "./interfaces/app.js";
-import type { Plugin, RegisterOptions, Register } from "./interfaces/plugin.js";
+import type { Plugin, RegisterOptions, Module } from "./plugin.js";
 import { hook } from "./hooks/index.js";
 import type { InterceptorFilter, InterceptorRegisterOptions } from "./utils/decorators/helpers.js";
 
@@ -27,9 +27,9 @@ export interface InterceptorOption {
  * ```
  * @since v0.1.0
  */
-export function interceptor<T extends RegisterOptions = {}>(handlers: Interceptor[], callback: Register<T>) {
-  async function module(app: App, appOpt: T) {
-    callback = callback as Plugin<T>;
+export function interceptor<S, T extends RegisterOptions = {}>(handlers: Interceptor[], callback: Module<S, T>) {
+  async function module(app: App<S>, appOpt: T) {
+    callback = callback as Plugin<S>;
     for (const handler of handlers) {
       app.register(hook("request", handler));
     }

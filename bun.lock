@@ -31,7 +31,7 @@
     },
     "packages/auth": {
       "name": "@minimajs/auth",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "devDependencies": {
         "@jest/globals": "^30.2.0",
         "@minimajs/server": "workspace:*",
@@ -133,7 +133,7 @@
     },
     "packages/schema": {
       "name": "@minimajs/schema",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "devDependencies": {
         "@jest/globals": "^30.2.0",
         "@minimajs/server": "workspace:*",
@@ -147,7 +147,7 @@
     },
     "packages/server": {
       "name": "@minimajs/server",
-      "version": "0.4.0",
+      "version": "0.5.1",
       "dependencies": {
         "avvio": "9",
         "deepmerge": "^4.3.1",

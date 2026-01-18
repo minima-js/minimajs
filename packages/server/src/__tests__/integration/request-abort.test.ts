@@ -7,7 +7,7 @@ import { context } from "../../context.js";
 import type { Server } from "../../core/index.js";
 
 describe("Request Abortion Integration Tests", () => {
-  let app: Server;
+  let app: Server<any>;
   let serverUrl: string;
 
   beforeEach(async () => {

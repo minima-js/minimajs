@@ -1,6 +1,6 @@
 # @minimajs/server
 
-A groundbreaking, high-performance HTTP framework for Node.js and Bun - designed for modern developers seeking efficiency, elegance, and speed.
+A modern, high-performance HTTP framework for Node.js and Bun - combining proven routing and lifecycle libraries with a clean, TypeScript-first API designed for today's runtimes.
 
 [![npm version](https://img.shields.io/npm/v/@minimajs/server.svg)](https://www.npmjs.com/package/@minimajs/server)
 [![License](https://img.shields.io/npm/l/@minimajs/server.svg)](https://github.com/minima-js/minimajs/blob/main/LICENSE)
@@ -15,7 +15,7 @@ A groundbreaking, high-performance HTTP framework for Node.js and Bun - designed
 - **Zero Boilerplate**: Get started with minimal setup and configuration
 - **ESM-Only**: Modern ECMAScript Modules with full async/await support
 - **Powerful Plugin System**: Extend functionality with encapsulated, reusable plugins
-- **Comprehensive Hooks**: Full control over request/response lifecycle
+- **Battle-Tested Core**: Built on proven libraries (find-my-way, avvio, pino) with a modern API layer
 
 ## 📦 Installation
 
@@ -224,14 +224,21 @@ const app = createApp();
 
 // Request lifecycle hooks
 app.register(
-  hook("request", ({ request, url }) => {
-    console.log(`${request.method} ${url.pathname}`);
+  hook("request", ({ request, pathname }) => {
+    console.log(`${request.method} ${pathname}`);
   })
 );
 
 app.register(
   hook("transform", (data, _ctx) => {
     return { ...data, timestamp: Date.now() };
+  })
+);
+
+app.register(
+  hook("send", (response, _ctx) => {
+    // Called after response is sent - useful for logging and cleanup
+    console.log(`Response sent with status: ${response.status}`);
   })
 );
 
@@ -264,7 +271,7 @@ app.register(
 
 **Available Hooks:**
 
-- **Request Lifecycle**: `request`, `transform`, `send`, `error`, `errorSent`, `sent`, `timeout`
+- **Request Lifecycle**: `request`, `transform`, `send`, `error`, `timeout`
 - **Application Lifecycle**: `ready`, `listen`, `close`, `register`
 
 ### 5. Custom Context Values
