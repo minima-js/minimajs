@@ -166,10 +166,25 @@ describe("node/utils", () => {
   describe("fromWebResponse", () => {
     let mockSocket: Socket;
     let mockRes: ServerResponse;
+    let responseBody: string;
 
     beforeEach(() => {
       mockSocket = new Socket();
       mockRes = new ServerResponse(new IncomingMessage(mockSocket));
+      responseBody = "";
+      
+      mockRes.write = function (chunk: any) {
+        responseBody += chunk.toString();
+        return true;
+      };
+      mockRes.end = function (chunk?: any) {
+        if (chunk) {
+          responseBody += chunk.toString();
+        }
+        // Emit finish event to properly complete the pipeline
+        setImmediate(() => this.emit('finish'));
+        return this;
+      };
     });
 
     test("should convert Web Response to Node Response", async () => {
@@ -180,12 +195,6 @@ describe("node/utils", () => {
           "x-custom": "value",
         },
       });
-
-      let responseBody = "";
-      mockRes.end = function (chunk?: any) {
-        if (chunk) responseBody = chunk.toString();
-        return this;
-      };
 
       await fromWebResponse(webResponse, mockRes);
 
@@ -203,12 +212,6 @@ describe("node/utils", () => {
         },
       });
 
-      let responseBody = "";
-      mockRes.end = function (chunk?: any) {
-        if (chunk) responseBody = chunk.toString();
-        return this;
-      };
-
       await fromWebResponse(webResponse, mockRes);
 
       expect(mockRes.statusCode).toBe(201);
@@ -224,12 +227,6 @@ describe("node/utils", () => {
         },
       });
 
-      let responseBody = "";
-      mockRes.end = function (chunk?: any) {
-        if (chunk) responseBody = chunk.toString();
-        return this;
-      };
-
       await fromWebResponse(webResponse, mockRes);
 
       expect(mockRes.statusCode).toBe(404);
@@ -240,12 +237,6 @@ describe("node/utils", () => {
       const webResponse = new Response(null, {
         status: 204,
       });
-
-      let responseBody = "";
-      mockRes.end = function (chunk?: any) {
-        if (chunk) responseBody = chunk.toString();
-        return this;
-      };
 
       await fromWebResponse(webResponse, mockRes);
 
