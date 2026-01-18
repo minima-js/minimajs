@@ -38,14 +38,7 @@ export interface RouteLoggerOptions {
  */
 export function routeLogger({ commonPrefix = false, logger }: RouteLoggerOptions = {}) {
   return hook("ready", async (app) => {
-    if (!logger) {
-      try {
-        const { default: chalk } = await import("chalk");
-        logger = (routes) => app.log.info(chalk.magenta(routes));
-      } catch {
-        logger = (routes) => app.log.info(routes);
-      }
-    }
-    logger(EOL.repeat(2) + app.router.prettyPrint({ commonPrefix }));
+    logger ??= (routes) => app.log.info(EOL + routes);
+    logger(app.router.prettyPrint({ commonPrefix }));
   });
 }
