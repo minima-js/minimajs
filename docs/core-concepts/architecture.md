@@ -26,45 +26,89 @@ The hook system gives you fine-grained control over the application and request 
 
 ### Hook Execution Order
 
-Hooks within the same scope execute in **LIFO** (Last-In-First-Out) order:
+Hooks within the same scope execute in **LIFO** (Last-In-First-Out) order. Register hooks via `meta.plugins`:
 
-```ts
-app.register(hook("request", () => console.log("First registered")));
-app.register(hook("request", () => console.log("Second registered")));
+::: code-group
 
-// Execution:
-// 1. "First registered" → runs first
-// 2. "Second registered" → runs second
+```typescript [src/users/module.ts]
+import { hook } from "@minimajs/server";
+
+export const meta = {
+  plugins: [
+    hook("request", () => console.log("First registered")),
+    hook("request", () => console.log("Second registered"))
+  ]
+};
+
+export default async function(app) {
+  // Routes here
+}
 ```
+
+:::
+
+**Execution order:**
+1. "First registered" → runs first
+2. "Second registered" → runs second
 
 ### Encapsulation and Scope Isolation
 
-Each `app.register()` creates an **isolated scope**. Hooks and routes only affect their own scope and any child scopes, but not sibling or parent scopes.
+Each module creates an **isolated scope**. Hooks and plugins registered via `meta.plugins` only affect that module and its children, not siblings or parents.
 
 <!--@include: ./diagrams/encapsulation.md-->
 
 **Example:**
 
-```ts
-const app = createApp();
+::: code-group
 
-// Root scope
-app.register(hook("request", () => console.log("Root hook")));
+```typescript [src/module.ts]
+import { hook } from "@minimajs/server";
 
-app.register(async (app) => {
-  // Child scope 1
-  app.register(hook("request", () => console.log("Child 1 hook")));
-  app.get("/users", () => "users");
-  // Request to /users executes: Root hook → Child 1 hook
-});
+// Root module - hooks apply to all child modules
+export const meta = {
+  plugins: [
+    hook("request", () => console.log("Root hook"))
+  ]
+};
 
-app.register(async (app) => {
-  // Child scope 2 (isolated from Child 1)
-  app.register(hook("request", () => console.log("Child 2 hook")));
-  app.get("/admin", () => "admin");
-  // Request to /admin executes: Root hook → Child 2 hook
-});
+export default async function(app) {
+  app.get('/health', () => 'ok');
+}
 ```
+
+```typescript [src/users/module.ts]
+import { hook } from "@minimajs/server";
+
+// Child scope 1
+export const meta = {
+  plugins: [
+    hook("request", () => console.log("Users hook"))
+  ]
+};
+
+export default async function(app) {
+  app.get('/list', () => "users");
+  // Request to /users/list executes: Root hook → Users hook
+}
+```
+
+```typescript [src/admin/module.ts]
+import { hook } from "@minimajs/server";
+
+// Child scope 2 (isolated from users module)
+export const meta = {
+  plugins: [
+    hook("request", () => console.log("Admin hook"))
+  ]
+};
+
+export default async function(app) {
+  app.get('/dashboard', () => "admin");
+  // Request to /admin/dashboard executes: Root hook → Admin hook
+}
+```
+
+:::
 
 ---
 
@@ -116,23 +160,33 @@ For more details, see the [Error Handling Guide](/guides/error-handling).
 2.  **Direct Response in handler** → Bypasses transform & serialization.
 3.  **Returning data in handler** → Full pipeline.
 
-```ts
-// Ultra-fast health check (Path 3)
-app.register(
-  hook("request", ({ pathname, responseState }) => {
-    if (pathname === "/health") {
-      // carry global response
-      return new Response("OK", responseState);
-    }
-  })
-);
+::: code-group
 
-// Fast static response (Path 2)
-app.get("/ping", ({ responseState }) => new Response("pong", responseState));
+```typescript [src/api/module.ts]
+import { hook } from "@minimajs/server";
 
-// Full pipeline (Path 1)
-app.get("/data", () => ({ data: "value" }));
+export const meta = {
+  plugins: [
+    // Ultra-fast health check (Path 3)
+    hook("request", ({ pathname, responseState }) => {
+      if (pathname === "/health") {
+        // carry global response
+        return new Response("OK", responseState);
+      }
+    })
+  ]
+};
+
+export default async function(app) {
+  // Fast static response (Path 2)
+  app.get("/ping", ({ responseState }) => new Response("pong", responseState));
+
+  // Full pipeline (Path 1)
+  app.get("/data", () => ({ data: "value" }));
+}
 ```
+
+:::
 
 ---
 
@@ -164,4 +218,7 @@ The framework uses **native Web API `Request` and `Response` objects** instead o
 
 ### 3. Modular, Scope-Isolated Design
 
-The combination of scoped `app.register()` and the LIFO hook system enables **scalable, composable applications** with clear lifecycle guarantees. Child scopes inherit from parents, but siblings remain completely isolated.
+Filesystem-based modules with `meta.plugins` enable **scalable, composable applications** with clear lifecycle guarantees. Each module creates an isolated scope where:
+- Child modules inherit hooks/plugins from parents
+- Sibling modules remain completely isolated
+- No configuration needed - just create directories and module files

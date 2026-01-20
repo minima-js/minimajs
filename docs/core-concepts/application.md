@@ -47,31 +47,47 @@ console.log(`Server running at ${address}`);
 
 ### `app.register()`
 
-The `.register()` method is the primary way to add functionality to your application. You can use it to register:
+The `.register()` method adds functionality to your application. While modules are **auto-discovered** by default, this method is available for:
 
-- Route handlers
-- [Lifecycle hooks](/guides/hooks)
-- [Plugins](/core-concepts/plugins) (reusable components that extend the current scope)
-- [Modules](/core-concepts/modules) (encapsulated functions that create isolated scopes)
+- Manual module registration (when `moduleDiscovery: false`)
+- Registering global plugins in your entry file
+- Building reusable plugins and libraries
 
-This method is fundamental to Minima.js's principle of **encapsulation**. When you register a module, it creates an isolated scope, meaning any hooks or plugins registered inside it will not affect the rest of your application, ensuring clear boundaries and predictable behavior.
+**Note:** When using module discovery (recommended), use `meta.plugins` instead of calling `app.register()` inside modules.
 
-```typescript
+::: code-group
+
+```typescript [Recommended: Using modules with meta.plugins]
+// src/users/module.ts
+import { hook } from "@minimajs/server";
+
+export const meta = {
+  plugins: [
+    hook("request", () => console.log("Users hook"))
+  ]
+};
+
+export default async function(app) {
+  app.get("/list", () => "users");
+}
+```
+
+```typescript [Alternative: Manual registration]
+// src/index.ts
 import { type App, hook } from "@minimajs/server";
 
-// A self-contained module
 async function myModule(app: App) {
-  // This hook is local to myModule only
   app.register(hook("request", () => console.log("Module hook!")));
-
   app.get("/hello", () => "Hello from the module!");
 }
 
-// Register the module with an optional prefix
+const app = createApp({ moduleDiscovery: false });
 app.register(myModule, { prefix: "/api" });
-
-// The route is now available at /api/hello
 ```
+
+:::
+
+This method is fundamental to Minima.js's principle of **encapsulation**. When you register a module, it creates an isolated scope, meaning any hooks or plugins registered inside it will not affect the rest of your application, ensuring clear boundaries and predictable behavior.
 
 ### `app.close()`
 

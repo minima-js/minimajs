@@ -235,7 +235,6 @@ app.register(adminFeatures);
 ## See Also
 
 - [Hooks](/guides/hooks)
-- [Middleware](/guides/middleware)
 - [Modules](/core-concepts/modules)
 
 ---

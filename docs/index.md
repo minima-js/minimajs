@@ -3,10 +3,10 @@ layout: home
 
 hero:
   name: "Minima.js"
-  text: "Thoughtfully Designed for Modern Runtimes"
+  text: "File-Based Modules. Zero Config."
   tagline: |
-    Most frameworks optimize features.
-    Minima.js optimizes how it feels to work every day.
+    Build backends that feel fast and clear—
+    file structure becomes your API, hooks are plugins, and everything just works.
 
   image:
     src: /logo.svg
@@ -22,8 +22,8 @@ hero:
 features:
   - icon:
       src: /icon-lightning.svg
-    title: Designed from scratch for modern runtimes
-    details: with carefully selected, battle-tested primitives where they make sense
+    title: File-Based Module Auto-Discovery
+    details: "Just create folders and module.ts files—routes, hooks, and plugins auto-load. No imports, no registration, no config. Structure matches URLs."
   - icon:
       src: /icon-bun.svg
     title: "100% Bun-Native Compatible"
@@ -47,39 +47,57 @@ features:
     details: Powerful hooks, plugins, and isolated modules—compose freely while keeping boundaries explicit and predictable.
 ---
 
-## Quick Example
+## File-Based Routing, Zero Config
+
+Organize by features—modules auto-load based on file structure:
 
 ::: code-group
 
-```typescript [Bun]
+```typescript [src/index.ts]
 import { createApp } from "@minimajs/server/bun";
-import { body } from "@minimajs/server"; // [!code highlight]
 
-const app = createApp();
-
-app.post("/users", async () => {
-  const data = await body(); // [!code highlight]
-  return { message: "User created", data };
-});
+const app = createApp(); // Auto-discovers all modules
 
 await app.listen({ port: 3000 });
 ```
 
-```typescript [Node.js]
-import { createApp } from "@minimajs/server/node";
-import { body } from "@minimajs/server"; // [!code highlight]
+```typescript [src/users/module.ts]
+import { body, hook } from "@minimajs/server";
+import { bodyParser } from "@minimajs/body-parser";
 
-const app = createApp();
+export const meta = {
+  plugins: [
+    bodyParser(),
+    hook("request", () => console.log("User route hit"))
+  ]
+};
 
-app.post("/users", async () => {
-  const data = await body(); // [!code highlight]
-  return { message: "User created", data };
-});
+export default async function(app) {
+  app.post("/create", () => {
+    const data = body();
+    return { message: "User created", data };
+  });
+  
+  app.get("/list", () => {
+    return { users: ["Alice", "Bob"] };
+  });
+}
+// ✅ Auto-loaded as /users/*
+```
 
-await app.listen({ port: 3000 });
+```typescript [src/posts/module.ts]
+export default async function(app) {
+  app.get("/latest", () => {
+    return { posts: [] };
+  });
+}
+// ✅ Auto-loaded as /posts/*
 ```
 
 :::
+
+**Your file structure = Your API structure**  
+No imports. No manual registration. Just create files and go.
 
 <div style="height: 2rem;"></div>
 

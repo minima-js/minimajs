@@ -132,25 +132,62 @@ app.get("/fast", () => {
 });
 ```
 
-### Encapsulation with Modules and Plugins
+### Structuring with Modules (Recommended)
 
-Minima.js allows you to structure your application into encapsulated [modules](/core-concepts/modules) and [plugins](/core-concepts/plugins). When you register a module with `app.register()`, it creates an isolated scope. Hooks and plugins registered inside a module only affect that module and its children, ensuring clear boundaries and predictable behavior.
+As your application grows, organize it by features. Minima.js **automatically discovers modules** from directories adjacent to your entry file.
 
-```ts
-import { type App, hook } from "@minimajs/server";
+**Important:** Files must be named `module.{ts,js,mjs}` for auto-discovery to work.
 
-async function userModule(app: App) {
-  // This hook is local to userModule ONLY
-  app.register(hook("request", () => console.log("Inside user module")));
-  app.get("/users", () => [
-    /* ... */
-  ]);
-}
-
-const app = createApp();
-// The root app is not affected by userModule's hooks
-app.register(userModule, { prefix: "/api/v1" });
 ```
+src/
+├── index.ts          # Entry point
+├── users/
+│   └── module.ts     # ✅ Auto-discovered (named "module")
+└── posts/
+    └── module.ts     # ✅ Auto-discovered
+```
+
+::: code-group
+
+```typescript [src/index.ts]
+import { createApp } from "@minimajs/server/bun";
+
+const app = createApp(); // Auto-discovery enabled by default!
+
+await app.listen({ port: 3000 });
+```
+
+```typescript [src/users/module.ts]
+import { params } from "@minimajs/server";
+
+export default async function(app) {
+  app.get('/list', () => [{ id: 1, name: 'John' }]);
+  
+  app.get('/:id', () => {
+    const id = params.get('id');
+    return { id, name: 'John' };
+  });
+}
+```
+
+:::
+
+Your routes are automatically created:
+- `GET /users/list`
+- `GET /users/:id`  
+- `GET /posts/list`
+
+Each module creates an **isolated scope** - hooks and plugins registered via `meta.plugins` only affect that module and its children.
+
+**Custom filename:** If you prefer a different filename (e.g., `route.ts`), you can configure it:
+
+```typescript
+const app = createApp({
+  moduleDiscovery: { index: 'route' } // Look for route.ts instead of module.ts
+});
+```
+
+Learn more about [module configuration and advanced features](/core-concepts/modules).
 
 ### Lifecycle Hooks
 

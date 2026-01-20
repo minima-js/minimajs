@@ -8,7 +8,36 @@ tags:
 
 # Hooks
 
-Hooks in Minima.js allow you to **tap into the application and request lifecycle**, enabling custom behavior at precise points. They are central to extending and customizing your application's behavior.
+Hooks in Minima.js allow you to **tap into the application and request lifecycle**, enabling custom behavior at precise points.
+
+**In Minima.js, everything is a plugin** - even hooks are plugins. You apply hooks via:
+- **`meta.plugins`** in module files (recommended)
+- **`app.register(hook(...))`** for manual registration
+
+::: code-group
+
+```typescript [src/users/module.ts]
+import { hook } from "@minimajs/server";
+
+export const meta = {
+  plugins: [
+    hook("request", ({ request }) => {
+      console.log(`${request.method} ${request.url}`);
+    }),
+    hook("error", (error) => {
+      console.error("Error in users module:", error);
+    })
+  ]
+};
+
+export default async function(app) {
+  // Your routes here
+}
+```
+
+:::
+
+> **Important:** The `meta.plugins` property **only works in module files** (files named `module.ts` by default, or whatever you configure with `moduleDiscovery.index`). It will **not** work in random files - only in files that are auto-discovered as modules. For other files or manual registration, use `app.register(hook(...))` instead.
 
 ## Quick Reference
 
@@ -50,8 +79,12 @@ Application lifecycle hooks are tied to the application's lifespan, ideal for ma
 
 This is perfect for managing database connections, message queues, or any resource that needs graceful setup and teardown.
 
-```ts
-import { createApp, hook } from "@minimajs/server";
+**Recommended: Use in root module's `meta.plugins`**
+
+::: code-group
+
+```typescript [src/module.ts]
+import { hook } from "@minimajs/server";
 
 const db = {
   async connect() {
@@ -62,19 +95,35 @@ const db = {
   },
 };
 
-const app = createApp();
+export const meta = {
+  plugins: [
+    hook.lifespan(async () => {
+      await db.connect();
 
-const dbLifecycle = hook.lifespan(async () => {
-  await db.connect();
+      // Return a cleanup function to run on app close
+      return async () => {
+        await db.disconnect();
+      };
+    })
+  ]
+};
 
-  // Return a cleanup function to run on app close
-  return async () => {
-    await db.disconnect();
-  };
-});
-
-app.register(dbLifecycle);
+export default async function(app) {
+  // Your routes here
+}
 ```
+
+```typescript [src/index.ts]
+import { createApp } from "@minimajs/server/bun";
+
+const app = createApp(); // Auto-discovers module with db lifecycle
+
+await app.listen({ port: 3000 });
+```
+
+:::
+
+:::
 
 ### Other Application Lifecycle Hooks
 
@@ -82,40 +131,64 @@ app.register(dbLifecycle);
 
 The `ready` hook executes when the application has completed initialization and all plugins have been registered. Use it for tasks that need to run before the server starts listening.
 
-```ts
-app.register(
-  hook("ready", async (app) => {
-    console.log("Application is ready!");
-    // Pre-warm caches, verify connections, etc.
-  })
-);
+::: code-group
+
+```typescript [src/module.ts]
+import { hook } from "@minimajs/server";
+
+export const meta = {
+  plugins: [
+    hook("ready", async (app) => {
+      console.log("Application is ready!");
+      // Pre-warm caches, verify connections, etc.
+    })
+  ]
+};
 ```
+
+:::
 
 #### `listen`
 
 The `listen` hook executes after the server starts listening for connections. It receives the server instance as a parameter.
 
-```ts
-app.register(
-  hook("listen", (server) => {
-    console.log(`Server listening on ${server.hostname}:${server.port}`);
-  })
-);
+::: code-group
+
+```typescript [src/module.ts]
+import { hook } from "@minimajs/server";
+
+export const meta = {
+  plugins: [
+    hook("listen", (server) => {
+      console.log(`Server listening on ${server.hostname}:${server.port}`);
+    })
+  ]
+};
 ```
+
+:::
 
 #### `close`
 
 The `close` hook executes when the application is shutting down. Use it for cleanup tasks like closing database connections or flushing logs.
 
-```ts
-app.register(
-  hook("close", async () => {
-    console.log("Server shutting down...");
-    await db.close();
-    await cache.flush();
-  })
-);
+::: code-group
+
+```typescript [src/module.ts]
+import { hook } from "@minimajs/server";
+
+export const meta = {
+  plugins: [
+    hook("close", async () => {
+      console.log("Server shutting down...");
+      await db.close();
+      await cache.flush();
+    })
+  ]
+};
 ```
+
+:::
 
 > **Tip:** Use `hook.lifespan` instead of separate `ready` and `close` hooks when you need paired setup/teardown logic for a single resource.
 
@@ -123,13 +196,21 @@ app.register(
 
 The `register` hook executes whenever a plugin is registered. It receives the plugin and its options as parameters. This is primarily used for debugging or plugin inspection.
 
-```ts
-app.register(
-  hook("register", (plugin, opts) => {
-    console.log(`Plugin registered: ${plugin.name || "anonymous"}`, opts);
-  })
-);
+::: code-group
+
+```typescript [src/module.ts]
+import { hook } from "@minimajs/server";
+
+export const meta = {
+  plugins: [
+    hook("register", (plugin, opts) => {
+      console.log(`Plugin registered: ${plugin.name || "anonymous"}`, opts);
+    })
+  ]
+};
 ```
+
+:::
 
 ## Request Lifecycle Hooks
 
@@ -147,26 +228,34 @@ There are two primary ways to define request hooks:
 
 Here’s how to define multiple hooks at once:
 
-```ts
-import { createApp, hook } from "@minimajs/server";
+::: code-group
 
-const app = createApp();
+```typescript [src/api/module.ts]
+import { hook, abort } from "@minimajs/server";
 
-app.register(
-  hook.define({
-    request({ request, pathname }) {
-      console.log("Incoming request:", request.url());
-      if (pathname === "/maintenance") {
-        // need to maintain headers in responseState
-        return abort("Under maintenance", 503);
-      }
-    },
-    send(response, { request }) {
-      console.log("Response sent for:", request.url());
-    },
-  })
-);
+export const meta = {
+  plugins: [
+    hook.define({
+      request({ request, pathname }) {
+        console.log("Incoming request:", request.url());
+        if (pathname === "/maintenance") {
+          // need to maintain headers in responseState
+          return abort("Under maintenance", 503);
+        }
+      },
+      send(response, { request }) {
+        console.log("Response sent for:", request.url());
+      },
+    })
+  ]
+};
+
+export default async function(app) {
+  // Your routes here
+}
 ```
+
+:::
 
 ### The Request Lifecycle
 
@@ -188,37 +277,45 @@ Minima.js provides several built-in hooks that fire at different stages of the r
 
 The `request` hook intercepts a request **before it reaches the route handler**. It's ideal for authentication, logging, rate limiting, or returning an early response to short-circuit the request lifecycle.
 
-```typescript
-// Authentication check
-app.register(
-  hook("request", ({ request }) => {
-    if (!request.headers.get("authorization")) {
-      // Early termination - bypasses route handler
-      abort("Unauthorized", 401);
-    }
-  })
-);
+::: code-group
 
-// Request logging
-app.register(
-  hook("request", ({ request, pathname }) => {
-    console.log(`[${request.method}] ${pathname}`, {
-      userAgent: request.headers.get("user-agent"),
-      timestamp: new Date().toISOString(),
-    });
-  })
-);
+```typescript [src/api/module.ts]
+import { hook, abort } from "@minimajs/server";
 
-// Rate limiting
-app.register(
-  hook("request", ({ request }) => {
-    const ip = request.headers.get("x-forwarded-for") || "unknown";
-    if (isRateLimited(ip)) {
-      abort("Too Many Requests", 429);
-    }
-  })
-);
+export const meta = {
+  plugins: [
+    // Authentication check
+    hook("request", ({ request }) => {
+      if (!request.headers.get("authorization")) {
+        // Early termination - bypasses route handler
+        abort("Unauthorized", 401);
+      }
+    }),
+
+    // Request logging
+    hook("request", ({ request, pathname }) => {
+      console.log(`[${request.method}] ${pathname}`, {
+        userAgent: request.headers.get("user-agent"),
+        timestamp: new Date().toISOString(),
+      });
+    }),
+
+    // Rate limiting
+    hook("request", ({ request }) => {
+      const ip = request.headers.get("x-forwarded-for") || "unknown";
+      if (isRateLimited(ip)) {
+        abort("Too Many Requests", 429);
+      }
+    })
+  ]
+};
+
+export default async function(app) {
+  // Your routes here
+}
 ```
+
+:::
 
 **Flow:**
 
@@ -230,21 +327,31 @@ app.register(
 
 The `transform` hook modifies response data returned by a handler before it is serialized. Transform hooks execute in **Child → Parent (LIFO) order**, meaning the last registered transform runs first.
 
-```typescript
-app.register(
-  hook("transform", (data) => {
-    if (Array.isArray(data.users)) {
-      data.users = data.users.map((u) => u.toUpperCase());
-    }
-    return data;
-  })
-);
+::: code-group
 
-app.get("/users", () => {
-  return { users: ["Alice", "Bob"] };
-});
-// Response: { "users": ["ALICE", "BOB"] }
+```typescript [src/users/module.ts]
+import { hook } from "@minimajs/server";
+
+export const meta = {
+  plugins: [
+    hook("transform", (data) => {
+      if (Array.isArray(data.users)) {
+        data.users = data.users.map((u) => u.toUpperCase());
+      }
+      return data;
+    })
+  ]
+};
+
+export default async function(app) {
+  app.get("/list", () => {
+    return { users: ["Alice", "Bob"] };
+  });
+  // Response: { "users": ["ALICE", "BOB"] }
+}
 ```
+
+:::
 
 > `transform` hooks **cannot** return a `Response` object. They only modify data.
 >
@@ -256,27 +363,37 @@ app.get("/users", () => {
 
 The `send` hook executes **just before returning the final response**, after the response has been sent to the client. It receives the response object and context, making it ideal for logging, metrics, and cleanup tasks.
 
-```typescript
-// Logging response
-app.register(
-  hook("send", (response, { request, pathname }) => {
-    console.log(`[${request.method}] ${pathname}`, {
-      status: response.status,
-      timestamp: new Date().toISOString(),
-    });
-  })
-);
+::: code-group
 
-// Metrics collection
-app.register(
-  hook("send", (response, ctx) => {
-    metrics.recordResponse({
-      status: response.status,
-      duration: Date.now() - ctx.startTime,
-    });
-  })
-);
+```typescript [src/api/module.ts]
+import { hook } from "@minimajs/server";
+
+export const meta = {
+  plugins: [
+    // Logging response
+    hook("send", (response, { request, pathname }) => {
+      console.log(`[${request.method}] ${pathname}`, {
+        status: response.status,
+        timestamp: new Date().toISOString(),
+      });
+    }),
+
+    // Metrics collection
+    hook("send", (response, ctx) => {
+      metrics.recordResponse({
+        status: response.status,
+        duration: Date.now() - ctx.startTime,
+      });
+    })
+  ]
+};
+
+export default async function(app) {
+  // Your routes here
+}
 ```
+
+:::
 
 > **Note:** The `send` hook cannot return a `Response` object or modify the response. It's strictly for post-response tasks like logging and cleanup.
 
@@ -294,19 +411,23 @@ Minima.js also offers helpers for running logic within the scope of a single req
 
 The `defer` helper registers a callback to be executed **after the response has been sent**, ideal for non-blocking tasks like analytics or logging.
 
-```ts
-import { createApp, defer } from "@minimajs/server";
+::: code-group
 
-const app = createApp();
+```typescript [src/api/module.ts]
+import { defer } from "@minimajs/server";
 
-app.get("/", () => {
-  defer(() => {
-    console.log("Response sent, running deferred task...");
+export default async function(app) {
+  app.get("/", () => {
+    defer(() => {
+      console.log("Response sent, running deferred task...");
+    });
+
+    return { message: "Hello World!" };
   });
-
-  return { message: "Hello World!" };
-});
+}
 ```
+
+:::
 
 > `defer` callbacks execute after the `send` hook has completed.
 
@@ -325,18 +446,37 @@ These hooks execute in **registration order**: parent hooks run first, then chil
 - **Setup hooks**: `register`, `listen`, `ready`
 - **Incoming request hooks**: `request`
 
-```typescript
-app.register(hook("request", () => console.log("Parent: Auth")));
+::: code-group
 
-app.register(async (app) => {
-  app.register(hook("request", () => console.log("Child: Logging")));
-  app.get("/users", () => "users");
-});
+```typescript [src/module.ts]
+import { hook } from "@minimajs/server";
 
-// Request to /users executes:
-// 1. "Parent: Auth"     (parent runs first)
-// 2. "Child: Logging"   (child runs second)
+export const meta = {
+  plugins: [
+    hook("request", () => console.log("Parent: Auth"))
+  ]
+};
 ```
+
+```typescript [src/users/module.ts]
+import { hook } from "@minimajs/server";
+
+export const meta = {
+  plugins: [
+    hook("request", () => console.log("Child: Logging"))
+  ]
+};
+
+export default async function(app) {
+  app.get("/list", () => "users");
+}
+```
+
+:::
+
+**Execution when calling `/users/list`:**
+1. "Parent: Auth" (parent runs first)
+2. "Child: Logging" (child runs second)
 
 **Why?** Parent middleware like authentication or logging should run **before** module-specific logic.
 
@@ -348,20 +488,39 @@ These hooks execute in **reverse order**: child hooks run first, then parent hoo
 - **Error hooks**: `error`
 - **Cleanup hooks**: `close`, `timeout`
 
-```typescript
-app.register(hook("error", () => ({ error: "Generic error" })));
+::: code-group
 
-app.register(async (app) => {
-  app.register(hook("error", () => ({ error: "Module-specific error" })));
-  app.get("/users", () => {
+```typescript [src/module.ts]
+import { hook } from "@minimajs/server";
+
+export const meta = {
+  plugins: [
+    hook("error", () => ({ error: "Generic error" }))
+  ]
+};
+```
+
+```typescript [src/users/module.ts]
+import { hook } from "@minimajs/server";
+
+export const meta = {
+  plugins: [
+    hook("error", () => ({ error: "Module-specific error" }))
+  ]
+};
+
+export default async function(app) {
+  app.get("/list", () => {
     throw new Error("Failed");
   });
-});
-
-// Error in /users executes:
-// 1. Child error handler (module-specific)
-// 2. Parent error handler (only if child doesn't handle)
+}
 ```
+
+:::
+
+**Execution on error in `/users/list`:**
+1. Child error handler (module-specific)
+2. Parent error handler (only if child doesn't handle)
 
 **Why?** The most specific handler (child) should try first, with parent as fallback.
 
@@ -387,66 +546,100 @@ app.register(async (app) => {
 
 #### Setup Flow (Parent → Child)
 
-```typescript
+::: code-group
+
+```typescript [src/module.ts]
+import { hook } from "@minimajs/server";
+
 // Parent: Initialize database
-app.register(
-  hook("ready", async () => {
-    await db.connect();
-    console.log("1. Database connected");
-  })
-);
+export const meta = {
+  plugins: [
+    hook("ready", async () => {
+      await db.connect();
+      console.log("1. Database connected");
+    })
+  ]
+};
+```
+
+```typescript [src/cache/module.ts]
+import { hook } from "@minimajs/server";
 
 // Child: Initialize cache (depends on db)
-app.register(async (app) => {
-  app.register(
+export const meta = {
+  plugins: [
     hook("ready", async () => {
       await cache.warmup();
       console.log("2. Cache warmed up");
     })
-  );
-});
-
-// Output: 1 → 2 (dependencies initialize in order)
+  ]
+};
 ```
+
+:::
+
+**Output:** 1 → 2 (dependencies initialize in order)
 
 #### Cleanup Flow (Child → Parent)
 
-```typescript
+::: code-group
+
+```typescript [src/module.ts]
+import { hook } from "@minimajs/server";
+
 // Parent: Close database
-app.register(
-  hook("close", async () => {
-    await db.disconnect();
-    console.log("2. Database closed");
-  })
-);
+export const meta = {
+  plugins: [
+    hook("close", async () => {
+      await db.disconnect();
+      console.log("2. Database closed");
+    })
+  ]
+};
+```
+
+```typescript [src/cache/module.ts]
+import { hook } from "@minimajs/server";
 
 // Child: Flush cache first
-app.register(async (app) => {
-  app.register(
+export const meta = {
+  plugins: [
     hook("close", async () => {
       await cache.flush();
       console.log("1. Cache flushed");
     })
-  );
-});
-
-// Output: 1 → 2 (cleanup in reverse order of setup)
+  ]
+};
 ```
+
+:::
+
+**Output:** 1 → 2 (cleanup in reverse order of setup)
 
 #### Error Handling (Child → Parent)
 
-```typescript
+::: code-group
+
+```typescript [src/module.ts]
+import { hook } from "@minimajs/server";
+
 // Parent: Generic error handler
-app.register(
-  hook("error", (err) => {
-    console.log("Fallback: Generic error response");
-    return { error: "Something went wrong" };
-  })
-);
+export const meta = {
+  plugins: [
+    hook("error", (err) => {
+      console.log("Fallback: Generic error response");
+      return { error: "Something went wrong" };
+    })
+  ]
+};
+```
+
+```typescript [src/users/module.ts]
+import { hook } from "@minimajs/server";
 
 // Child: Specific validation error handler
-app.register(async (app) => {
-  app.register(
+export const meta = {
+  plugins: [
     hook("error", (err) => {
       if (err.name === "ValidationError") {
         console.log("Handled: Validation error");
@@ -454,48 +647,83 @@ app.register(async (app) => {
       }
       // Return undefined to let parent handle it
     })
-  );
+  ]
+};
 
-  app.post("/users", () => {
+export default async function(app) {
+  app.post("/create", () => {
     /* ... */
   });
-});
-
-// ValidationError: Child handles it
-// Other errors: Falls through to parent
+}
 ```
+
+:::
+
+**Behavior:**
+- ValidationError: Child handles it
+- Other errors: Falls through to parent
 
 ### Scope Inheritance
 
-Child scopes inherit hooks from their parents, but sibling scopes remain isolated.
+Child modules inherit hooks from their parents, but sibling modules remain isolated.
 
-```typescript
-const app = createApp();
+::: code-group
+
+```typescript [src/module.ts]
+import { hook } from "@minimajs/server";
 
 // Parent hook - inherited by all children
-app.register(hook("request", () => console.log("Parent")));
+export const meta = {
+  plugins: [
+    hook("request", () => console.log("Parent"))
+  ]
+};
 
-// Child scope 1
-app.register(async (app) => {
-  app.register(hook("request", () => console.log("Child 1")));
-  app.get("/users", () => "users");
-});
-
-// Child scope 2
-app.register(async (app) => {
-  app.register(hook("request", () => console.log("Child 2")));
-  app.get("/admin", () => "admin");
-});
+export default async function(app) {
+  app.get("/health", () => "ok");
+}
 ```
 
-**Execution when calling `/users`:**
+```typescript [src/users/module.ts]
+import { hook } from "@minimajs/server";
+
+// Child scope 1
+export const meta = {
+  plugins: [
+    hook("request", () => console.log("Child 1"))
+  ]
+};
+
+export default async function(app) {
+  app.get("/list", () => "users");
+}
+```
+
+```typescript [src/admin/module.ts]
+import { hook } from "@minimajs/server";
+
+// Child scope 2
+export const meta = {
+  plugins: [
+    hook("request", () => console.log("Child 2"))
+  ]
+};
+
+export default async function(app) {
+  app.get("/dashboard", () => "admin");
+}
+```
+
+:::
+
+**Execution when calling `/users/list`:**
 
 ```
 Child 1  (child hook - runs first)
 Parent   (inherited from parent - runs second)
 ```
 
-**Execution when calling `/admin`:**
+**Execution when calling `/admin/dashboard`:**
 
 ```
 Child 2  (child hook - runs first)
@@ -504,10 +732,55 @@ Parent   (inherited from parent - runs second)
 
 <!--@include: ./diagrams/hook-scope-inheritance.md-->
 
-> A request to `/users` will only trigger hooks from **Child 1**, not from its sibling.
+> A request to `/users/list` will only trigger hooks from **users module**, not from its sibling admin module.
+
+---
+
+## Manual Registration (Alternative)
+
+If you're not using module discovery (`moduleDiscovery: false`) or need to register hooks manually in your entry file, you can use `app.register(hook(...))`:
+
+```typescript
+import { createApp, hook } from "@minimajs/server/bun";
+
+const app = createApp({ moduleDiscovery: false });
+
+// Register hooks manually
+app.register(
+  hook("request", ({ request }) => {
+    console.log(`${request.method} ${request.url}`);
+  })
+);
+
+app.register(
+  hook.lifespan(async () => {
+    await db.connect();
+    return async () => await db.disconnect();
+  })
+);
+
+// Register a module manually
+app.register(async (app) => {
+  app.register(hook("error", () => ({ error: "Module error" })));
+  app.get("/users", () => "users");
+}, { prefix: "/api" });
+
+await app.listen({ port: 3000 });
+```
+
+**When to use manual registration:**
+- Apps without module discovery
+- Registering global plugins in entry files
+- Building reusable plugin libraries
+- Quick prototypes or single-file apps
+
+**Recommended:** Use `meta.plugins` in module files for better organization and automatic discovery.
+
+---
 
 ## Best Practices
 
+- **Use `meta.plugins`** in module files instead of `app.register()` for better organization
 - **Use `hook.lifespan`** for managing resources with paired setup and teardown logic (databases, connections, etc.)
 - **Use `defer`** for non-blocking, post-response tasks like logging or analytics
 - **Use `onError`** for request-specific error handling that shouldn't be global

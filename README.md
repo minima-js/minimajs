@@ -35,40 +35,76 @@ yarn add @minimajs/server
 
 ## 🏁 Quick Start
 
-### Bun Runtime
+### Filesystem-Based Modules (Recommended)
+
+Organize your app by features - Minima.js automatically discovers modules.
+
+**Convention:** Files must be named `module.{ts,js,mjs}`
+
+```
+src/
+├── index.ts          # Entry point
+├── users/
+│   └── module.ts     # ✅ Auto-discovered (named "module")
+└── posts/
+    └── module.ts     # ✅ Auto-discovered
+```
+
+::: code-group
+
+```typescript [src/index.ts]
+import { createApp } from "@minimajs/server/bun"; // or /node
+
+const app = createApp(); // Discovers modules automatically!
+
+await app.listen({ port: 3000 });
+```
+
+```typescript [src/users/module.ts]
+import { params } from "@minimajs/server";
+
+export default async function(app) {
+  app.get('/list', () => [{ id: 1, name: 'John' }]);
+  
+  app.get('/:id', () => {
+    const id = params.get('id');
+    return { id, name: 'John' };
+  });
+}
+```
+
+:::
+
+Your routes are automatically available:
+- `GET /users/list`
+- `GET /users/:id`
+- `GET /posts/list`
+
+### Advanced: Custom Configuration
+
+```typescript
+const app = createApp({
+  moduleDiscovery: {
+    root: './modules',     // Custom directory (default: entry file's directory)
+    index: 'route'         // Custom filename (default: 'module')
+  }
+});
+
+// Or disable auto-discovery
+const app = createApp({
+  moduleDiscovery: false   // Manual registration only
+});
+```
+
+### Simple Single-File App
+
+For quick prototypes or microservices:
 
 ```typescript
 import { createApp } from "@minimajs/server/bun";
 import { params, body } from "@minimajs/server";
 
-const app = createApp();
-
-// Simple route
-app.get("/", () => ({ message: "Hello, World!" }));
-
-// Route with parameters
-app.get("/users/:id", () => {
-  const id = params.get("id");
-  return { userId: id };
-});
-
-// POST with body parsing
-app.post("/users", () => {
-  const userData = body<{ name: string; email: string }>();
-  return { created: userData };
-});
-
-const { address } = await app.listen({ port: 3000 });
-console.log("Server running on", address);
-```
-
-### Node.js Runtime
-
-```typescript
-import { createApp } from "@minimajs/server/node";
-import { params, body } from "@minimajs/server";
-
-const app = createApp();
+const app = createApp({ moduleDiscovery: false });
 
 app.get("/", () => ({ message: "Hello, World!" }));
 
@@ -82,8 +118,7 @@ app.post("/users", () => {
   return { created: userData };
 });
 
-const { address } = await app.listen({ port: 3000 });
-console.log("Server running on", address);
+await app.listen({ port: 3000 });
 ```
 
 ## ✨ Key Features
@@ -144,49 +179,63 @@ app.post("/users/:id", () => {
 
 <!-- TODO: Update the example -->
 
-### 3. Modular Architecture with Encapsulation
+### 3. Filesystem-Based Modules with Auto-Discovery
 
-Build modular applications with powerful encapsulation - each registered function creates an isolated scope:
+Organize your application by features, and let Minima.js discover modules automatically:
 
-```typescript
-import { createApp, hook, type App } from "@minimajs/server";
+::: code-group
 
-// User module - encapsulated scope
-async function userModule(app: App) {
-  // This hook only affects routes in THIS module
-  app.register(
-    hook("request", () => {
-      console.log("User module request");
-    })
-  );
+```typescript [src/index.ts]
+import { createApp } from "@minimajs/server/bun";
 
-  app.get("/users", () => getUsers());
-  app.get("/users/:id", () => getUser(params.get("id")));
-}
+const app = createApp(); // Auto-discovers from ./src
 
-// Admin module - separate encapsulated scope
-async function adminModule(app: App) {
-  // Different hooks - completely isolated from user module
-  app.register(
-    hook("request", () => {
-      console.log("Admin module request");
-    })
-  );
-
-  app.get("/admin", () => getAdminData());
-  app.get("/admin/users", () => getAllUsers());
-}
-
-const app = createApp();
-
-// Register modules - each gets its own isolated scope
-app.register(userModule);
-app.register(adminModule);
-
-// Register with prefix for API versioning
-app.register(userModule, { prefix: "/api/v1" });
-// Routes: /api/v1/users, /api/v1/users/:id
+await app.listen({ port: 3000 });
 ```
+
+```typescript [src/users/module.ts]
+import { hook } from "@minimajs/server";
+import { cors } from "@minimajs/server/plugins";
+import { params } from "@minimajs/server";
+
+// Module-scoped plugins via meta
+export const meta = {
+  plugins: [
+    cors({ origin: '*' }),
+    hook("request", () => console.log("User request"))
+  ]
+};
+
+// Module routes
+export default async function(app) {
+  app.get('/list', () => getUsers());
+  app.get('/:id', () => getUser(params.get("id")));
+}
+```
+
+```typescript [src/admin/module.ts]
+import { hook } from "@minimajs/server";
+
+// Different plugins - completely isolated from users module
+export const meta = {
+  plugins: [
+    hook("request", () => console.log("Admin request"))
+  ]
+};
+
+export default async function(app) {
+  app.get('/dashboard', () => getAdminData());
+}
+```
+
+:::
+
+Routes are automatically created:
+- `GET /users/list`
+- `GET /users/:id`
+- `GET /admin/dashboard`
+
+Each module is **completely isolated** - plugins and hooks in one module don't affect others.
 
 ### 4. Comprehensive Lifecycle Hooks
 
@@ -424,26 +473,58 @@ For comprehensive documentation, guides, and examples, visit:
 
 ## 🏗️ Project Structure
 
-Recommended project structure:
+Recommended project structure with automatic module discovery:
 
 ```
 .
-├── src
-│   ├── index.ts           # Entry point
-│   ├── user               # User module
-│   │   ├── index.ts       # Module entry
-│   │   ├── routes.ts      # Route handlers
-│   │   └── service.ts     # Business logic
-│   ├── auth               # Auth module
-│   │   ├── index.ts
-│   │   ├── middleware.ts
-│   │   └── context.ts
-│   └── shared             # Shared utilities
-│       ├── plugins.ts
-│       └── hooks.ts
+├── src/
+│   ├── index.ts              # Entry point
+│   ├── module.ts             # Optional root module (defines /api prefix for all)
+│   ├── users/
+│   │   ├── module.ts         # Module entry (auto-loaded)
+│   │   ├── service.ts        # Business logic
+│   │   └── types.ts          # Type definitions
+│   ├── posts/
+│   │   ├── module.ts
+│   │   └── service.ts
+│   └── auth/
+│       ├── module.ts
+│       ├── middleware.ts
+│       └── context.ts
 ├── package.json
 └── tsconfig.json
 ```
+
+::: code-group
+
+```typescript [src/index.ts]
+import { createApp } from "@minimajs/server/bun";
+
+const app = createApp(); // Auto-discovers modules from ./src
+
+await app.listen({ port: 3000 });
+```
+
+```typescript [src/users/module.ts]
+import type { App } from "@minimajs/server";
+import { cors } from "@minimajs/server/plugins";
+import { body } from "@minimajs/server";
+
+// Register module-scoped plugins
+export const meta = {
+  plugins: [
+    cors({ origin: 'https://example.com' })
+  ]
+};
+
+// Define routes
+export default async function(app: App) {
+  app.get('/list', () => getUsers());
+  app.post('/create', () => createUser(body()));
+}
+```
+
+:::
 
 ## 🔧 TypeScript Configuration
 
