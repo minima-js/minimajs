@@ -12,6 +12,7 @@ import type { ImportedModule, ModuleDiscoveryOptions } from "./types.js";
  */
 export function moduleDiscovery(options: ModuleDiscoveryOptions) {
   const modulesPath = options.root ?? getRunningFilePath();
+  const index = options.index ?? "module";
   async function loadModules(app: App, current: ImportedModule): Promise<void> {
     app.register(async function dummyModule(child: App, opts: any) {
       current.meta.plugins?.forEach((x) => child.register(x));
@@ -20,21 +21,21 @@ export function moduleDiscovery(options: ModuleDiscoveryOptions) {
         await current.module(child, opts);
       }
       // Scan and load child modules
-      for await (const entry of scanModules(current.dir)) {
+      for await (const entry of scanModules(current.dir, index)) {
         await loadModules(child, await importModule(entry));
       }
     }, current.meta);
   }
 
   return plugin(async function moduleDiscovery(app) {
-    const rootModule = await tryImport(path.join(modulesPath, "module"));
+    const rootModule = await tryImport(path.join(modulesPath, index));
     if (rootModule) {
       rootModule.meta = { name: "root", ...rootModule.meta };
       await loadModules(app, rootModule);
       return;
     }
 
-    for await (const entry of scanModules(modulesPath)) {
+    for await (const entry of scanModules(modulesPath, index)) {
       await loadModules(app, await importModule(entry));
     }
   });

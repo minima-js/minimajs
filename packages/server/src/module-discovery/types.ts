@@ -15,4 +15,5 @@ export interface ImportedModule {
 
 export interface ModuleDiscoveryOptions {
   root?: string;
+  index?: string;
 }
