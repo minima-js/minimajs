@@ -20,6 +20,7 @@ import type { ServerAdapter } from "../interfaces/server.js";
 import { minimajs } from "../plugins/minimajs/index.js";
 import { Server } from "./server.js";
 import { createLogger, logger as defaultLogger } from "../logger.js";
+import { moduleDiscovery } from "../module-discovery/index.js";
 
 export * from "./server.js";
 
@@ -33,6 +34,7 @@ export interface CreateBaseSeverOptions {
   prefix?: string;
   /** Pino logger instance, or false to disable logging */
   logger?: Logger | false;
+  moduleDiscovery?: false | string;
 }
 
 export function createBaseServer<T>(server: ServerAdapter<T>, options: CreateBaseSeverOptions) {
@@ -44,5 +46,8 @@ export function createBaseServer<T>(server: ServerAdapter<T>, options: CreateBas
     router: Router({ ignoreTrailingSlash: true, ...options.router }),
   });
   srv.register(minimajs());
+  if (options.moduleDiscovery !== false) {
+    srv.register(moduleDiscovery({ modulesPath: options.moduleDiscovery, name: "root" }));
+  }
   return srv;
 }
