@@ -1,11 +1,10 @@
+import path from "node:path";
 import type { App } from "../interfaces/index.js";
 import { plugin } from "../plugin.js";
 import { getRunningFilePath } from "../utils/fs.js";
-import { importModule } from "./importer.js";
-import { scanDirectory } from "./scanner.js";
-import type { Meta, ModuleDiscoveryOptions } from "./types.js";
-
-export * from "./types.js";
+import { importModule, tryImport } from "./importer.js";
+import { scanModules } from "./scanner.js";
+import type { ImportedModule, ModuleDiscoveryOptions } from "./types.js";
 
 /**
  * Module discovery plugin
@@ -13,32 +12,28 @@ export * from "./types.js";
  */
 export function moduleDiscovery(options: ModuleDiscoveryOptions) {
   const modulesPath = options.modulesPath ?? getRunningFilePath();
+  async function loadModules(app: App, current: ImportedModule): Promise<void> {
+    app.register(async function dummyModule(child: App, opts: any) {
+      if (current.module) {
+        await current.module(child, opts);
+      }
+      // Scan and load child modules
+      for await (const entry of scanModules(current.dir)) {
+        await loadModules(child, await importModule(entry));
+      }
+    }, current.meta);
+  }
 
-  async function loadModules(app: App, current: string, meta?: Meta): Promise<void> {
-    // Import module (Node.js caches this automatically)
-    const imported = await importModule(current, meta);
-
-    if (!imported) {
-      // No module found and no default meta - stop here
+  return plugin(async function moduleDiscovery(app) {
+    const rootModule = await tryImport(path.join(modulesPath, "module"));
+    if (rootModule) {
+      rootModule.meta = { name: options.name, ...rootModule.meta };
+      await loadModules(app, rootModule);
       return;
     }
 
-    app.register(async function dummyModule(child: App, opts: any) {
-      if (imported.module) {
-        await imported.module(child, opts);
-      }
-      // Scan and load child modules
-      for await (const entry of scanDirectory(current)) {
-        await loadModules(child, entry.path);
-      }
-    }, imported.meta);
-  }
-
-  return plugin(function moduleDiscovery(app) {
-    return loadModules(app, modulesPath, {
-      prefix: "",
-      name: options.name,
-    },
-    );
+    for await (const entry of scanModules(modulesPath)) {
+      await loadModules(app, await importModule(entry));
+    }
   });
 }

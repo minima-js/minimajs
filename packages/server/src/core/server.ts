@@ -1,7 +1,7 @@
 import Router, { type HTTPMethod, type HTTPVersion } from "find-my-way";
 import { type Avvio } from "avvio";
 import { type Logger } from "pino";
-import type { App, RouteHandler } from "../interfaces/app.js";
+import type { App, Handler } from "../interfaces/app.js";
 import type { Plugin, Registerable, PluginOptions, PluginSync, Module, RegisterOptions } from "../plugin.js";
 import { applyRouteMetadata, applyRoutePrefix } from "../internal/route.js";
 import { createHooksStore, runHooks } from "../hooks/store.js";
@@ -57,61 +57,61 @@ export class Server<S> implements App<S> {
   }
 
   // HTTP methods
-  get(path: string, handler: RouteHandler<S>): this;
-  get(path: string, ...args: [...descriptors: RouteMetaDescriptor<S>[], handler: RouteHandler<S>]): this;
-  get(path: string, ...args: [...descriptors: RouteMetaDescriptor<S>[], handler: RouteHandler<S>]): this {
+  get(path: string, handler: Handler<S>): this;
+  get(path: string, ...args: [...descriptors: RouteMetaDescriptor<S>[], handler: Handler<S>]): this;
+  get(path: string, ...args: [...descriptors: RouteMetaDescriptor<S>[], handler: Handler<S>]): this {
     return this.route({ method: "GET", path }, ...args);
   }
 
-  post(path: string, handler: RouteHandler<S>): this;
-  post(path: string, ...args: [...RouteMetaDescriptor<S>[], RouteHandler<S>]): this;
-  post(path: string, ...args: [...RouteMetaDescriptor<S>[], RouteHandler<S>]): this {
+  post(path: string, handler: Handler<S>): this;
+  post(path: string, ...args: [...RouteMetaDescriptor<S>[], Handler<S>]): this;
+  post(path: string, ...args: [...RouteMetaDescriptor<S>[], Handler<S>]): this {
     return this.route({ method: "POST", path }, ...args);
   }
 
-  put(path: string, handler: RouteHandler<S>): this;
-  put(path: string, ...args: [...RouteMetaDescriptor<S>[], RouteHandler<S>]): this;
-  put(path: string, ...args: [...RouteMetaDescriptor<S>[], RouteHandler<S>]): this {
+  put(path: string, handler: Handler<S>): this;
+  put(path: string, ...args: [...RouteMetaDescriptor<S>[], Handler<S>]): this;
+  put(path: string, ...args: [...RouteMetaDescriptor<S>[], Handler<S>]): this {
     return this.route({ method: "PUT", path }, ...args);
   }
 
-  delete(path: string, handler: RouteHandler<S>): this;
-  delete(path: string, ...args: [...RouteMetaDescriptor<S>[], RouteHandler<S>]): this;
-  delete(path: string, ...args: [...RouteMetaDescriptor<S>[], RouteHandler<S>]): this {
+  delete(path: string, handler: Handler<S>): this;
+  delete(path: string, ...args: [...RouteMetaDescriptor<S>[], Handler<S>]): this;
+  delete(path: string, ...args: [...RouteMetaDescriptor<S>[], Handler<S>]): this {
     return this.route({ method: "DELETE", path }, ...args);
   }
 
-  patch(path: string, handler: RouteHandler<S>): this;
-  patch(path: string, ...args: [...RouteMetaDescriptor<S>[], RouteHandler<S>]): this;
-  patch(path: string, ...args: [...RouteMetaDescriptor<S>[], RouteHandler<S>]): this {
+  patch(path: string, handler: Handler<S>): this;
+  patch(path: string, ...args: [...RouteMetaDescriptor<S>[], Handler<S>]): this;
+  patch(path: string, ...args: [...RouteMetaDescriptor<S>[], Handler<S>]): this {
     return this.route({ method: "PATCH", path }, ...args);
   }
 
-  head(path: string, handler: RouteHandler<S>): this;
-  head(path: string, ...args: [...RouteMetaDescriptor<S>[], RouteHandler<S>]): this;
-  head(path: string, ...args: [...RouteMetaDescriptor<S>[], RouteHandler<S>]): this {
+  head(path: string, handler: Handler<S>): this;
+  head(path: string, ...args: [...RouteMetaDescriptor<S>[], Handler<S>]): this;
+  head(path: string, ...args: [...RouteMetaDescriptor<S>[], Handler<S>]): this {
     return this.route({ method: "HEAD", path }, ...args);
   }
 
-  options(path: string, handler: RouteHandler<S>): this;
-  options(path: string, ...args: [...RouteMetaDescriptor<S>[], RouteHandler<S>]): this;
-  options(path: string, ...args: [...RouteMetaDescriptor<S>[], RouteHandler<S>]): this {
+  options(path: string, handler: Handler<S>): this;
+  options(path: string, ...args: [...RouteMetaDescriptor<S>[], Handler<S>]): this;
+  options(path: string, ...args: [...RouteMetaDescriptor<S>[], Handler<S>]): this {
     return this.route({ method: "OPTIONS", path }, ...args);
   }
 
-  all(path: string, handler: RouteHandler<S>): this;
-  all(path: string, ...args: [...RouteMetaDescriptor<S>[], RouteHandler<S>]): this;
-  all(path: string, ...args: [...RouteMetaDescriptor<S>[], RouteHandler<S>]): this {
+  all(path: string, handler: Handler<S>): this;
+  all(path: string, ...args: [...RouteMetaDescriptor<S>[], Handler<S>]): this;
+  all(path: string, ...args: [...RouteMetaDescriptor<S>[], Handler<S>]): this {
     // Register route for all HTTP methods
     const methods: HTTPMethod[] = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"];
     return this.route({ method: methods, path }, ...args);
   }
 
-  route(options: RouteOptions, handler: RouteHandler<S>): this;
-  route(options: RouteOptions, ...args: [...RouteMetaDescriptor<S>[], RouteHandler<S>]): this;
-  route(options: RouteOptions, ...args: [...RouteMetaDescriptor<S>[], RouteHandler<S>]): this {
+  route(options: RouteOptions, handler: Handler<S>): this;
+  route(options: RouteOptions, ...args: [...RouteMetaDescriptor<S>[], Handler<S>]): this;
+  route(options: RouteOptions, ...args: [...RouteMetaDescriptor<S>[], Handler<S>]): this {
     const { method, path } = options;
-    const handler = args[args.length - 1] as RouteHandler<S>;
+    const handler = args[args.length - 1] as Handler<S>;
     const descriptors = args.slice(0, -1) as RouteMetaDescriptor<S>[];
     const fullPath = applyRoutePrefix(path, this.$prefix, this.$prefixExclude);
 

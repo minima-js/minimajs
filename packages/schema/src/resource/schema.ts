@@ -3,7 +3,7 @@ import {
   type App,
   type Context,
   type PluginSync,
-  type RouteHandler,
+  type Handler,
   type RouteMetaDescriptor,
   type RouteMetadata,
 } from "@minimajs/server";
@@ -14,7 +14,7 @@ export type SchemaDataTypes = "body" | "headers" | "response" | "searchParams" |
 
 interface SchemaStore<T> {
   path: string;
-  handler: RouteHandler<T>;
+  handler: Handler<T>;
   app: App;
   schemas: SchemaMetadata[];
 }

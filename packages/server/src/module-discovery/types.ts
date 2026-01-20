@@ -6,6 +6,7 @@ export interface Meta {
 }
 
 export interface ImportedModule {
+  dir: string;
   meta: Meta;
   module?: Module;
 }
