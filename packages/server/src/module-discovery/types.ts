@@ -1,8 +1,10 @@
+import type { Plugin, PluginSync } from "../plugin.js";
 import type { Module } from "../plugin.js";
 
-export interface Meta {
+export interface Meta<S = any> {
   name?: string;
   prefix?: string;
+  plugins?: (Plugin<S> | PluginSync<S>)[];
 }
 
 export interface ImportedModule {
@@ -12,6 +14,5 @@ export interface ImportedModule {
 }
 
 export interface ModuleDiscoveryOptions {
-  modulesPath?: string;
-  name: string;
+  root?: string;
 }

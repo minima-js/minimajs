@@ -21,6 +21,7 @@ import { minimajs } from "../plugins/minimajs/index.js";
 import { Server } from "./server.js";
 import { createLogger, logger as defaultLogger } from "../logger.js";
 import { moduleDiscovery } from "../module-discovery/index.js";
+import type { ModuleDiscoveryOptions } from "../module-discovery/types.js";
 
 export * from "./server.js";
 
@@ -34,7 +35,7 @@ export interface CreateBaseSeverOptions {
   prefix?: string;
   /** Pino logger instance, or false to disable logging */
   logger?: Logger | false;
-  moduleDiscovery?: false | string;
+  moduleDiscovery?: false | ModuleDiscoveryOptions;
 }
 
 export function createBaseServer<T>(server: ServerAdapter<T>, options: CreateBaseSeverOptions) {
@@ -47,7 +48,7 @@ export function createBaseServer<T>(server: ServerAdapter<T>, options: CreateBas
   });
   srv.register(minimajs());
   if (options.moduleDiscovery !== false) {
-    srv.register(moduleDiscovery({ modulesPath: options.moduleDiscovery, name: "root" }));
+    srv.register(moduleDiscovery(options.moduleDiscovery ?? {}));
   }
   return srv;
 }

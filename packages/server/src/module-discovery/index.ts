@@ -11,9 +11,11 @@ import type { ImportedModule, ModuleDiscoveryOptions } from "./types.js";
  * Uses Node.js's built-in import caching for performance
  */
 export function moduleDiscovery(options: ModuleDiscoveryOptions) {
-  const modulesPath = options.modulesPath ?? getRunningFilePath();
+  const modulesPath = options.root ?? getRunningFilePath();
   async function loadModules(app: App, current: ImportedModule): Promise<void> {
     app.register(async function dummyModule(child: App, opts: any) {
+      current.meta.plugins?.forEach((x) => child.register(x));
+
       if (current.module) {
         await current.module(child, opts);
       }
@@ -27,7 +29,7 @@ export function moduleDiscovery(options: ModuleDiscoveryOptions) {
   return plugin(async function moduleDiscovery(app) {
     const rootModule = await tryImport(path.join(modulesPath, "module"));
     if (rootModule) {
-      rootModule.meta = { name: options.name, ...rootModule.meta };
+      rootModule.meta = { name: "root", ...rootModule.meta };
       await loadModules(app, rootModule);
       return;
     }
