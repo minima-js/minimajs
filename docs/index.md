@@ -3,11 +3,10 @@ layout: home
 
 hero:
   name: "Minima.js"
-  text: "File-Based Modules. Zero Config."
+  text: Thoughtfully Designed for Modern Runtimes
   tagline: |
-    Build backends that feel fast and clear—
-    file structure becomes your API, every configurations are plugins, and everything just works.
-
+    Most frameworks optimize features.
+    Minima.js optimizes how it feels to work every day.
   image:
     src: /logo.svg
     alt: Minima.js
@@ -22,82 +21,247 @@ hero:
 features:
   - icon:
       src: /icon-lightning.svg
-    title: File-Based Module Auto-Discovery
-    details: "Just create folders and module.ts files—routes, hooks, and plugins auto-load. No imports, no registration, no config. Structure matches URLs."
+    title: Built from Scratch for Modern Runtimes
+    details: "Not a legacy port. Designed ground-up for Bun and Node.js with native APIs, zero compatibility layers, zero historical baggage."
   - icon:
-      src: /icon-bun.svg
-    title: "100% Bun-Native Compatible"
-    details: "First-class Bun support with dedicated imports. Full Node.js compatibility. Same code, different runtime."
+      src: /icon-function.svg
+    title: File-Based Modules with True Isolation
+    details: "Create users/module.ts, it auto-loads as /users/*. Each module is encapsulated—plugins only affect that module and its children. No sibling interference."
   - icon:
-      src: /icon-globe.svg
-    title: "Web Standards & ESM"
-    details: "Native Request/Response objects and pure ESM modules. No wrappers, no abstractions—just standardized, future-proof APIs."
+      src: /icon-context.svg
+    title: Write Code That Reads Naturally
+    details: "Call body() from anywhere. No req.body drilling. No context passing. Access request data like it's global—because it is (safely)."
   - icon:
       src: /icon-typescript.svg
     title: TypeScript works with you
     details: |
-      APIs are designed for inference, so types flow naturally from usage. You write logic, not generics or config.
+      APIs are designed for inference, so types flow naturally from usage. You write logic.
   - icon:
-      src: /icon-context.svg
-    title: "Context-Aware Design"
-    details: "AsyncLocalStorage based context. Access request data anywhere without prop drilling."
+      src: /icon-globe.svg
+    title: Web Standards, Zero Abstractions
+    details: "Native Request/Response objects. Web standard APIs. Pure ESM. No framework-specific wrappers. Write portable, future-proof code."
   - icon:
-      src: /icon-function.svg
-    title: Composable, but Never Entangled
-    details: Powerful hooks, plugins, and isolated modules—compose freely while keeping boundaries explicit and predictable.
+      src: /icon-bun.svg
+    title: Native Performance, Zero Cost
+    details: "Bun.serve() native support. Node.js compatibility. No abstraction overhead. Direct access to runtime primitives."
 ---
 
-## File-Based Routing, Zero Config
+## How It Feels to Build
 
-Organize by features—modules auto-load based on file structure:
+Watch how little code you need to write. Notice what you DON'T see—no imports, no registration, no wiring.
 
 ::: code-group
 
 ```typescript [src/index.ts]
 import { createApp } from "@minimajs/server/bun";
+// import { createApp } from "@minimajs/server/node"; // for node
 
-const app = createApp(); // Auto-discovers all modules
 
+const app = createApp();
 await app.listen({ port: 3000 });
+// That's your entire entry point
+```
+
+```typescript [src/module.ts]
+import { type Meta } from "@minimajs/server";
+import { bodyParser } from "@minimajs/body-parser";
+
+// Global config - applies to every route
+export const meta: Meta = {
+  prefix: '/api',
+  plugins: [bodyParser()]
+};
+
+export default async function(app) {
+  app.get('/health', () => ({ status: 'ok' }));
+}
 ```
 
 ```typescript [src/users/module.ts]
-import { body, hook } from "@minimajs/server";
-import { bodyParser } from "@minimajs/body-parser";
+import { body } from "@minimajs/server";
 
-export const meta = {
-  plugins: [
-    bodyParser(), // will be required plugin to use body() and can also be installed global using app.register(bodyParser())
-    hook("request", () => console.log("User route hit")),
-  ],
-};
+// Auto-loaded as /api/users/*
+export default async function(app) {
+  app.get('/list', () => [
+    { id: 1, name: "Alice" },
+    { id: 2, name: "Bob" }
+  ]);
 
-export default async function (app) {
-  app.post("/create", () => {
-    const data = body();
-    return { message: "User created", data };
-  });
-
-  app.get("/list", () => {
-    return { users: ["Alice", "Bob"] };
+  app.post('/create', () => {
+    const user = body();
+    return { created: user };
   });
 }
-// ✅ Auto-loaded as /users/*
 ```
 
 ```typescript [src/posts/module.ts]
-export default async function (app) {
-  app.get("/latest", () => {
-    return { posts: [] };
-  });
+// Auto-loaded as /api/posts/*
+export default async function(app) {
+  app.get('/latest', () => ({ posts: [] }));
 }
-// ✅ Auto-loaded as /posts/*
 ```
 
 :::
 
-**Your file structure = Your API structure**  
-No imports. No manual registration. Just create files and go.
+**Your API is ready:**
+- `GET /api/health` → `{"status":"ok"}`
+- `GET /api/users/list` → `[{"id":1,"name":"Alice"}...]`
+- `POST /api/users/create` → Creates user
+- `GET /api/posts/latest` → `{"posts":[]}`
+
+---
+
+## Add Authentication in Seconds
+
+Protected routes? Just add a plugin to `meta.plugins`:
+
+::: code-group
+
+```typescript [src/protected/module.ts]
+import { type Meta } from "@minimajs/server";
+import { authPlugin, guardPlugin, getUser } from "../auth/index.js";
+
+export const meta: Meta = {
+  plugins: [
+    authPlugin,   // Makes getUser() available
+    guardPlugin   // Requires authentication
+  ]
+};
+
+export default async function(app) {
+  app.get('/profile', () => {
+    const user = getUser();  // Guaranteed to exist (guard ensures it)
+    return { user };
+  });
+}
+```
+
+:::
+
+No decorators. No middleware chains. Just declare what you need.
+
+[See full JWT authentication tutorial →](/cookbook/jwt-authentication)
+
+---
+
+## True Module Encapsulation
+
+Each module creates an isolated scope. Plugins, hooks, and configuration stay contained—no accidental global state, no sibling interference.
+
+::: code-group
+
+```typescript [src/module.ts]
+import { type Meta } from "@minimajs/server";
+import { bodyParser } from "@minimajs/body-parser";
+
+// Root module - these plugins apply to ALL children
+export const meta: Meta = {
+  prefix: '/api',
+  plugins: [bodyParser()]
+};
+```
+
+```typescript [src/users/module.ts]
+import { type Meta } from "@minimajs/server";
+import { hook } from "@minimajs/server";
+
+// Users module - this hook ONLY affects /api/users/* routes
+export const meta: Meta = {
+  plugins: [
+    hook('request', () => console.log('Users accessed'))
+  ]
+};
+
+export default async function(app) {
+  app.get('/list', () => [/* users */]);
+}
+```
+
+```typescript [src/posts/module.ts]
+// Posts module - no logging hook here
+// Completely isolated from users module
+export default async function(app) {
+  app.get('/latest', () => [/* posts */]);
+}
+```
+
+:::
+
+**How it works:**
+- ✅ Root module plugins → Inherited by all children
+- ✅ Parent module plugins → Inherited by their children only
+- ✅ Sibling modules → Completely isolated from each other
+- ✅ Child can override or extend parent behavior
+- ✅ No global state pollution
+
+**Request to `/api/users/list`:**
+```
+→ Root plugins run (bodyParser)
+→ Users plugins run (logging hook)
+→ Route handler executes
+```
+
+**Request to `/api/posts/latest`:**
+```
+→ Root plugins run (bodyParser)
+→ Route handler executes
+✅ Users logging hook DOES NOT run (isolated)
+```
+
+This means you can:
+- Add features without breaking existing ones
+- Test modules in complete isolation
+- Refactor one module without touching others
+- Work in parallel as a team without conflicts
+- See exactly what affects each route
+
+
+## Real Projects, Real Simple
+
+### REST API with Auth
+```
+src/
+├── module.ts           # Global auth, body parsing, CORS
+├── auth/
+│   └── module.ts       # POST /auth/login (public)
+└── users/
+    └── module.ts       # GET/POST /users/* (protected)
+```
+
+[Full JWT tutorial →](/cookbook/jwt-authentication)
+
+### Microservices Gateway
+```
+src/
+├── module.ts           # Rate limiting, logging
+├── api/
+│   └── module.ts       # Proxy to backend services
+└── webhooks/
+    └── module.ts       # Handle external webhooks
+```
+
+[Proxy plugin docs →](/plugins/proxy)
+
+<div class="VPFeatures" style="--vp-features-gap: 2rem; --vp-features-max-items-per-row: 1;">
+  <div class="container">
+    <div class="items">
+      <div class="item grid-1">
+        <div class="VPLink no-arrow" href="#">
+          <article class="VPFeature">
+            <h2 class="title">Ready to Build?</h2>
+            <p class="details">
+              Start with our 5-minute quickstart. You'll have a working API with authentication, body parsing, and multiple modules before your coffee gets cold.
+            </p>
+            <div style="height: 1rem;"></div>
+            <a href="/getting-started" class="VPButton" role="button" style="background-color: var(--vp-c-brand-1); color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.25rem;">
+              Get Started →
+            </a>
+          </article>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div style="height: 2rem;"></div>
 
@@ -107,36 +271,13 @@ No imports. No manual registration. Just create files and go.
       <div class="item grid-1">
         <div class="VPLink no-arrow" href="#">
           <article class="VPFeature">
-            <h2 class="title">Why Minima.js?</h2>
-            <p class="details">
-              Minima.js removes the friction you’ve learned to tolerate—slow feedback, noisy types, hidden lifecycles, and tangled modules—so building backends feels fast, clear, and predictable again.
-            </p>
-            <div style="height: 1rem;"></div>
-            <a href="/intro" class="VPButton" role="button" style="background-color: var(--vp-c-brand-1); color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.25rem;">
-              Learn More
-            </a>
-          </article>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div style="height: 4rem;"></div>
-
-<div class="VPFeatures" style="--vp-features-gap: 2rem; --vp-features-max-items-per-row: 1;">
-  <div class="container">
-    <div class="items">
-      <div class="item grid-1">
-        <div class="VPLink no-arrow" href="#">
-          <article class="VPFeature">
             <h2 class="title">Join the Community</h2>
             <p class="details">
-              Open source and community-driven. Report bugs, suggest features, or contribute code. We'd love to have you on board.
+              Open source and community-driven. Report bugs, request features, or contribute code. We'd love your feedback.
             </p>
             <div style="height: 1rem;"></div>
             <a href="https://github.com/minima-js/minimajs" class="VPButton" role="button" style="background-color: var(--vp-c-brand-1); color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.25rem;">
-              Get Involved
+              GitHub →
             </a>
           </article>
         </div>

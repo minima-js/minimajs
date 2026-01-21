@@ -62,7 +62,6 @@ const config = defineConfig({
         items: [
           { text: "Routing", link: "/guides/routing" },
           { text: "HTTP", link: "/guides/http" },
-          { text: "Middleware", link: "/guides/middleware" }, // Updated link
           { text: "Hooks", link: "/guides/hooks" },
           { text: "Error Handling", link: "/guides/error-handling" },
           { text: "Logger", link: "/guides/logger" },

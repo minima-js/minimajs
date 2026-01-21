@@ -13,7 +13,13 @@ tags:
 
 Plugins are the fundamental building blocks of Minima.js applications. They allow you to encapsulate and reuse logic, extend functionality, add lifecycle hooks, and compose complex features from smaller, manageable pieces.
 
-This guide covers how to create plugins and how to compose them into powerful, reusable structures.
+**In Minima.js, everything is a plugin** - even hooks are plugins. Apply them via:
+- **`meta.plugins`** in module files (recommended)
+- **`app.register()`** for manual registration
+
+This guide covers how to create plugins and how to use them in your modules.
+
+> **Important:** The `meta.plugins` property **only works in module files** (files named `module.ts` by default, or whatever you configure with `moduleDiscovery.index`). It will **not** work in random files - only in files that are auto-discovered as modules. For other files or manual registration, use `app.register()` instead.
 
 ## What is a Plugin?
 
@@ -24,30 +30,44 @@ A plugin is a reusable component that extends the functionality of your applicat
 Understanding the distinction between a plugin and a module is key to structuring your application effectively.
 
 **Module** (creates a new isolated scope):
-A module is a plain `async function` that creates a new, encapsulated scope. Hooks and routes registered inside a module do not affect its parent or sibling scopes. This is ideal for grouping a feature's routes.
+A module is a plain `async function` that creates a new, encapsulated scope. Hooks and plugins registered via `meta.plugins` do not affect parent or sibling scopes. This is ideal for grouping a feature's routes.
 
-```typescript
+::: code-group
+
+```typescript [src/users/module.ts]
 // This is a MODULE - it creates a new nested scope
-app.register(async function userModule(app, opts) {
-  // This creates a child scope, isolated from siblings.
-  app.get("/users", () => getUsers());
-});
+export default async function(app) {
+  // This creates a child scope, isolated from siblings
+  app.get("/list", () => getUsers());
+}
 ```
+
+:::
 
 **Plugin** (extends the current scope):
-A plugin is a function wrapped with the `plugin()` utility. It extends the _current_ scope, making it perfect for adding hooks, middleware, or decorators that should apply to other routes or plugins at the same level.
+A plugin is a function wrapped with the `plugin()` utility. It extends the _current_ scope via `meta.plugins`, making it perfect for adding hooks that should apply to routes in that module.
 
-```typescript
+::: code-group
+
+```typescript [src/api/module.ts]
 import { plugin, hook } from "@minimajs/server";
 
-// This is a PLUGIN - it extends the current scope
-app.register(
-  plugin(async function authPlugin(app, opts) {
-    // This hook is added to the CURRENT scope.
-    app.register(hook("request", authMiddleware));
-  })
-);
+// Create a custom plugin
+const authPlugin = plugin(async function auth(app) {
+  app.register(hook("request", authMiddleware));
+});
+
+// Register plugin in meta - extends current module scope
+export const meta = {
+  plugins: [authPlugin]
+};
+
+export default async function(app) {
+  app.get("/protected", () => "authenticated");
+}
 ```
+
+:::
 
 | Feature       | Plugin (`plugin()`)          | Module (`async function`)      |
 | ------------- | ---------------------------- | ------------------------------ |
@@ -71,7 +91,9 @@ plugin<T>(fn: PluginCallback<T>): Plugin
 
 **Example (with options factory):**
 
-```typescript
+::: code-group
+
+```typescript [plugins/api-key.ts]
 import { plugin, hook } from "@minimajs/server";
 
 interface ApiPluginOptions {
@@ -79,7 +101,7 @@ interface ApiPluginOptions {
   timeout?: number;
 }
 
-const apiPlugin = (options: ApiPluginOptions) =>
+export const apiPlugin = (options: ApiPluginOptions) =>
   plugin(async function api(app) {
     const { apiKey, timeout = 5000 } = options;
 
@@ -89,15 +111,27 @@ const apiPlugin = (options: ApiPluginOptions) =>
       })
     );
   });
-
-// Register with options
-app.register(
-  apiPlugin({
-    apiKey: process.env.API_KEY!,
-    timeout: 10000,
-  })
-);
 ```
+
+```typescript [src/api/module.ts]
+import { apiPlugin } from "../../plugins/api-key.js";
+
+// Register plugin with options in meta
+export const meta = {
+  plugins: [
+    apiPlugin({
+      apiKey: process.env.API_KEY!,
+      timeout: 10000,
+    })
+  ]
+};
+
+export default async function(app) {
+  app.get("/data", () => "protected data");
+}
+```
+
+:::
 
 ### `plugin.sync()`
 
@@ -109,19 +143,33 @@ plugin.sync<T>(fn: PluginCallbackSync<T>): Plugin
 
 **Example:**
 
-```typescript
+::: code-group
+
+```typescript [plugins/cors.ts]
 import { plugin, hook } from "@minimajs/server";
 
-const corsPlugin = plugin.sync(function cors(app, opts) {
+export const corsPlugin = plugin.sync(function cors(app) {
   app.register(
     hook("request", (ctx) => {
-      ctx.response.headers.set("Access-Control-Allow-Origin", "*");
+      ctx.responseState.headers.set("Access-Control-Allow-Origin", "*");
     })
   );
 });
-
-app.register(corsPlugin);
 ```
+
+```typescript [src/api/module.ts]
+import { corsPlugin } from "../../plugins/cors.js";
+
+export const meta = {
+  plugins: [corsPlugin]
+};
+
+export default async function(app) {
+  app.get("/data", () => ({ data: "value" }));
+}
+```
+
+:::
 
 ---
 
@@ -141,31 +189,31 @@ function compose<T extends PluginOptions = any>(...plugins: (Plugin<T> | PluginS
 
 **Usage:**
 
-```typescript
-import { compose, hook, type App } from "@minimajs/server";
+::: code-group
 
-// 1. Compose lifecycle hooks for database management
+```typescript [src/module.ts]
+import { compose, hook } from "@minimajs/server";
+
+// Compose lifecycle hooks for database management
 const dbLifecycle = compose(
   hook("ready", async () => await db.connect()),
   hook("close", async () => await db.close())
 );
-app.register(dbLifecycle);
 
-// 2. Compose multiple feature modules into a single API
-async function authModule(app: App) {
-  /* ... */
-}
-async function usersModule(app: App) {
-  /* ... */
-}
+export const meta = {
+  plugins: [dbLifecycle]
+};
 
-const apiModule = compose(authModule, usersModule);
-app.register(apiModule); // register composed module
+export default async function(app) {
+  app.get("/health", () => "ok");
+}
 ```
+
+:::
 
 ### `compose.create()`
 
-`compose.create()` creates a reusable "applicator" that wraps a module with a common set of plugins, such as middleware.
+`compose.create()` creates a reusable "applicator" that wraps plugins together. Useful for creating shared plugin stacks.
 
 **Signature:**
 
@@ -177,60 +225,101 @@ function create<T extends PluginOptions = any>(
 
 **Usage:**
 
-```typescript
-import { compose, type App } from "@minimajs/server";
+::: code-group
 
-// Create a composer with common middleware
+```typescript [src/api/module.ts]
+import { compose } from "@minimajs/server";
+import { authPlugin } from "../../plugins/auth.js";
+import { loggingPlugin } from "../../plugins/logging.js";
+
+// Create a composer with common plugins
 const withAuthAndLogging = compose.create(authPlugin, loggingPlugin);
 
-// Define modules
-async function usersModule(app: App) {
-  /* ... */
-}
-async function postsModule(app: App) {
-  /* ... */
-}
+export const meta = {
+  plugins: [
+    withAuthAndLogging(/* additional plugin here */)
+  ]
+};
 
-// Apply the composer to both modules
-app.register(withAuthAndLogging(usersModule));
-app.register(withAuthAndLogging(postsModule));
+export default async function(app) {
+  app.get("/data", () => "protected data");
+}
 ```
 
-**Execution Order:** `authPlugin` → `loggingPlugin` → `usersModule`.
+:::
+
+**Execution Order:** `authPlugin` → `loggingPlugin` → additional plugins.
 
 ## Use Cases for Composition
 
-#### 1. Reusable Middleware Stacks
+#### 1. Reusable Plugin Stacks
 
-```typescript
-const withSecureMiddleware = compose.create(
+::: code-group
+
+```typescript [src/api/module.ts]
+import { compose } from "@minimajs/server";
+import { corsPlugin } from "../../plugins/cors.js";
+import { helmetPlugin } from "../../plugins/helmet.js";
+import { rateLimitPlugin } from "../../plugins/rate-limit.js";
+import { authPlugin } from "../../plugins/auth.js";
+
+// Compose security plugins
+const securityPlugins = compose(
   corsPlugin({ origin: "https://example.com" }),
   helmetPlugin(),
   rateLimitPlugin({ max: 100 }),
-  authenticationPlugin()
+  authPlugin({ secretKey: process.env.JWT_SECRET! })
 );
 
-// Apply to all API routes
-app.register(withSecureMiddleware(publicApiModule));
-app.register(withSecureMiddleware(privateApiModule));
+export const meta = {
+  plugins: [securityPlugins]
+};
+
+export default async function(app) {
+  app.get("/secure", () => "protected");
+}
 ```
 
-#### 2. Grouping Feature Modules
+:::
 
-```typescript
-const userFeatures = compose(userAuthModule, userProfileModule, userSettingsModule);
-const adminFeatures = compose(adminDashboardModule, adminUsersModule);
+#### 2. Combining Multiple Hooks
 
-app.register(userFeatures);
-app.register(adminFeatures);
+::: code-group
+
+```typescript [src/module.ts]
+import { compose, hook } from "@minimajs/server";
+
+// Group related lifecycle hooks
+const appLifecycle = compose(
+  hook("ready", async () => {
+    await db.connect();
+    await cache.warmup();
+  }),
+  hook("close", async () => {
+    await cache.flush();
+    await db.disconnect();
+  })
+);
+
+export const meta = {
+  plugins: [appLifecycle]
+};
+
+export default async function(app) {
+  app.get("/health", () => "ok");
+}
 ```
+
+:::
 
 ## Best Practices
 
-1.  **Keep Plugins Focused**: Each plugin should have a single, clear responsibility.
-2.  **Use Composition for Reusability**: Group related hooks and setup logic.
-3.  **Order Matters in Composition**: Place middleware in a logical sequence.
-4.  **Use TypeScript for Options**: Define interfaces for plugin options to ensure type safety.
+1.  **Use `meta.plugins`** in module files instead of `app.register()` for better organization
+2.  **Keep Plugins Focused**: Each plugin should have a single, clear responsibility
+3.  **Use Composition for Reusability**: Group related hooks and setup logic with `compose()`
+4.  **Order Matters in Composition**: Plugins execute in the order they're defined in the array
+5.  **Use TypeScript for Options**: Define interfaces for plugin options to ensure type safety
+6.  **Create Reusable Plugins**: Store plugins in a `plugins/` directory for reuse across modules
 
 ## See Also
 
@@ -243,7 +332,9 @@ app.register(adminFeatures);
 
 ### Authentication Plugin
 
-```typescript
+::: code-group
+
+```typescript [plugins/auth.ts]
 import { plugin, hook, abort } from "@minimajs/server";
 
 interface AuthOptions {
@@ -251,7 +342,7 @@ interface AuthOptions {
   excludePaths?: string[];
 }
 
-const authPlugin = (options: AuthOptions) =>
+export const authPlugin = (options: AuthOptions) =>
   plugin(async function auth(app) {
     const { secretKey, excludePaths = [] } = options;
 
@@ -274,21 +365,35 @@ const authPlugin = (options: AuthOptions) =>
       })
     );
   });
-
-app.register(
-  authPlugin({
-    secretKey: process.env.JWT_SECRET!,
-    excludePaths: ["/login", "/register"],
-  })
-);
 ```
+
+```typescript [src/api/module.ts]
+import { authPlugin } from "../../plugins/auth.js";
+
+export const meta = {
+  plugins: [
+    authPlugin({
+      secretKey: process.env.JWT_SECRET!,
+      excludePaths: ["/login", "/register"],
+    })
+  ]
+};
+
+export default async function(app) {
+  app.get("/protected", () => ({ data: "secret" }));
+}
+```
+
+:::
 
 ### Logging Plugin
 
-```typescript
+::: code-group
+
+```typescript [plugins/logger.ts]
 import { plugin, hook } from "@minimajs/server";
 
-const requestLogger = plugin(async function logger(app) {
+export const requestLogger = plugin(async function logger(app) {
   app.register(
     hook("request", (ctx) => {
       console.log(`[${new Date().toISOString()}] ${ctx.request.method} ${ctx.request.url}`);
@@ -296,18 +401,33 @@ const requestLogger = plugin(async function logger(app) {
   );
 
   app.register(
-    hook("send", (ctx) => {
-      console.log(`[${new Date().toISOString()}] ${ctx.request.method} ${ctx.request.url} - ${ctx.response.status}`);
+    hook("send", (response, ctx) => {
+      console.log(`[${new Date().toISOString()}] ${ctx.request.method} ${ctx.request.url} - ${response.status}`);
     })
   );
 });
-
-app.register(requestLogger);
 ```
+
+```typescript [src/module.ts]
+import { requestLogger } from "../plugins/logger.js";
+
+// Register logger in root module - applies to all child modules
+export const meta = {
+  plugins: [requestLogger]
+};
+
+export default async function(app) {
+  app.get("/health", () => "ok");
+}
+```
+
+:::
 
 ### Database Connection Plugin
 
-```typescript
+::: code-group
+
+```typescript [plugins/database.ts]
 import { plugin, hook } from "@minimajs/server";
 
 interface DbOptions {
@@ -315,7 +435,7 @@ interface DbOptions {
   poolSize?: number;
 }
 
-const dbPlugin = (options: DbOptions) =>
+export const dbPlugin = (options: DbOptions) =>
   plugin(async function database(app) {
     const { connectionString, poolSize = 10 } = options;
 
@@ -339,10 +459,59 @@ const dbPlugin = (options: DbOptions) =>
       return { status: isHealthy ? "healthy" : "unhealthy" };
     });
   });
-
-app.register(
-  dbPlugin({
-    connectionString: process.env.DATABASE_URL!,
-  })
-);
 ```
+
+```typescript [src/module.ts]
+import { dbPlugin } from "../plugins/database.js";
+
+// Register database plugin in root module
+export const meta = {
+  plugins: [
+    dbPlugin({
+      connectionString: process.env.DATABASE_URL!,
+    })
+  ]
+};
+
+export default async function(app) {
+  app.get("/health", () => "ok");
+}
+```
+
+:::
+
+---
+
+## Manual Registration (Alternative)
+
+If you're not using module discovery (`moduleDiscovery: false`) or need to register plugins manually in your entry file, you can use `app.register()`:
+
+```typescript
+import { createApp } from "@minimajs/server/bun";
+import { authPlugin } from "./plugins/auth.js";
+import { requestLogger } from "./plugins/logger.js";
+
+const app = createApp({ moduleDiscovery: false });
+
+// Register plugins manually
+app.register(requestLogger);
+app.register(authPlugin({
+  secretKey: process.env.JWT_SECRET!,
+  excludePaths: ["/login"],
+}));
+
+// Register modules manually
+app.register(async (app) => {
+  app.get("/users", () => "users");
+}, { prefix: "/api" });
+
+await app.listen({ port: 3000 });
+```
+
+**When to use manual registration:**
+- Apps without module discovery
+- Registering global plugins in entry files
+- Building reusable plugin libraries
+- Quick prototypes or single-file apps
+
+**Recommended:** Use `meta.plugins` in module files for better organization and automatic discovery.

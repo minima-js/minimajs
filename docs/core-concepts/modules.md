@@ -7,304 +7,303 @@ tags:
   - scope
 ---
 
-# Structuring Your Application with Modules
+# Building with File-Based Modules
 
-Modules are the recommended way to structure your Minima.js application. Instead of defining all your routes in one file, you organize your application into **filesystem-based modules** that Minima.js automatically discovers and loads.
+Learn how to structure your Minima.js application using filesystem-based modules. By the end of this tutorial, you'll understand how to organize features into modules, scope plugins, and build scalable APIs using nothing but your file structure.
 
-## Quick Start: Filesystem-Based Modules
+## What You'll Learn
 
-By default, Minima.js **automatically discovers modules** from directories adjacent to your entry file.
+- Creating your first auto-discovered module
+- Adding plugins to modules with `meta.plugins`
+- Building nested module hierarchies
+- Setting up global configuration with a root module
+- Customizing module discovery behavior
 
-**Convention:** Files must be named `module.{ts,js,mjs}` for auto-discovery.
+## Prerequisites
 
-```
-src/
-├── index.ts          # Your entry point
-├── users/
-│   └── module.ts     # ✅ Automatically discovered
-└── posts/
-    └── module.ts     # ✅ Automatically discovered
-    └── routes.ts     # ❌ Not discovered (wrong filename)
-```
+This tutorial assumes you have a basic Minima.js app with an entry point (`src/index.ts`). If not, see [Getting Started](/getting-started) first.
 
-::: code-group
+---
 
-```typescript [src/index.ts]
-import { createApp } from "@minimajs/server";
+## Step 1: Create Your First Module
 
-const app = createApp(); // Module discovery enabled by default!
+Let's start by creating a simple users module. Minima.js will automatically discover any file named `module.ts` in subdirectories.
 
-await app.listen({ port: 3000 });
-```
-
-:::
-
-That's it! Minima.js finds all `module.{ts,js,mjs}` files in subdirectories and loads them automatically.
-
-**Your routes are ready:**
-- `GET /users/*` (from `users/module.ts`)
-- `GET /posts/*` (from `posts/module.ts`)
-
-> **Custom filename:** Want to use `route.ts` or `index.ts` instead? See [Module Discovery Configuration](#module-discovery-configuration).
-
-### Custom Discovery Root
-
-If you prefer organizing modules in a specific directory:
+**1. Create the directory structure:**
 
 ```
 src/
 ├── index.ts
-└── api/              # Custom root
-    ├── users/
-    │   └── module.ts
-    └── posts/
-        └── module.ts
+└── users/
+    └── module.ts  # This will be auto-discovered
 ```
 
-::: code-group
-
-```typescript [src/index.ts]
-const app = createApp({
-  moduleDiscovery: { root: './api' }
-});
-```
-
-:::
-
-## Why Use Modules?
-
-Filesystem-based modules provide:
-
-- **Zero boilerplate:** No need to import and register every module
-- **Convention over configuration:** Directory structure defines your app structure  
-- **Automatic routing:** Module paths become route prefixes automatically
-- **Encapsulation:** Each module has its own isolated scope
-- **Scalability:** Easy to add new features by adding new directories
-- **Team-friendly:** Multiple developers can work on different modules without conflicts
-
-## Creating Your First Module
-
-Create a module by adding a `module.ts` file in a directory:
+**2. Write your first module:**
 
 ::: code-group
 
 ```typescript [src/users/module.ts]
 import type { App } from "@minimajs/server";
 
-// Sample data
 const users = [
-  { id: 1, name: "John Doe" },
-  { id: 2, name: "Jane Doe" },
+  { id: 1, name: "Alice" },
+  { id: 2, name: "Bob" }
 ];
 
-// Export module metadata (optional)
-export const meta = {
-  prefix: '/users', // This will be auto-generated from directory name if not specified
-};
-
-// Export default function - this is your module
 export default async function(app: App) {
   app.get('/list', () => users);
-  app.get('/:id', (req) => users.find(u => u.id === Number(req.params.id)));
+  app.get('/:id', ({ params }) => {
+    return users.find(u => u.id === Number(params.id));
+  });
 }
+```
+
+```typescript [src/index.ts]
+import { createApp } from "@minimajs/server/bun";
+
+const app = createApp(); // Auto-discovers users/module.ts
+
+await app.listen({ port: 3000 });
 ```
 
 :::
 
-The directory name becomes the route prefix automatically:
-- Module at `src/users/module.ts` → Routes at `/users/*`
-- Route `/list` → Final path: `/users/list`
-- Route `/:id` → Final path: `/users/:id`
+**3. Test it:**
 
-## Module Configuration with `meta`
+```bash
+curl http://localhost:3000/users/list
+# → [{"id":1,"name":"Alice"},{"id":2,"name":"Bob"}]
 
-Use the exported `meta` object to configure your module:
-
-::: code-group
-
-```typescript [src/api/module.ts]
-export const meta = {
-  name: 'api',           // Module name (auto-generated from directory if omitted)
-  prefix: '/api/v1',     // Custom prefix (defaults to /dirname)
-  plugins: []            // Plugins to register in this module scope
-};
-
-export default async function(app: App) {
-  // Your routes here
-}
+curl http://localhost:3000/users/1
+# → {"id":1,"name":"Alice"}
 ```
 
-:::
+🎉 **What just happened?**
+- Minima.js found `users/module.ts` automatically
+- The directory name (`users`) became the route prefix (`/users`)
+- Your routes (`/list` and `/:id`) were mounted under `/users`
 
-## Registering Plugins in Modules
+---
 
-Use `meta.plugins` to register plugins that only affect the current module. This is the **recommended approach** as it's declarative and keeps your module function clean.
+## Step 2: Add Plugins to Your Module
+
+Now let's add some plugins to our users module - like request logging and body parsing.
+
+**1. Add the `meta` export with plugins:**
 
 ::: code-group
 
-```typescript [src/admin/module.ts]
-import { cors } from '@minimajs/server/plugins';
-import { hook } from '@minimajs/server';
+```typescript [src/users/module.ts]
+import type { App, Meta } from "@minimajs/server";
+import { hook, body } from "@minimajs/server";
+import { bodyParser } from "@minimajs/body-parser";
 
-export const meta = {
+const users = [
+  { id: 1, name: "Alice" },
+  { id: 2, name: "Bob" }
+];
+
+// Register plugins in meta.plugins
+export const meta: Meta = {
   plugins: [
-    cors({ origin: 'https://admin.example.com' }),
-    hook('request', () => {
-      console.log('Admin request');
+    bodyParser(),  // Enable body parsing for this module
+    hook('request', ({ request }) => {
+      console.log(`[Users] ${request.method} ${request.url}`);
     })
   ]
 };
 
 export default async function(app: App) {
-  app.get('/dashboard', () => 'Admin Dashboard');
-}
-```
-
-:::
-
-**Why use `meta.plugins` instead of `app.register()`?**
-
-::: code-group
-
-```typescript [❌ Less clear - mixing concerns]
-export default async function(app: App) {
-  app.register(cors({ origin: '...' }));
-  app.register(hook('request', ...));
-  app.get('/route', ...);
-}
-```
-
-```typescript [✅ Better - declarative and separated]
-export const meta = {
-  plugins: [cors(...), hook(...)]
-};
-
-export default async function(app: App) {
-  app.get('/route', ...); // Only routes here
-}
-```
-
-:::
-
-### Module-Scoped Plugins
-
-Plugins registered via `meta.plugins` are **scoped to the module** - they don't affect parent or sibling modules:
-
-::: code-group
-
-```typescript [src/api/module.ts]
-import { bodyParser } from '@minimajs/server/plugins';
-import { body } from '@minimajs/server';
-
-export const meta = {
-  prefix: '/api',
-  plugins: [
-    bodyParser({ types: ['json'] }) // Only parses JSON for /api/* routes
-  ]
-};
-
-export default async function(app: App) {
-  app.post('/data', () => {
-    const data = body(); // bodyParser is available
-    return { received: data };
-  });
-}
-```
-
-```typescript [src/public/module.ts]
-import { body } from '@minimajs/server';
-
-// No bodyParser plugin here
-
-export default async function(app: App) {
-  app.post('/webhook', () => {
-    const data = body(); // ❌ bodyParser not available in this module
-    return { ok: true };
+  app.get('/list', () => users);
+  
+  app.post('/create', () => {
+    const newUser = body();  // body() works because bodyParser is registered
+    users.push(newUser);
+    return { created: newUser };
   });
 }
 ```
 
 :::
 
-## Nested Modules
+**2. Test the new POST route:**
 
-Minima.js automatically discovers nested modules from your directory structure. Child modules inherit their parent's prefix:
+```bash
+curl -X POST http://localhost:3000/users/create \
+  -H "Content-Type: application/json" \
+  -d '{"id":3,"name":"Charlie"}'
+# → {"created":{"id":3,"name":"Charlie"}}
+
+# Check your server logs - you'll see the logging hook output
+```
+
+✨ **Key Concept:** Plugins in `meta.plugins` are **scoped to the module**. They only affect routes in this module, not others.
+
+---
+
+## Step 3: Create a Nested Module
+
+Let's add a nested module for user profiles. This demonstrates how modules can be organized hierarchically.
+
+**1. Create the nested structure:**
 
 ```
 src/
-├── api/
-│   ├── module.ts        # Parent module
-│   ├── users/
-│   │   └── module.ts    # Child module
-│   └── posts/
-│       └── module.ts    # Child module
+├── index.ts
+└── users/
+    ├── module.ts
+    └── profile/
+        └── module.ts  # Nested module
 ```
+
+**2. Create the nested module:**
+
+::: code-group
+
+```typescript [src/users/profile/module.ts]
+import type { App } from "@minimajs/server";
+
+export default async function(app: App) {
+  app.get('/:userId', ({ params }) => {
+    const userId = params.userId;
+    return {
+      userId,
+      bio: "User profile for " + userId,
+      settings: { theme: "dark" }
+    };
+  });
+}
+```
+
+:::
+
+**3. Test the nested route:**
+
+```bash
+curl http://localhost:3000/users/profile/1
+# → {"userId":"1","bio":"User profile for 1",...}
+```
+
+📁 **Route Structure:**
+- `src/users/module.ts` → `/users/*`
+- `src/users/profile/module.ts` → `/users/profile/*`
+
+The prefixes stack automatically!
+
+---
+
+## Step 4: Share Config with a Parent Module
+
+What if you want multiple child modules to share plugins? Use a parent module.
+
+**1. Restructure to use a parent:**
+
+```
+src/
+├── index.ts
+└── api/
+    ├── module.ts       # Parent module
+    ├── users/
+    │   └── module.ts   # Child 1
+    └── posts/
+        └── module.ts   # Child 2
+```
+
+**2. Create the parent module with shared plugins:**
 
 ::: code-group
 
 ```typescript [src/api/module.ts]
-import { bodyParser } from '@minimajs/server/plugins';
+import type { App, Meta } from "@minimajs/server";
+import { bodyParser } from "@minimajs/body-parser";
+import { cors } from "@minimajs/cors";
 
-export const meta = {
+// These plugins apply to ALL child modules
+export const meta: Meta = {
   prefix: '/api/v1',
   plugins: [
-    bodyParser({ types: ['json'] }) // All children get body parsing
+    bodyParser(),
+    cors({ origin: '*' })
   ]
 };
 
 export default async function(app: App) {
-  app.get('/status', () => ({ status: 'ok' }));
+  app.get('/health', () => ({ status: 'ok' }));
 }
 ```
 
 ```typescript [src/api/users/module.ts]
-import { params, body } from '@minimajs/server';
+import type { App } from "@minimajs/server";
+import { body } from "@minimajs/server";
 
-// No meta needed - auto-generated from directory name
-
+// No need to register bodyParser - inherited from parent!
 export default async function(app: App) {
-  app.get('/list', () => [/* users */]);
-  
   app.post('/create', () => {
-    const user = body(); // bodyParser from parent is available
+    const user = body();  // Works because of parent's bodyParser
     return { created: user };
   });
 }
 ```
 
+```typescript [src/api/posts/module.ts]
+import type { App } from "@minimajs/server";
+import { body } from "@minimajs/server";
+
+// Also inherits bodyParser from parent
+export default async function(app: App) {
+  app.post('/create', () => {
+    const post = body();
+    return { created: post };
+  });
+}
+```
+
 :::
 
-**Resulting routes:**
-- `GET /api/v1/status` (from `api/module.ts`)
-- `GET /api/v1/users/list` (from `api/users/module.ts` - prefixes stack)
-- `POST /api/v1/users/create`
+**3. Check the resulting routes:**
 
-### Root Module (Optional)
+- `GET /api/v1/health` (parent)
+- `POST /api/v1/users/create` (child, with inherited plugins)
+- `POST /api/v1/posts/create` (child, with inherited plugins)
 
-Create a `module.ts` in the discovery root to apply configuration to ALL modules:
+🎯 **Inheritance:** Child modules automatically get their parent's prefix and plugins!
+
+---
+
+## Step 5: Set Up a Root Module (Global Config)
+
+For truly global configuration that applies to **every module**, create a root module in your discovery root.
+
+**1. Create a root module:**
 
 ```
 src/
-├── module.ts            # ROOT module (optional)
+├── index.ts
+├── module.ts        # ROOT module - applies to everything
 ├── users/
-│   └── module.ts        # Child of root
+│   └── module.ts
 └── posts/
-    └── module.ts        # Child of root
+    └── module.ts
 ```
+
+**2. Add global plugins in the root module:**
 
 ::: code-group
 
 ```typescript [src/module.ts]
-import { bodyParser, cors } from '@minimajs/server/plugins';
-import { hook } from '@minimajs/server';
+import type { App, Meta } from "@minimajs/server";
+import { bodyParser } from "@minimajs/body-parser";
+import { cors } from "@minimajs/cors";
+import { hook } from "@minimajs/server";
 
-export const meta = {
+// 🌍 Global configuration - inherited by ALL modules
+export const meta: Meta = {
   prefix: '/api',
   plugins: [
-    bodyParser({ types: ['json'] }),
-    cors({ origin: '*' }),
+    bodyParser(),           // All routes get body parsing
+    cors({ origin: '*' }),  // All routes get CORS
     hook('request', ({ request }) => {
-      console.log(`${request.method} ${request.url}`);
+      console.log(`[Global] ${request.method} ${request.url}`);
     })
   ]
 };
@@ -316,262 +315,282 @@ export default async function(app: App) {
 
 :::
 
-**Benefits:**
-- All child modules get `/api` prefix
-- All child modules get body parsing, CORS, and logging
-- Centralized configuration for the entire API
-
-**Resulting routes:**
-- `GET /api/health`
-- `GET /api/users/list` (inherits `/api` prefix)
-- `GET /api/posts/list` (inherits `/api` prefix)
-
-## Module Discovery Configuration
-
-### Default Behavior
-
-By default, Minima.js discovers modules from the **entry file's directory**:
+**3. Now every module gets these plugins automatically:**
 
 ::: code-group
-
-```typescript [src/index.ts]
-// Discovers modules from ./src/**/module.{ts,js,mjs}
-const app = createApp();
-```
-
-:::
-
-If your entry file is at `src/index.ts`, Minima.js scans:
-- ✅ `src/users/module.ts`
-- ✅ `src/posts/module.ts`
-- ✅ `src/api/v1/users/module.ts` (nested modules)
-
-### Basic Configuration
-
-```typescript
-// Disable module discovery (manual registration only)
-const app = createApp({
-  moduleDiscovery: false
-});
-
-// Custom root directory
-const app = createApp({
-  moduleDiscovery: { root: './modules' }
-});
-
-// Custom index filename
-const app = createApp({
-  moduleDiscovery: { index: 'route' }  // Look for route.ts instead of module.ts
-});
-```
-
-### Advanced Configuration
-
-All options are fully configurable:
-
-```typescript
-const app = createApp({
-  moduleDiscovery: {
-    root: './src/features',   // Directory to scan (default: entry file's directory)
-    index: 'controller'       // Filename to look for (default: 'module')
-  }
-});
-```
-
-**Discovery pattern:** `{root}/*/{index}.{ts,js,mjs}`
-
-With `root: './src/features'` and `index: 'controller'`:
-- ✅ `src/features/users/controller.ts`
-- ✅ `src/features/posts/controller.js`
-- ✅ `src/features/api/v1/controller.mjs`
-- ❌ `src/features/users/routes.ts` (wrong filename)
-- ❌ `src/other/users/controller.ts` (wrong root)
-
-### Real-World Examples
-
-**Example 1: Next.js-style app directory**
-```typescript
-// Use 'route' files like Next.js
-const app = createApp({
-  moduleDiscovery: { 
-    root: './app',
-    index: 'route'
-  }
-});
-
-// Discovers: app/users/route.ts, app/posts/route.ts
-```
-
-**Example 2: NestJS-style controllers**
-```typescript
-const app = createApp({
-  moduleDiscovery: { 
-    root: './src/controllers',
-    index: 'controller'
-  }
-});
-
-// Discovers: src/controllers/users/controller.ts
-```
-
-**Example 3: Laravel-style resources**
-```typescript
-const app = createApp({
-  moduleDiscovery: { 
-    root: './resources',
-    index: 'routes'
-  }
-});
-
-// Discovers: resources/api/routes.ts
-```
-
-**Example 4: Monorepo with multiple apps**
-```typescript
-const app = createApp({
-  moduleDiscovery: { 
-    root: './packages/api/modules'
-  }
-});
-
-// Only scans that specific directory
-```
-
-### Complete Example
-
-Here's a real-world example showing all features together:
-
-```
-src/
-├── index.ts
-├── module.ts              # Root module
-├── users/
-│   ├── module.ts
-│   └── profile/
-│       └── module.ts
-└── posts/
-    └── module.ts
-```
-
-::: code-group
-
-```typescript [src/module.ts]
-import { bodyParser, cors } from '@minimajs/server/plugins';
-
-export const meta = {
-  prefix: '/api/v1',
-  plugins: [
-    bodyParser(),
-    cors({ origin: process.env.CORS_ORIGIN || '*' })
-  ]
-};
-
-export default async function(app) {
-  app.get('/health', () => ({ status: 'healthy', timestamp: Date.now() }));
-}
-```
 
 ```typescript [src/users/module.ts]
-import { hook } from '@minimajs/server';
-import { params, body } from '@minimajs/server';
+import type { App } from "@minimajs/server";
+import { body } from "@minimajs/server";
 
-export const meta = {
-  plugins: [
-    hook('request', () => {
-      // Only logs for /api/v1/users/* routes
-      console.log('Users module accessed');
-    })
-  ]
-};
-
-export default async function(app) {
-  app.get('/list', () => getUsers());
-  app.get('/:id', () => getUser(params.get('id')));
-  app.post('/create', () => createUser(body()));
-}
-```
-
-```typescript [src/users/profile/module.ts]
-import { params } from '@minimajs/server';
-
-// Inherits bodyParser and cors from root, and logging from parent
-
-export default async function(app) {
-  app.get('/', () => {
-    const userId = params.get('id'); // From parent route
-    return getUserProfile(userId);
+// No bodyParser here - inherited from root!
+export default async function(app: App) {
+  app.post('/create', () => {
+    const user = body();  // Works due to root's bodyParser
+    return { created: user };
   });
 }
 ```
 
-```typescript [src/index.ts]
-import { createApp } from '@minimajs/server/bun';
-
-const app = createApp(); // Auto-discovers from ./src
-
-await app.listen({ port: 3000 });
-```
-
 :::
 
-**Resulting API:**
-- `GET /api/v1/health` (root module)
-- `GET /api/v1/users/list` (users module)
-- `GET /api/v1/users/:id` (users module)
-- `POST /api/v1/users/create` (users module)
-- `GET /api/v1/users/profile` (users/profile module)
+**Resulting structure:**
+- `GET /api/health` (root)
+- `POST /api/users/create` (inherits `/api` prefix + all plugins)
+- `POST /api/posts/create` (inherits `/api` prefix + all plugins)
 
-**Plugin inheritance:**
-- ✅ All routes get `bodyParser` and `cors` (from root)
-- ✅ Only `/api/v1/users/*` routes get the logging hook
-- ✅ Each module is isolated from siblings
+💡 **Best Practice:** Put authentication, body parsing, CORS, rate limiting, and global logging in the root module.
 
-## Manual Module Registration (Alternative)
+---
 
-If you prefer explicit control, you can disable auto-discovery and manually register modules:
+## Step 6: Customize Module Discovery
+
+By default, Minima.js looks for `module.{ts,js,mjs}` files. You can customize this.
+
+### Change the Filename Pattern
+
+Want to use `route.ts` instead?
 
 ::: code-group
 
-```typescript [src/modules/users.ts]
-import type { App } from "@minimajs/server";
-
-export async function usersModule(app: App) {
-  app.get('/users', () => [/* users */]);
-}
-```
-
 ```typescript [src/index.ts]
-import { createApp } from "@minimajs/server";
-import { usersModule } from "./modules/users";
+import { createApp } from "@minimajs/server/bun";
 
 const app = createApp({
-  moduleDiscovery: false  // Disable auto-discovery
+  moduleDiscovery: { 
+    index: 'route'  // Now looks for route.ts instead of module.ts
+  }
 });
-
-// Manually register modules
-app.register(usersModule);
-app.register(usersModule, { prefix: '/api/v1' }); // With custom prefix
 
 await app.listen({ port: 3000 });
 ```
 
 :::
 
-**When to use manual registration:**
-- Building a plugin/library for others to use
-- Need dynamic module loading logic
-- Prefer explicit imports over conventions
+Now your structure would be:
+```
+src/
+├── index.ts
+├── users/
+│   └── route.ts    # ✅ Discovered
+└── posts/
+    └── route.ts    # ✅ Discovered
+```
 
-**When to use module discovery (recommended):**
-- Building an application
-- Want convention over configuration
-- Need automatic routing from filesystem structure
-- Working in a team with multiple developers
+### Change the Discovery Root
 
-## Best Practices
+Want to organize modules in a specific directory?
 
-1. **Use module discovery for applications** - It's simpler and scales better
-2. **Use `meta.plugins` for module-specific plugins** - Keeps plugin scope clear
-3. **One feature per module** - Each directory represents one feature/domain
-4. **Nest related modules** - Group related features under parent modules
-5. **Use meaningful directory names** - They become your route prefixes
+::: code-group
+
+```typescript [src/index.ts]
+import { createApp } from "@minimajs/server/bun";
+import path from "node:path";
+
+const app = createApp({
+  moduleDiscovery: { 
+    root: path.resolve(import.meta.dir, 'features')
+  }
+});
+
+await app.listen({ port: 3000 });
+```
+
+:::
+
+Now Minima.js only scans `src/features/`:
+```
+src/
+├── index.ts
+└── features/        # Only scans here
+    ├── users/
+    │   └── module.ts
+    └── posts/
+        └── module.ts
+```
+
+### Combine Both Options
+
+::: code-group
+
+```typescript [src/index.ts]
+import path from "node:path";
+
+const app = createApp({
+  moduleDiscovery: { 
+    root: path.resolve(import.meta.dir, 'app'),
+    index: 'route'
+  }
+});
+```
+
+:::
+
+Discovery pattern: `app/**/route.{ts,js,mjs}`
+
+---
+
+## Common Patterns
+
+### Pattern 1: API Versioning
+
+```
+src/
+├── module.ts         # Root with global auth
+├── v1/
+│   ├── module.ts     # Prefix: /api/v1
+│   ├── users/
+│   │   └── module.ts
+│   └── posts/
+│       └── module.ts
+└── v2/
+    ├── module.ts     # Prefix: /api/v2
+    └── users/
+        └── module.ts
+```
+
+### Pattern 2: Public vs Protected Routes
+
+::: code-group
+
+```typescript [src/module.ts]
+import { authPlugin } from './plugins/auth.js';
+
+// Root module - makes auth available everywhere
+export const meta: Meta = {
+  plugins: [authPlugin]
+};
+```
+
+```typescript [src/public/module.ts]
+// No guard - anyone can access
+export default async function(app: App) {
+  app.post('/login', () => {/* ... */});
+}
+```
+
+```typescript [src/protected/module.ts]
+import { guardPlugin } from '../plugins/guard.js';
+
+// Add guard to require authentication
+export const meta: Meta = {
+  plugins: [guardPlugin]
+};
+
+export default async function(app: App) {
+  app.get('/profile', () => {/* ... */});
+}
+```
+
+:::
+
+### Pattern 3: Feature-Based Organization
+
+```
+src/
+├── auth/
+│   ├── module.ts      # Login, logout, etc.
+│   └── middleware/
+│       └── guard.ts
+├── users/
+│   ├── module.ts      # User CRUD
+│   └── profile/
+│       └── module.ts  # User profiles
+└── posts/
+    ├── module.ts      # Post CRUD
+    └── comments/
+        └── module.ts  # Post comments
+```
+
+---
+
+## Troubleshooting
+
+### My module isn't being discovered
+
+**Check:**
+1. ✅ Is the file named `module.{ts,js,mjs}`?
+2. ✅ Is it in a subdirectory of your entry point?
+3. ✅ Is `moduleDiscovery` enabled? (It's on by default)
+
+**Debug by logging discovered modules:**
+```typescript
+const app = createApp();
+console.log('Checking module discovery...');
+await app.ready();
+```
+
+### Plugins not working
+
+**Remember:**
+- `meta.plugins` only works in `module.ts` files (or your configured index filename)
+- Plugins are scoped to the module and its children
+- Parent modules' plugins are inherited by children
+
+### Routes returning 404
+
+**Check your prefix stacking:**
+```
+src/api/users/module.ts
+└─> /api (from parent) + /users (from directory) = /api/users/*
+```
+
+Use absolute prefixes in `meta.prefix` to override:
+```typescript
+export const meta: Meta = {
+  prefix: '/custom'  // Overrides directory-based prefix
+};
+```
+
+---
+
+## Next Steps
+
+Now that you understand modules, explore:
+
+- **[Plugins](/core-concepts/plugins)** - Create reusable plugins for your modules
+- **[Hooks](/guides/hooks)** - Learn all available lifecycle hooks
+- **[JWT Authentication](/cookbook/jwt-authentication)** - Build a real auth system with modules
+
+---
+
+## Quick Reference
+
+### File Naming
+- Default: `module.{ts,js,mjs}`
+- Configure: `moduleDiscovery: { index: 'your-name' }`
+
+### Module Structure
+```typescript
+import type { App, Meta } from "@minimajs/server";
+
+export const meta: Meta = {
+  prefix: '/custom',     // Optional: override directory name
+  plugins: [/* ... */]   // Optional: module-scoped plugins
+};
+
+export default async function(app: App) {
+  // Your routes here
+}
+```
+
+### Discovery Options
+```typescript
+createApp({
+  moduleDiscovery: {
+    root: path.resolve(import.meta.dir, 'dir'),  // Where to scan
+    index: 'filename'                             // What to look for
+  }
+})
+```
+
+### Module Types
+- **Regular Module:** Any `module.ts` in a subdirectory
+- **Root Module:** `module.ts` in the discovery root (global config)
+- **Nested Module:** `module.ts` inside another module's directory
+
+### Plugin Scope
+- Root module plugins → Inherited by ALL modules
+- Parent module plugins → Inherited by children
+- Module plugins → Only that module
+- Sibling modules → Isolated from each other
