@@ -16,4 +16,7 @@ export interface ImportedModule {
 export interface ModuleDiscoveryOptions {
   root?: string;
   index?: string;
+  scanner?: ModuleScanner;
 }
+
+export type ModuleScanner = (dir: string, index: string) => AsyncGenerator<string>;

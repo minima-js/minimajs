@@ -14,7 +14,7 @@ import { routeLogger } from "@minimajs/server/plugins";
 
 ## Usage
 
-Simply register the plugin with your application instance. It has no effect in production environments unless a custom logger is provided.
+Simply register the plugin with your application instance.
 
 ```typescript
 app.register(routeLogger());
@@ -37,7 +37,7 @@ When you start your application, you will see output similar to this in your con
 Allows you to provide a custom logging function to display the route tree.
 
 - **Type**: `(message: string) => void`
-- **Default**: A function that logs to the console using `chalk` for color.
+- **Default**: A function that logs to the console.
 
 ```typescript
 app.register(

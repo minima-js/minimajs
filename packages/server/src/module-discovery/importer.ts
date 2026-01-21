@@ -2,9 +2,8 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import type { ImportedModule } from "./types.js";
 
-// Ordered by likelihood: TypeScript first (common in modern projects), then JS variants
 // This array will be reordered based on successful matches for optimization
-const tryExt = [".ts", ".js", ".mjs", ""];
+const tryExt = ["", ".js", ".mjs", ".ts"];
 
 /**
  * Moves an element from a given index to the front of the array (index 0)

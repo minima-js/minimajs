@@ -6,7 +6,7 @@ hero:
   text: "File-Based Modules. Zero Config."
   tagline: |
     Build backends that feel fast and clear—
-    file structure becomes your API, hooks are plugins, and everything just works.
+    file structure becomes your API, every configurations are plugins, and everything just works.
 
   image:
     src: /logo.svg
@@ -67,17 +67,17 @@ import { bodyParser } from "@minimajs/body-parser";
 
 export const meta = {
   plugins: [
-    bodyParser(),
-    hook("request", () => console.log("User route hit"))
-  ]
+    bodyParser(), // will be required plugin to use body() and can also be installed global using app.register(bodyParser())
+    hook("request", () => console.log("User route hit")),
+  ],
 };
 
-export default async function(app) {
+export default async function (app) {
   app.post("/create", () => {
     const data = body();
     return { message: "User created", data };
   });
-  
+
   app.get("/list", () => {
     return { users: ["Alice", "Bob"] };
   });
@@ -86,7 +86,7 @@ export default async function(app) {
 ```
 
 ```typescript [src/posts/module.ts]
-export default async function(app) {
+export default async function (app) {
   app.get("/latest", () => {
     return { posts: [] };
   });

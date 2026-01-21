@@ -10,7 +10,7 @@ describe("plugins/proxy", () => {
   let app: Server<BunServer<any>>;
 
   beforeEach(() => {
-    app = createApp({ logger: logger });
+    app = createApp({ logger: logger, moduleDiscovery: false });
   });
 
   afterEach(async () => {

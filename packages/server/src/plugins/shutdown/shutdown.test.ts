@@ -111,7 +111,7 @@ describe("shutdownListener", () => {
 
 describe("shutdown plugin", () => {
   test("should create shutdown plugin with default options", () => {
-    const app = createApp({ logger: false });
+    const app = createApp({ logger: false, moduleDiscovery: false });
     const plugin = shutdown();
 
     expect(plugin).toBeDefined();
@@ -121,7 +121,7 @@ describe("shutdown plugin", () => {
   });
 
   test("should create shutdown plugin with custom signals", () => {
-    const app = createApp({ logger: false });
+    const app = createApp({ logger: false, moduleDiscovery: false });
     const plugin = shutdown({ signals: ["SIGINT"] });
 
     expect(plugin).toBeDefined();
@@ -130,7 +130,7 @@ describe("shutdown plugin", () => {
   });
 
   test("should create shutdown plugin with custom timeout", () => {
-    const app = createApp({ logger: false });
+    const app = createApp({ logger: false, moduleDiscovery: false });
     const plugin = shutdown({ timeout: 10000 });
 
     expect(plugin).toBeDefined();
@@ -139,7 +139,7 @@ describe("shutdown plugin", () => {
   });
 
   test("should register shutdown plugin successfully", async () => {
-    const app = createApp({ logger: false });
+    const app = createApp({ logger: false, moduleDiscovery: false });
     app.register(shutdown());
 
     await app.ready();

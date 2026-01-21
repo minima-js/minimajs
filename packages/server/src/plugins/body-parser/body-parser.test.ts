@@ -9,7 +9,7 @@ describe("bodyParser", () => {
   let app: App;
 
   beforeEach(() => {
-    app = createApp();
+    app = createApp({ moduleDiscovery: false, logger: false });
   });
 
   afterEach(async () => {

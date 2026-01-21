@@ -16,7 +16,7 @@ import {
 describe("hooks", () => {
   let app: App;
   beforeEach(() => {
-    app = createApp({ logger: false });
+    app = createApp({ logger: false, moduleDiscovery: false });
   });
 
   afterEach(() => app?.close());
