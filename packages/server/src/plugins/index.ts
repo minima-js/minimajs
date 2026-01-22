@@ -26,3 +26,4 @@ export * from "./cors/index.js";
 export * from "./proxy/index.js";
 export * from "./descriptor/index.js";
 export * from "./express/index.js";
+export * from "./controller/index.js";
