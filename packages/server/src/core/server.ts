@@ -9,7 +9,7 @@ import { serialize, errorHandler } from "../internal/default-handler.js";
 import { handleRequest } from "../internal/handler.js";
 import type { ErrorHandler, Serializer } from "../interfaces/response.js";
 import { plugin as p } from "../plugin.js";
-import type { PrefixOptions, RouteConfig, RouteMetaDescriptor, RouteOptions } from "../interfaces/route.js";
+import type { RouteConfig, RouteMetaDescriptor, RouteOptions } from "../interfaces/route.js";
 import { createBoot, wrapPlugin } from "../internal/boot.js";
 import type { AddressInfo, ServerAdapter, ListenOptions } from "../interfaces/server.js";
 import { kAppDescriptor, kHooks, kModulesChain } from "../symbols.js";
@@ -26,8 +26,7 @@ export class Server<S> implements App<S> {
   readonly router: Router.Instance<HTTPVersion.V1>;
   readonly container: Container<S>;
 
-  $prefix: string;
-  $prefixExclude: string[];
+  prefix: string;
 
   $parent: App<S> | null = null;
 
@@ -50,8 +49,7 @@ export class Server<S> implements App<S> {
       [kModulesChain]: [this],
     };
     this.log = opts.logger;
-    this.$prefix = opts.prefix;
-    this.$prefixExclude = [];
+    this.prefix = opts.prefix;
     this.router = opts.router;
     this.boot = createBoot(this);
   }
@@ -113,7 +111,7 @@ export class Server<S> implements App<S> {
     const { method, path } = options;
     const handler = args[args.length - 1] as Handler<S>;
     const descriptors = args.slice(0, -1) as RouteMetaDescriptor<S>[];
-    const fullPath = applyRoutePrefix(path, this.$prefix, this.$prefixExclude);
+    const fullPath = applyRoutePrefix(path, this.prefix);
 
     const store: RouteConfig<S> = {
       app: this,
@@ -129,14 +127,6 @@ export class Server<S> implements App<S> {
       () => {}, // Dummy handler - actual handler is in store
       store
     );
-    return this;
-  }
-
-  prefix(prefix: string, options: PrefixOptions = {}): this {
-    this.$prefix = prefix;
-    if (options.exclude) {
-      this.$prefixExclude = options.exclude;
-    }
     return this;
   }
 

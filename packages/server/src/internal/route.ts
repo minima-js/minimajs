@@ -24,9 +24,8 @@ export function applyRouteMetadata<T>(route: RouteConfig<T>, descriptors: RouteM
 /**
  * Applies prefix to a path, considering exclusions
  */
-export function applyRoutePrefix(path: string, prefix: string, excludeList: string[]): string {
-  const shouldExclude = excludeList.some((excludePath) => path === excludePath || path.startsWith(excludePath + "/"));
-  return shouldExclude ? path : prefix + path;
+export function applyRoutePrefix(path: string, prefix: string): string {
+  return prefix + path;
 }
 
 export function result2route<T>(route: RouteFindResult<T>): Route<T> {

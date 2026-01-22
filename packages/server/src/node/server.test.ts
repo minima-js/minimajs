@@ -30,7 +30,7 @@ describe("Node Server", () => {
 
     test("should create an app with custom prefix", () => {
       app = createApp({ prefix: "/api/v1" });
-      expect(app.$prefix).toBe("/api/v1");
+      expect(app.prefix).toBe("/api/v1");
     });
 
     test("should create an app with custom router config", () => {
@@ -169,35 +169,6 @@ describe("Node Server", () => {
       expect(response.status).toBe(200);
       const data = (await response.json()) as any;
       expect(data.success).toBe(true);
-    });
-
-    test("should allow changing prefix dynamically", async () => {
-      app = createApp({ logger: false });
-      app.prefix("/v1").get("/users", () => ({ version: 1 }));
-      app.prefix("/v2").get("/users", () => ({ version: 2 }));
-
-      const v1Response = await app.handle(createRequest("/v1/users"));
-      const v1Data = (await v1Response.json()) as any;
-      expect(v1Data.version).toBe(1);
-
-      const v2Response = await app.handle(createRequest("/v2/users"));
-      const v2Data = (await v2Response.json()) as any;
-      expect(v2Data.version).toBe(2);
-    });
-
-    test("should handle prefix exclusion", async () => {
-      app = createApp({ logger: false });
-      app.prefix("/api", { exclude: ["/health"] });
-      app.get("/users", () => ({ prefixed: true }));
-      app.get("/health", () => ({ excluded: true }));
-
-      const apiResponse = await app.handle(createRequest("/api/users"));
-      expect(apiResponse.status).toBe(200);
-
-      const healthResponse = await app.handle(createRequest("/health"));
-      expect(healthResponse.status).toBe(200);
-      const healthData = (await healthResponse.json()) as any;
-      expect(healthData.excluded).toBe(true);
     });
   });
 

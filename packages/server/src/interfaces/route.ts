@@ -22,10 +22,6 @@ export interface RouteOptions {
   path: string;
 }
 
-export interface PrefixOptions {
-  exclude?: string[];
-}
-
 export interface RouteFindResult<T> extends FindResult<any> {
   store: RouteConfig<T>;
 }

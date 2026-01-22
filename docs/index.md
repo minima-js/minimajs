@@ -56,7 +56,6 @@ Watch how little code you need to write. Notice what you DON'T see—no imports,
 import { createApp } from "@minimajs/server/bun";
 // import { createApp } from "@minimajs/server/node"; // for node
 
-
 const app = createApp();
 await app.listen({ port: 3000 });
 // That's your entire entry point
@@ -68,42 +67,54 @@ import { bodyParser } from "@minimajs/body-parser";
 
 // Global config - applies to every route
 export const meta: Meta = {
-  prefix: '/api',
-  plugins: [bodyParser()]
+  prefix: "/api",
+  plugins: [bodyParser()],
 };
 
-export default async function(app) {
-  app.get('/health', () => ({ status: 'ok' }));
+// sync / async supported
+export default async function (app) {
+  app.get("/health", () => ({ status: "ok" }));
 }
 ```
 
 ```typescript [src/users/module.ts]
+// Auto-loaded as /api/users/*
+
 import { body } from "@minimajs/server";
 
-// Auto-loaded as /api/users/*
-export default async function(app) {
-  app.get('/list', () => [
+function getUsers() {
+  return [
     { id: 1, name: "Alice" },
-    { id: 2, name: "Bob" }
-  ]);
+    { id: 2, name: "Bob" },
+  ];
+}
 
-  app.post('/create', () => {
-    const user = body();
-    return { created: user };
-  });
+function createUser() {
+  const user = body();
+  return { created: user };
+}
+
+export default function (app) {
+  app.get("/list", getUsers);
+  app.post("/create", createUser);
 }
 ```
 
 ```typescript [src/posts/module.ts]
 // Auto-loaded as /api/posts/*
-export default async function(app) {
-  app.get('/latest', () => ({ posts: [] }));
+
+function getLatestPosts() {
+  return { posts: [] };
+}
+export default function (app) {
+  app.get("/latest", getLatestPosts);
 }
 ```
 
 :::
 
 **Your API is ready:**
+
 - `GET /api/health` → `{"status":"ok"}`
 - `GET /api/users/list` → `[{"id":1,"name":"Alice"}...]`
 - `POST /api/users/create` → Creates user
@@ -123,14 +134,14 @@ import { authPlugin, guardPlugin, getUser } from "../auth/index.js";
 
 export const meta: Meta = {
   plugins: [
-    authPlugin,   // Makes getUser() available
-    guardPlugin   // Requires authentication
-  ]
+    authPlugin, // Makes getUser() available
+    guardPlugin, // Requires authentication
+  ],
 };
 
-export default async function(app) {
-  app.get('/profile', () => {
-    const user = getUser();  // Guaranteed to exist (guard ensures it)
+export default async function (app) {
+  app.get("/profile", () => {
+    const user = getUser(); // Guaranteed to exist (guard ensures it)
     return { user };
   });
 }
@@ -156,8 +167,8 @@ import { bodyParser } from "@minimajs/body-parser";
 
 // Root module - these plugins apply to ALL children
 export const meta: Meta = {
-  prefix: '/api',
-  plugins: [bodyParser()]
+  prefix: "/api",
+  plugins: [bodyParser()],
 };
 ```
 
@@ -167,38 +178,39 @@ import { hook } from "@minimajs/server";
 
 // Users module - this hook ONLY affects /api/users/* routes
 export const meta: Meta = {
-  plugins: [
-    hook('request', () => console.log('Users accessed'))
-  ]
+  plugins: [hook("request", () => console.log("Users accessed"))],
 };
 
-export default async function(app) {
-  app.get('/list', () => [/* users */]);
+export default async function (app) {
+  app.get("/list", () => [
+    /* users */
+  ]);
 }
 ```
 
 ```typescript [src/posts/module.ts]
-import { searchParams } from '@minimajs/server';
+import { searchParams } from "@minimajs/server";
 // Posts module - no logging hook here
 // Completely isolated from users module
 
 function getPosts() {
   // contexts will be available everywhere
-  const page = searchParams.get('page', Number); // cast page to number
+  const page = searchParams.get("page", Number); // cast page to number
   return {
     page,
-    data: [] // posts
-  }
+    data: [], // posts
+  };
 }
 
-export default async function(app) {
-  app.get('/latest', getPosts);
+export default async function (app) {
+  app.get("/latest", getPosts);
 }
 ```
 
 :::
 
 **How it works:**
+
 - ✅ Root module plugins → Inherited by all children
 - ✅ Parent module plugins → Inherited by their children only
 - ✅ Sibling modules → Completely isolated from each other
@@ -206,6 +218,7 @@ export default async function(app) {
 - ✅ No global state pollution
 
 **Request to `/api/users/list`:**
+
 ```
 → Root plugins run (bodyParser)
 → Users plugins run (logging hook)
@@ -213,14 +226,15 @@ export default async function(app) {
 ```
 
 **Request to `/api/posts/latest`:**
+
 ```
 → Root plugins run (bodyParser)
 → Route handler executes
 ✅ Users logging hook DOES NOT run (isolated)
 ```
 
-
 ### REST API with Auth
+
 ```
 src/
 ├── module.ts           # Global auth, body parsing, CORS

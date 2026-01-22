@@ -2,7 +2,7 @@ import type { Instance as Router, HTTPVersion } from "find-my-way";
 import type { ErrorHandler, Serializer } from "./response.js";
 import type { Plugin, PluginOptions, PluginSync, Module, RegisterOptions, Registerable } from "../plugin.js";
 import type { Context } from "./context.js";
-import type { PrefixOptions, RouteMetaDescriptor, RouteOptions } from "./route.js";
+import type { RouteMetaDescriptor, RouteOptions } from "./route.js";
 import type { Logger } from "pino";
 import type { kAppDescriptor, kHooks, kModulesChain } from "../symbols.js";
 import type { HookStore } from "../hooks/types.js";
@@ -25,8 +25,7 @@ export interface App<S = any> {
 
   readonly $parent: App<S> | null;
 
-  readonly $prefix: string;
-  readonly $prefixExclude: string[];
+  readonly prefix: string;
 
   log: Logger;
 
@@ -60,8 +59,6 @@ export interface App<S = any> {
 
   route(options: RouteOptions, handler: Handler<S>): this;
   route(options: RouteOptions, ...args: [...RouteMetaDescriptor<S>[], Handler<S>]): this;
-
-  prefix(prefix: string, options?: PrefixOptions): this;
 
   // Register plugins with generic options support
   register<T extends PluginOptions>(plugin: Plugin<S, T>, opts?: T): this;

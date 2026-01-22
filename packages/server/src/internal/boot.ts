@@ -45,17 +45,14 @@ interface OverrideOptions {
 function pluginOverride<S>(app: App<S>, fn: Registerable<S>, options: OverrideOptions = {}): App<S> {
   if (plugin.is(fn)) return app;
 
-  const { $prefix: parentPrefix = "", $prefixExclude: parentExclude = [] } = app;
+  const { prefix: parentPrefix } = app;
 
   const child: App<S> = Object.create(app, {
     container: {
       value: cloneContainer(app.container),
     },
-    $prefix: {
+    prefix: {
       value: options.prefix ? parentPrefix + options.prefix : parentPrefix,
-    },
-    $prefixExclude: {
-      value: [...parentExclude],
     },
     $parent: {
       value: app,
