@@ -32,6 +32,7 @@ export * from "./hooks/index.js";
 
 export { type StatusCode } from "./internal/response.js";
 export { defer, onError, type DeferCallback, type ErrorCallback } from "./plugins/minimajs/index.js";
+export { controller } from "./plugins/controller/index.js";
 
 export * from "./plugin.js";
 export * from "./module-discovery/types.js";

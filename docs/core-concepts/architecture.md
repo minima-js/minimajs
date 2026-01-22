@@ -34,13 +34,10 @@ Hooks within the same scope execute in **LIFO** (Last-In-First-Out) order. Regis
 import { hook } from "@minimajs/server";
 
 export const meta = {
-  plugins: [
-    hook("request", () => console.log("First registered")),
-    hook("request", () => console.log("Second registered"))
-  ]
+  plugins: [hook("request", () => console.log("First registered")), hook("request", () => console.log("Second registered"))],
 };
 
-export default async function(app) {
+export default async function (app) {
   // Routes here
 }
 ```
@@ -48,6 +45,7 @@ export default async function(app) {
 :::
 
 **Execution order:**
+
 1. "First registered" → runs first
 2. "Second registered" → runs second
 
@@ -66,13 +64,11 @@ import { hook } from "@minimajs/server";
 
 // Root module - hooks apply to all child modules
 export const meta = {
-  plugins: [
-    hook("request", () => console.log("Root hook"))
-  ]
+  plugins: [hook("request", () => console.log("Root hook"))],
 };
 
-export default async function(app) {
-  app.get('/health', () => 'ok');
+export default async function (app) {
+  app.get("/health", () => "ok");
 }
 ```
 
@@ -81,13 +77,11 @@ import { hook } from "@minimajs/server";
 
 // Child scope 1
 export const meta = {
-  plugins: [
-    hook("request", () => console.log("Users hook"))
-  ]
+  plugins: [hook("request", () => console.log("Users hook"))],
 };
 
-export default async function(app) {
-  app.get('/list', () => "users");
+export default async function (app) {
+  app.get("/list", () => "users");
   // Request to /users/list executes: Root hook → Users hook
 }
 ```
@@ -97,13 +91,11 @@ import { hook } from "@minimajs/server";
 
 // Child scope 2 (isolated from users module)
 export const meta = {
-  plugins: [
-    hook("request", () => console.log("Admin hook"))
-  ]
+  plugins: [hook("request", () => console.log("Admin hook"))],
 };
 
-export default async function(app) {
-  app.get('/dashboard', () => "admin");
+export default async function (app) {
+  app.get("/dashboard", () => "admin");
   // Request to /admin/dashboard executes: Root hook → Admin hook
 }
 ```
@@ -173,11 +165,11 @@ export const meta = {
         // carry global response
         return new Response("OK", responseState);
       }
-    })
-  ]
+    }),
+  ],
 };
 
-export default async function(app) {
+export default async function (app) {
   // Fast static response (Path 2)
   app.get("/ping", ({ responseState }) => new Response("pong", responseState));
 
@@ -219,6 +211,7 @@ The framework uses **native Web API `Request` and `Response` objects** instead o
 ### 3. Modular, Scope-Isolated Design
 
 Filesystem-based modules with `meta.plugins` enable **scalable, composable applications** with clear lifecycle guarantees. Each module creates an isolated scope where:
+
 - Child modules inherit hooks/plugins from parents
 - Sibling modules remain completely isolated
 - No configuration needed - just create directories and module files

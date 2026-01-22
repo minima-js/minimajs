@@ -63,12 +63,12 @@ await app.listen({ port: 3000 });
 
 ```typescript [src/module.ts]
 import { type Meta } from "@minimajs/server";
-import { bodyParser } from "@minimajs/body-parser";
+import { cors } from "@minimajs/server/plugins";
 
 // Global config - applies to every route
 export const meta: Meta = {
   prefix: "/api",
-  plugins: [bodyParser()],
+  plugins: [cors()],
 };
 
 // sync / async supported
@@ -163,12 +163,12 @@ Each module creates an isolated scope. Plugins, hooks, and configuration stay co
 
 ```typescript [src/module.ts]
 import { type Meta } from "@minimajs/server";
-import { bodyParser } from "@minimajs/body-parser";
+import { cors } from "@minimajs/server/plugins";
 
 // Root module - these plugins apply to ALL children
 export const meta: Meta = {
   prefix: "/api",
-  plugins: [bodyParser()],
+  plugins: [cors()],
 };
 ```
 
@@ -220,7 +220,7 @@ export default async function (app) {
 **Request to `/api/users/list`:**
 
 ```
-→ Root plugins run (bodyParser)
+→ Root plugins run (cors)
 → Users plugins run (logging hook)
 → Route handler executes
 ```
@@ -228,7 +228,7 @@ export default async function (app) {
 **Request to `/api/posts/latest`:**
 
 ```
-→ Root plugins run (bodyParser)
+→ Root plugins run (cors)
 → Route handler executes
 ✅ Users logging hook DOES NOT run (isolated)
 ```

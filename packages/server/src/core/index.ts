@@ -22,6 +22,7 @@ import { Server } from "./server.js";
 import { createLogger, logger as defaultLogger } from "../logger.js";
 import { moduleDiscovery } from "../module-discovery/index.js";
 import type { ModuleDiscoveryOptions } from "../module-discovery/types.js";
+import { bodyParser } from "../plugins/index.js";
 
 export * from "./server.js";
 
@@ -47,6 +48,7 @@ export function createBaseServer<T>(server: ServerAdapter<T>, options: CreateBas
     router: Router({ ignoreTrailingSlash: true, ...options.router }),
   });
   srv.register(minimajs());
+  srv.register(bodyParser());
   if (options.moduleDiscovery !== false) {
     srv.register(moduleDiscovery(options.moduleDiscovery ?? {}));
   }

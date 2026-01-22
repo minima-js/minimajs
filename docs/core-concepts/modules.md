@@ -87,7 +87,7 @@ curl http://localhost:3000/users/1
 
 ## Step 2: Add Plugins to Your Module
 
-Now let's add some plugins to our users module - like request logging and body parsing.
+Now let's add some plugins to our users module - like request logging and CORS.
 
 **1. Add the `meta` export with plugins:**
 
@@ -95,8 +95,8 @@ Now let's add some plugins to our users module - like request logging and body p
 
 ```typescript [src/users/module.ts]
 import type { App, Meta } from "@minimajs/server";
-import { hook, body } from "@minimajs/server";
-import { bodyParser } from "@minimajs/body-parser";
+import { hook } from "@minimajs/server";
+import { cors } from "@minimajs/server/plugins";
 
 const users = [
   { id: 1, name: "Alice" },
@@ -106,7 +106,7 @@ const users = [
 // Register plugins in meta.plugins
 export const meta: Meta = {
   plugins: [
-    bodyParser(),  // Enable body parsing for this module
+    cors(),  // Enable cors for this module
     hook('request', ({ request }) => {
       console.log(`[Users] ${request.method} ${request.url}`);
     })
@@ -115,24 +115,19 @@ export const meta: Meta = {
 
 export default async function(app: App) {
   app.get('/list', () => users);
-  
-  app.post('/create', () => {
-    const newUser = body();  // body() works because bodyParser is registered
-    users.push(newUser);
-    return { created: newUser };
+  app.get('/:id', ({ params }) => {
+    return users.find(u => u.id === Number(params.id));
   });
 }
 ```
 
 :::
 
-**2. Test the new POST route:**
+**2. Test the routes:**
 
 ```bash
-curl -X POST http://localhost:3000/users/create \
-  -H "Content-Type: application/json" \
-  -d '{"id":3,"name":"Charlie"}'
-# → {"created":{"id":3,"name":"Charlie"}}
+curl http://localhost:3000/users/list
+# → [{"id":1,"name":"Alice"},{"id":2,"name":"Bob"}]
 
 # Check your server logs - you'll see the logging hook output
 ```
@@ -215,14 +210,12 @@ src/
 
 ```typescript [src/api/module.ts]
 import type { App, Meta } from "@minimajs/server";
-import { bodyParser } from "@minimajs/body-parser";
-import { cors } from "@minimajs/cors";
+import { cors } from "@minimajs/server/plugins";
 
-// These plugins apply to ALL child modules
+// These plugin apply to ALL child modules
 export const meta: Meta = {
   prefix: '/api/v1',
   plugins: [
-    bodyParser(),
     cors({ origin: '*' })
   ]
 };
@@ -234,27 +227,19 @@ export default async function(app: App) {
 
 ```typescript [src/api/users/module.ts]
 import type { App } from "@minimajs/server";
-import { body } from "@minimajs/server";
 
-// No need to register bodyParser - inherited from parent!
+// No need to register cors - inherited from parent!
 export default async function(app: App) {
-  app.post('/create', () => {
-    const user = body();  // Works because of parent's bodyParser
-    return { created: user };
-  });
+  app.get('/list', () => ({ users: [] }));
 }
 ```
 
 ```typescript [src/api/posts/module.ts]
 import type { App } from "@minimajs/server";
-import { body } from "@minimajs/server";
 
-// Also inherits bodyParser from parent
+// Also inherits CORS from parent
 export default async function(app: App) {
-  app.post('/create', () => {
-    const post = body();
-    return { created: post };
-  });
+  app.get('/list', () => ({ posts: [] }));
 }
 ```
 
@@ -263,8 +248,8 @@ export default async function(app: App) {
 **3. Check the resulting routes:**
 
 - `GET /api/v1/health` (parent)
-- `POST /api/v1/users/create` (child, with inherited plugins)
-- `POST /api/v1/posts/create` (child, with inherited plugins)
+- `GET /api/v1/users/list` (child, with inherited plugins)
+- `GET /api/v1/posts/list` (child, with inherited plugins)
 
 🎯 **Inheritance:** Child modules automatically get their parent's prefix and plugins!
 
@@ -292,15 +277,13 @@ src/
 
 ```typescript [src/module.ts]
 import type { App, Meta } from "@minimajs/server";
-import { bodyParser } from "@minimajs/body-parser";
-import { cors } from "@minimajs/cors";
+import { cors } from "@minimajs/server/plugins";
 import { hook } from "@minimajs/server";
 
 // 🌍 Global configuration - inherited by ALL modules
 export const meta: Meta = {
   prefix: '/api',
   plugins: [
-    bodyParser(),           // All routes get body parsing
     cors({ origin: '*' }),  // All routes get CORS
     hook('request', ({ request }) => {
       console.log(`[Global] ${request.method} ${request.url}`);
@@ -321,14 +304,10 @@ export default async function(app: App) {
 
 ```typescript [src/users/module.ts]
 import type { App } from "@minimajs/server";
-import { body } from "@minimajs/server";
 
-// No bodyParser here - inherited from root!
+// No CORS here - inherited from root!
 export default async function(app: App) {
-  app.post('/create', () => {
-    const user = body();  // Works due to root's bodyParser
-    return { created: user };
-  });
+  app.get('/list', () => ({ users: [] }));
 }
 ```
 
@@ -336,10 +315,10 @@ export default async function(app: App) {
 
 **Resulting structure:**
 - `GET /api/health` (root)
-- `POST /api/users/create` (inherits `/api` prefix + all plugins)
-- `POST /api/posts/create` (inherits `/api` prefix + all plugins)
+- `GET /api/users/list` (inherits `/api` prefix + all plugins)
+- `GET /api/posts/list` (inherits `/api` prefix + all plugins)
 
-💡 **Best Practice:** Put authentication, body parsing, CORS, rate limiting, and global logging in the root module.
+💡 **Best Practice:** Put authentication, CORS, rate limiting, and global logging in the root module.
 
 ---
 

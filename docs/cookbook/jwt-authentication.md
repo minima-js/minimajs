@@ -32,6 +32,7 @@ src/
 ```
 
 **Key points:**
+
 - `module.ts` files are auto-discovered and loaded
 - Each module declares its plugins via `export const meta: Meta`
 - No manual registration needed - just create files!
@@ -121,10 +122,10 @@ const users = [{ id: 1, username: "john.doe", password: "password123" }];
 
 // Register authPlugin to make getUser() available
 export const meta: Meta = {
-  plugins: [authPlugin]
+  plugins: [authPlugin],
 };
 
-export default async function(app) {
+export default async function (app) {
   app.post("/login", () => {
     const { username, password } = body<{ username?: string; password?: string }>();
 
@@ -160,12 +161,12 @@ import { guardPlugin } from "../auth/guard.js";
 // Apply both auth and guard plugins
 export const meta: Meta = {
   plugins: [
-    authPlugin,  // Makes getUser() available
-    guardPlugin  // Ensures user is authenticated
-  ]
+    authPlugin, // Makes getUser() available
+    guardPlugin, // Ensures user is authenticated
+  ],
 };
 
-export default async function(app) {
+export default async function (app) {
   app.get("/me", () => {
     // Because guard is applied, getUser() will always return a user here
     const user = getUser();
@@ -174,9 +175,9 @@ export default async function(app) {
 
   app.get("/settings", () => {
     const user = getUser();
-    return { 
+    return {
       user,
-      message: "User settings" 
+      message: "User settings",
     };
   });
 }
@@ -215,11 +216,11 @@ import { authPlugin } from "./auth/tools.js";
 // Root module - all child modules inherit these plugins
 export const meta: Meta = {
   plugins: [
-    authPlugin  // Now available in ALL modules
-  ]
+    authPlugin, // Now available in ALL modules
+  ],
 };
 
-export default async function(app) {
+export default async function (app) {
   app.get("/health", () => "ok");
 }
 ```
@@ -228,7 +229,7 @@ export default async function(app) {
 import { body, type Meta } from "@minimajs/server";
 import { getUser } from "./tools.js"; // ✅ authPlugin inherited from root
 
-export default async function(app) {
+export default async function (app) {
   app.post("/login", () => {
     // ... login logic
   });
@@ -242,10 +243,10 @@ import { guardPlugin } from "../auth/guard.js";
 
 // Only need guard here - authPlugin comes from root
 export const meta: Meta = {
-  plugins: [guardPlugin]
+  plugins: [guardPlugin],
 };
 
-export default async function(app) {
+export default async function (app) {
   app.get("/me", () => {
     const user = getUser();
     return { user };
@@ -266,6 +267,7 @@ With file-based module discovery:
 3. **`/profile/settings`** (protected) - Same guard applies to all routes in module
 
 **API Routes:**
+
 - `POST /auth/login` - Public (login with credentials, get JWT)
 - `GET /profile/me` - Protected (returns authenticated user)
 - `GET /profile/settings` - Protected (returns user settings)

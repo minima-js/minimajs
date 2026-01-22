@@ -353,15 +353,21 @@ app.get("/stream", () => {
 
 ### Body Parser
 
+Body parser is **enabled by default** and configured to parse JSON. You can override the configuration or disable it:
+
 ```typescript
 import { bodyParser } from "@minimajs/server/plugins";
 
+// Override configuration (supports multiple types)
 app.register(
   bodyParser({
-    types: ["json", "text", "form"],
+    type: ["json", "text", "form"],
     clone: false,
   })
 );
+
+// Or disable it entirely
+app.register(bodyParser({ enabled: false }));
 ```
 
 ### Router Logger

@@ -248,19 +248,19 @@ app.get("/users/:id", () => {
 
 ### `body()`
 
-Returns the parsed request body. Requires the body parser plugin.
+Returns the parsed request body. The body parser is **enabled by default** and configured to parse JSON, so you can use `body()` immediately without any setup.
 
 ```ts
 import { body } from "@minimajs/server";
-import { bodyParser } from "@minimajs/server/plugins";
 
-app.register(bodyParser());
-
+// Body parser is already enabled - no registration needed!
 app.post("/users", () => {
   const data = body();
   return { created: data };
 });
 ```
+
+To change the configuration or disable the body parser, see the [Body Parser plugin documentation](/plugins/body-parser).
 
 ---
 

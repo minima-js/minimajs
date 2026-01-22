@@ -62,12 +62,10 @@ The `.register()` method adds functionality to your application. While modules a
 import { hook } from "@minimajs/server";
 
 export const meta = {
-  plugins: [
-    hook("request", () => console.log("Users hook"))
-  ]
+  plugins: [hook("request", () => console.log("Users hook"))],
 };
 
-export default async function(app) {
+export default async function (app) {
   app.get("/list", () => "users");
 }
 ```
