@@ -5,7 +5,28 @@ sidebar_position: 6
 
 # Built-in Plugins
 
-Minima.js comes with a set of pre-built plugins to handle common web development needs. These plugins are designed to be easily integrated into your application using the `app.register()` method.
+Minima.js comes with a set of pre-built plugins to handle common web development needs. These plugins can be easily integrated into your application:
+
+- **In module files** - Use `meta.plugins` (recommended)
+- **In entry files** - Use `app.register()`
+
+## Quick Example
+
+```typescript
+// src/module.ts
+import { type Meta } from "@minimajs/server";
+import { cors } from "@minimajs/server/plugins";
+
+export const meta: Meta = {
+  plugins: [
+    cors({ origin: "*" })
+  ]
+};
+
+export default async function (app) {
+  app.get("/api/data", () => ({ data: "value" }));
+}
+```
 
 ## Available Plugins
 

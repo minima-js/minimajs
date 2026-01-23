@@ -31,6 +31,7 @@ import { controller } from "@minimajs/server";
 export const meta: Meta = {
   plugins: [
     controller(import("./controller"), [
+      // Format: "<METHOD> <PATH> <HANDLER_NAME>"
       "GET / getList",
       "POST / createUser",
       "GET /:id getUser",
@@ -70,13 +71,12 @@ For standard CRUD operations:
 import { controller } from "@minimajs/server";
 
 export const meta: Meta = {
-  plugins: [
-    controller.rest(import("./controller"), "id"),
-  ],
+  plugins: [controller.rest(import("./controller"), "id")],
 };
 ```
 
 Automatically creates:
+
 - `GET /` → `list`
 - `GET /:id` → `find`
 - `POST /` → `create`

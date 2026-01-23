@@ -11,6 +11,7 @@ tags:
 Hooks in Minima.js allow you to **tap into the application and request lifecycle**, enabling custom behavior at precise points.
 
 **In Minima.js, everything is a plugin** - even hooks are plugins. You apply hooks via:
+
 - **`meta.plugins`** in module files (recommended)
 - **`app.register(hook(...))`** for manual registration
 
@@ -26,11 +27,11 @@ export const meta = {
     }),
     hook("error", (error) => {
       console.error("Error in users module:", error);
-    })
-  ]
+    }),
+  ],
 };
 
-export default async function(app) {
+export default async function (app) {
   // Your routes here
 }
 ```
@@ -104,11 +105,11 @@ export const meta = {
       return async () => {
         await db.disconnect();
       };
-    })
-  ]
+    }),
+  ],
 };
 
-export default async function(app) {
+export default async function (app) {
   // Your routes here
 }
 ```
@@ -141,8 +142,8 @@ export const meta = {
     hook("ready", async (app) => {
       console.log("Application is ready!");
       // Pre-warm caches, verify connections, etc.
-    })
-  ]
+    }),
+  ],
 };
 ```
 
@@ -161,8 +162,8 @@ export const meta = {
   plugins: [
     hook("listen", (server) => {
       console.log(`Server listening on ${server.hostname}:${server.port}`);
-    })
-  ]
+    }),
+  ],
 };
 ```
 
@@ -183,8 +184,8 @@ export const meta = {
       console.log("Server shutting down...");
       await db.close();
       await cache.flush();
-    })
-  ]
+    }),
+  ],
 };
 ```
 
@@ -205,8 +206,8 @@ export const meta = {
   plugins: [
     hook("register", (plugin, opts) => {
       console.log(`Plugin registered: ${plugin.name || "anonymous"}`, opts);
-    })
-  ]
+    }),
+  ],
 };
 ```
 
@@ -246,11 +247,11 @@ export const meta = {
       send(response, { request }) {
         console.log("Response sent for:", request.url());
       },
-    })
-  ]
+    }),
+  ],
 };
 
-export default async function(app) {
+export default async function (app) {
   // Your routes here
 }
 ```
@@ -306,11 +307,11 @@ export const meta = {
       if (isRateLimited(ip)) {
         abort("Too Many Requests", 429);
       }
-    })
-  ]
+    }),
+  ],
 };
 
-export default async function(app) {
+export default async function (app) {
   // Your routes here
 }
 ```
@@ -339,11 +340,11 @@ export const meta = {
         data.users = data.users.map((u) => u.toUpperCase());
       }
       return data;
-    })
-  ]
+    }),
+  ],
 };
 
-export default async function(app) {
+export default async function (app) {
   app.get("/list", () => {
     return { users: ["Alice", "Bob"] };
   });
@@ -384,11 +385,11 @@ export const meta = {
         status: response.status,
         duration: Date.now() - ctx.startTime,
       });
-    })
-  ]
+    }),
+  ],
 };
 
-export default async function(app) {
+export default async function (app) {
   // Your routes here
 }
 ```
@@ -416,7 +417,7 @@ The `defer` helper registers a callback to be executed **after the response has 
 ```typescript [src/api/module.ts]
 import { defer } from "@minimajs/server";
 
-export default async function(app) {
+export default async function (app) {
   app.get("/", () => {
     defer(() => {
       console.log("Response sent, running deferred task...");
@@ -452,9 +453,7 @@ These hooks execute in **registration order**: parent hooks run first, then chil
 import { hook } from "@minimajs/server";
 
 export const meta = {
-  plugins: [
-    hook("request", () => console.log("Parent: Auth"))
-  ]
+  plugins: [hook("request", () => console.log("Parent: Auth"))],
 };
 ```
 
@@ -462,12 +461,10 @@ export const meta = {
 import { hook } from "@minimajs/server";
 
 export const meta = {
-  plugins: [
-    hook("request", () => console.log("Child: Logging"))
-  ]
+  plugins: [hook("request", () => console.log("Child: Logging"))],
 };
 
-export default async function(app) {
+export default async function (app) {
   app.get("/list", () => "users");
 }
 ```
@@ -475,6 +472,7 @@ export default async function(app) {
 :::
 
 **Execution when calling `/users/list`:**
+
 1. "Parent: Auth" (parent runs first)
 2. "Child: Logging" (child runs second)
 
@@ -494,9 +492,7 @@ These hooks execute in **reverse order**: child hooks run first, then parent hoo
 import { hook } from "@minimajs/server";
 
 export const meta = {
-  plugins: [
-    hook("error", () => ({ error: "Generic error" }))
-  ]
+  plugins: [hook("error", () => ({ error: "Generic error" }))],
 };
 ```
 
@@ -504,12 +500,10 @@ export const meta = {
 import { hook } from "@minimajs/server";
 
 export const meta = {
-  plugins: [
-    hook("error", () => ({ error: "Module-specific error" }))
-  ]
+  plugins: [hook("error", () => ({ error: "Module-specific error" }))],
 };
 
-export default async function(app) {
+export default async function (app) {
   app.get("/list", () => {
     throw new Error("Failed");
   });
@@ -519,6 +513,7 @@ export default async function(app) {
 :::
 
 **Execution on error in `/users/list`:**
+
 1. Child error handler (module-specific)
 2. Parent error handler (only if child doesn't handle)
 
@@ -557,8 +552,8 @@ export const meta = {
     hook("ready", async () => {
       await db.connect();
       console.log("1. Database connected");
-    })
-  ]
+    }),
+  ],
 };
 ```
 
@@ -571,8 +566,8 @@ export const meta = {
     hook("ready", async () => {
       await cache.warmup();
       console.log("2. Cache warmed up");
-    })
-  ]
+    }),
+  ],
 };
 ```
 
@@ -593,8 +588,8 @@ export const meta = {
     hook("close", async () => {
       await db.disconnect();
       console.log("2. Database closed");
-    })
-  ]
+    }),
+  ],
 };
 ```
 
@@ -607,8 +602,8 @@ export const meta = {
     hook("close", async () => {
       await cache.flush();
       console.log("1. Cache flushed");
-    })
-  ]
+    }),
+  ],
 };
 ```
 
@@ -629,8 +624,8 @@ export const meta = {
     hook("error", (err) => {
       console.log("Fallback: Generic error response");
       return { error: "Something went wrong" };
-    })
-  ]
+    }),
+  ],
 };
 ```
 
@@ -646,11 +641,11 @@ export const meta = {
         return { error: "Validation failed", details: err.details };
       }
       // Return undefined to let parent handle it
-    })
-  ]
+    }),
+  ],
 };
 
-export default async function(app) {
+export default async function (app) {
   app.post("/create", () => {
     /* ... */
   });
@@ -660,6 +655,7 @@ export default async function(app) {
 :::
 
 **Behavior:**
+
 - ValidationError: Child handles it
 - Other errors: Falls through to parent
 
@@ -674,12 +670,10 @@ import { hook } from "@minimajs/server";
 
 // Parent hook - inherited by all children
 export const meta = {
-  plugins: [
-    hook("request", () => console.log("Parent"))
-  ]
+  plugins: [hook("request", () => console.log("Parent"))],
 };
 
-export default async function(app) {
+export default async function (app) {
   app.get("/health", () => "ok");
 }
 ```
@@ -689,12 +683,10 @@ import { hook } from "@minimajs/server";
 
 // Child scope 1
 export const meta = {
-  plugins: [
-    hook("request", () => console.log("Child 1"))
-  ]
+  plugins: [hook("request", () => console.log("Child 1"))],
 };
 
-export default async function(app) {
+export default async function (app) {
   app.get("/list", () => "users");
 }
 ```
@@ -704,12 +696,10 @@ import { hook } from "@minimajs/server";
 
 // Child scope 2
 export const meta = {
-  plugins: [
-    hook("request", () => console.log("Child 2"))
-  ]
+  plugins: [hook("request", () => console.log("Child 2"))],
 };
 
-export default async function(app) {
+export default async function (app) {
   app.get("/dashboard", () => "admin");
 }
 ```
@@ -760,15 +750,19 @@ app.register(
 );
 
 // Register a module manually
-app.register(async (app) => {
-  app.register(hook("error", () => ({ error: "Module error" })));
-  app.get("/users", () => "users");
-}, { prefix: "/api" });
+app.register(
+  async (app) => {
+    app.register(hook("error", () => ({ error: "Module error" })));
+    app.get("/users", () => "users");
+  },
+  { prefix: "/api" }
+);
 
 await app.listen({ port: 3000 });
 ```
 
 **When to use manual registration:**
+
 - Apps without module discovery
 - Registering global plugins in entry files
 - Building reusable plugin libraries

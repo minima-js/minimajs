@@ -63,12 +63,12 @@ await app.listen({ port: 3000 });
 ```typescript [src/users/module.ts]
 import { params } from "@minimajs/server";
 
-export default async function(app) {
-  app.get('/list', () => [{ id: 1, name: 'John' }]);
-  
-  app.get('/:id', () => {
-    const id = params.get('id');
-    return { id, name: 'John' };
+export default async function (app) {
+  app.get("/list", () => [{ id: 1, name: "John" }]);
+
+  app.get("/:id", () => {
+    const id = params.get("id");
+    return { id, name: "John" };
   });
 }
 ```
@@ -76,6 +76,7 @@ export default async function(app) {
 :::
 
 Your routes are automatically available:
+
 - `GET /users/list`
 - `GET /users/:id`
 - `GET /posts/list`
@@ -85,14 +86,14 @@ Your routes are automatically available:
 ```typescript
 const app = createApp({
   moduleDiscovery: {
-    root: './modules',     // Custom directory (default: entry file's directory)
-    index: 'route'         // Custom filename (default: 'module')
-  }
+    root: "./modules", // Custom directory (default: entry file's directory)
+    index: "route", // Custom filename (default: 'module')
+  },
 });
 
 // Or disable auto-discovery
 const app = createApp({
-  moduleDiscovery: false   // Manual registration only
+  moduleDiscovery: false, // Manual registration only
 });
 ```
 
@@ -200,16 +201,13 @@ import { params } from "@minimajs/server";
 
 // Module-scoped plugins via meta
 export const meta = {
-  plugins: [
-    cors({ origin: '*' }),
-    hook("request", () => console.log("User request"))
-  ]
+  plugins: [cors({ origin: "*" }), hook("request", () => console.log("User request"))],
 };
 
 // Module routes
-export default async function(app) {
-  app.get('/list', () => getUsers());
-  app.get('/:id', () => getUser(params.get("id")));
+export default async function (app) {
+  app.get("/list", () => getUsers());
+  app.get("/:id", () => getUser(params.get("id")));
 }
 ```
 
@@ -218,19 +216,18 @@ import { hook } from "@minimajs/server";
 
 // Different plugins - completely isolated from users module
 export const meta = {
-  plugins: [
-    hook("request", () => console.log("Admin request"))
-  ]
+  plugins: [hook("request", () => console.log("Admin request"))],
 };
 
-export default async function(app) {
-  app.get('/dashboard', () => getAdminData());
+export default async function (app) {
+  app.get("/dashboard", () => getAdminData());
 }
 ```
 
 :::
 
 Routes are automatically created:
+
 - `GET /users/list`
 - `GET /users/:id`
 - `GET /admin/dashboard`
@@ -518,15 +515,13 @@ import { body } from "@minimajs/server";
 
 // Register module-scoped plugins
 export const meta = {
-  plugins: [
-    cors({ origin: 'https://example.com' })
-  ]
+  plugins: [cors({ origin: "https://example.com" })],
 };
 
 // Define routes
-export default async function(app: App) {
-  app.get('/list', () => getUsers());
-  app.post('/create', () => createUser(body()));
+export default async function (app: App) {
+  app.get("/list", () => getUsers());
+  app.post("/create", () => createUser(body()));
 }
 ```
 

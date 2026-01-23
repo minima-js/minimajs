@@ -94,6 +94,7 @@ const config = defineConfig({
         text: "Advanced",
         items: [
           { text: "Overview", link: "/advanced/index" },
+          { text: "Module Discovery", link: "/advanced/module-discovery" },
           { text: "Custom Runtime Adapters", link: "/advanced/custom-adapters" },
           { text: "Container & Encapsulation", link: "/advanced/container-encapsulation" },
         ],

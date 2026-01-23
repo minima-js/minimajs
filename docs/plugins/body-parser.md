@@ -12,7 +12,7 @@ import { bodyParser } from "@minimajs/server/plugins";
 
 ## Default Behavior
 
-**The body parser is automatically enabled by default** when you create an app using `createApp()`. It is configured to parse `application/json` content types, so you can use the `body()` function immediately without any setup.
+**The body parser is automatically enabled by default**. It is configured to parse `application/json` content types, so you can use the `body()` function immediately without any setup.
 
 ```typescript
 import { createApp } from "@minimajs/server/bun";

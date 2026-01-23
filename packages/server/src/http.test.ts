@@ -64,7 +64,7 @@ describe("Http", () => {
 
   describe("body", () => {
     test("should retrieve request body as ReadableStream", async () => {
-      const app = createApp({ logger: false, moduleDiscovery: false });
+      const app = createApp({ logger: false, moduleDiscovery: false }).register(bodyParser({ enabled: false }));
       app.post("/test", async () => {
         const data = (await request().json()) as { message: string };
         return { received: data };
@@ -81,7 +81,7 @@ describe("Http", () => {
     });
 
     test("should handle typed body", async () => {
-      const app = createApp({ logger: false, moduleDiscovery: false });
+      const app = createApp({ logger: false, moduleDiscovery: false }).register(bodyParser({ enabled: false }));
       app.post("/test", async () => {
         const data = (await request().json()) as { name: string; age: number };
         return { name: data.name, age: data.age };
@@ -511,7 +511,7 @@ describe("Http", () => {
 
   describe("body() without bodyParser", () => {
     test("should throw error when bodyParser is not registered", async () => {
-      const app = createApp({ logger: false, moduleDiscovery: false });
+      const app = createApp({ logger: false, moduleDiscovery: false }).register(bodyParser({ enabled: false }));
       app.get("/test", () => {
         body(); // This will throw
         return "ok";

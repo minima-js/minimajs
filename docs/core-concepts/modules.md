@@ -47,13 +47,13 @@ import type { App } from "@minimajs/server";
 
 const users = [
   { id: 1, name: "Alice" },
-  { id: 2, name: "Bob" }
+  { id: 2, name: "Bob" },
 ];
 
-export default async function(app: App) {
-  app.get('/list', () => users);
-  app.get('/:id', ({ params }) => {
-    return users.find(u => u.id === Number(params.id));
+export default async function (app: App) {
+  app.get("/list", () => users);
+  app.get("/:id", ({ params }) => {
+    return users.find((u) => u.id === Number(params.id));
   });
 }
 ```
@@ -79,6 +79,7 @@ curl http://localhost:3000/users/1
 ```
 
 🎉 **What just happened?**
+
 - Minima.js found `users/module.ts` automatically
 - The directory name (`users`) became the route prefix (`/users`)
 - Your routes (`/list` and `/:id`) were mounted under `/users`
@@ -100,23 +101,23 @@ import { cors } from "@minimajs/server/plugins";
 
 const users = [
   { id: 1, name: "Alice" },
-  { id: 2, name: "Bob" }
+  { id: 2, name: "Bob" },
 ];
 
 // Register plugins in meta.plugins
 export const meta: Meta = {
   plugins: [
-    cors(),  // Enable cors for this module
-    hook('request', ({ request }) => {
+    cors(), // Enable cors for this module
+    hook("request", ({ request }) => {
       console.log(`[Users] ${request.method} ${request.url}`);
-    })
-  ]
+    }),
+  ],
 };
 
-export default async function(app: App) {
-  app.get('/list', () => users);
-  app.get('/:id', ({ params }) => {
-    return users.find(u => u.id === Number(params.id));
+export default async function (app: App) {
+  app.get("/list", () => users);
+  app.get("/:id", ({ params }) => {
+    return users.find((u) => u.id === Number(params.id));
   });
 }
 ```
@@ -158,13 +159,13 @@ src/
 ```typescript [src/users/profile/module.ts]
 import type { App } from "@minimajs/server";
 
-export default async function(app: App) {
-  app.get('/:userId', ({ params }) => {
+export default async function (app: App) {
+  app.get("/:userId", ({ params }) => {
     const userId = params.userId;
     return {
       userId,
       bio: "User profile for " + userId,
-      settings: { theme: "dark" }
+      settings: { theme: "dark" },
     };
   });
 }
@@ -180,6 +181,7 @@ curl http://localhost:3000/users/profile/1
 ```
 
 📁 **Route Structure:**
+
 - `src/users/module.ts` → `/users/*`
 - `src/users/profile/module.ts` → `/users/profile/*`
 
@@ -214,14 +216,12 @@ import { cors } from "@minimajs/server/plugins";
 
 // These plugin apply to ALL child modules
 export const meta: Meta = {
-  prefix: '/api/v1',
-  plugins: [
-    cors({ origin: '*' })
-  ]
+  prefix: "/api/v1",
+  plugins: [cors({ origin: "*" })],
 };
 
-export default async function(app: App) {
-  app.get('/health', () => ({ status: 'ok' }));
+export default async function (app: App) {
+  app.get("/health", () => ({ status: "ok" }));
 }
 ```
 
@@ -229,8 +229,8 @@ export default async function(app: App) {
 import type { App } from "@minimajs/server";
 
 // No need to register cors - inherited from parent!
-export default async function(app: App) {
-  app.get('/list', () => ({ users: [] }));
+export default async function (app: App) {
+  app.get("/list", () => ({ users: [] }));
 }
 ```
 
@@ -238,8 +238,8 @@ export default async function(app: App) {
 import type { App } from "@minimajs/server";
 
 // Also inherits CORS from parent
-export default async function(app: App) {
-  app.get('/list', () => ({ posts: [] }));
+export default async function (app: App) {
+  app.get("/list", () => ({ posts: [] }));
 }
 ```
 
@@ -282,17 +282,17 @@ import { hook } from "@minimajs/server";
 
 // 🌍 Global configuration - inherited by ALL modules
 export const meta: Meta = {
-  prefix: '/api',
+  prefix: "/api",
   plugins: [
-    cors({ origin: '*' }),  // All routes get CORS
-    hook('request', ({ request }) => {
+    cors({ origin: "*" }), // All routes get CORS
+    hook("request", ({ request }) => {
       console.log(`[Global] ${request.method} ${request.url}`);
-    })
-  ]
+    }),
+  ],
 };
 
-export default async function(app: App) {
-  app.get('/health', () => ({ status: 'ok' }));
+export default async function (app: App) {
+  app.get("/health", () => ({ status: "ok" }));
 }
 ```
 
@@ -306,108 +306,21 @@ export default async function(app: App) {
 import type { App } from "@minimajs/server";
 
 // No CORS here - inherited from root!
-export default async function(app: App) {
-  app.get('/list', () => ({ users: [] }));
+export default async function (app: App) {
+  app.get("/list", () => ({ users: [] }));
 }
 ```
 
 :::
 
 **Resulting structure:**
+
 - `GET /api/health` (root)
 - `GET /api/users/list` (inherits `/api` prefix + all plugins)
 - `GET /api/posts/list` (inherits `/api` prefix + all plugins)
 
 💡 **Best Practice:** Put authentication, CORS, rate limiting, and global logging in the root module.
 
----
-
-## Step 6: Customize Module Discovery
-
-By default, Minima.js looks for `module.{ts,js,mjs}` files. You can customize this.
-
-### Change the Filename Pattern
-
-Want to use `route.ts` instead?
-
-::: code-group
-
-```typescript [src/index.ts]
-import { createApp } from "@minimajs/server/bun";
-
-const app = createApp({
-  moduleDiscovery: { 
-    index: 'route'  // Now looks for route.ts instead of module.ts
-  }
-});
-
-await app.listen({ port: 3000 });
-```
-
-:::
-
-Now your structure would be:
-```
-src/
-├── index.ts
-├── users/
-│   └── route.ts    # ✅ Discovered
-└── posts/
-    └── route.ts    # ✅ Discovered
-```
-
-### Change the Discovery Root
-
-Want to organize modules in a specific directory?
-
-::: code-group
-
-```typescript [src/index.ts]
-import { createApp } from "@minimajs/server/bun";
-import path from "node:path";
-
-const app = createApp({
-  moduleDiscovery: { 
-    root: path.resolve(import.meta.dir, 'features')
-  }
-});
-
-await app.listen({ port: 3000 });
-```
-
-:::
-
-Now Minima.js only scans `src/features/`:
-```
-src/
-├── index.ts
-└── features/        # Only scans here
-    ├── users/
-    │   └── module.ts
-    └── posts/
-        └── module.ts
-```
-
-### Combine Both Options
-
-::: code-group
-
-```typescript [src/index.ts]
-import path from "node:path";
-
-const app = createApp({
-  moduleDiscovery: { 
-    root: path.resolve(import.meta.dir, 'app'),
-    index: 'route'
-  }
-});
-```
-
-:::
-
-Discovery pattern: `app/**/route.{ts,js,mjs}`
-
----
 
 ## Common Patterns
 
@@ -433,31 +346,35 @@ src/
 ::: code-group
 
 ```typescript [src/module.ts]
-import { authPlugin } from './plugins/auth.js';
+import { authPlugin } from "./plugins/auth.js";
 
 // Root module - makes auth available everywhere
 export const meta: Meta = {
-  plugins: [authPlugin]
+  plugins: [authPlugin],
 };
 ```
 
 ```typescript [src/public/module.ts]
 // No guard - anyone can access
-export default async function(app: App) {
-  app.post('/login', () => {/* ... */});
+export default async function (app: App) {
+  app.post("/login", () => {
+    /* ... */
+  });
 }
 ```
 
 ```typescript [src/protected/module.ts]
-import { guardPlugin } from '../plugins/guard.js';
+import { guardPlugin } from "../plugins/guard.js";
 
 // Add guard to require authentication
 export const meta: Meta = {
-  plugins: [guardPlugin]
+  plugins: [guardPlugin],
 };
 
-export default async function(app: App) {
-  app.get('/profile', () => {/* ... */});
+export default async function (app: App) {
+  app.get("/profile", () => {
+    /* ... */
+  });
 }
 ```
 
@@ -488,20 +405,23 @@ src/
 ### My module isn't being discovered
 
 **Check:**
+
 1. ✅ Is the file named `module.{ts,js,mjs}`?
 2. ✅ Is it in a subdirectory of your entry point?
 3. ✅ Is `moduleDiscovery` enabled? (It's on by default)
 
 **Debug by logging discovered modules:**
+
 ```typescript
 const app = createApp();
-console.log('Checking module discovery...');
+console.log("Checking module discovery...");
 await app.ready();
 ```
 
 ### Plugins not working
 
 **Remember:**
+
 - `meta.plugins` only works in `module.ts` files (or your configured index filename)
 - Plugins are scoped to the module and its children
 - Parent modules' plugins are inherited by children
@@ -509,15 +429,17 @@ await app.ready();
 ### Routes returning 404
 
 **Check your prefix stacking:**
+
 ```
 src/api/users/module.ts
 └─> /api (from parent) + /users (from directory) = /api/users/*
 ```
 
 Use absolute prefixes in `meta.prefix` to override:
+
 ```typescript
 export const meta: Meta = {
-  prefix: '/custom'  // Overrides directory-based prefix
+  prefix: "/custom", // Overrides directory-based prefix
 };
 ```
 
@@ -536,39 +458,35 @@ Now that you understand modules, explore:
 ## Quick Reference
 
 ### File Naming
+
 - Default: `module.{ts,js,mjs}`
-- Configure: `moduleDiscovery: { index: 'your-name' }`
+- Advanced configuration: [Module Discovery](/advanced/module-discovery)
 
 ### Module Structure
+
 ```typescript
 import type { App, Meta } from "@minimajs/server";
 
 export const meta: Meta = {
-  prefix: '/custom',     // Optional: override directory name
-  plugins: [/* ... */]   // Optional: module-scoped plugins
+  prefix: "/custom", // Optional: override directory name
+  plugins: [
+    /* ... */
+  ], // Optional: module-scoped plugins
 };
 
-export default async function(app: App) {
+export default async function (app: App) {
   // Your routes here
 }
 ```
 
-### Discovery Options
-```typescript
-createApp({
-  moduleDiscovery: {
-    root: path.resolve(import.meta.dir, 'dir'),  // Where to scan
-    index: 'filename'                             // What to look for
-  }
-})
-```
-
 ### Module Types
+
 - **Regular Module:** Any `module.ts` in a subdirectory
 - **Root Module:** `module.ts` in the discovery root (global config)
 - **Nested Module:** `module.ts` inside another module's directory
 
 ### Plugin Scope
+
 - Root module plugins → Inherited by ALL modules
 - Parent module plugins → Inherited by children
 - Module plugins → Only that module

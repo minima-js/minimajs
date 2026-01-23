@@ -3,6 +3,7 @@ import { createHooksStore, runHooks } from "./store.js";
 import { createApp } from "../node/index.js";
 import type { Context } from "../interfaces/index.js";
 import { kHooks } from "../symbols.js";
+import { createRequest, mockContext } from "../mock/index.js";
 
 describe("hooks/store", () => {
   describe("createHooksStore", () => {
@@ -115,8 +116,7 @@ describe("hooks/store", () => {
       const response = new Response("test");
       app.container[kHooks].request.add(() => response);
       app.container[kHooks].request.add(() => {});
-
-      const result = await runHooks.request(app, {} as Context);
+      const result = await app.handle(createRequest("/"));
       expect(result).toBe(response);
     });
 
@@ -124,7 +124,10 @@ describe("hooks/store", () => {
       app.container[kHooks].request.add(() => {});
       app.container[kHooks].request.add(() => {});
 
-      const result = await runHooks.request(app, {} as Context);
+      const result = await runHooks.request(
+        app,
+        mockContext((x) => x)
+      );
       expect(result).toBeUndefined();
     });
 
