@@ -6,10 +6,10 @@ A modern, high-performance HTTP framework for Node.js and Bun - combining proven
 [![License](https://img.shields.io/npm/l/@minimajs/server.svg)](https://github.com/minima-js/minimajs/blob/main/LICENSE)
 
 ## 🚀 Highlights
-
+- **File-Based Modules with True Isolation**: Create users/module.ts, it auto-loads as /users/*. Each module is encapsulated.
 - **Dual Runtime Support**: Native integration with both Bun and Node.js - no abstraction overhead
 - **100% TypeScript**: Built entirely in TypeScript for type safety and better DX
-- **Web Standards First**: Uses native Web API Request/Response objects
+- **Web Standards First**: Uses native Web API
 - **Context-Aware**: Access request data anywhere with AsyncLocalStorage - no more prop drilling
 - **Functional Approach**: Clean, composable APIs embracing functional programming
 - **Zero Boilerplate**: Get started with minimal setup and configuration
@@ -45,14 +45,15 @@ Organize your app by features - Minima.js automatically discovers modules.
 src/
 ├── index.ts          # Entry point
 ├── users/
-│   └── module.ts     # ✅ Auto-discovered (named "module")
+│   └── module.ts     # ✅ Auto-discovered
 └── posts/
     └── module.ts     # ✅ Auto-discovered
 ```
 
-::: code-group
 
 ```typescript [src/index.ts]
+// src/index.ts
+
 import { createApp } from "@minimajs/server/bun"; // or /node
 
 const app = createApp(); // Discovers modules automatically!
@@ -61,6 +62,8 @@ await app.listen({ port: 3000 });
 ```
 
 ```typescript [src/users/module.ts]
+// src/users/module.ts
+
 import { params } from "@minimajs/server";
 
 export default async function (app) {
@@ -72,8 +75,6 @@ export default async function (app) {
   });
 }
 ```
-
-:::
 
 Your routes are automatically available:
 
@@ -95,31 +96,6 @@ const app = createApp({
 const app = createApp({
   moduleDiscovery: false, // Manual registration only
 });
-```
-
-### Simple Single-File App
-
-For quick prototypes or microservices:
-
-```typescript
-import { createApp } from "@minimajs/server/bun";
-import { params, body } from "@minimajs/server";
-
-const app = createApp({ moduleDiscovery: false });
-
-app.get("/", () => ({ message: "Hello, World!" }));
-
-app.get("/users/:id", () => {
-  const id = params.get("id");
-  return { userId: id };
-});
-
-app.post("/users", () => {
-  const userData = body<{ name: string; email: string }>();
-  return { created: userData };
-});
-
-await app.listen({ port: 3000 });
 ```
 
 ## ✨ Key Features
@@ -184,9 +160,10 @@ app.post("/users/:id", () => {
 
 Organize your application by features, and let Minima.js discover modules automatically:
 
-::: code-group
 
 ```typescript [src/index.ts]
+// src/index.ts
+
 import { createApp } from "@minimajs/server/bun";
 
 const app = createApp(); // Auto-discovers from ./src
@@ -195,6 +172,8 @@ await app.listen({ port: 3000 });
 ```
 
 ```typescript [src/users/module.ts]
+// src/users/module.ts
+
 import { hook } from "@minimajs/server";
 import { cors } from "@minimajs/server/plugins";
 import { params } from "@minimajs/server";
@@ -212,6 +191,8 @@ export default async function (app) {
 ```
 
 ```typescript [src/admin/module.ts]
+// src/admin/module.ts
+
 import { hook } from "@minimajs/server";
 
 // Different plugins - completely isolated from users module
@@ -223,8 +204,6 @@ export default async function (app) {
   app.get("/dashboard", () => getAdminData());
 }
 ```
-
-:::
 
 Routes are automatically created:
 
@@ -366,35 +345,6 @@ app.get("/info", () => {
 });
 ```
 
-### Two Response Modes
-
-**1. Automatic Serialization (Recommended)**
-
-Return JavaScript values - they'll be serialized with hooks and global headers applied:
-
-```typescript
-app.get("/data", () => {
-  headers.set("X-Custom-Header", "value");
-
-  // Goes through: hooks → headers → serialization
-  return { message: "Hello", timestamp: Date.now() };
-});
-```
-
-**2. Direct Response (Bypass Everything)**
-
-Return native Response to skip all hooks and processing for maximum performance:
-
-```typescript
-app.get("/stream", () => {
-  // Bypasses: hooks, global headers, serialization
-  return new Response("Raw response", {
-    status: 200,
-    headers: { "Content-Type": "text/plain" },
-  });
-});
-```
-
 ## 🔌 Built-in Plugins
 
 ### Body Parser
@@ -498,9 +448,10 @@ Recommended project structure with automatic module discovery:
 └── tsconfig.json
 ```
 
-::: code-group
 
 ```typescript [src/index.ts]
+// src/index.ts
+
 import { createApp } from "@minimajs/server/bun";
 
 const app = createApp(); // Auto-discovers modules from ./src
@@ -509,6 +460,8 @@ await app.listen({ port: 3000 });
 ```
 
 ```typescript [src/users/module.ts]
+// src/users/module.ts
+
 import type { App } from "@minimajs/server";
 import { cors } from "@minimajs/server/plugins";
 import { body } from "@minimajs/server";
@@ -524,8 +477,6 @@ export default async function (app: App) {
   app.post("/create", () => createUser(body()));
 }
 ```
-
-:::
 
 ## 🔧 TypeScript Configuration
 
