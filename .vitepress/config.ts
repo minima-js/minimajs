@@ -1,12 +1,30 @@
 import { defineConfig } from "vitepress";
 import { withMermaid } from "vitepress-plugin-mermaid";
 
+const tagId = 'GTM-P9NLW275';
+
+
 const config = defineConfig({
   title: "Minima.js",
   description: "A cutting-edge Node.js framework for modern web applications",
   base: "/",
   srcDir: "docs",
   cleanUrls: true,
+
+   head: [
+    [
+      'script',
+      { async: '', src: 'https://www.googletagmanager.com/gtag/js?id=' + tagId }
+    ],
+    [
+      'script',
+      {},
+      `window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '${tagId}');`
+    ]
+  ],
 
   // Vite configuration for Mermaid compatibility
   vite: {
