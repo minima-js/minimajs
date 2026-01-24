@@ -1,9 +1,9 @@
 import path from "node:path";
-import type { App } from "../interfaces/index.js";
-import { plugin } from "../plugin.js";
-import { getRunningFilePath } from "../utils/fs.js";
+import type { App } from "../../interfaces/index.js";
+import { plugin } from "../../plugin.js";
+import { getRunningFilePath } from "../../utils/fs.js";
 import { importModule, tryImport } from "./importer.js";
-import { scanModules as $scanModules } from "./scanner.js";
+import { scanModules } from "./scanner.js";
 import type { ImportedModule, ModuleDiscoveryOptions } from "./types.js";
 
 /**
@@ -11,7 +11,7 @@ import type { ImportedModule, ModuleDiscoveryOptions } from "./types.js";
  * Uses Node.js's built-in import caching for performance
  */
 export function moduleDiscovery(options: ModuleDiscoveryOptions) {
-  const { index = "module", scanner = $scanModules, root: modulesPath = getRunningFilePath() } = options;
+  const { index = "module", scanner = scanModules, root: modulesPath = getRunningFilePath() } = options;
 
   async function loadModules(app: App, current: ImportedModule): Promise<void> {
     app.register(async function unknown(child: App, opts: any) {

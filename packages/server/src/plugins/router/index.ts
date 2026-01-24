@@ -1,12 +1,15 @@
 import { EOL } from "node:os";
+import { type App } from "../../interfaces/index.js";
 import { hook } from "../../hooks/index.js";
 
 export interface RouteLoggerOptions {
+  enabled?: boolean;
   /** Custom logger function to output routes. Defaults to console.log with magenta color */
   logger?: (message: string) => void;
   /** Whether to print routes with common prefix removed for cleaner output. Defaults to false */
   commonPrefix?: boolean;
 }
+const kRouteLogger = Symbol();
 
 /**
  * Displays a formatted tree of all routes with their HTTP methods and paths.
@@ -36,9 +39,21 @@ export interface RouteLoggerOptions {
  * app.register(routeLogger({ commonPrefix: false  }));
  * ```
  */
-export function routeLogger({ commonPrefix = false, logger }: RouteLoggerOptions = {}) {
-  return hook("ready", async (app) => {
+export function routeLogger({ enabled, commonPrefix = false, logger }: RouteLoggerOptions = {}) {
+  if (enabled === false) {
+    return hook.factory((hooks, app) => {
+      hooks.ready.delete(app.$root.container[kRouteLogger] as any);
+    });
+  }
+
+  function onReady(app: App) {
     logger ??= (routes) => app.log.info(EOL + routes);
     logger(app.router.prettyPrint({ commonPrefix }));
+  }
+
+  return hook.factory((hooks, app) => {
+    hooks.ready.delete(app.$root.container[kRouteLogger] as any);
+    app.$root.container[kRouteLogger] = onReady;
+    hooks.ready.add(onReady);
   });
 }

@@ -24,18 +24,15 @@ export * from "./interfaces/index.js";
 // Exports Contexts
 export * from "./context.js";
 
-// Export Intercetpros
-export * from "./interceptor.js";
-
 export * from "./http.js";
 export * from "./hooks/index.js";
 
 export { type StatusCode } from "./internal/response.js";
-export { defer, onError, type DeferCallback, type ErrorCallback } from "./plugins/minimajs/index.js";
+export { defer, onError, type DeferCallback, type ErrorCallback } from "./plugins/deferrer/index.js";
 export { controller } from "./plugins/controller/index.js";
 
 export * from "./plugin.js";
-export * from "./module-discovery/types.js";
+export * from "./plugins/module-discovery/types.js";
 export { compose } from "./compose.js";
 
 export { createApp } from "./node/index.js";

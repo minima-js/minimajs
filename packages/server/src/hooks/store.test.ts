@@ -4,6 +4,7 @@ import { createApp } from "../node/index.js";
 import type { Context } from "../interfaces/index.js";
 import { kHooks } from "../symbols.js";
 import { createRequest, mockContext } from "../mock/index.js";
+import { bodyParser } from "../plugins/index.js";
 
 describe("hooks/store", () => {
   describe("createHooksStore", () => {
@@ -75,11 +76,12 @@ describe("hooks/store", () => {
 
     test("should run hooks in FIFO order for normal hooks", async () => {
       const order: number[] = [];
+      app.register(bodyParser({ enabled: false }));
       app.container[kHooks].ready.add(() => order.push(1));
       app.container[kHooks].ready.add(() => order.push(2));
       app.container[kHooks].ready.add(() => order.push(3));
 
-      await runHooks(app, "ready");
+      await app.ready();
       expect(order).toEqual([1, 2, 3]);
     });
 

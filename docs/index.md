@@ -37,13 +37,14 @@ features:
     details: |
       APIs are designed for inference, so types flow naturally from usage. You write logic.
   - icon:
-      src: /icon-globe.svg
-    title: Web Standards, Zero Abstractions
-    details: "Native Request/Response objects. Web standard APIs. Pure ESM. No framework-specific wrappers. Write portable, future-proof code."
-  - icon:
       src: /icon-bun.svg
     title: 100% Bun-Native Compatible
     details: First-class Bun support with dedicated imports. Full Node.js compatibility. Same code, different runtime.
+  - icon:
+      src: /icon-globe.svg
+    title: Web Standards, Zero Abstractions
+    details: "Native Request/Response objects. Web standard APIs. Pure ESM. No framework-specific wrappers. Write portable, future-proof code."
+
 ---
 
 ## How It Feels to Build

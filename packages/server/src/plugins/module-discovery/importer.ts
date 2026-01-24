@@ -3,7 +3,7 @@ import { pathToFileURL } from "node:url";
 import type { ImportedModule } from "./types.js";
 
 // This array will be reordered based on successful matches for optimization
-const tryExt = ["", ".js", ".mjs", ".ts"];
+const tryExt = [".js", "", ".mjs", ".ts"];
 
 /**
  * Moves an element from a given index to the front of the array (index 0)

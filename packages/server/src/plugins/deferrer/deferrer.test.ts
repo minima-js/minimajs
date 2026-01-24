@@ -10,7 +10,7 @@ describe("minimajs plugin", () => {
   let app: Server<BunServer<any>>;
 
   beforeEach(() => {
-    app = createApp({ moduleDiscovery: false });
+    app = createApp({ logger: false, moduleDiscovery: false });
   });
 
   afterEach(async () => {

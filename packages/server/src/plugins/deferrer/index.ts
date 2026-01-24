@@ -74,7 +74,7 @@ export function onError(cb: ErrorCallback) {
  * app.register(minimaPlugin());
  * ```
  */
-export function minimajs() {
+export function deferrer() {
   async function send(response: Response) {
     if (!response.ok) await sendError(response);
     for (const cb of getDeferredCallbacks()) {

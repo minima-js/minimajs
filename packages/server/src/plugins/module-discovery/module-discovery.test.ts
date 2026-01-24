@@ -2,10 +2,10 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { writeFile, mkdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { moduleDiscovery } from "./index.js";
-import { Server } from "../core/server.js";
-import type { ServerAdapter } from "../interfaces/server.js";
+import { Server } from "../../core/server.js";
+import type { ServerAdapter } from "../../interfaces/server.js";
 import Router from "find-my-way";
-import { createLogger } from "../logger.js";
+import { createLogger } from "../../logger.js";
 
 const TEST_BASE_DIR = path.join(import.meta.dir, "__test-modules");
 let TEST_DIR: string;
@@ -184,7 +184,7 @@ describe("Module Discovery", () => {
       /**
        * Modules can register plugins via meta.plugins array
        */
-      const pluginPath = path.resolve(import.meta.dir, "../plugin.js");
+      const pluginPath = path.resolve(import.meta.dir, "../../plugin.js");
       await writeFile(
         path.join(TEST_DIR, "module.ts"),
         `import { plugin } from '${pluginPath}';
@@ -198,7 +198,6 @@ describe("Module Discovery", () => {
       const server = createServer();
       server.register(moduleDiscovery({ root: TEST_DIR }));
       await server.ready();
-
       // Both module and plugin routes should exist
       expect(hasRoute(server, "GET", "/from-module")).toBe(true);
       expect(hasRoute(server, "GET", "/from-plugin")).toBe(true);
