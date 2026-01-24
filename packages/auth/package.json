@@ -3,6 +3,7 @@
   "version": "1.2.0",
   "description": "Authentication and authorization utilities with session management and guard support",
   "type": "module",
+  "license": "MIT",
   "exports": "./lib/index.js",
   "scripts": {
     "dev": "tsc -w",

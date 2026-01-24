@@ -6,7 +6,8 @@ A modern, high-performance HTTP framework for Node.js and Bun - combining proven
 [![License](https://img.shields.io/npm/l/@minimajs/server.svg)](https://github.com/minima-js/minimajs/blob/main/LICENSE)
 
 ## 🚀 Highlights
-- **File-Based Modules with True Isolation**: Create users/module.ts, it auto-loads as /users/*. Each module is encapsulated.
+
+- **File-Based Modules with True Isolation**: Create users/module.ts, it auto-loads as /users/\*. Each module is encapsulated.
 - **Dual Runtime Support**: Native integration with both Bun and Node.js - no abstraction overhead
 - **100% TypeScript**: Built entirely in TypeScript for type safety and better DX
 - **Web Standards First**: Uses native Web API
@@ -49,7 +50,6 @@ src/
 └── posts/
     └── module.ts     # ✅ Auto-discovered
 ```
-
 
 ```typescript [src/index.ts]
 // src/index.ts
@@ -159,7 +159,6 @@ app.post("/users/:id", () => {
 ### 3. Filesystem-Based Modules with Auto-Discovery
 
 Organize your application by features, and let Minima.js discover modules automatically:
-
 
 ```typescript [src/index.ts]
 // src/index.ts
@@ -448,7 +447,6 @@ Recommended project structure with automatic module discovery:
 └── tsconfig.json
 ```
 
-
 ```typescript [src/index.ts]
 // src/index.ts
 
@@ -555,3 +553,7 @@ Built on top of excellent libraries:
 **Made with ❤️ for the modern web**
 
 See the full documentation at [minima-js.github.io](https://minima-js.github.io/)
+
+## License
+
+MIT

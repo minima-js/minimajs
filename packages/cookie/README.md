@@ -242,12 +242,12 @@ app.post("/logout", () => {
    cookies.set("auth-token", token, { maxAge: 900 }); // 15 minutes
    ```
 
-## License
-
-MIT
-
 ## Links
 
 - [Documentation](https://minima-js.github.io/packages/cookie)
 - [GitHub](https://github.com/minima-js/minimajs)
 - [npm](https://www.npmjs.com/package/@minimajs/cookie)
+
+## License
+
+MIT
