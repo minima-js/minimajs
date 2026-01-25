@@ -616,14 +616,16 @@ export const meta = {
 ::: code-group
 
 ```typescript [src/module.ts]
-import { hook } from "@minimajs/server";
+import { hook, abort } from "@minimajs/server";
 
 // Parent: Generic error handler
 export const meta = {
   plugins: [
     hook("error", (err) => {
-      console.log("Fallback: Generic error response");
-      return { error: "Something went wrong" };
+      if (!abort.is(err)) {
+        console.log("Fallback: Generic error response", err);
+        return abort({ message: "Something went wrong" }, 500);
+      }
     }),
   ],
 };

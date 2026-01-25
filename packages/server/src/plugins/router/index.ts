@@ -1,6 +1,7 @@
 import { EOL } from "node:os";
 import { type App } from "../../interfaces/index.js";
 import { hook } from "../../hooks/index.js";
+import { setTimeout as sleep } from "node:timers/promises";
 
 export interface RouteLoggerOptions {
   enabled?: boolean;
@@ -8,6 +9,7 @@ export interface RouteLoggerOptions {
   logger?: (message: string) => void;
   /** Whether to print routes with common prefix removed for cleaner output. Defaults to false */
   commonPrefix?: boolean;
+  delay?: number; // logs are async, if route list is long, this might override other logs, causing delay can prevent overlapping.
 }
 const kRouteLogger = Symbol();
 
@@ -39,7 +41,7 @@ const kRouteLogger = Symbol();
  * app.register(routeLogger({ commonPrefix: false  }));
  * ```
  */
-export function routeLogger({ enabled, commonPrefix = false, logger }: RouteLoggerOptions = {}) {
+export function routeLogger({ enabled, delay = 1, commonPrefix = false, logger }: RouteLoggerOptions = {}) {
   if (enabled === false) {
     return hook.factory((hooks, app) => {
       hooks.ready.delete(app.$root.container[kRouteLogger] as any);
@@ -49,6 +51,7 @@ export function routeLogger({ enabled, commonPrefix = false, logger }: RouteLogg
   function onReady(app: App) {
     logger ??= (routes) => app.log.info(EOL + routes);
     logger(app.router.prettyPrint({ commonPrefix }));
+    return sleep(delay); // give some space for other loggers
   }
 
   return hook.factory((hooks, app) => {
