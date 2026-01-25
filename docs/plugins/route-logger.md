@@ -4,21 +4,9 @@ The Route Logger is a development utility that provides a clear overview of all 
 
 This is incredibly useful for debugging and for quickly understanding the overall structure of your API.
 
-## Installation
-
-The plugin is included with the `@minimajs/server` package and can be imported from `@minimajs/server/plugins`.
-
-```typescript
-import { routeLogger } from "@minimajs/server/plugins";
-```
-
 ## Usage
 
-Simply register the plugin with your application instance. It has no effect in production environments unless a custom logger is provided.
-
-```typescript
-app.register(routeLogger());
-```
+Route logger is enabled by default
 
 When you start your application, you will see output similar to this in your console:
 
@@ -32,14 +20,27 @@ When you start your application, you will see output similar to this in your con
 
 ## Configuration
 
+### `enabled`
+
+If you don't want, just disable it.
+
+- **Type**: `boolean`
+- **Default**: `true`
+
+```typescript
+import { routeLogger } from "@minimajs/server/plugins";
+app.register(routeLogger({ enabled: false }));
+```
+
 ### `logger`
 
 Allows you to provide a custom logging function to display the route tree.
 
 - **Type**: `(message: string) => void`
-- **Default**: A function that logs to the console using `chalk` for color.
+- **Default**: A function that logs to the console.
 
 ```typescript
+import { routeLogger } from "@minimajs/server/plugins";
 app.register(
   routeLogger({
     logger: (routes) => {

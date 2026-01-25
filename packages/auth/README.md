@@ -469,3 +469,7 @@ interface AuthResourceWithRequired<T> {
 ## Conclusion
 
 The `@minimajs/auth` package provides a powerful, type-safe, and flexible authentication system for Minima.js applications. With support for both optional and required authentication modes, combined with guards and composition, you can implement sophisticated authentication and authorization patterns while maintaining clean, readable code.
+
+## License
+
+MIT

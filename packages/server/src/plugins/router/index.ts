@@ -1,12 +1,17 @@
 import { EOL } from "node:os";
+import { type App } from "../../interfaces/index.js";
 import { hook } from "../../hooks/index.js";
+import { setTimeout as sleep } from "node:timers/promises";
 
 export interface RouteLoggerOptions {
+  enabled?: boolean;
   /** Custom logger function to output routes. Defaults to console.log with magenta color */
   logger?: (message: string) => void;
   /** Whether to print routes with common prefix removed for cleaner output. Defaults to false */
   commonPrefix?: boolean;
+  delay?: number; // logs are async, if route list is long, this might override other logs, causing delay can prevent overlapping.
 }
+const kRouteLogger = Symbol();
 
 /**
  * Displays a formatted tree of all routes with their HTTP methods and paths.
@@ -36,16 +41,22 @@ export interface RouteLoggerOptions {
  * app.register(routeLogger({ commonPrefix: false  }));
  * ```
  */
-export function routeLogger({ commonPrefix = false, logger }: RouteLoggerOptions = {}) {
-  return hook("ready", async (app) => {
-    if (!logger) {
-      try {
-        const { default: chalk } = await import("chalk");
-        logger = (routes) => app.log.info(chalk.magenta(routes));
-      } catch {
-        logger = (routes) => app.log.info(routes);
-      }
-    }
-    logger(EOL.repeat(2) + app.router.prettyPrint({ commonPrefix }));
+export function routeLogger({ enabled, delay = 1, commonPrefix = false, logger }: RouteLoggerOptions = {}) {
+  if (enabled === false) {
+    return hook.factory((hooks, app) => {
+      hooks.ready.delete(app.$root.container[kRouteLogger] as any);
+    });
+  }
+
+  function onReady(app: App) {
+    logger ??= (routes) => app.log.info(EOL + routes);
+    logger(app.router.prettyPrint({ commonPrefix }));
+    return sleep(delay); // give some space for other loggers
+  }
+
+  return hook.factory((hooks, app) => {
+    hooks.ready.delete(app.$root.container[kRouteLogger] as any);
+    app.$root.container[kRouteLogger] = onReady;
+    hooks.ready.add(onReady);
   });
 }

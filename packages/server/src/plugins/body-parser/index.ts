@@ -1,6 +1,5 @@
 import { hook } from "../../hooks/index.js";
 import type { Context, RouteMetaDescriptor } from "../../interfaces/index.js";
-import { plugin } from "../../plugin.js";
 import { kBody, kBodySkip } from "../../symbols.js";
 
 export type BodyParserType = "json" | "text" | "form" | "arrayBuffer" | "blob";
@@ -9,6 +8,7 @@ export type BodyParserType = "json" | "text" | "form" | "arrayBuffer" | "blob";
  * Options for body parser plugin
  */
 export interface BodyParserOptions {
+  enabled?: boolean;
   /**
    * Clone the request before parsing (useful if you need to read the body multiple times)
    * @default false
@@ -30,19 +30,27 @@ export interface BodyParserOptions {
  * Body parser plugin that automatically parses request bodies
  * and stores them in context.locals for access via body() function
  *
+ * **Note:** Body parser is enabled by default.
+ * You can override the configuration or disable it by re-registering with different options.
+ *
  * @example
  * ```ts
  * import { createApp } from '@minimajs/server/bun';
  * import { bodyParser } from '@minimajs/server/plugins';
+ * import { body } from '@minimajs/server';
  *
  * const app = createApp();
- * app.register(bodyParser()); // Default: JSON
- * app.register(bodyParser({ type: "text" })); // Parse as text
- *
+ * // Body parser is already enabled - use body() directly
  * app.post('/users', () => {
  *   const data = body<{ name: string }>();
  *   return { received: data };
  * });
+ *
+ * // Override configuration to parse text instead of JSON
+ * app.register(bodyParser({ type: "text" }));
+ *
+ * // Or disable it entirely
+ * app.register(bodyParser({ enabled: false }));
  * ```
  */
 
@@ -88,8 +96,14 @@ function getAllowedTypes(type?: BodyParserType | BodyParserType[]): Set<BodyPars
   if (!Array.isArray(type)) type = [type];
   return new Set(type);
 }
+const kBodyParser = Symbol("minimajs.body.parser");
 
 export function bodyParser(opts: BodyParserOptions = { type: ["json"] }) {
+  if (opts.enabled === false) {
+    return hook.factory((hooks, app) => {
+      hooks.request.delete(app.$root.container[kBodyParser] as any);
+    });
+  }
   // Convert type option to Set for fast lookup
   const allowedTypes = getAllowedTypes(opts.type);
 
@@ -139,7 +153,7 @@ export function bodyParser(opts: BodyParserOptions = { type: ["json"] }) {
       // The body() function will return null
     }
   }
-  return plugin.sync((app) => {
+  return hook.factory((hooks, app) => {
     // Warn if form type is used (deprecated)
     if (allowedTypes.has("form")) {
       app.log.warn(
@@ -147,7 +161,9 @@ export function bodyParser(opts: BodyParserOptions = { type: ["json"] }) {
           "Please use @minimajs/multipart for form data parsing instead."
       );
     }
-    app.register(hook("request", onRequest));
+    hooks.request.delete(app.$root.container[kBodyParser] as any);
+    app.$root.container[kBodyParser] = onRequest;
+    hooks.request.add(onRequest);
   });
 }
 

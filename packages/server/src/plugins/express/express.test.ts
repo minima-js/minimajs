@@ -11,7 +11,7 @@ describe("express", () => {
   const res = {} as ServerResponse;
 
   beforeEach(() => {
-    app = createApp({ logger: false });
+    app = createApp({ logger: false, moduleDiscovery: false });
   });
 
   afterEach(async () => {

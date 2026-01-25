@@ -17,9 +17,12 @@
 import Router, { type HTTPVersion, type Config as RouterConfig } from "find-my-way";
 import { type Logger } from "pino";
 import type { ServerAdapter } from "../interfaces/server.js";
-import { minimajs } from "../plugins/minimajs/index.js";
+import { deferrer } from "../plugins/deferrer/index.js";
 import { Server } from "./server.js";
 import { createLogger, logger as defaultLogger } from "../logger.js";
+import { moduleDiscovery } from "../plugins/module-discovery/index.js";
+import type { ModuleDiscoveryOptions } from "../plugins/module-discovery/types.js";
+import { bodyParser, routeLogger } from "../plugins/index.js";
 
 export * from "./server.js";
 
@@ -33,6 +36,7 @@ export interface CreateBaseSeverOptions {
   prefix?: string;
   /** Pino logger instance, or false to disable logging */
   logger?: Logger | false;
+  moduleDiscovery?: false | ModuleDiscoveryOptions;
 }
 
 export function createBaseServer<T>(server: ServerAdapter<T>, options: CreateBaseSeverOptions) {
@@ -43,6 +47,11 @@ export function createBaseServer<T>(server: ServerAdapter<T>, options: CreateBas
     logger,
     router: Router({ ignoreTrailingSlash: true, ...options.router }),
   });
-  srv.register(minimajs());
+  srv.register(deferrer());
+  srv.register(bodyParser());
+  srv.register(routeLogger());
+  if (options.moduleDiscovery !== false) {
+    srv.register(moduleDiscovery(options.moduleDiscovery ?? {}));
+  }
   return srv;
 }

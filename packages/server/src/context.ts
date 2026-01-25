@@ -1,13 +1,11 @@
-import { $context } from "./internal/context.js";
 import { isCallable } from "./utils/callable.js";
 export { safe } from "./internal/context.js";
 export { maybeContext } from "./internal/context.js";
+import { $context as context } from "./internal/context.js";
+
+export { context };
 
 export type OnceCallback<T> = () => T;
-
-export function context() {
-  return $context();
-}
 
 /**
  * Creates a context for sharing data within a request's scope.

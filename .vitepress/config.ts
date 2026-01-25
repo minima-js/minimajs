@@ -1,12 +1,30 @@
 import { defineConfig } from "vitepress";
 import { withMermaid } from "vitepress-plugin-mermaid";
 
+const tagId = 'GTM-P9NLW275';
+
+
 const config = defineConfig({
   title: "Minima.js",
   description: "A cutting-edge Node.js framework for modern web applications",
   base: "/",
   srcDir: "docs",
   cleanUrls: true,
+
+   head: [
+    [
+      'script',
+      { async: '', src: 'https://www.googletagmanager.com/gtag/js?id=' + tagId }
+    ],
+    [
+      'script',
+      {},
+      `window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '${tagId}');`
+    ]
+  ],
 
   // Vite configuration for Mermaid compatibility
   vite: {
@@ -61,8 +79,8 @@ const config = defineConfig({
         text: "Guides",
         items: [
           { text: "Routing", link: "/guides/routing" },
+          { text: "Controllers", link: "/guides/controllers" },
           { text: "HTTP", link: "/guides/http" },
-          { text: "Middleware", link: "/guides/middleware" }, // Updated link
           { text: "Hooks", link: "/guides/hooks" },
           { text: "Error Handling", link: "/guides/error-handling" },
           { text: "Logger", link: "/guides/logger" },
@@ -94,6 +112,7 @@ const config = defineConfig({
         text: "Advanced",
         items: [
           { text: "Overview", link: "/advanced/index" },
+          { text: "Module Discovery", link: "/advanced/module-discovery" },
           { text: "Custom Runtime Adapters", link: "/advanced/custom-adapters" },
           { text: "Container & Encapsulation", link: "/advanced/container-encapsulation" },
         ],

@@ -3,7 +3,6 @@ import type { Server as NodeServerHttps } from "node:https";
 import { hook } from "../../hooks/index.js";
 import type { Context } from "../../interfaces/index.js";
 
-export type NodeServer = NodeServerHttp | NodeServerHttps;
 export type ExpressCallback = (req: IncomingMessage, res: ServerResponse, next: (err?: unknown) => void) => void;
 
 /**
@@ -33,7 +32,7 @@ export type ExpressCallback = (req: IncomingMessage, res: ServerResponse, next: 
  */
 
 export function express(callback: ExpressCallback) {
-  function expressMiddleware(ctx: Context<NodeServer>) {
+  function expressMiddleware(ctx: Context<NodeServerHttp | NodeServerHttps>) {
     return new Promise<void>((resolve, reject) => {
       callback(ctx.incomingMessage, ctx.serverResponse, (err?: unknown) => {
         if (err) {

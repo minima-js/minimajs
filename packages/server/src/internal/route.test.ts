@@ -117,43 +117,23 @@ describe("internal/route", () => {
 
   describe("applyRoutePrefix", () => {
     test("should apply prefix to path", () => {
-      const result = applyRoutePrefix("/users", "/api", []);
+      const result = applyRoutePrefix("/users", "/api");
       expect(result).toBe("/api/users");
     });
 
     test("should not apply prefix if path is in exclude list", () => {
-      const result = applyRoutePrefix("/health", "/api", ["/health", "/status"]);
-      expect(result).toBe("/health");
-    });
-
-    test("should not apply prefix if path starts with excluded path", () => {
-      const result = applyRoutePrefix("/health/check", "/api", ["/health"]);
-      expect(result).toBe("/health/check");
-    });
-
-    test("should apply prefix if path is not in exclude list", () => {
-      const result = applyRoutePrefix("/users", "/api", ["/health", "/status"]);
-      expect(result).toBe("/api/users");
+      const result = applyRoutePrefix("/health", "/api");
+      expect(result).toBe("/api/health");
     });
 
     test("should handle empty prefix", () => {
-      const result = applyRoutePrefix("/users", "", []);
+      const result = applyRoutePrefix("/users", "");
       expect(result).toBe("/users");
     });
 
     test("should handle root path", () => {
-      const result = applyRoutePrefix("/", "/api", []);
+      const result = applyRoutePrefix("/", "/api");
       expect(result).toBe("/api/");
-    });
-
-    test("should exclude exact path match", () => {
-      const result = applyRoutePrefix("/public", "/api", ["/public"]);
-      expect(result).toBe("/public");
-    });
-
-    test("should exclude paths starting with excluded prefix", () => {
-      const result = applyRoutePrefix("/public/assets/image.png", "/api", ["/public"]);
-      expect(result).toBe("/public/assets/image.png");
     });
   });
 

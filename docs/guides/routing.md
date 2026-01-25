@@ -118,20 +118,6 @@ app.get("/files/:file(^\\d+).png", () => {
 });
 ```
 
-## Route Options
-
-When defining a route, you can also pass an `options` object to customize its behavior.
-
-```typescript
-app.post("/users", { bodyLimit: 1024 * 1024 * 10 }, () => {
-  // ...
-});
-```
-
-The following options are available:
-
-- `bodyLimit`: The maximum size of the request body in bytes.
-
 ## Route Metadata
 
 Minima.js allows you to attach custom metadata to your routes. This is a powerful feature for adding route-specific configuration, flags, or contextual information that can be accessed by handlers, hooks, or plugins. Metadata is passed as `[key, value]` tuples directly in the route definition, before the final handler function.
@@ -141,7 +127,8 @@ It's recommended to use `Symbol`s as keys for your metadata to avoid potential n
 **Defining Metadata:**
 
 ```typescript
-import { app } from "./your-app-instance"; // Your app instance
+import { createApp } from "@minimajs/server";
+const app = createApp();
 // Define custom symbols for metadata keys
 const kAuthRequired = Symbol("AuthRequired");
 const kPermissions = Symbol("Permissions");

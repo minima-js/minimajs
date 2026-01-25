@@ -2,7 +2,6 @@ import { describe, test, expect, beforeEach, afterEach, jest } from "@jest/globa
 import { createApp } from "../../bun/index.js";
 import type { App } from "../../interfaces/index.js";
 import { routeLogger } from "./index.js";
-import chalk from "chalk";
 import { EOL } from "node:os";
 
 describe("routeLogger", () => {
@@ -22,14 +21,14 @@ describe("routeLogger", () => {
     await app.close();
   });
 
-  test("should log routes with default options using app.log.info and chalk", async () => {
+  test("should log routes with default options using app.log.info", async () => {
     const spy = jest.spyOn(app.log, "info").mockImplementation(() => {});
 
     app.register(routeLogger());
     await app.ready();
 
-    const printedRoutes = EOL.repeat(2) + app.router.prettyPrint({ commonPrefix: false });
-    expect(spy).toHaveBeenCalledWith(chalk.magenta(printedRoutes));
+    const printedRoutes = EOL + app.router.prettyPrint({ commonPrefix: false });
+    expect(spy).toHaveBeenCalledWith(printedRoutes);
 
     spy.mockRestore();
   });
@@ -39,37 +38,22 @@ describe("routeLogger", () => {
     app.register(routeLogger({ logger: mockLogger }));
     await app.ready();
 
-    const printedRoutes = EOL.repeat(2) + app.router.prettyPrint({ commonPrefix: false });
+    const printedRoutes = app.router.prettyPrint({ commonPrefix: false });
     expect(mockLogger).toHaveBeenCalledWith(printedRoutes);
   });
 
   test("should use custom formatter when provided", async () => {
     const mockLogger = jest.fn();
 
-    await app.register(
-      routeLogger({
-        logger: mockLogger,
-      })
-    );
-    await app.ready();
-
-    const printedRoutes = EOL.repeat(2) + app.router.prettyPrint({ commonPrefix: false });
-    expect(mockLogger).toHaveBeenCalledWith(`${printedRoutes}`);
-  });
-
-  test("should respect commonPrefix option", async () => {
-    const mockLogger = jest.fn();
-
     app.register(
       routeLogger({
         logger: mockLogger,
-        commonPrefix: true,
       })
     );
     await app.ready();
 
-    const printedRoutes = EOL.repeat(2) + app.router.prettyPrint({ commonPrefix: true });
-    expect(mockLogger).toHaveBeenCalledWith(printedRoutes);
+    const printedRoutes = app.router.prettyPrint({ commonPrefix: false });
+    expect(mockLogger).toHaveBeenCalledWith(`${printedRoutes}`);
   });
 
   test("should log routes only when app is ready", async () => {

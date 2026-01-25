@@ -106,3 +106,7 @@ async function handleFileUpload() {
 - **isFile Function:**
 
   This function checks if a given object is an instance of the `File` class.
+
+## License
+
+MIT

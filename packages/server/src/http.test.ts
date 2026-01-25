@@ -20,7 +20,7 @@ describe("Http", () => {
 
   describe("response", () => {
     test("should create response from data", async () => {
-      const app = createApp({ logger: false });
+      const app = createApp({ logger: false, moduleDiscovery: false });
       app.get("/test", async () => {
         return response("Message: Ok");
       });
@@ -64,7 +64,7 @@ describe("Http", () => {
 
   describe("body", () => {
     test("should retrieve request body as ReadableStream", async () => {
-      const app = createApp({ logger: false });
+      const app = createApp({ logger: false, moduleDiscovery: false }).register(bodyParser({ enabled: false }));
       app.post("/test", async () => {
         const data = (await request().json()) as { message: string };
         return { received: data };
@@ -81,7 +81,7 @@ describe("Http", () => {
     });
 
     test("should handle typed body", async () => {
-      const app = createApp({ logger: false });
+      const app = createApp({ logger: false, moduleDiscovery: false }).register(bodyParser({ enabled: false }));
       app.post("/test", async () => {
         const data = (await request().json()) as { name: string; age: number };
         return { name: data.name, age: data.age };
@@ -99,7 +99,7 @@ describe("Http", () => {
     });
 
     test("should handle empty body", async () => {
-      const app = createApp({ logger: false });
+      const app = createApp({ logger: false, moduleDiscovery: false });
       app.register(bodyParser());
       app.get("/test", () => {
         const reqBody = body();
@@ -168,7 +168,7 @@ describe("Http", () => {
     });
 
     test("headers.set should set response header", async () => {
-      const app = createApp({ logger: false });
+      const app = createApp({ logger: false, moduleDiscovery: false });
       app.get("/test", () => {
         headers.set("x-custom", "test-value");
         return { message: "ok" };
@@ -355,7 +355,7 @@ describe("Http", () => {
 
   describe("status", () => {
     test("should set status code with number", async () => {
-      const app = createApp({ logger: false });
+      const app = createApp({ logger: false, moduleDiscovery: false });
       app.get("/test", () => {
         response.status(201);
         return { message: "created" };
@@ -366,7 +366,7 @@ describe("Http", () => {
     });
 
     test("should set status code with StatusCodes key", async () => {
-      const app = createApp({ logger: false });
+      const app = createApp({ logger: false, moduleDiscovery: false });
       app.get("/test", () => {
         response.status("CREATED");
         return { message: "created" };
@@ -377,7 +377,7 @@ describe("Http", () => {
     });
 
     test("setStatusCode should work with number", async () => {
-      const app = createApp({ logger: false });
+      const app = createApp({ logger: false, moduleDiscovery: false });
       app.get("/test", () => {
         response.status(300);
         return { message: "hello world" };
@@ -388,7 +388,7 @@ describe("Http", () => {
     });
 
     test("setStatusCode should work with StatusCodes key", async () => {
-      const app = createApp({ logger: false });
+      const app = createApp({ logger: false, moduleDiscovery: false });
       app.get("/test", () => {
         response.status("BAD_GATEWAY");
         return { message: "hello world" };
@@ -401,7 +401,7 @@ describe("Http", () => {
 
   describe("setHeader", () => {
     test("should set header", async () => {
-      const app = createApp({ logger: false });
+      const app = createApp({ logger: false, moduleDiscovery: false });
       app.get("/test", () => {
         setHeader("x-name", "Adil");
         return { message: "hello world" };
@@ -412,7 +412,7 @@ describe("Http", () => {
     });
 
     test("should set multiple headers", async () => {
-      const app = createApp({ logger: false });
+      const app = createApp({ logger: false, moduleDiscovery: false });
       app.get("/test", () => {
         setHeader("x-name", "Adil");
         setHeader("x-custom", "value");
@@ -511,7 +511,7 @@ describe("Http", () => {
 
   describe("body() without bodyParser", () => {
     test("should throw error when bodyParser is not registered", async () => {
-      const app = createApp();
+      const app = createApp({ logger: false, moduleDiscovery: false }).register(bodyParser({ enabled: false }));
       app.get("/test", () => {
         body(); // This will throw
         return "ok";
@@ -528,7 +528,7 @@ describe("Http", () => {
 
   describe("response() with status option", () => {
     test("should create response with status code from ReasonPhrases", async () => {
-      const app = createApp();
+      const app = createApp({ moduleDiscovery: false });
       app.get("/test", async () => {
         return response("Data: Ok", { status: "CREATED" });
       });
@@ -550,7 +550,7 @@ describe("Http", () => {
 
   describe("headers.getAll() with set-cookie", () => {
     test("should return all set-cookie headers", () => {
-      const app = createApp();
+      const app = createApp({ moduleDiscovery: false });
       app.get("/test", () => {
         const cookies = headers.getAll("set-cookie");
         return { count: cookies.length };
@@ -590,7 +590,7 @@ describe("Http", () => {
 
   describe("headers.append()", () => {
     test("should append header to response", async () => {
-      const app = createApp();
+      const app = createApp({ moduleDiscovery: false });
       app.get("/test", () => {
         headers.append("X-Custom", "value1");
         headers.append("X-Custom", "value2");
@@ -627,7 +627,7 @@ describe("Http", () => {
 
   describe("proxy", () => {
     test("should configure with a callback function", () => {
-      const app = createApp();
+      const app = createApp({ moduleDiscovery: false });
       const ipPlugin = proxy({
         host: false,
         proto: false,

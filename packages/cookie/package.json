@@ -3,6 +3,7 @@
   "version": "1.1.0",
   "description": "Type-safe cookie management for Minima.js",
   "type": "module",
+  "license": "MIT",
   "exports": {
     ".": "./lib/index.js"
   },

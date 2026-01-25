@@ -7,7 +7,7 @@ describe("cors", () => {
   let app: Server<any>;
 
   beforeEach(() => {
-    app = createApp({ logger: false });
+    app = createApp({ logger: false, moduleDiscovery: false });
   });
 
   afterEach(async () => {

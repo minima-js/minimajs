@@ -5,7 +5,7 @@ sidebar_position: 1
 
 # JWT Authentication
 
-This recipe will show you how to implement JWT-based authentication in your Minima.js application. We will use the `@minimajs/auth` package to create authentication plugins and `jsonwebtoken` to generate and verify JWTs.
+This recipe shows you how to implement JWT-based authentication using Minima.js's file-based module system. We'll use the `@minimajs/auth` package and `jsonwebtoken`, organizing everything into auto-discovered modules with `meta.plugins`.
 
 ## Prerequisites
 
@@ -16,12 +16,35 @@ npm install @minimajs/auth jsonwebtoken
 npm install -D @types/jsonwebtoken
 ```
 
+## Project Structure
+
+Here's our complete file structure using file-based module discovery:
+
+```
+src/
+├── index.ts              # Entry point (auto-discovers modules)
+├── auth/
+│   ├── tools.ts          # Auth plugin & getUser helper
+│   ├── guard.ts          # Guard plugin for protected routes
+│   └── module.ts         # Public routes: POST /auth/login
+└── profile/
+    └── module.ts         # Protected routes: GET /profile/me, /profile/settings
+```
+
+**Key points:**
+
+- `module.ts` files are auto-discovered and loaded
+- Each module declares its plugins via `export const meta: Meta`
+- No manual registration needed - just create files!
+
 ## 1. Creating the Auth Tools
 
-The first step is to use the `createAuth` function from `@minimajs/auth`. This creates a reusable authentication plugin and a `getUser` resource accessor to get the authenticated user from the context.
+Use the `createAuth` function from `@minimajs/auth` to create a reusable authentication plugin and a `getUser` helper to access the authenticated user.
 
-```typescript title="src/auth/tools.ts"
-import { createAuth, UnauthorizedError } from "@minimajs/auth";
+::: code-group
+
+```typescript [src/auth/tools.ts]
+import { createAuth } from "@minimajs/auth";
 import { headers } from "@minimajs/server";
 import * as jwt from "jsonwebtoken";
 
@@ -55,15 +78,19 @@ export const [authPlugin, getUser] = createAuth(async (): Promise<User | null> =
 });
 ```
 
-## 2. Creating a Guard
+:::
 
-A "guard" is a middleware that ensures a user is authenticated before allowing access to a route. With `@minimajs/auth`, you can easily create one using the `getUser` accessor.
+## 2. Creating a Guard Plugin
 
-```typescript title="src/auth/guard.ts"
+A "guard" is a plugin that ensures a user is authenticated before allowing access to a route. Create it as a reusable plugin that can be added to `meta.plugins`.
+
+::: code-group
+
+```typescript [src/auth/guard.ts]
 import { plugin, hook } from "@minimajs/server";
-import { getUser } from "./tools";
+import { getUser } from "./tools.js";
 
-// This is our guard middleware, wrapped in a plugin
+// This is our guard plugin - can be used in meta.plugins
 export const guardPlugin = plugin((app) => {
   app.register(
     hook("request", () => {
@@ -74,21 +101,31 @@ export const guardPlugin = plugin((app) => {
 });
 ```
 
-## 3. Generating Tokens
+:::
 
-Next, we need a way to generate a JWT when a user logs in. Let's create a module with a `/login` route.
+## 3. Public Auth Routes (Login)
 
-```typescript title="src/auth/routes.ts"
-import { type App, body } from "@minimajs/server";
+Create the auth module with public routes (login). Register the `authPlugin` in `meta.plugins` to make `getUser()` available in this module's routes.
+
+::: code-group
+
+```typescript [src/auth/module.ts]
+import { body, type Meta } from "@minimajs/server";
 import * as jwt from "jsonwebtoken";
 import { UnauthorizedError } from "@minimajs/auth";
+import { authPlugin } from "./tools.js";
 
 const JWT_SECRET = "your-super-secret-key";
 
 // A mock user database
 const users = [{ id: 1, username: "john.doe", password: "password123" }];
 
-export async function authRoutes(app: App) {
+// Register authPlugin to make getUser() available
+export const meta: Meta = {
+  plugins: [authPlugin],
+};
+
+export default async function (app) {
   app.post("/login", () => {
     const { username, password } = body<{ username?: string; password?: string }>();
 
@@ -105,60 +142,154 @@ export async function authRoutes(app: App) {
     return { token };
   });
 }
+// ✅ Auto-loaded as /auth/login
 ```
 
-## 4. Putting It All Together
+:::
 
-Finally, let's wire everything up. We'll register the main `authPlugin` globally to make `getUser` available everywhere. Then, we'll use `compose.create()` to apply our `guardPlugin` only to the routes that need protection.
+## 4. Protected Routes Module
 
-Let's create a protected route module first:
+Create a protected module by adding both `authPlugin` and `guardPlugin` to `meta.plugins`. The guard ensures the user is authenticated before accessing routes.
 
-```typescript title="src/profile/routes.ts"
-import { type App } from "@minimajs/server";
-import { getUser } from "../auth/tools";
+::: code-group
 
-export async function profileRoutes(app: App) {
-  app.get("/profile", () => {
-    // Because a guard is applied, getUser() will always return a user here.
+```typescript [src/profile/module.ts]
+import { type Meta } from "@minimajs/server";
+import { authPlugin, getUser } from "../auth/tools.js";
+import { guardPlugin } from "../auth/guard.js";
+
+// Apply both auth and guard plugins
+export const meta: Meta = {
+  plugins: [
+    authPlugin, // Makes getUser() available
+    guardPlugin, // Ensures user is authenticated
+  ],
+};
+
+export default async function (app) {
+  app.get("/me", () => {
+    // Because guard is applied, getUser() will always return a user here
+    const user = getUser();
+    return { user };
+  });
+
+  app.get("/settings", () => {
+    const user = getUser();
+    return {
+      user,
+      message: "User settings",
+    };
+  });
+}
+// ✅ Auto-loaded as /profile/*
+// ✅ All routes are protected by guardPlugin
+```
+
+:::
+
+## 5. Entry Point
+
+The entry point is minimal - just create the app and let module discovery do the rest!
+
+::: code-group
+
+```typescript [src/index.ts]
+import { createApp } from "@minimajs/server/bun";
+
+const app = createApp(); // Auto-discovers all modules
+
+await app.listen({ port: 3000 });
+```
+
+:::
+
+### Alternative: Global Auth via Root Module
+
+If you want `getUser()` available in **all modules** without repeating `authPlugin`, create a root module:
+
+::: code-group
+
+```typescript [src/module.ts]
+import { type Meta } from "@minimajs/server";
+import { authPlugin } from "./auth/tools.js";
+
+// Root module - all child modules inherit these plugins
+export const meta: Meta = {
+  plugins: [
+    authPlugin, // Now available in ALL modules
+  ],
+};
+
+export default async function (app) {
+  app.get("/health", () => "ok");
+}
+```
+
+```typescript [src/auth/module.ts]
+import { body, type Meta } from "@minimajs/server";
+import { getUser } from "./tools.js"; // ✅ authPlugin inherited from root
+
+export default async function (app) {
+  app.post("/login", () => {
+    // ... login logic
+  });
+}
+```
+
+```typescript [src/profile/module.ts]
+import { type Meta } from "@minimajs/server";
+import { getUser } from "../auth/tools.js"; // ✅ authPlugin inherited from root
+import { guardPlugin } from "../auth/guard.js";
+
+// Only need guard here - authPlugin comes from root
+export const meta: Meta = {
+  plugins: [guardPlugin],
+};
+
+export default async function (app) {
+  app.get("/me", () => {
     const user = getUser();
     return { user };
   });
 }
 ```
 
-Now, we combine everything in the main application file:
+:::
 
-```typescript title="src/index.ts"
-import { createApp, compose } from "@minimajs/server";
-import { authPlugin } from "./auth/tools";
-import { guardPlugin } from "./auth/guard";
-import { authRoutes } from "./auth/routes";
-import { profileRoutes } from "./profile/routes";
+This approach is cleaner when most of your modules need authentication.
 
-const app = createApp();
+## How It Works
 
-// 1. Register the main auth plugin globally.
-// This makes `getUser()` available everywhere but doesn't protect any routes.
-app.register(authPlugin);
+With file-based module discovery:
 
-// 2. Public routes can be registered directly.
-app.register(authRoutes);
+1. **`/auth/login`** (public) - No guard, anyone can login
+2. **`/profile/me`** (protected) - Guard in `meta.plugins` ensures authentication
+3. **`/profile/settings`** (protected) - Same guard applies to all routes in module
 
-// 3. Create a middleware applicator with our guard plugin.
-const withAuthGuard = compose.create(guardPlugin);
+**API Routes:**
 
-// 4. Apply the guard to the protected routes module.
-const protectedProfileRoutes = withAuthGuard(profileRoutes);
+- `POST /auth/login` - Public (login with credentials, get JWT)
+- `GET /profile/me` - Protected (returns authenticated user)
+- `GET /profile/settings` - Protected (returns user settings)
 
-// 5. Register the protected module.
-app.register(protectedProfileRoutes);
+**Testing:**
 
-await app.listen({ port: 3000 });
+```bash
+# 1. Login to get token
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "john.doe", "password": "password123"}'
+
+# Response: { "token": "eyJhbG..." }
+
+# 2. Access protected route with token
+curl http://localhost:3000/profile/me \
+  -H "Authorization: Bearer eyJhbG..."
+
+# Response: { "user": { "id": 1, "username": "john.doe" } }
+
+# 3. Without token -> 401 Unauthorized
+curl http://localhost:3000/profile/me
 ```
 
-In this setup:
-
-- The `/login` route is public.
-- The `/profile` route is protected and will return a 401 error if a valid JWT is not provided.
-
-This approach provides a clean and composable way to handle authentication and authorization in your Minima.js application.
+This approach provides a clean, file-based way to handle authentication and authorization in your Minima.js application. Each module declares its own requirements via `meta.plugins`, making it easy to see what protection applies to each feature.

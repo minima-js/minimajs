@@ -2,9 +2,6 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import assert from "node:assert";
 import type { Context } from "../interfaces/context.js";
 
-export type HookCallback = () => void | Promise<void>;
-export type ErrorHookCallback = (err: unknown) => any | Promise<any>;
-
 const contextStorage = new AsyncLocalStorage<Context<any>>();
 
 export function wrap<S, T>(context: Context<S>, cb: () => T) {

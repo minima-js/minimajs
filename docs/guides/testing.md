@@ -320,21 +320,19 @@ test("send hook adds custom header", async () => {
 
 ```ts
 import { createRequest } from "@minimajs/server/mock";
-import { definePlugin } from "@minimajs/server";
+import { plugin } from "@minimajs/server";
 
-const myPlugin = definePlugin((app, options) => {
-  app.register(
+const myPlugin = (options) => {
+  return app.register(
     hook("request", () => {
       context.set("pluginData", options.value);
     })
   );
-});
+};
 
 test("custom plugin sets context", async () => {
   const app = createApp();
-
   app.register(myPlugin({ value: "test" }));
-
   app.get("/", () => {
     return { data: context.get("pluginData") };
   });
@@ -377,19 +375,21 @@ test("mocked database query", async () => {
 
 ```ts
 import { createRequest } from "@minimajs/server/mock";
+import { createContext } from "@minimajs/server";
 
 test("mock context for testing", async () => {
   const app = createApp();
+  const [getUserId, setUserId] = createContext();
 
   // Set up context in request hook
   app.register(
     hook("request", () => {
-      context.set("userId", "mock-user-123");
+      setUserId("mock-user-123");
     })
   );
 
   app.get("/profile", () => {
-    const userId = context.get("userId");
+    const userId = setUserId();
     return { userId };
   });
 

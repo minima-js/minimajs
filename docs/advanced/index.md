@@ -4,6 +4,17 @@ This section covers advanced Minima.js concepts for building custom integrations
 
 ## Topics
 
+### [Module Discovery Configuration](./module-discovery.md)
+
+Customize how Minima.js discovers modules: change filenames, scan roots, or plug in a custom scanner.
+
+Topics covered:
+
+- `moduleDiscovery` options (`root`, `index`, `scanner`)
+- Absolute path requirements
+- Custom discovery patterns
+- Disabling discovery for manual registration
+
 ### [Custom Runtime Adapters](./custom-adapters.md)
 
 Learn how to create custom adapters to run Minima.js on different runtimes like Deno, uWebSockets.js, or any other HTTP server implementation.
