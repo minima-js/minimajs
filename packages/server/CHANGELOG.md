@@ -1,5 +1,17 @@
 # @minimajs/server
 
+## 0.7.0
+
+### Minor Changes
+
+- 305a67d: ### Added
+  - Automatic module discovery for files named `module.{js,ts}`
+  - Controllers API via `controller(import('./controller'), ['GET / getList'])`
+
+  ### Changed
+  - Enabled body parser and route logger by default
+  - Renamed `RouteHandler` to `Handler`
+
 ## 0.6.0
 
 ### Minor Changes
