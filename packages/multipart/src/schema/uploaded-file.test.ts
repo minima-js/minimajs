@@ -3,8 +3,15 @@ import { Readable } from "node:stream";
 import { writeFile, readFile, mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { UploadedFile, isUploadedFile } from "./uploaded-file.js";
-import { File } from "../file.js";
+import { UploadedFile, isUploadedFile, type UploadedFileInit } from "./uploaded-file.js";
+
+function createUploadedFile(filename: string = "test.pdf", options: Partial<UploadedFileInit> = {}) {
+  return new UploadedFile(filename, {
+    path: "",
+    size: 0,
+    ...options,
+  });
+}
 
 describe("UploadedFile", () => {
   const testDir = join(tmpdir(), "minimajs-uploaded-file-tests");
@@ -24,70 +31,27 @@ describe("UploadedFile", () => {
 
   describe("constructor", () => {
     test("should create UploadedFile instance with all properties", () => {
-      const info = {
-        field: "avatar",
-        filename: "profile.png",
-        encoding: "7bit",
-        mimeType: "image/png",
-        stream: Readable.from(["test"]),
-      };
-
-      const uploadedFile = new UploadedFile(info, testFile, 1024, abortController.signal);
-
-      expect(uploadedFile.field).toBe("avatar");
-      expect(uploadedFile.filename).toBe("profile.png");
-      expect(uploadedFile.encoding).toBe("7bit");
-      expect(uploadedFile.mimeType).toBe("image/png");
-      expect(uploadedFile.tmpFile).toBe(testFile);
+      const uploadedFile = createUploadedFile("test.pdf", { path: testFile, size: 1024, signal: abortController.signal });
+      expect(uploadedFile.name).toBe("profile.png");
+      expect(uploadedFile.type).toBe("image/png");
+      expect(uploadedFile.path).toBe(testFile);
       expect(uploadedFile.size).toBe(1024);
     });
 
     test("should extend File class", () => {
-      const info = {
-        field: "doc",
-        filename: "test.pdf",
-        encoding: "7bit",
-        mimeType: "application/pdf",
-        stream: Readable.from(["test"]),
-      };
-
-      const uploadedFile = new UploadedFile(info, testFile, 500, abortController.signal);
-
+      const uploadedFile = createUploadedFile();
       expect(uploadedFile).toBeInstanceOf(File);
       expect(uploadedFile).toBeInstanceOf(UploadedFile);
-    });
-
-    test("should work without signal parameter", () => {
-      const info = {
-        field: "doc",
-        filename: "test.pdf",
-        encoding: "7bit",
-        mimeType: "application/pdf",
-        stream: Readable.from(["test"]),
-      };
-
-      const uploadedFile = new UploadedFile(info, testFile, 500);
-
-      expect(uploadedFile.tmpFile).toBe(testFile);
     });
   });
 
   describe("stream", () => {
     test("should create readable stream from temporary file", async () => {
-      const info = {
-        field: "doc",
-        filename: "test.txt",
-        encoding: "7bit",
-        mimeType: "text/plain",
-        stream: Readable.from(["test"]),
-      };
+      const uploadedFile = new UploadedFile("test.pdf", { path: testFile, size: 12, signal: abortController.signal });
+      const stream = uploadedFile.stream();
+      expect(stream).toBeInstanceOf(ReadableStream);
 
-      const uploadedFile = new UploadedFile(info, testFile, 12, abortController.signal);
-      const stream = uploadedFile.stream;
-
-      expect(stream).toBeInstanceOf(Readable);
-
-      const chunks: Buffer[] = [];
+      const chunks: Uint8Array[] = [];
       for await (const chunk of stream) {
         chunks.push(chunk);
       }
@@ -204,8 +168,8 @@ describe("UploadedFile", () => {
 
       const uploadedFile = new UploadedFile(info, testFile, 12, abortController.signal);
 
-      const stream1 = uploadedFile.stream;
-      const stream2 = uploadedFile.stream;
+      const stream1 = uploadedFile.nodeStream();
+      const stream2 = uploadedFile.nodeStream();
 
       const destroyPromises = [
         new Promise<void>((resolve) => {
@@ -257,54 +221,6 @@ describe("UploadedFile", () => {
     });
   });
 
-  describe("inherited File properties", () => {
-    test("should have ext property", () => {
-      const info = {
-        field: "doc",
-        filename: "report.pdf",
-        encoding: "7bit",
-        mimeType: "application/pdf",
-        stream: Readable.from(["test"]),
-      };
-
-      const uploadedFile = new UploadedFile(info, testFile, 1024, abortController.signal);
-
-      expect(uploadedFile.ext).toBe(".pdf");
-    });
-
-    test("should have randomName property", () => {
-      const info = {
-        field: "image",
-        filename: "photo.jpg",
-        encoding: "7bit",
-        mimeType: "image/jpeg",
-        stream: Readable.from(["test"]),
-      };
-
-      const uploadedFile = new UploadedFile(info, testFile, 2048, abortController.signal);
-
-      expect(uploadedFile.randomName).toMatch(/^[0-9a-f-]+\.jpg$/);
-    });
-
-    test("should support move method", async () => {
-      const info = {
-        field: "doc",
-        filename: "test.txt",
-        encoding: "7bit",
-        mimeType: "text/plain",
-        stream: Readable.from(["test"]),
-      };
-
-      const uploadedFile = new UploadedFile(info, testFile, 12, abortController.signal);
-      const destFile = await uploadedFile.move(testDir, "moved.txt");
-
-      expect(destFile).toBe("moved.txt");
-
-      const content = await readFile(join(testDir, destFile), "utf-8");
-      expect(content).toBe("Test content");
-    });
-  });
-
   describe("size property", () => {
     test("should store file size", () => {
       const info = {
@@ -315,7 +231,7 @@ describe("UploadedFile", () => {
         stream: Readable.from(["test"]),
       };
 
-      const uploadedFile = new UploadedFile(info, testFile, 5242880, abortController.signal);
+      const uploadedFile = createUploadedFile(info.filename, { size: 5242880, signal: abortController.signal });
 
       expect(uploadedFile.size).toBe(5242880);
     });
@@ -347,20 +263,12 @@ describe("UploadedFile", () => {
 
       const uploadedFile = new UploadedFile(info, testFile, 12, abortController.signal);
 
-      expect(uploadedFile.tmpFile).toBe(testFile);
+      expect(uploadedFile.path).toBe(testFile);
     });
 
     test("should allow reading file directly", async () => {
-      const info = {
-        field: "doc",
-        filename: "test.txt",
-        encoding: "7bit",
-        mimeType: "text/plain",
-        stream: Readable.from(["test"]),
-      };
-
-      const uploadedFile = new UploadedFile(info, testFile, 12, abortController.signal);
-      const content = await readFile(uploadedFile.tmpFile, "utf-8");
+      const uploadedFile = createUploadedFile();
+      const content = await readFile(uploadedFile.path, "utf-8");
 
       expect(content).toBe("Test content");
     });

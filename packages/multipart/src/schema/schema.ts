@@ -1,5 +1,5 @@
 import { z, core, ZodType } from "zod";
-import { UploadedFile } from "./uploaded-file.js";
+import type { UploadedFile } from "./uploaded-file.js";
 
 export type ExtractTests = Record<string, FileBuilderDef>;
 

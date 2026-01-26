@@ -1,5 +1,11 @@
 import { mkdir } from "node:fs/promises";
-import { resolve } from "node:path";
+import { extname, join, resolve } from "node:path";
+import type { MultipartRawFile } from "./types.js";
+import { stream2uint8array, type Stream2uint8arrayOptions } from "./stream.js";
+import type { UploadedFile } from "./schema/uploaded-file.js";
+import { v4 as uuid } from "uuid";
+import { createWriteStream } from "node:fs";
+import { pipeline } from "node:stream/promises";
 
 /**
  * Array of binary file size units.
@@ -62,4 +68,39 @@ export async function ensurePath(...paths: string[]) {
   const dest = resolve(...paths);
   await mkdir(dest, { recursive: true });
   return dest;
+}
+
+export function isFile(f: unknown): f is File {
+  return f instanceof File;
+}
+
+export function isRawFile(f: any): f is MultipartRawFile {
+  return Boolean(f.stream);
+}
+
+export async function raw2file(raw: MultipartRawFile, options: Stream2uint8arrayOptions): Promise<File> {
+  return new File([await stream2uint8array(raw.stream, options)], raw.filename, {
+    type: raw.mimeType,
+    lastModified: new Date().getTime(),
+  });
+}
+/**
+ * Generates a random UUID-based filename while preserving the original extension.
+ * Useful for storing files with unique names to prevent collisions.
+ * @returns A UUID filename with the original file extension
+ */
+export function randomName(filename: string) {
+  return `${uuid()}${extname(filename)}`;
+}
+
+export async function move(file: File | UploadedFile | MultipartRawFile, dest = process.cwd(), filename?: string) {
+  if (isRawFile(file)) {
+    filename ??= randomName(file.filename);
+    await pipeline(file.stream, createWriteStream(join(dest, filename)));
+    return filename;
+  }
+
+  filename ??= randomName(file.name);
+  await pipeline(file.stream(), createWriteStream(join(dest, filename)));
+  return filename;
 }

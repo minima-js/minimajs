@@ -2,8 +2,8 @@ import { describe, test, expect } from "@jest/globals";
 import { Readable } from "node:stream";
 import { setTimeout as sleep } from "node:timers/promises";
 import { multipart } from "./multipart.js";
-import { File, isFile } from "./file.js";
 import { mockContext } from "@minimajs/server/mock";
+import { isFile } from "./helpers.js";
 
 // Helper to create multipart form data stream
 async function* createMultipartStream(
@@ -37,11 +37,10 @@ describe("multipart", () => {
 
       await mockContext(
         async () => {
-          const file = await multipart.file();
+          const file = await multipart.file("avatar");
           expect(file).toBeInstanceOf(File);
-          expect(file.field).toBe("avatar");
-          expect(file.filename).toBe("profile.png");
-          expect(file.mimeType).toBe("image/png");
+          expect(file?.name).toBe("profile.png");
+          expect(file?.type).toBe("image/png");
         },
         {
           headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
@@ -60,9 +59,7 @@ describe("multipart", () => {
       await mockContext(
         async () => {
           const file = await multipart.file("avatar");
-
-          expect(file.field).toBe("avatar");
-          expect(file.filename).toBe("profile.png");
+          expect(file?.name).toBe("profile.png");
         },
         {
           headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
@@ -77,7 +74,7 @@ describe("multipart", () => {
 
       await mockContext(
         async () => {
-          await expect(multipart.file()).rejects.toThrow("Uploaded file is invalid or not matched");
+          expect(await multipart.file("name")).toBe(null);
         },
         {
           headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
@@ -96,7 +93,7 @@ describe("multipart", () => {
 
       await mockContext(
         async () => {
-          await expect(multipart.file("document")).rejects.toThrow();
+          expect(await multipart.file("document")).toBe(null);
         },
         {
           headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
@@ -113,10 +110,9 @@ describe("multipart", () => {
 
       await mockContext(
         async () => {
-          const file = await multipart.file();
+          const file = await multipart.file("file");
 
-          expect(file.encoding).toBeDefined();
-          expect(file.mimeType).toBe("text/plain");
+          expect(file?.type).toBe("text/plain;charset=utf-8");
         },
         {
           headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
@@ -129,7 +125,7 @@ describe("multipart", () => {
       const stream = Readable.from([""]);
       await mockContext(
         async () => {
-          await expect(multipart.file()).rejects.toThrow();
+          await expect(multipart.file("")).rejects.toThrow();
         },
         {
           body: stream as any,
@@ -150,15 +146,14 @@ describe("multipart", () => {
       await mockContext(
         async () => {
           const files: File[] = [];
-          for await (const file of multipart.files()) {
+          for await (const [_name, file] of multipart.files()) {
             files.push(file);
-            await file.flush();
           }
 
           expect(files.length).toBe(3);
-          expect(files[0]?.filename).toBe("doc1.pdf");
-          expect(files[1]?.filename).toBe("doc2.pdf");
-          expect(files[2]?.filename).toBe("image.png");
+          expect(files[0]?.name).toBe("doc1.pdf");
+          expect(files[1]?.name).toBe("doc2.pdf");
+          expect(files[2]?.name).toBe("image.png");
         },
         {
           headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
@@ -175,9 +170,8 @@ describe("multipart", () => {
         async () => {
           const files: File[] = [];
 
-          for await (const file of multipart.files()) {
+          for await (const [, file] of multipart.files()) {
             files.push(file);
-            await file.flush();
           }
           expect(files.length).toBe(0);
         },
@@ -199,14 +193,12 @@ describe("multipart", () => {
       await mockContext(
         async () => {
           const files: File[] = [];
-
-          for await (const file of multipart.files()) {
+          for await (const [_field, file] of multipart.files()) {
             files.push(file);
-            await file.flush();
           }
 
           expect(files.length).toBe(1);
-          expect(files[0]!.filename).toBe("test.txt");
+          expect(files[0]!.name).toBe("test.txt");
         },
         {
           headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
@@ -318,14 +310,13 @@ describe("multipart", () => {
           const items: Array<[string, string | File]> = [];
           for await (const item of multipart.body()) {
             items.push(item);
-            if (isFile(item[1])) await item[1].flush();
           }
           expect(items.length).toBe(4);
           expect(items[0]?.[0]).toBe("name");
           expect(items[0]?.[1]).toBe("John Doe");
           expect(items[1]?.[0]).toBe("avatar");
           expect(isFile(items[1]?.[1])).toBe(true);
-          expect((items[1]?.[1] as File).filename).toBe("profile.png");
+          expect((items[1]?.[1] as File).name).toBe("profile.png");
           expect(items[2]?.[0]).toBe("email");
           expect(items[2]?.[1]).toBe("john@example.com");
           expect(items[3]?.[0]).toBe("document");
@@ -376,9 +367,6 @@ describe("multipart", () => {
 
           for await (const item of multipart.body()) {
             items.push(item);
-            if (item[1] instanceof File) {
-              await item[1].flush();
-            }
           }
 
           expect(items.length).toBe(2);
@@ -425,8 +413,6 @@ describe("multipart", () => {
 
           for await (const item of multipart.body()) {
             items.push(item);
-            const [, body] = item;
-            if (isFile(body)) await body.flush();
           }
 
           const [name1, value1] = items[0]!;

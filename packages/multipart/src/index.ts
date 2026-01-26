@@ -13,5 +13,6 @@
  * await file.move('/uploads/avatars');
  * ```
  */
-export * from "./file.js";
 export * from "./multipart.js";
+
+export * as helpers from "./helpers.js";

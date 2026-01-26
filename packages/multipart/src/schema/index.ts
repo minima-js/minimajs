@@ -23,7 +23,6 @@ import { getUploadedBody, type UploadOption } from "./uploaded.js";
 import { ValidationError } from "./error.js";
 
 export { type UploadOption } from "./uploaded.js";
-export * from "./uploaded-file.js";
 export * from "./schema.js";
 
 export function createMultipartUpload<T extends z.ZodRawShape>(obj: T, option: UploadOption = {}) {

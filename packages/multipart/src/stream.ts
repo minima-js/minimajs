@@ -1,6 +1,6 @@
 import { PassThrough, Transform, Writable, type Readable, type TransformCallback } from "node:stream";
 
-export interface TypedStream<T> {
+export interface TypedStream<T> extends PassThrough {
   write(chunk: T): boolean;
   end(): this;
   emit(event: "error", error: unknown): boolean;
@@ -25,6 +25,46 @@ export function stream2void() {
       callback();
     },
   });
+}
+
+export interface Stream2uint8arrayOptions {
+  maxSize?: number;
+}
+export async function stream2uint8array(
+  stream: Readable,
+  { maxSize = Infinity }: Stream2uint8arrayOptions
+): Promise<Uint8Array<ArrayBuffer>> {
+  let buffer = new Uint8Array(64 * 1024); // 64KB
+  let length = 0;
+
+  for await (const chunk of stream) {
+    // normalize chunk
+    const uint8 = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk);
+
+    const needed = length + uint8.byteLength;
+
+    if (needed > maxSize) {
+      stream.destroy();
+      throw new Error("Body exceeds maxSize");
+    }
+
+    // grow buffer (amortized O(n))
+    if (needed > buffer.byteLength) {
+      let newSize = buffer.byteLength;
+      while (newSize < needed) {
+        newSize *= 2;
+      }
+
+      const next = new Uint8Array(newSize);
+      next.set(buffer, 0);
+      buffer = next;
+    }
+
+    buffer.set(uint8, length);
+    length += uint8.byteLength;
+  }
+
+  return buffer.subarray(0, length);
 }
 
 export class StreamMeter extends Transform {

@@ -1,12 +1,13 @@
 import { z, ZodError } from "zod";
 import { humanFileSize } from "../helpers.js";
-import type { File } from "../file.js";
 import type { FileSchema } from "./schema.js";
+import type { MultipartRawFile } from "../types.js";
+import { extname } from "node:path";
 
-function isValidFileType(file: File, accept: string[]) {
+function isValidFileType(file: MultipartRawFile, accept: string[]) {
   if (!accept.length) return true;
 
-  const fileExtension = String(file.ext).toLowerCase();
+  const fileExtension = extname(file.filename).toLowerCase();
   for (const type of accept) {
     if (type === "*/*") {
       return true;
@@ -41,7 +42,7 @@ function isValidFileType(file: File, accept: string[]) {
   return false;
 }
 
-export function mimeType(schema: FileSchema, file: File): never | void {
+export function mimeType(schema: FileSchema, file: MultipartRawFile): never | void {
   const { types: accept = [] } = schema.def;
   if (!accept.length) return;
   if (isValidFileType(file, accept)) return;
@@ -52,13 +53,13 @@ export function mimeType(schema: FileSchema, file: File): never | void {
       format: "mime_type",
       pattern: acceptedTypes,
       input: file.mimeType,
-      path: [file.field],
+      path: [file.fieldname],
       message: `Invalid file type. Expected: ${acceptedTypes}, received: ${file.mimeType}`,
     },
   ]);
 }
 
-export function maxSize(schema: FileSchema, file: File, size: number): never {
+export function maxSize(schema: FileSchema, file: MultipartRawFile, size: number): never {
   const max = schema.def.max!;
   throw new ZodError([
     {
@@ -66,13 +67,13 @@ export function maxSize(schema: FileSchema, file: File, size: number): never {
       origin: "file",
       maximum: max,
       input: size,
-      path: [file.field],
+      path: [file.fieldname],
       message: `File size exceeds maximum. Expected: ${humanFileSize(max)}, received: ${humanFileSize(size)}+`,
     },
   ]);
 }
 
-export async function minSize(schema: FileSchema, file: File, size: number) {
+export async function minSize(schema: FileSchema, file: MultipartRawFile, size: number) {
   const { min = 0 } = schema.def;
   if (size >= min) return;
   throw new ZodError([
@@ -81,8 +82,8 @@ export async function minSize(schema: FileSchema, file: File, size: number) {
       origin: "file",
       minimum: min,
       input: size,
-      path: [file.field],
-      message: `File "${file.field}" is too small. Minimum: ${humanFileSize(min)}, actual: ${humanFileSize(size)}`,
+      path: [file.fieldname],
+      message: `File "${file.fieldname}" is too small. Minimum: ${humanFileSize(min)}, actual: ${humanFileSize(size)}`,
     },
   ]);
 }

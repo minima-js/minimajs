@@ -1,47 +1,15 @@
-import { Readable } from "node:stream";
-import { ok } from "node:assert";
-import { Busboy, type BusboyConfig, type BusboyHeaders } from "@fastify/busboy";
-import { File } from "./file.js";
-import { context } from "@minimajs/server";
-import { ValidationError } from "@minimajs/server/error";
-import { createAsyncIterator, stream2void } from "./stream.js";
-import { UploadError } from "./errors.js";
-
-type Config = Omit<BusboyConfig, "headers">;
-
-function toBusBoyHeaders(headers: Headers): BusboyHeaders {
-  ok(headers.has("content-type"), new ValidationError("Invalid content type or not exists in header"));
-  return {
-    "content-type": headers.get("content-type")!,
-  };
-}
-
-function busboy(opt: Config) {
-  const { request, incomingMessage } = context();
-  try {
-    // TODO: needs to handle if request.body is null
-    const stream = incomingMessage ? incomingMessage : Readable.fromWeb(request.body!);
-    const headers = toBusBoyHeaders(request.headers);
-    const bb = new Busboy({
-      ...opt,
-      headers,
-    });
-    stream.pipe(bb);
-    return bb;
-  } catch (err) {
-    if (err instanceof Error) {
-      throw new UploadError(err.message, { base: err });
-    }
-    throw err;
-  }
-}
+import { createAsyncIterator, stream2uint8array, stream2void } from "./stream.js";
+import { busboy } from "./busboy.js";
+import type { MultipartFileOptions, MultipartOptions, MultipartRawFile, MultipartRawResult } from "./types.js";
+import { isRawFile, raw2file } from "./helpers.js";
+import { pipeline } from "node:stream/promises";
 
 export namespace multipart {
   /**
    * Retrieves a single file from a multipart form request.
    * If a field name is provided, only files from that field are accepted.
    *
-   * @param name - Optional field name to match. If provided, only files from this field are returned.
+   * @param name - field name to match. If provided, only files from this field are returned.
    *                If omitted, the first file from any field is returned.
    * @returns A promise that resolves to the uploaded File
    * @throws {UploadError} If no file is found or the file doesn't match the specified field name
@@ -55,23 +23,43 @@ export namespace multipart {
    * await avatar.move('/uploads');
    * ```
    */
-  export async function file(name?: string) {
-    const limits: BusboyConfig["limits"] = { fields: 0 };
-    if (!name) {
-      limits.files = 1;
+  export async function file(name: string, options: MultipartFileOptions = {}) {
+    for await (const field of raw<MultipartRawFile>({ ...options, limits: { ...options.limits, fields: 0 } })) {
+      if (field.fieldname !== name) {
+        await pipeline(field.stream, stream2void());
+        continue;
+      }
+      return raw2file(field, options);
     }
-    return new Promise<File>((resolve, reject) => {
-      const bb = busboy({ limits });
-      bb.on("file", (uploadedName, file, filename, encoding, mimeType) => {
-        if (name && uploadedName !== name) {
-          file.pipe(stream2void());
-          return;
-        }
-        resolve(new File(uploadedName, filename, encoding, mimeType, file));
+    return null;
+  }
+  /**
+   * Retrieves a single file from a multipart form request.
+   * If a field name is provided, only files from that field are accepted.
+   *
+   * @param name - field name to match. If provided, only files from this field are returned.
+   *                If omitted, the first file from any field is returned.
+   * @returns A promise that resolves to the uploaded File
+   * @throws {UploadError} If no file is found or the file doesn't match the specified field name
+   * @example
+   * ```ts
+   * // Get any file
+   * const file = await multipart.file();
+   *
+   * // Get file from specific field
+   * const avatar = await multipart.file('avatar');
+   * await avatar.move('/uploads');
+   * ```
+   */
+  export async function firstFile(options: MultipartFileOptions = {}): Promise<[field: string, file: File] | null> {
+    for await (const field of raw<MultipartRawFile>({ ...options, limits: { ...options.limits, files: 1, fields: 0 } })) {
+      const file = new File([await stream2uint8array(field.stream, options)], field.filename, {
+        type: field.mimeType,
+        lastModified: new Date().getTime(),
       });
-      bb.on("error", (er) => reject(er));
-      bb.on("finish", () => reject(new UploadError("Uploaded file is invalid or not matched")));
-    });
+      return [field.fieldname, file];
+    }
+    return null;
   }
 
   /**
@@ -87,17 +75,10 @@ export namespace multipart {
    * }
    * ```
    */
-  export function files() {
-    const [stream, iterator] = createAsyncIterator<File>();
-    const bb = busboy({
-      limits: { fields: 0 },
-    });
-    bb.on("file", (uploadedName, file, filename, encoding, mimeType) => {
-      stream.write(new File(uploadedName, filename, encoding, mimeType, file));
-    });
-    bb.on("error", (err) => stream.emit("error", err));
-    bb.on("finish", () => stream.end());
-    return iterator;
+  export async function* files(options: MultipartFileOptions = {}) {
+    for await (const field of raw<MultipartRawFile>({ ...options, limits: { ...options.limits, fields: 0 } })) {
+      yield [field.fieldname, await raw2file(field, options)] as const;
+    }
   }
 
   /**
@@ -114,7 +95,7 @@ export namespace multipart {
    */
   export function fields<T extends Record<string, string>>() {
     const values: any = {};
-    const bb = busboy({
+    const [bb] = busboy({
       limits: { files: 0 },
     });
     bb.on("field", (name, value) => {
@@ -143,17 +124,41 @@ export namespace multipart {
    * }
    * ```
    */
-  export function body() {
-    const [stream, iterator] = createAsyncIterator<[string, string | File]>();
-    const bb = busboy({});
-    bb.on("field", (name, value) => {
-      stream.write([name, value]);
+  export async function* body(options: MultipartFileOptions = {}): AsyncGenerator<[field: string, value: string | File]> {
+    for await (const field of raw(options)) {
+      if (isRawFile(field)) {
+        const file = new File([await stream2uint8array(field.stream, options)], field.filename, {
+          type: field.mimeType,
+          lastModified: new Date().getTime(),
+        });
+        yield [field.fieldname, file];
+        continue;
+      }
+      yield [field.fieldname, field.value];
+    }
+  }
+
+  export function raw<T = MultipartRawResult>(options: MultipartOptions): AsyncGenerator<T> {
+    const [stream, iterator] = createAsyncIterator<MultipartRawResult>();
+    const [bb, stop] = busboy(options);
+
+    bb.on("field", (fieldname, value, fieldnameTruncated, valueTruncated, transferEncoding, mimeType) => {
+      stream.write({ fieldname, value, fieldnameTruncated, valueTruncated, transferEncoding, mimeType });
     });
-    bb.on("file", (name, file, filename, encoding, mimeType) => {
-      stream.write([name, new File(name, filename, encoding, mimeType, file)]);
+
+    bb.on("file", async (fieldname, fStream, filename, transferEncoding, mimeType) => {
+      stream.write({ fieldname, stream: fStream, filename, transferEncoding, mimeType });
     });
+
     bb.on("error", (err) => stream.emit("error", err));
+
     bb.on("finish", () => stream.end());
-    return iterator;
+
+    stream.on("error", (err: any) => {
+      if (err.name === "AbortError" && err.code === "ABORT_ERR") {
+        stop();
+      }
+    });
+    return iterator as AsyncGenerator<T>;
   }
 }

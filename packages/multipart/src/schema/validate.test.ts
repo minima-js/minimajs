@@ -3,20 +3,29 @@ import { ZodError, z } from "zod";
 import { Readable } from "node:stream";
 import { mimeType, maxSize, minSize, maximum } from "./validate.js";
 import { file } from "./schema.js";
-import { File } from "../file.js";
+import type { MultipartRawFile } from "../types.js";
+
+function createRawFile(f: Omit<Partial<MultipartRawFile>, "stream"> & { stream?: Readable } = {}): MultipartRawFile {
+  return {
+    filename: "test.pdf",
+    fieldname: "doc",
+    stream: Readable.from(["test"]) as any,
+    transferEncoding: "utf-8",
+    mimeType: "application/pdf",
+    ...f,
+  };
+}
 
 describe("validate", () => {
   describe("mimeType", () => {
     test("should allow any file when accept is empty array", () => {
-      const stream = Readable.from(["test"]);
-      const f = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
       const schema = file();
-      expect(() => mimeType(schema, f)).not.toThrow();
+      expect(() => mimeType(schema, createRawFile())).not.toThrow();
     });
 
     test("should allow file with exact MIME type match", () => {
       const stream = Readable.from(["test"]);
-      const f = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const f = createRawFile({ stream });
       const schema = file().accept(["application/pdf"]);
 
       expect(() => mimeType(schema, f)).not.toThrow();
@@ -24,7 +33,7 @@ describe("validate", () => {
 
     test("should allow file with wildcard */*", () => {
       const stream = Readable.from(["test"]);
-      const f = new File("doc", "test.pdf", "7bit", "application/pdf", stream);
+      const f = createRawFile({ stream });
       const schema = file().accept(["*/*"]);
 
       expect(() => mimeType(schema, f)).not.toThrow();

@@ -1,29 +1,58 @@
-import type { Readable } from "node:stream";
-import { File, type FileInfo } from "../file.js";
-import { unlink } from "node:fs/promises";
+import { Readable } from "node:stream";
+import { readFile, unlink } from "node:fs/promises";
 import { createReadStream } from "node:fs";
 
-/**
- * Represents a validated and uploaded file that has been saved to temporary storage.
- * Used with schema validation for multipart uploads.
- */
+export interface UploadedFileInit extends FilePropertyBag {
+  path: string;
+  size: number;
+  type?: string;
+  lastModified?: number;
+  signal?: AbortSignal;
+}
+
 export class UploadedFile extends File {
   #streams = new Set<Readable>();
-  constructor(
-    info: FileInfo,
-    public readonly tmpFile: string,
-    public readonly size: number,
-    private readonly signal?: AbortSignal
-  ) {
-    super(info.field, info.filename, info.encoding, info.mimeType);
+  #size: number;
+  readonly path: string;
+  readonly signal?: AbortSignal;
+
+  constructor(filename: string, { path, signal, size, ...propertyBag }: UploadedFileInit) {
+    super([], filename, propertyBag);
+    this.path = path;
+    this.#size = size;
+    this.signal = signal;
+  }
+
+  // ✅ fix incorrect size
+  get size() {
+    return this.#size;
+  }
+
+  // ✅ stream from disk instead of memory
+  stream(): ReadableStream<Uint8Array<ArrayBuffer>> {
+    return Readable.toWeb(this.nodeStream());
+  }
+
+  // ✅ load on demand
+  async arrayBuffer(): Promise<ArrayBuffer> {
+    const buf = await readFile(this.path);
+    return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+  }
+
+  async text(): Promise<string> {
+    return readFile(this.path, "utf8");
+  }
+
+  slice(): Blob {
+    throw new Error("UploadedFile.slice() is not supported. Files are disk-backed and stream-only.");
   }
 
   /**
    * Creates a readable stream from the temporary file.
    * Multiple streams can be created; all are tracked for cleanup.
    */
-  get stream(): Readable {
-    const stream = createReadStream(this.tmpFile, { signal: this.signal });
+  nodeStream(): Readable {
+    const stream = createReadStream(this.path, { signal: this.signal });
     this.#streams.add(stream);
     stream.on("close", () => {
       this.#streams.delete(stream);
@@ -38,20 +67,10 @@ export class UploadedFile extends File {
     for (const stream of this.#streams) {
       stream.destroy();
     }
-    await unlink(this.tmpFile).catch((_) => false);
+    return unlink(this.path).catch((_) => false);
   }
 }
 
-/**
- * Type guard to check if a value is an UploadedFile instance.
- *
- * @example
- * ```ts
- * if (isUploadedFile(file)) {
- *   console.log(file.tmpFile);
- * }
- * ```
- */
-export function isUploadedFile(file: unknown) {
-  return file instanceof UploadedFile;
+export function isUploadedFile(f: unknown): f is UploadedFile {
+  return f instanceof UploadedFile;
 }
