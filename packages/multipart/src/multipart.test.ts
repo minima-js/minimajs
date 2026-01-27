@@ -55,7 +55,6 @@ describe("multipart", () => {
         { name: "document", filename: "report.pdf", contentType: "application/pdf", data: "pdf-data" },
         { name: "avatar", filename: "profile.png", contentType: "image/png", data: "image-data" },
       ]);
-
       await mockContext(
         async () => {
           const file = await multipart.file("avatar");

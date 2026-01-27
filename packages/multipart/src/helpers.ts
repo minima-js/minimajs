@@ -1,11 +1,12 @@
 import { mkdir } from "node:fs/promises";
 import { extname, join, resolve } from "node:path";
 import type { MultipartRawFile } from "./types.js";
-import { stream2uint8array, type Stream2uint8arrayOptions } from "./stream.js";
+import { stream2uint8array, stream2void, type Stream2uint8arrayOptions } from "./stream.js";
 import type { UploadedFile } from "./schema/uploaded-file.js";
 import { v4 as uuid } from "uuid";
 import { createWriteStream } from "node:fs";
 import { pipeline } from "node:stream/promises";
+import { Readable } from "node:stream";
 
 /**
  * Array of binary file size units.
@@ -75,7 +76,7 @@ export function isFile(f: unknown): f is File {
 }
 
 export function isRawFile(f: any): f is MultipartRawFile {
-  return Boolean(f.stream);
+  return f.stream instanceof Readable;
 }
 
 export async function raw2file(raw: MultipartRawFile, options: Stream2uint8arrayOptions): Promise<File> {
@@ -103,4 +104,8 @@ export async function move(file: File | UploadedFile | MultipartRawFile, dest = 
   filename ??= randomName(file.name);
   await pipeline(file.stream(), createWriteStream(join(dest, filename)));
   return filename;
+}
+
+export function drain(file: MultipartRawFile) {
+  return pipeline(file.stream, stream2void());
 }

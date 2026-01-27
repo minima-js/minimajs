@@ -16,7 +16,7 @@ export function busboy(opt: MultipartOptions) {
   let stream: Readable | undefined = incomingMessage;
   if (!stream) {
     if (!request.body) {
-      throw new UploadError("Expected multipart/form-data body", 400);
+      throw new UploadError("Missing request body", 400);
     }
     stream = Readable.fromWeb(request.body);
   }
@@ -24,6 +24,8 @@ export function busboy(opt: MultipartOptions) {
   function stop() {
     stream!.unpipe(bb);
     bb.destroy();
+    // console.log("voding!!!");
+    // stream?.pipe(stream2void());
     stream!.resume();
   }
 

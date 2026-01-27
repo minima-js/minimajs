@@ -14,5 +14,5 @@
  * ```
  */
 export * from "./multipart.js";
-
+export * from "./types.js";
 export * as helpers from "./helpers.js";
