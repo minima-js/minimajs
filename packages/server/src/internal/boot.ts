@@ -34,6 +34,7 @@ function cloneContainer<S>(container: Container<S>): Container<S> {
     newContainer[key] = value;
   }
 
+  newContainer.$middlewares = container.$middlewares;
   return newContainer;
 }
 

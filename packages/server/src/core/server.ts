@@ -44,6 +44,7 @@ export class Server<S> implements App<S> {
     opts: ServerOptions
   ) {
     this.container = {
+      $middlewares: [],
       [kHooks]: createHooksStore(),
       [kAppDescriptor]: [],
       [kModulesChain]: [this],

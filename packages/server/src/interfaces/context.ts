@@ -1,11 +1,11 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Server as HttpServer } from "node:http";
 import type { Server as HttpsServer } from "node:https";
-import type { App, Container } from "./app.js";
+import type { App } from "./app.js";
 import type { ResponseState } from "./response.js";
-import type { Route } from "./route.js";
-import type { ServerAdapter } from "../index.js";
-import type { kIpAddr } from "../symbols.js";
+import type { Route, RouteMetaDescriptor } from "./route.js";
+import type { HookStore, Middleware, ServerAdapter } from "../index.js";
+import type { kAppDescriptor, kHooks, kIpAddr, kModulesChain } from "../symbols.js";
 
 export interface ContextMetadata {
   url?: URL;
@@ -21,11 +21,11 @@ export interface ContextLocals {
 }
 
 export interface Context<S = unknown> {
+  readonly $metadata: ContextMetadata;
   readonly app: App<S>;
   readonly server: S;
   readonly serverAdapter: ServerAdapter<S>;
   readonly pathname: string;
-  readonly $metadata: ContextMetadata;
   readonly request: Request; // WebApi Request
   readonly responseState: ResponseState; // Mutable response headers/status
   readonly container: Container<S>; // app.container
@@ -36,3 +36,10 @@ export interface Context<S = unknown> {
 }
 
 export type RequestHandlerContext<S = unknown> = Partial<Pick<Context<S>, "incomingMessage" | "serverResponse">>;
+export type Container<S = unknown> = {
+  $middlewares: Middleware[];
+  [kHooks]: HookStore;
+  [kAppDescriptor]: RouteMetaDescriptor<S>[];
+  [kModulesChain]: App<S>[];
+  [key: symbol]: unknown;
+};
