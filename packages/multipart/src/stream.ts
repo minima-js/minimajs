@@ -28,11 +28,12 @@ export function stream2void() {
 }
 
 export interface Stream2uint8arrayOptions {
-  maxSize?: number;
+  fileSize?: number;
 }
+
 export async function stream2uint8array(
   stream: Readable,
-  { maxSize = Infinity }: Stream2uint8arrayOptions
+  { fileSize: maxSize = Infinity }: Stream2uint8arrayOptions
 ): Promise<Uint8Array<ArrayBuffer>> {
   let buffer = new Uint8Array(64 * 1024); // 64KB
   let length = 0;

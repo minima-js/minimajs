@@ -1,6 +1,6 @@
 import { createAsyncIterator, stream2void } from "./stream.js";
 import { busboy } from "./busboy.js";
-import type { MultipartFileOptions, MultipartOptions, MultipartRawFile, MultipartRawResult } from "./types.js";
+import type { MultipartOptions, MultipartRawFile, MultipartRawResult } from "./types.js";
 import { isRawFile, raw2file } from "./helpers.js";
 import { pipeline } from "node:stream/promises";
 
@@ -23,10 +23,10 @@ export namespace multipart {
    * await avatar.move('/uploads');
    * ```
    */
-  export async function file(name: string, options: MultipartFileOptions = {}) {
+  export async function file(name: string, options: MultipartOptions = {}) {
     const field = await rawFile(name, options);
     if (!field) return null;
-    return raw2file(field, options);
+    return raw2file(field, options.limits ?? {});
   }
   /**
    * Retrieves a raw file stream from a multipart form request without buffering into memory.
@@ -44,7 +44,8 @@ export namespace multipart {
    */
   export async function rawFile(name: string, options: MultipartOptions = {}): Promise<MultipartRawFile | null> {
     return new Promise<MultipartRawFile | null>((resolve, reject) => {
-      const [bb, stop] = busboy({ ...options, limits: { ...options.limits, fields: 0 } });
+      const { limits } = options;
+      const [bb, stop] = busboy({ ...options, limits: { ...limits, fields: 0 } });
       bb.on("file", (fieldname, stream, filename, transferEncoding, mimeType) => {
         if (fieldname !== name) {
           pipeline(stream, stream2void()).catch(() => {});
@@ -81,10 +82,10 @@ export namespace multipart {
    * }
    * ```
    */
-  export async function firstFile(options: MultipartFileOptions = {}): Promise<[field: string, file: File] | null> {
+  export async function firstFile(options: MultipartOptions = {}): Promise<[field: string, file: File] | null> {
     const field = await firstRawFile(options);
     if (!field) return null;
-    return [field.fieldname, await raw2file(field, options)];
+    return [field.fieldname, await raw2file(field, options.limits ?? {})];
   }
 
   /**
@@ -135,9 +136,10 @@ export namespace multipart {
    * }
    * ```
    */
-  export async function* files(options: MultipartFileOptions = {}) {
-    for await (const field of raw<MultipartRawFile>({ ...options, limits: { ...options.limits, fields: 0 } })) {
-      yield [field.fieldname, await raw2file(field, options)] as const;
+  export async function* files(options: MultipartOptions = {}) {
+    const { limits = {} } = options;
+    for await (const field of raw<MultipartRawFile>({ ...options, limits: { ...limits, fields: 0 } })) {
+      yield [field.fieldname, await raw2file(field, limits)] as const;
     }
   }
 
@@ -188,10 +190,10 @@ export namespace multipart {
    * }
    * ```
    */
-  export async function* body(options: MultipartFileOptions = {}): AsyncGenerator<[field: string, value: string | File]> {
+  export async function* body(options: MultipartOptions = {}): AsyncGenerator<[field: string, value: string | File]> {
     for await (const field of raw(options)) {
       if (isRawFile(field)) {
-        yield [field.fieldname, await raw2file(field, options)];
+        yield [field.fieldname, await raw2file(field, { fileSize: options.limits?.fileSize ?? Infinity })];
         continue;
       }
       yield [field.fieldname, field.value];
