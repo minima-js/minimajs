@@ -1,41 +1,12 @@
 import "./avvio-patch.js";
 import avvio, { type Avvio } from "avvio";
-import type { App, Container } from "../interfaces/index.js";
+import type { App } from "../interfaces/index.js";
 import { runHooks } from "../hooks/store.js";
 import { kModuleName, kModulesChain, kPlugin } from "../symbols.js";
-import { isCallable } from "../utils/callable.js";
 import { plugin, type PluginOptions, type RegisterOptions, type Registerable } from "../plugin.js";
+import { cloneContainer } from "./container.js";
 
-export const METADATA_SYMBOLS = [kModuleName, kPlugin];
-
-/**
- * Checks if a value has a clone method
- */
-function cloneable(value: unknown): value is { clone(): unknown } {
-  return isCallable((value as any)?.clone);
-}
-
-/**
- * Clones a container by iterating symbol properties and conditionally cloning values
- */
-function cloneContainer<S>(container: Container<S>): Container<S> {
-  const newContainer: Container<S> = {} as Container<S>;
-  // Iterate over symbol properties
-  for (const key of Object.getOwnPropertySymbols(container)) {
-    const value = container[key];
-    if (Array.isArray(value)) {
-      newContainer[key] = [...value];
-      continue;
-    }
-    if (cloneable(value)) {
-      newContainer[key] = value.clone();
-      continue;
-    }
-    newContainer[key] = value;
-  }
-  newContainer.$rootMiddleware = container.$rootMiddleware;
-  return newContainer;
-}
+const METADATA_SYMBOLS = [kModuleName, kPlugin];
 
 interface OverrideOptions {
   prefix?: string;

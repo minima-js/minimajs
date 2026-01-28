@@ -1,4 +1,5 @@
-import type { Context, Middleware, MiddlewareNext } from "../interfaces/index.js";
+import type { Context } from "../interfaces/index.js";
+import type { Middleware, MiddlewareNext } from "../interfaces/app.js";
 
 export function composeMiddleware(middlewares: Middleware[]) {
   if (middlewares.length === 1) return middlewares[0]!;

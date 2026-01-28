@@ -10,7 +10,8 @@ import type {
   OnReadyHook,
   OnRegisterHook,
 } from "./types.js";
-import type { App, Middleware } from "../interfaces/index.js";
+import type { App } from "../interfaces/index.js";
+import type { Middleware } from "../interfaces/app.js";
 import type { PluginSync } from "../plugin.js";
 import { plugin } from "../plugin.js";
 import { kHooks, kMiddlewares } from "../symbols.js";
@@ -99,17 +100,4 @@ export function middleware<S = any>(...middlewares: Middleware<S>[]) {
   });
 }
 
-export type {
-  LifecycleHook,
-  OnRequestHook,
-  OnTransformHook,
-  OnSendHook,
-  OnErrorHook,
-  OnTimeoutHook,
-  OnCloseHook,
-  OnListenHook,
-  OnReadyHook,
-  OnRegisterHook,
-  GenericHookCallback as HookCallback,
-  HookStore,
-} from "./types.js";
+export * from "./types.js";

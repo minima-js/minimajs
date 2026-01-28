@@ -1,7 +1,6 @@
-import { type HookStore, type GenericHookCallback } from "./types.js";
-import type { App } from "../interfaces/app.js";
+import type { App, Context } from "../interfaces/index.js";
 import { kHooks } from "../symbols.js";
-import type { Context, OnErrorHook, OnRequestHook, OnSendHook, OnTransformHook } from "../interfaces/index.js";
+import type { HookStore, GenericHookCallback, OnErrorHook, OnRequestHook, OnSendHook, OnTransformHook } from "./types.js";
 
 /**
  * Hook Execution Order and Direction

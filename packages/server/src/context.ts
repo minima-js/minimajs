@@ -1,7 +1,7 @@
 import { isCallable } from "./utils/callable.js";
 import assert from "node:assert";
 import { AsyncLocalStorage } from "node:async_hooks";
-import type { Context } from "./index.js";
+import type { Context, MiddlewareNext } from "./index.js";
 
 export type OnceCallback<T> = () => T;
 
@@ -47,8 +47,8 @@ export function createContext<T>(value?: T | (() => T)) {
 }
 export const executionContext = new AsyncLocalStorage<Context<any>>();
 
-export function runInContext<S, T = Response>(context: Context<S>, cb: () => T): T {
-  return executionContext.run<T>(context, cb);
+export function runInContext<S>(context: Context<S>, cb: MiddlewareNext) {
+  return executionContext.run(context, cb);
 }
 
 export function safe<T, U extends unknown[]>(cb: (...args: U) => T) {
