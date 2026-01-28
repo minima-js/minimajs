@@ -23,9 +23,8 @@ import { getUploadedBody, type UploadOption } from "./uploaded.js";
 import { ValidationError } from "./error.js";
 
 export { type UploadOption } from "./uploaded.js";
-export * from "./schema.js";
 
-export function createMultipartUpload<T extends z.ZodRawShape>(obj: T, option: UploadOption = {}) {
+export function createMultipart<T extends z.ZodRawShape>(obj: T, option: UploadOption = {}) {
   const [$body] = createContext(() => getUploadedBody(obj, context(), option));
   return async function getData(): Promise<z.infer<z.ZodObject<T>>> {
     try {

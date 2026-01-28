@@ -147,9 +147,10 @@ export function bodyParser(opts: BodyParserOptions = { type: ["json"] }) {
       }
 
       locals[kBody] = parsed;
-    } catch {
+    } catch (err) {
+      if (!Error.isError(err)) throw err;
       // Parse error - keep null value
-      app.log.error("body already parsed!");
+      app.log.error(err, "Failed to parse request body as %s", parseType);
       // The body() function will return null
     }
   }

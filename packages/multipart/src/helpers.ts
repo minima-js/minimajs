@@ -2,7 +2,7 @@ import { mkdir } from "node:fs/promises";
 import { extname, join, resolve } from "node:path";
 import type { MultipartRawFile } from "./types.js";
 import { stream2uint8array, stream2void, type Stream2uint8arrayOptions } from "./stream.js";
-import type { UploadedFile } from "./schema/uploaded-file.js";
+import type { TempFile } from "./schema/file.js";
 import { v4 as uuid } from "uuid";
 import { createWriteStream } from "node:fs";
 import { pipeline } from "node:stream/promises";
@@ -76,7 +76,7 @@ export function isFile(f: unknown): f is File {
 }
 
 export function isRawFile(f: any): f is MultipartRawFile {
-  return f.stream instanceof Readable;
+  return "filename" in f && f.stream instanceof Readable;
 }
 
 export async function raw2file(raw: MultipartRawFile, options: Stream2uint8arrayOptions): Promise<File> {
@@ -94,7 +94,7 @@ export function randomName(filename: string) {
   return `${uuid()}${extname(filename)}`;
 }
 
-export async function move(file: File | UploadedFile | MultipartRawFile, dest = process.cwd(), filename?: string) {
+export async function move(file: File | TempFile | MultipartRawFile, dest = process.cwd(), filename?: string) {
   if (isRawFile(file)) {
     filename ??= randomName(file.filename);
     await pipeline(file.stream, createWriteStream(join(dest, filename)));
