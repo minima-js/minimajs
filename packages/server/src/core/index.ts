@@ -23,17 +23,17 @@ import { createLogger, logger as defaultLogger } from "../logger.js";
 import { moduleDiscovery } from "../plugins/module-discovery/index.js";
 import type { ModuleDiscoveryOptions } from "../plugins/module-discovery/types.js";
 import { bodyParser, routeLogger } from "../plugins/index.js";
-import { runInContext } from "../context.js";
-import { hook, middleware, type Middleware } from "../index.js";
+import { executionContext, hook } from "../index.js";
 import { composeMiddleware } from "../internal/middleware.js";
 import { kMiddlewares } from "../symbols.js";
+import { contextProvider } from "../plugins/context-provider/index.js";
 
 export * from "./server.js";
 
 /**
  * Configuration options for creating a base server instance.
  */
-export interface CreateBaseSeverOptions<S = any> {
+export interface CreateBaseSeverOptions {
   /** Router configuration from find-my-way */
   router?: RouterConfig<HTTPVersion>;
   /** URL prefix for all routes */
@@ -41,12 +41,9 @@ export interface CreateBaseSeverOptions<S = any> {
   /** Pino logger instance, or false to disable logging */
   logger?: Logger | false;
   moduleDiscovery?: false | ModuleDiscoveryOptions;
-  withContext?: Middleware<S>;
 }
 
-export function createBaseServer<T>(server: ServerAdapter<T>, options: CreateBaseSeverOptions<T>) {
-  const { withContext = runInContext } = options;
-
+export function createBaseServer<T>(server: ServerAdapter<T>, options: CreateBaseSeverOptions) {
   let logger: Logger | undefined = options.logger === false ? createLogger({ enabled: false }) : options.logger;
 
   logger ??= defaultLogger;
@@ -56,8 +53,7 @@ export function createBaseServer<T>(server: ServerAdapter<T>, options: CreateBas
     logger,
     router: Router({ ignoreTrailingSlash: true, ...options.router }),
   });
-
-  srv.register(middleware(withContext));
+  srv.register(contextProvider((ctx, next) => executionContext.run(ctx, next)));
   srv.register(deferrer());
   srv.register(bodyParser());
   srv.register(routeLogger());
