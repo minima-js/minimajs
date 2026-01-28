@@ -12,7 +12,7 @@ import { plugin as p } from "../plugin.js";
 import type { RouteConfig, RouteMetaDescriptor, RouteOptions } from "../interfaces/route.js";
 import { createBoot, wrapPlugin } from "../internal/boot.js";
 import type { AddressInfo, ServerAdapter, ListenOptions } from "../interfaces/server.js";
-import { kAppDescriptor, kHooks, kModulesChain } from "../symbols.js";
+import { kAppDescriptor, kHooks, kMiddlewares, kModulesChain } from "../symbols.js";
 import type { Container, RequestHandlerContext } from "../interfaces/index.js";
 
 export interface ServerOptions {
@@ -44,7 +44,10 @@ export class Server<S> implements App<S> {
     opts: ServerOptions
   ) {
     this.container = {
-      $middlewares: [],
+      $rootMiddleware(_ctx, cb) {
+        return cb();
+      },
+      [kMiddlewares]: new Set(),
       [kHooks]: createHooksStore(),
       [kAppDescriptor]: [],
       [kModulesChain]: [this],

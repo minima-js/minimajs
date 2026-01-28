@@ -5,7 +5,7 @@ import type { App } from "./app.js";
 import type { ResponseState } from "./response.js";
 import type { Route, RouteMetaDescriptor } from "./route.js";
 import type { HookStore, Middleware, ServerAdapter } from "../index.js";
-import type { kAppDescriptor, kHooks, kIpAddr, kModulesChain } from "../symbols.js";
+import type { kAppDescriptor, kHooks, kIpAddr, kMiddlewares, kModulesChain } from "../symbols.js";
 
 export interface ContextMetadata {
   url?: URL;
@@ -37,7 +37,8 @@ export interface Context<S = unknown> {
 
 export type RequestHandlerContext<S = unknown> = Partial<Pick<Context<S>, "incomingMessage" | "serverResponse">>;
 export type Container<S = unknown> = {
-  $middlewares: Middleware[];
+  $rootMiddleware: Middleware;
+  [kMiddlewares]: Set<Middleware<S>>;
   [kHooks]: HookStore;
   [kAppDescriptor]: RouteMetaDescriptor<S>[];
   [kModulesChain]: App<S>[];

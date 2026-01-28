@@ -23,15 +23,17 @@ import { createLogger, logger as defaultLogger } from "../logger.js";
 import { moduleDiscovery } from "../plugins/module-discovery/index.js";
 import type { ModuleDiscoveryOptions } from "../plugins/module-discovery/types.js";
 import { bodyParser, routeLogger } from "../plugins/index.js";
-import { runInContext } from "../internal/context.js";
-import { middleware, type Context } from "../index.js";
+import { runInContext } from "../context.js";
+import { hook, middleware, type Middleware } from "../index.js";
+import { composeMiddleware } from "../internal/middleware.js";
+import { kMiddlewares } from "../symbols.js";
 
 export * from "./server.js";
 
 /**
  * Configuration options for creating a base server instance.
  */
-export interface CreateBaseSeverOptions {
+export interface CreateBaseSeverOptions<S = any> {
   /** Router configuration from find-my-way */
   router?: RouterConfig<HTTPVersion>;
   /** URL prefix for all routes */
@@ -39,10 +41,10 @@ export interface CreateBaseSeverOptions {
   /** Pino logger instance, or false to disable logging */
   logger?: Logger | false;
   moduleDiscovery?: false | ModuleDiscoveryOptions;
-  withContext?(ctx: Context, callback: () => Promise<Response>): Promise<Response>;
+  withContext?: Middleware<S>;
 }
 
-export function createBaseServer<T>(server: ServerAdapter<T>, options: CreateBaseSeverOptions) {
+export function createBaseServer<T>(server: ServerAdapter<T>, options: CreateBaseSeverOptions<T>) {
   const { withContext = runInContext } = options;
 
   let logger: Logger | undefined = options.logger === false ? createLogger({ enabled: false }) : options.logger;
@@ -62,5 +64,12 @@ export function createBaseServer<T>(server: ServerAdapter<T>, options: CreateBas
   if (options.moduleDiscovery !== false) {
     srv.register(moduleDiscovery(options.moduleDiscovery ?? {}));
   }
+
+  srv.register(
+    hook("ready", (app) => {
+      app.container.$rootMiddleware = composeMiddleware([...app.container[kMiddlewares]]);
+    })
+  );
+
   return srv;
 }

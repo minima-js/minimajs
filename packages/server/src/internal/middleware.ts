@@ -1,22 +1,26 @@
 import type { Context, Middleware, MiddlewareNext } from "../interfaces/index.js";
 
-export function wrap(middlewares: Middleware[], ctx: Context, callback: MiddlewareNext): Promise<Response> {
-  let index = -1;
+export function composeMiddleware(middlewares: Middleware[]) {
+  if (middlewares.length === 1) return middlewares[0]!;
 
-  const dispatch = (i: number): Promise<Response> => {
-    if (i <= index) {
-      return Promise.reject(new Error("next() called multiple times"));
-    }
+  return function wrap(ctx: Context, callback: MiddlewareNext): Promise<Response> {
+    let index = -1;
 
-    index = i;
-    const mw = middlewares[i];
+    const dispatch = (i: number): Promise<Response> => {
+      if (i <= index) {
+        return Promise.reject(new Error("next() called multiple times"));
+      }
 
-    if (!mw) {
-      return callback();
-    }
+      index = i;
+      const mw = middlewares[i];
 
-    return mw(ctx, () => dispatch(i + 1));
+      if (!mw) {
+        return callback();
+      }
+
+      return mw(ctx, () => dispatch(i + 1));
+    };
+
+    return dispatch(0);
   };
-
-  return dispatch(0);
 }

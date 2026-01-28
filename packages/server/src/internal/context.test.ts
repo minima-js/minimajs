@@ -1,5 +1,5 @@
 import { mockContext } from "../mock/index.js";
-import { $context as context, safe } from "./context.js";
+import { context as context, safe } from "../context.js";
 
 describe("Context", () => {
   describe("getContext", () => {

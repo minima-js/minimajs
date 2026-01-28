@@ -2,7 +2,6 @@ import { type HTTPMethod } from "find-my-way";
 import { type App } from "../interfaces/app.js";
 import { type Route } from "../interfaces/route.js";
 import { runHooks } from "../hooks/store.js";
-import { wrap } from "./middleware.js";
 import { type Context, type RequestHandlerContext } from "../interfaces/context.js";
 import { NotFoundError, RedirectError } from "../error.js";
 import { createResponse } from "./response.js";
@@ -34,11 +33,11 @@ export async function handleRequest<S>(
   }
 
   const ctx: Context<any> = {
-    app,
     $metadata: {
       pathStart,
       pathEnd,
     },
+    app,
     pathname,
     server: server.server!,
     serverAdapter: server.adapter,
@@ -51,7 +50,7 @@ export async function handleRequest<S>(
     serverResponse: partial.serverResponse,
   };
 
-  return wrap(server.container.$middlewares, ctx, async () => {
+  return server.container.$rootMiddleware(ctx, async () => {
     try {
       return await finalizeSend(ctx, await prepare(route, ctx));
     } catch (err) {

@@ -10,10 +10,10 @@ import type {
   OnReadyHook,
   OnRegisterHook,
 } from "./types.js";
-import type { App } from "../interfaces/index.js";
+import type { App, Middleware } from "../interfaces/index.js";
 import type { PluginSync } from "../plugin.js";
 import { plugin } from "../plugin.js";
-import { kHooks } from "../symbols.js";
+import { kHooks, kMiddlewares } from "../symbols.js";
 
 // ============================================================================
 // Hook Factory
@@ -91,6 +91,13 @@ export namespace hook {
 // ============================================================================
 
 export { createHooksStore, runHooks, SERVER_HOOKS, LIFECYCLE_HOOKS } from "./store.js";
+
+export function middleware<S = any>(...middlewares: Middleware<S>[]) {
+  return plugin.sync<S>((app) => {
+    const mw = app.container[kMiddlewares];
+    middlewares.forEach((x) => mw.add(x));
+  });
+}
 
 export type {
   LifecycleHook,

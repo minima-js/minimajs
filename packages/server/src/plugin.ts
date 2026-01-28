@@ -1,6 +1,5 @@
 import { kModuleName, kPlugin, kPluginSync } from "./symbols.js";
 import type { App } from "./interfaces/app.js";
-import type { Middleware } from "./index.js";
 
 // Options for register callbacks with prefix support
 export type PluginCallback<S, T extends PluginOptions> = (app: App<S>, opts: T) => void | Promise<void>;
@@ -93,10 +92,4 @@ export namespace plugin {
     }
     return fn.name || "anonymous";
   }
-}
-
-export function middleware(...middlewares: Middleware[]) {
-  return plugin.sync((app) => {
-    app.container.$middlewares.push(...middlewares);
-  });
 }

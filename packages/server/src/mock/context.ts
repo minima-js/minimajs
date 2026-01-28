@@ -1,4 +1,4 @@
-import { runInContext } from "../internal/context.js";
+import { runInContext } from "../context.js";
 import { type Context } from "../interfaces/context.js";
 import { createRequest, type MockRequestOptions } from "./request.js";
 import { kBody } from "../symbols.js";

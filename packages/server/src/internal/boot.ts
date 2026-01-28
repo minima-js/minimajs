@@ -33,8 +33,7 @@ function cloneContainer<S>(container: Container<S>): Container<S> {
     }
     newContainer[key] = value;
   }
-
-  newContainer.$middlewares = container.$middlewares;
+  newContainer.$rootMiddleware = container.$rootMiddleware;
   return newContainer;
 }
 

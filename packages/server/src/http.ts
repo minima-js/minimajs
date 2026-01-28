@@ -1,4 +1,4 @@
-import { $context } from "./internal/context.js";
+import { context } from "./context.js";
 
 import { RedirectError, HttpError, BaseHttpError, NotFoundError, type HttpErrorOptions } from "./error.js";
 import type { HeadersInit, HttpHeader, HttpHeaderIncoming, ResponseBody, ResponseOptions } from "./interfaces/response.js";
@@ -27,7 +27,7 @@ import type { Dict } from "./interfaces/index.js";
  * @since v0.2.0
  */
 export function response(body: ResponseBody, options: ResponseOptions = {}): Response {
-  const { responseState } = $context();
+  const { responseState } = context();
   if (options.status) {
     responseState.status = toStatusCode(options.status);
   }
@@ -57,7 +57,7 @@ export namespace response {
    * @since v0.2.0
    */
   export function status(statusCode: StatusCode): void {
-    const { responseState: res } = $context();
+    const { responseState: res } = context();
     res.status = toStatusCode(statusCode);
   }
 }
@@ -230,7 +230,7 @@ export namespace abort {
  * @since v0.2.0
  */
 export function request(): Request {
-  const { request: req } = $context();
+  const { request: req } = context();
   return req;
 }
 
@@ -251,7 +251,7 @@ export namespace request {
    */
 
   export function url(): URL {
-    const { $metadata: metadata, request } = $context();
+    const { $metadata: metadata, request } = context();
     if (metadata.url) return metadata.url;
     metadata.proto ??= "http";
     if (!metadata.host) {
@@ -281,7 +281,7 @@ export namespace request {
    * ```
    */
   export function ip(): string | null {
-    const { locals } = $context();
+    const { locals } = context();
     let ipAddr = locals[kIpAddr];
     if (ipAddr === undefined) {
       ipAddr = request.remoteAddr();
@@ -291,7 +291,7 @@ export namespace request {
   }
 
   export function remoteAddr(): string | null {
-    const ctx = $context();
+    const ctx = context();
     return ctx.serverAdapter.remoteAddr(ctx);
   }
 }
@@ -318,7 +318,7 @@ export namespace request {
  * @since v0.2.0
  */
 export function body<T = unknown>(): T {
-  const { locals } = $context();
+  const { locals } = context();
   if (!(kBody in locals)) {
     throw new Error("Body parser is not registered. Please register bodyParser plugin first.");
   }
@@ -357,7 +357,7 @@ export const getBody = body;
  * @since v0.2.0
  */
 export function params<T = Dict<string>>(): T {
-  const { route } = $context();
+  const { route } = context();
   if (!route) {
     return {} as T;
   }
@@ -535,7 +535,7 @@ export namespace headers {
   export function set(headers: HeadersInit): void;
   export function set(headers: HttpHeader, value: string): void;
   export function set(name: HttpHeader | HeadersInit, value?: string): void {
-    const { responseState: res } = $context();
+    const { responseState: res } = context();
 
     // If name is a string, set single header
     if (typeof name === "string") {
@@ -562,7 +562,7 @@ export namespace headers {
    * ```
    */
   export function append(name: HttpHeader, value: string): void {
-    const { responseState: resInit } = $context();
+    const { responseState: resInit } = context();
     resInit.headers.append(name, value);
   }
 }
@@ -586,7 +586,7 @@ const kSearchParams = Symbol();
  * @since v0.2.0
  */
 export function searchParams<T extends Record<string, string>>(): T {
-  const ctx = $context();
+  const ctx = context();
   let queries = ctx.locals[kSearchParams] as T;
   if (!queries) {
     queries = Object.fromEntries(request.url().searchParams) as T;
