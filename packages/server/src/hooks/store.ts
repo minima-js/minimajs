@@ -134,7 +134,7 @@ export namespace runHooks {
     return result;
   }
 
-  export async function error<S>(app: App<S>, error: unknown, ctx: Context<S>): Promise<any> {
+  export async function error<S>(app: App<S>, error: unknown, ctx: Context<S>): Promise<unknown> {
     const hooks = findHookToRun<S, OnErrorHook<S>>(app, "error");
     let err = error;
     for (const hook of hooks) {

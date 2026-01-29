@@ -1,4 +1,4 @@
-import type { Context, Middleware } from "../../interfaces/index.js";
+import type { Middleware } from "../../interfaces/index.js";
 import { plugin } from "../../plugin.js";
 import { kMiddlewares } from "../../symbols.js";
 import { runHooks } from "../../hooks/store.js";
@@ -7,7 +7,7 @@ import { handleError } from "./error-handler.js";
 const kContextRunner = Symbol("minimajs.context.wrapper");
 
 export function contextProvider(callback: Middleware) {
-  const provider: Middleware = (ctx: Context, next) => {
+  const provider: Middleware = (ctx, next) => {
     return callback(ctx, async () => {
       let response: Response;
       try {

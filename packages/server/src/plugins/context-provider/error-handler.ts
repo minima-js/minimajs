@@ -2,7 +2,6 @@ import { RedirectError, BaseHttpError } from "../../error.js";
 import { runHooks } from "../../hooks/store.js";
 import type { Context } from "../../interfaces/context.js";
 import { createResponse } from "../../internal/response.js";
-import { kHooks } from "../../symbols.js";
 
 export async function handleError(err: unknown, ctx: Context): Promise<Response> {
   // Handle redirects specially
@@ -10,15 +9,12 @@ export async function handleError(err: unknown, ctx: Context): Promise<Response>
     return err.render(ctx);
   }
 
-  const hooks = ctx.app.container[kHooks];
-
   // If error hooks are registered, run them
-  if (hooks.error.size > 0) {
-    try {
-      return await createResponse(await runHooks.error(ctx.app, err, ctx), {}, ctx);
-    } catch {
-      // If error hook throws, fall through to default handling
-    }
+  try {
+    return await createResponse(await runHooks.error(ctx.app, err, ctx), {}, ctx);
+  } catch (_err) {
+    // If error hook throws, fall through to default handling
+    err = _err;
   }
 
   // Handle HTTP errors (they know how to render themselves)
