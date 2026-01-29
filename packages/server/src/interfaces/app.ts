@@ -1,5 +1,5 @@
 import type { Instance as Router, HTTPVersion } from "find-my-way";
-import type { ErrorHandler, Serializer } from "./response.js";
+import type { Serializer } from "./response.js";
 import type { Plugin, PluginOptions, PluginSync, Module, RegisterOptions, Registerable } from "../plugin.js";
 import type { Context } from "./context.js";
 import type { RouteMetaDescriptor, RouteOptions } from "./route.js";
@@ -24,8 +24,6 @@ export interface App<S = any> {
   log: Logger;
 
   serialize: Serializer<S>;
-
-  errorHandler: ErrorHandler<S>;
 
   get(path: string, handler: Handler<S>): this;
   get(path: string, ...args: [...RouteMetaDescriptor<S>[], Handler<S>]): this;

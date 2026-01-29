@@ -147,7 +147,7 @@
     },
     "packages/server": {
       "name": "@minimajs/server",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "dependencies": {
         "avvio": "9",
         "deepmerge": "^4.3.1",

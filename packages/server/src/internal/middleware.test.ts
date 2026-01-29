@@ -136,7 +136,7 @@ describe("middleware", () => {
       expect(executionLog).toEqual(["middleware1", "middleware2-short-circuit"]);
     });
 
-    test("should reject when next() is called multiple times", async () => {
+    test("should return error response when next() is called multiple times", async () => {
       app.register(
         middleware(async (_ctx, next) => {
           await next();
@@ -147,7 +147,9 @@ describe("middleware", () => {
 
       app.get("/test", () => ({ success: true }));
 
-      await expect(app.handle(createRequest("/test"))).rejects.toThrow("next() called multiple times");
+      const response = await app.handle(createRequest("/test"));
+      // Error is caught by contextProvider and converted to error response
+      expect(response.status).toBe(500);
     });
 
     test("should handle async middlewares", async () => {
@@ -827,6 +829,257 @@ describe("middleware", () => {
       await app.handle(createRequest("/test"));
 
       expect(order).toEqual(["first", "second", "third", "fourth", "handler"]);
+    });
+  });
+
+  describe("error propagation", () => {
+    test("should allow middleware to catch errors from handler", async () => {
+      const executionLog: string[] = [];
+      let caughtError: Error | null = null;
+
+      app.register(
+        middleware(async (_ctx, next) => {
+          executionLog.push("middleware-before");
+          try {
+            return await next();
+          } catch (error) {
+            executionLog.push("middleware-caught-error");
+            caughtError = error as Error;
+            // Return a custom error response
+            return new Response(JSON.stringify({ error: "Caught by middleware" }), {
+              status: 500,
+              headers: { "content-type": "application/json" },
+            });
+          }
+        })
+      );
+
+      app.get("/test", () => {
+        executionLog.push("handler-throwing");
+        throw new Error("Handler error");
+      });
+
+      const response = await app.handle(createRequest("/test"));
+      const data = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(data).toEqual({ error: "Caught by middleware" });
+      expect(executionLog).toEqual(["middleware-before", "handler-throwing", "middleware-caught-error"]);
+      expect(caughtError).toBeInstanceOf(Error);
+      expect(caughtError!.message).toBe("Handler error");
+    });
+
+    test("should allow middleware to catch and rethrow errors", async () => {
+      const executionLog: string[] = [];
+
+      app.register(
+        middleware(async (_ctx, next) => {
+          executionLog.push("outer-middleware-before");
+          try {
+            return await next();
+          } catch (error) {
+            executionLog.push("outer-middleware-caught");
+            throw error; // Rethrow to let default error handler process it
+          }
+        })
+      );
+
+      app.register(
+        middleware(async (_ctx, next) => {
+          executionLog.push("inner-middleware-before");
+          return next();
+        })
+      );
+
+      app.get("/test", () => {
+        executionLog.push("handler-throwing");
+        throw new Error("Handler error");
+      });
+
+      const response = await app.handle(createRequest("/test"));
+
+      // Default error handler should return 500
+      expect(response.status).toBe(500);
+      expect(executionLog).toEqual([
+        "outer-middleware-before",
+        "inner-middleware-before",
+        "handler-throwing",
+        "outer-middleware-caught",
+      ]);
+    });
+
+    test("should propagate errors through nested middlewares", async () => {
+      const executionLog: string[] = [];
+
+      app.register(
+        middleware(async (_ctx, next) => {
+          executionLog.push("m1-before");
+          try {
+            const response = await next();
+            executionLog.push("m1-after");
+            return response;
+          } catch (error) {
+            executionLog.push("m1-caught");
+            throw error;
+          }
+        })
+      );
+
+      app.register(
+        middleware(async (_ctx, next) => {
+          executionLog.push("m2-before");
+          try {
+            const response = await next();
+            executionLog.push("m2-after");
+            return response;
+          } catch (error) {
+            executionLog.push("m2-caught");
+            throw error;
+          }
+        })
+      );
+
+      app.register(
+        middleware(async (_ctx, next) => {
+          executionLog.push("m3-before");
+          try {
+            const response = await next();
+            executionLog.push("m3-after");
+            return response;
+          } catch (error) {
+            executionLog.push("m3-caught");
+            throw error;
+          }
+        })
+      );
+
+      app.get("/test", () => {
+        executionLog.push("handler-throwing");
+        throw new Error("Handler error");
+      });
+
+      await app.handle(createRequest("/test"));
+
+      // Error should propagate through all middlewares in reverse order
+      expect(executionLog).toEqual([
+        "m1-before",
+        "m2-before",
+        "m3-before",
+        "handler-throwing",
+        "m3-caught",
+        "m2-caught",
+        "m1-caught",
+      ]);
+    });
+
+    test("should allow middleware to transform errors into responses", async () => {
+      app.register(
+        middleware(async (_ctx, next) => {
+          try {
+            return await next();
+          } catch (error) {
+            const err = error as Error;
+            return new Response(
+              JSON.stringify({
+                error: err.message,
+                type: err.name,
+              }),
+              {
+                status: 400,
+                headers: { "content-type": "application/json" },
+              }
+            );
+          }
+        })
+      );
+
+      app.get("/test", () => {
+        const error = new Error("Validation failed");
+        error.name = "ValidationError";
+        throw error;
+      });
+
+      const response = await app.handle(createRequest("/test"));
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data).toEqual({
+        error: "Validation failed",
+        type: "ValidationError",
+      });
+    });
+
+    test("should work with APM-style error tracking in middleware", async () => {
+      const apmLog: Array<{ type: string; error?: string }> = [];
+
+      app.register(
+        middleware(async (_ctx, next) => {
+          apmLog.push({ type: "transaction-start" });
+          try {
+            const response = await next();
+            apmLog.push({ type: "transaction-success" });
+            return response;
+          } catch (error) {
+            apmLog.push({ type: "transaction-error", error: (error as Error).message });
+            throw error; // Rethrow to let error handler process it
+          }
+        })
+      );
+
+      // Test successful request
+      app.get("/success", () => ({ success: true }));
+      await app.handle(createRequest("/success"));
+
+      expect(apmLog).toEqual([{ type: "transaction-start" }, { type: "transaction-success" }]);
+
+      // Reset log
+      apmLog.length = 0;
+
+      // Test failed request
+      app.get("/error", () => {
+        throw new Error("Something went wrong");
+      });
+      await app.handle(createRequest("/error"));
+
+      expect(apmLog).toEqual([{ type: "transaction-start" }, { type: "transaction-error", error: "Something went wrong" }]);
+    });
+
+    test("should handle errors thrown by middleware itself", async () => {
+      const executionLog: string[] = [];
+
+      app.register(
+        middleware(async (_ctx, next) => {
+          executionLog.push("outer-before");
+          try {
+            return await next();
+          } catch (error) {
+            executionLog.push("outer-caught: " + (error as Error).message);
+            return new Response(JSON.stringify({ error: "Handled" }), {
+              status: 500,
+              headers: { "content-type": "application/json" },
+            });
+          }
+        })
+      );
+
+      app.register(
+        middleware(async (_ctx, _next) => {
+          executionLog.push("inner-throwing");
+          throw new Error("Middleware error");
+        })
+      );
+
+      app.get("/test", () => {
+        executionLog.push("handler");
+        return { success: true };
+      });
+
+      const response = await app.handle(createRequest("/test"));
+      const data = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(data).toEqual({ error: "Handled" });
+      expect(executionLog).toEqual(["outer-before", "inner-throwing", "outer-caught: Middleware error"]);
     });
   });
 });

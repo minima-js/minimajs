@@ -5,9 +5,9 @@ import type { App, Handler } from "../interfaces/app.js";
 import type { Plugin, Registerable, PluginOptions, PluginSync, Module, RegisterOptions } from "../plugin.js";
 import { applyRouteMetadata, applyRoutePrefix } from "../internal/route.js";
 import { runHooks } from "../hooks/store.js";
-import { serialize, errorHandler } from "../internal/default-handler.js";
+import { serialize } from "../internal/serialize.js";
 import { handleRequest } from "../internal/handler.js";
-import type { ErrorHandler, Serializer } from "../interfaces/response.js";
+import type { Serializer } from "../interfaces/response.js";
 import { plugin as p } from "../plugin.js";
 import type { RouteConfig, RouteMetaDescriptor, RouteOptions } from "../interfaces/route.js";
 import { createBoot, wrapPlugin } from "../internal/boot.js";
@@ -37,7 +37,6 @@ export class Server<S> implements App<S> {
   public log: Logger;
 
   public serialize: Serializer<S> = serialize;
-  public errorHandler: ErrorHandler<S> = errorHandler;
 
   constructor(
     public readonly adapter: ServerAdapter<S>,
