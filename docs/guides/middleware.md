@@ -9,7 +9,18 @@ tags:
 
 # Middleware
 
-Middleware in Minima.js provides a powerful way to **wrap the entire request-response cycle** using an onion-like execution pattern. Unlike hooks which react to specific lifecycle events, middleware gives you full control over the request flow with `next()` semantics.
+Middleware in Minima.js provides a way to **wrap the entire request-response cycle** using an onion-like execution pattern. Unlike hooks which react to specific lifecycle events, middleware gives you full control over the request flow with `next()` semantics.
+
+::: warning Prefer Hooks Over Middleware
+Minima.js is optimized for a single middleware (the internal `contextProvider`). Adding additional middlewares introduces overhead in the request chain. For most use cases, **use hooks instead**:
+
+- **Error handling** → `hook("error", ...)`
+- **Authentication** → `hook("request", ...)`
+- **Logging** → `hook("request", ...)` or `hook("send", ...)`
+- **Validation** → `hook("request", ...)`
+
+Only use middleware when you **must wrap the request** with before/after logic that requires async context preservation (e.g., APM transactions, OpenTelemetry spans).
+:::
 
 **In Minima.js, everything is a plugin** - middleware is registered as a plugin via:
 
@@ -81,49 +92,6 @@ app.register(
     // AFTER: runs after handler returns
     console.log("Request completed");
     return response;
-  })
-);
-```
-
-### Modifying the Response
-
-Middleware can intercept and modify the response:
-
-```typescript
-app.register(
-  middleware(async (ctx, next) => {
-    const response = await next();
-
-    // Add custom headers
-    const headers = new Headers(response.headers);
-    headers.set("x-response-time", `${Date.now() - start}ms`);
-
-    return new Response(response.body, {
-      status: response.status,
-      headers,
-    });
-  })
-);
-```
-
-### Short-Circuiting
-
-Return a `Response` without calling `next()` to short-circuit the chain:
-
-```typescript
-app.register(
-  middleware(async (ctx, next) => {
-    const token = ctx.request.headers.get("authorization");
-
-    if (!token) {
-      // Short-circuit - handler never runs
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { "content-type": "application/json" },
-      });
-    }
-
-    return next();
   })
 );
 ```
@@ -207,26 +175,27 @@ Both middleware and hooks allow you to intercept requests, but they serve differ
 | Feature                | Middleware                         | Hooks                                  |
 | ---------------------- | ---------------------------------- | -------------------------------------- |
 | **Execution Model**    | Onion (wrap with `next()`)         | Sequential (FIFO/LIFO)                 |
-| **Response Wrapping**  | ✅ Full control before/after       | ❌ Limited (separate hooks)            |
+| **Scope**              | ⚠️ Always global                   | ✅ Module-scoped                       |
+| **Performance**        | ⚠️ Adds overhead per middleware    | ✅ Optimized                           |
 | **Async Context**      | ✅ Preserved through chain         | ⚠️ May break in loop iterations       |
-| **Short-circuit**      | ✅ Return Response                 | ✅ Return Response (request hook)      |
-| **Modify Response**    | ✅ Intercept and transform         | ⚠️ Only via transform hook            |
-| **Use Case**           | APM, auth, compression, timing     | Logging, metrics, side effects         |
+| **Use Case**           | APM, tracing                       | Logging, error handling, validation    |
+
+> **Important:** Middleware is **always registered globally**, regardless of where you define it. Even if you register middleware inside a module, it will apply to all requests across the entire application. Use hooks for module-scoped behavior.
 
 ### When to Use Middleware
 
-- **APM/Tracing** - Elastic APM, OpenTelemetry, custom tracing
-- **Authentication** - Wrap requests with auth context
-- **Compression** - Modify response body
-- **Timing/Metrics** - Measure request duration
-- **Error Boundaries** - Catch and handle errors
+Only use middleware when you need to **wrap** the request with before/after logic:
+
+- **APM/Tracing** - Elastic APM, OpenTelemetry spans that must wrap the entire request
+- **Timing with async context** - When you need timing data to propagate through async operations
 
 ### When to Use Hooks
 
+- **Error Handling** - Use `error` hook for scoped error handling
+- **Authentication** - Use `request` hook to validate and reject requests
 - **Logging** - Log requests/responses as side effects
-- **Metrics** - Record metrics without modifying flow
 - **Validation** - Quick request validation
-- **Cleanup** - Post-response cleanup tasks
+- **Cleanup** - Post-response cleanup tasks via `send` hook
 
 ---
 
@@ -279,192 +248,26 @@ The middleware approach keeps everything in a single promise chain, preserving t
 
 ## Common Patterns
 
-### Authentication Middleware
+### Request Timing with APM
 
 ```typescript
-app.register(
-  middleware(async (ctx, next) => {
-    const token = ctx.request.headers.get("authorization")?.replace("Bearer ", "");
+import { middleware } from "@minimajs/server";
+import apm from "elastic-apm-node";
 
-    if (!token) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { "content-type": "application/json" },
-      });
-    }
-
-    // Validate token and add user to context
-    const user = await validateToken(token);
-    (ctx as any).user = user;
-
-    return next();
-  })
-);
-
-// Access user in handlers
-app.get("/profile", (ctx) => {
-  return { user: (ctx as any).user };
-});
-```
-
-### CORS Middleware
-
-```typescript
-app.register(
-  middleware(async (ctx, next) => {
-    const response = await next();
-
-    const headers = new Headers(response.headers);
-    headers.set("access-control-allow-origin", "*");
-    headers.set("access-control-allow-methods", "GET, POST, PUT, DELETE");
-    headers.set("access-control-allow-headers", "Content-Type, Authorization");
-
-    return new Response(response.body, {
-      status: response.status,
-      headers,
-    });
-  })
-);
-```
-
-### Request Timing
-
-```typescript
-app.register(
-  middleware(async (ctx, next) => {
-    const start = Date.now();
-    const response = await next();
-    const duration = Date.now() - start;
-
-    const headers = new Headers(response.headers);
-    headers.set("x-response-time", `${duration}ms`);
-
-    return new Response(response.body, {
-      status: response.status,
-      headers,
-    });
-  })
-);
-```
-
-### Rate Limiting
-
-```typescript
-const requestCounts = new Map<string, { count: number; resetAt: number }>();
-
-app.register(
-  middleware(async (ctx, next) => {
-    const ip = ctx.request.headers.get("x-forwarded-for") || "unknown";
-    const now = Date.now();
-    const windowMs = 60000; // 1 minute
-    const maxRequests = 100;
-
-    let record = requestCounts.get(ip);
-
-    if (!record || record.resetAt < now) {
-      record = { count: 0, resetAt: now + windowMs };
-    }
-
-    record.count++;
-    requestCounts.set(ip, record);
-
-    if (record.count > maxRequests) {
-      return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
-        status: 429,
-        headers: { "content-type": "application/json" },
-      });
-    }
-
-    return next();
-  })
-);
-```
-
-### Error Boundary
-
-```typescript
-app.register(
-  middleware(async (ctx, next) => {
-    try {
-      return await next();
-    } catch (error) {
-      console.error("Unhandled error:", error);
-
-      return new Response(
-        JSON.stringify({
-          error: "Internal Server Error",
-          message: process.env.NODE_ENV === "development" ? error.message : undefined,
-        }),
-        {
-          status: 500,
-          headers: { "content-type": "application/json" },
-        }
-      );
-    }
-  })
-);
-```
-
----
-
-## Error Propagation
-
-Errors thrown by handlers or inner middlewares propagate through the middleware chain, allowing any middleware to catch and handle them:
-
-```typescript
-app.register(
-  middleware(async (ctx, next) => {
-    try {
-      return await next();
-    } catch (error) {
-      // Catch errors from handlers or inner middlewares
-      console.error("Caught:", error.message);
-
-      // Transform the error into a response
-      return new Response(JSON.stringify({ error: error.message }), {
-        status: 500,
-        headers: { "content-type": "application/json" },
-      });
-    }
-  })
-);
-```
-
-### How It Works
-
-1. Errors propagate up through the middleware chain in reverse order (innermost to outermost)
-2. Any middleware can catch errors with `try/catch` around `next()`
-3. If no middleware catches the error, the default `contextProvider` catches it and uses `app.errorHandler`
-4. The `send` hook always runs, whether the response comes from success or error handling
-
-```
-Request ──► Middleware 1 ──► Middleware 2 ──► Handler (throws)
-                                                   │
-                  ◄── error propagates ◄───────────┘
-                  │
-            Middleware 1 catches
-                  │
-                  ▼
-           Returns Response ──► send hook ──► Client
-```
-
-### APM Integration
-
-This error propagation model is perfect for APM (Application Performance Monitoring) tools:
-
-```typescript
 app.register(
   middleware(async (ctx, next) => {
     const transaction = apm.startTransaction(ctx.pathname, "request");
+    const start = Date.now();
 
     try {
       const response = await next();
       transaction?.setOutcome("success");
+      console.log(`${ctx.pathname} took ${Date.now() - start}ms`);
       return response;
     } catch (error) {
       transaction?.setOutcome("failure");
       apm.captureError(error);
-      throw error; // Re-throw to let default error handler process it
+      throw error; // Re-throw to let error hooks handle it
     } finally {
       transaction?.end();
     }
@@ -472,44 +275,7 @@ app.register(
 );
 ```
 
----
-
-## Context Provider
-
-The `contextProvider` is a special middleware that wraps the entire request in an execution context. It also serves as the final error handler - any uncaught errors are caught here and processed by `app.errorHandler`.
-
-By default, Minima.js registers one that uses `AsyncLocalStorage`:
-
-```typescript
-// Default context provider (registered automatically)
-srv.register(contextProvider((ctx, next) => executionContext.run(ctx, next)));
-```
-
-### Custom Context Provider
-
-You can override the default context provider to add custom async context:
-
-```typescript
-import { contextProvider, executionContext } from "@minimajs/server";
-
-app.register(
-  contextProvider(async (ctx, next) => {
-    // Custom setup before executionContext
-    const requestId = crypto.randomUUID();
-    (ctx as any).requestId = requestId;
-
-    // IMPORTANT: Always call executionContext.run to preserve async context
-    return executionContext.run(ctx, async () => {
-      const response = await next();
-
-      // Custom cleanup after response
-      return response;
-    });
-  })
-);
-```
-
-> **Important:** When overriding `contextProvider`, always wrap `next()` with `executionContext.run(ctx, ...)` to preserve the async context that other parts of Minima.js depend on.
+> **Note:** For error handling, authentication, rate limiting, and other request validation, use hooks instead. Hooks provide module-scoped behavior and integrate with the error handling system.
 
 ---
 
@@ -567,11 +333,11 @@ All patterns maintain FIFO order for the "before" phase and LIFO for the "after"
 
 ## Best Practices
 
-- **Use middleware for wrapping** - When you need to execute code both before and after the handler
 - **Use middleware for APM/tracing** - Async context is preserved through the chain
-- **Always return `next()`** - Unless you're intentionally short-circuiting
+- **Always return `next()`** - Don't skip calling next unless intentional
 - **Don't call `next()` multiple times** - This will throw an error
 - **Keep middleware focused** - Each middleware should do one thing well
 - **Order matters** - Register middleware in the order you want them to execute
-- **Use `contextProvider`** - For custom async context that needs to wrap everything
-- **Prefer hooks for side effects** - Use hooks for logging/metrics that don't need to wrap the response
+- **Prefer hooks** - Use hooks for error handling, authentication, validation, and side effects
+
+> **Advanced:** To customize `AsyncLocalStorage` behavior, see [Context Provider](../advanced/context-provider.md).

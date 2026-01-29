@@ -116,6 +116,7 @@ const config = defineConfig({
           { text: "Module Discovery", link: "/advanced/module-discovery" },
           { text: "Custom Runtime Adapters", link: "/advanced/custom-adapters" },
           { text: "Container & Encapsulation", link: "/advanced/container-encapsulation" },
+          { text: "Context Provider", link: "/advanced/context-provider" },
         ],
       },
       {
