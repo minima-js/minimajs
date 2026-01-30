@@ -42,9 +42,8 @@ features:
     details: First-class Bun support with dedicated imports. Full Node.js compatibility. Same code, different runtime.
   - icon:
       src: /icon-globe.svg
-    title: Web Standards, Zero Abstractions
-    details: "Native Request/Response objects. Web standard APIs. Pure ESM. No framework-specific wrappers. Write portable, future-proof code."
-
+    title: Web Standards, Pure ESM, Zero Abstractions
+    details: "Native Request/Response/File/Blob/URL. Web standard APIs. Pure ESM. No framework-specific wrappers. Write portable, future-proof code."
 ---
 
 ## How It Feels to Build
@@ -123,36 +122,45 @@ export default function (app) {
 
 ---
 
-## Add Authentication in Seconds
+## Handle File Uploads with Native File API
 
-Protected routes? Just add a plugin to `meta.plugins`:
+Upload handling with `@minimajs/multipart` gives you native `File` instances—no custom wrappers, no learning curve.
 
 ::: code-group
 
-```typescript [src/protected/module.ts]
-import { type Meta } from "@minimajs/server";
-import { authPlugin, guardPlugin, getUser } from "../auth/index.js";
+```typescript [src/uploads/module.ts]
+import { multipart, helpers } from "@minimajs/multipart";
 
-export const meta: Meta = {
-  plugins: [
-    authPlugin, // Makes getUser() available
-    guardPlugin, // Requires authentication
-  ],
-};
+export async function uploadAvatar() {
+  // Returns native File instance - holds data in memory
+  const avatar = await multipart.file("avatar");
 
-export default async function (app) {
-  app.get("/profile", () => {
-    const user = getUser(); // Guaranteed to exist (guard ensures it)
-    return { user };
-  });
+  // Or use rawFile for streaming without memory overhead
+  // const avatar = multipart.rawFile("avatar");
+
+  // Move file to destination
+  await helpers.move(avatar, "./uploads/avatars");
+
+  // File is a valid Response - renders with correct content-type
+  return avatar;
+}
+
+export default function (app) {
+  app.post("/avatar", uploadAvatar);
 }
 ```
 
 :::
 
-No decorators. No middleware chains. Just declare what you need.
+**What you get:**
 
-[See full JWT authentication tutorial →](/cookbook/jwt-authentication)
+- ✅ Native `File` instances (Web Standards API)
+- ✅ `multipart.file()` reads entire file into memory
+- ✅ `multipart.rawFile()` streams without memory overhead
+- ✅ `File` works as Response automatically
+- ✅ Use `@minimajs/multipart/schema` for multiple files
+
+[See multipart documentation →](/packages/multipart)
 
 ---
 

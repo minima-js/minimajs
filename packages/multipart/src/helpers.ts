@@ -7,6 +7,7 @@ import { v4 as uuid } from "uuid";
 import { createWriteStream } from "node:fs";
 import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
+import { StreamFile } from "./streaming/file.js";
 
 /**
  * Array of binary file size units.
@@ -81,6 +82,14 @@ export function isRawFile(f: any): f is MultipartRawFile {
 
 export async function raw2file(raw: MultipartRawFile, options: Stream2uint8arrayOptions): Promise<File> {
   return new File([await stream2uint8array(raw.stream, options)], raw.filename, {
+    type: raw.mimeType,
+    lastModified: new Date().getTime(),
+  });
+}
+
+export function raw2streamFile(raw: MultipartRawFile): StreamFile {
+  return new StreamFile(raw.filename, {
+    stream: raw.stream,
     type: raw.mimeType,
     lastModified: new Date().getTime(),
   });

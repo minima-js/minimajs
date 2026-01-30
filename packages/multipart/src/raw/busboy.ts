@@ -1,6 +1,6 @@
-import type { MultipartOptions } from "./types.js";
+import type { MultipartOptions } from "../types.js";
 import { Busboy, type BusboyHeaders } from "@fastify/busboy";
-import { UploadError } from "./errors.js";
+import { UploadError } from "../errors.js";
 import { abort, context } from "@minimajs/server";
 import { Readable } from "node:stream";
 
