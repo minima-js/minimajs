@@ -61,7 +61,7 @@ import { context, createContext } from "@minimajs/server";
 import { z } from "zod";
 import { getUploadedBody, type UploadOption } from "./uploaded.js";
 import { ValidationError } from "./error.js";
-
+export * from "./file.js";
 export { type UploadOption } from "./uploaded.js";
 
 /**

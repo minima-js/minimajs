@@ -13,6 +13,7 @@ export interface TempFileInit extends FilePropertyBag {
 
 export class TempFile extends File {
   #streams = new Set<Readable>();
+  #buffer: Uint8Array<ArrayBuffer> | null = null;
   #size: number;
   readonly path: string;
   readonly signal?: AbortSignal;
@@ -33,7 +34,7 @@ export class TempFile extends File {
   }
 
   async arrayBuffer(): Promise<ArrayBuffer> {
-    const buf = await readFile(this.path);
+    const buf = await this.bytes();
     return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
   }
 
@@ -42,7 +43,10 @@ export class TempFile extends File {
   }
 
   async bytes(): Promise<Uint8Array<ArrayBuffer>> {
-    return readFile(this.path);
+    if (!this.#buffer) {
+      this.#buffer = await readFile(this.path);
+    }
+    return this.#buffer;
   }
 
   slice(): Blob {
@@ -68,7 +72,7 @@ export class TempFile extends File {
    * Loads the file into memory and returns a standard File object.
    */
   async toFile(): Promise<File> {
-    const buffer = await readFile(this.path);
+    const buffer = await this.bytes();
     return new File([buffer], this.name, { type: this.type, lastModified: this.lastModified });
   }
 
@@ -87,15 +91,11 @@ export class TempFile extends File {
    */
   async destroy(): Promise<boolean> {
     const pending: Promise<void>[] = [];
-
     for (const stream of this.#streams) {
       const isActive = stream.readableFlowing === true || (stream as ReadStream).bytesRead > 0;
-
       if (isActive) {
-        // Stream is actively being consumed, wait for it to finish
         pending.push(finished(stream));
       } else {
-        // Stream hasn't started, safe to destroy immediately
         stream.destroy();
       }
     }

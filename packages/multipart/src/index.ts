@@ -13,6 +13,9 @@
  * await file.move('/uploads/avatars');
  * ```
  */
-export * from "./multipart.js";
-export * from "./types.js";
+
+export * as multipart from "./multipart/index.js";
+export * as raw from "./raw/index.js";
+export * as streaming from "./streaming/index.js";
 export * as helpers from "./helpers.js";
+export * from "./types.js";

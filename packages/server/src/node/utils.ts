@@ -38,7 +38,9 @@ export function toWebRequest(req: IncomingMessage, domain: string = "http://loca
     headers: toWebHeaders(req.headers),
     body: req.method !== "GET" && req.method !== "HEAD" ? req : undefined,
     signal: controller.signal,
+    duplex: "half",
   });
+
   return request;
 }
 

@@ -1,7 +1,7 @@
-import { busboy } from "./raw/busboy.js";
-import type { MultipartOptions, MultipartRawFile } from "./types.js";
-import { isRawFile, raw2file } from "./helpers.js";
-import * as raw from "./raw/index.js";
+import { busboy } from "../raw/busboy.js";
+import type { MultipartOptions, MultipartRawFile } from "../types.js";
+import { isRawFile, raw2file } from "../helpers.js";
+import * as raw from "../raw/index.js";
 
 /**
  * Retrieves a single file from a multipart form request.

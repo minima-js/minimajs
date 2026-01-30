@@ -1,9 +1,9 @@
+import * as multipart from "./index.js";
 import { describe, test, expect } from "@jest/globals";
 import { Readable } from "node:stream";
 import { setTimeout as sleep } from "node:timers/promises";
-import { multipart } from "./multipart.js";
 import { mockContext } from "@minimajs/server/mock";
-import { isFile } from "./helpers.js";
+import { isFile } from "../helpers.js";
 
 // Helper to create multipart form data stream
 async function* createMultipartStream(

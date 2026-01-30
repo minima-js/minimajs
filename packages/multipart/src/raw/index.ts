@@ -1,8 +1,12 @@
 import { pipeline } from "node:stream/promises";
 import type { MultipartOptions, MultipartRawFile, MultipartRawResult } from "../types.js";
 import { busboy } from "./busboy.js";
-import { stream2void, createAsyncIterator } from "../stream.js";
+import { createAsyncIterator } from "../stream.js";
+import { stream2void } from "../helpers.js";
 export * from "./busboy.js";
+
+export const RAW_FILE = Symbol("minimajs.multipart.raw-file");
+export const RAW_FIELD = Symbol("minimajs.multipart.raw-field");
 
 /**
  * Retrieves a raw file stream from a multipart form request without buffering into memory.
@@ -33,6 +37,7 @@ export async function file(name: string, options: MultipartOptions = {}): Promis
         filename,
         transferEncoding,
         mimeType,
+        [RAW_FILE]: true,
       });
       stream.on("end", stop);
     });
@@ -69,6 +74,7 @@ export async function firstFile(options: MultipartOptions = {}): Promise<Multipa
         filename,
         transferEncoding,
         mimeType,
+        [RAW_FILE]: true,
       });
     });
     bb.on("error", (err) => {
@@ -86,7 +92,7 @@ export function files(options: MultipartOptions = {}): AsyncGenerator<MultipartR
   const [bb, stop] = busboy({ ...options, limits: { ...limits, fields: 0 } });
 
   bb.on("file", (fieldname, fStream, filename, transferEncoding, mimeType) => {
-    stream.write({ fieldname, stream: fStream, filename, transferEncoding, mimeType });
+    stream.write({ fieldname, stream: fStream, filename, transferEncoding, mimeType, [RAW_FILE]: true });
   });
 
   bb.on("error", (err) => stream.emit("error", err));
@@ -121,11 +127,11 @@ export function body<T = MultipartRawResult>(options: MultipartOptions = {}): As
   const [bb, stop] = busboy(options);
 
   bb.on("field", (fieldname, value, fieldnameTruncated, valueTruncated, transferEncoding, mimeType) => {
-    stream.write({ fieldname, value, fieldnameTruncated, valueTruncated, transferEncoding, mimeType });
+    stream.write({ [RAW_FIELD]: true, fieldname, value, fieldnameTruncated, valueTruncated, transferEncoding, mimeType });
   });
 
   bb.on("file", (fieldname, fStream, filename, transferEncoding, mimeType) => {
-    stream.write({ fieldname, stream: fStream, filename, transferEncoding, mimeType });
+    stream.write({ [RAW_FILE]: true, fieldname, stream: fStream, filename, transferEncoding, mimeType });
   });
 
   bb.on("error", (err) => stream.emit("error", err));
