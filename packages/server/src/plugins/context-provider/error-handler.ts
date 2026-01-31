@@ -26,6 +26,5 @@ export async function handleError(err: unknown, ctx: Context): Promise<Response>
   ctx.app.log.error(err);
 
   // Return generic error response
-  const errorBody = { message: "Unable to process request" };
-  return createResponse(errorBody, { status: 500 }, ctx);
+  return createResponse({ message: "Unable to process request" }, { status: 500 }, ctx);
 }

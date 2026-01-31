@@ -182,6 +182,29 @@ Both middleware and hooks allow you to intercept requests, but they serve differ
 
 > **Important:** Middleware is **always registered globally**, regardless of where you define it. Even if you register middleware inside a module, it will apply to all requests across the entire application. Use hooks for module-scoped behavior.
 
+::: tip Register Middleware on Root App Only
+To keep your code future-proof, always register middleware on the root app explicitly. If you need to register middleware from within a module, use `app.$root`:
+
+```typescript
+import { middleware, plugin } from "@minimajs/server";
+
+export const meta = {
+  plugins: [
+    plugin.sync((app) => {
+      app.$root.register(
+        middleware(async (ctx, next) => {
+          // Your middleware logic
+          return next();
+        })
+      );
+    }),
+  ],
+};
+```
+
+This ensures your middleware is explicitly global and won't break if module-scoped middleware is added in the future.
+:::
+
 ### When to Use Middleware
 
 Only use middleware when you need to **wrap** the request with before/after logic:
