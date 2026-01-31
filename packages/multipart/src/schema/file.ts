@@ -39,7 +39,7 @@ export class TempFile extends File {
   }
 
   async text(): Promise<string> {
-    return readFile(this.path, "utf8");
+    return new TextDecoder().decode(await this.bytes());
   }
 
   async bytes(): Promise<Uint8Array<ArrayBuffer>> {

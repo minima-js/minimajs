@@ -139,7 +139,7 @@ export async function uploadAvatar() {
   // const avatar = multipart.rawFile("avatar");
 
   // Move file to destination
-  await helpers.move(avatar, "./uploads/avatars");
+  await helpers.save(avatar, "./uploads/avatars");
 
   // File is a valid Response - renders with correct content-type
   return avatar;

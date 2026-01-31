@@ -1,12 +1,12 @@
 import { mkdir } from "node:fs/promises";
 import { extname, join, resolve } from "node:path";
-import type { MultipartRawFile } from "./types.js";
+import type { MultipartRawField, MultipartRawFile } from "./types.js";
 import { v4 as uuid } from "uuid";
 import { createWriteStream } from "node:fs";
 import { pipeline } from "node:stream/promises";
 import { Readable, Writable } from "node:stream";
 import { StreamFile } from "./streaming/file.js";
-import { RAW_FILE } from "./raw/index.js";
+import { RAW_FIELD, RAW_FILE } from "./raw/index.js";
 
 /**
  * Array of binary file size units.
@@ -79,6 +79,11 @@ export function isFile(f: unknown): f is File {
 /** Checks if a value is a raw multipart file from the parser. */
 export function isRawFile(f: any): f is MultipartRawFile {
   return f?.[RAW_FILE];
+}
+
+/** Checks if a value is a raw multipart file from the parser. */
+export function isRawField(f: any): f is MultipartRawField {
+  return f?.[RAW_FIELD];
 }
 
 /** Converts a raw multipart file stream into a Web API File by buffering the entire stream. */

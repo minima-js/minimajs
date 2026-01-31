@@ -5,7 +5,7 @@ sidebar_position: 3
 
 # Multipart File Uploads
 
-The `@minimajs/multipart` package provides a simple, context-aware API for handling multipart form data with native `File` instances and streaming support.
+The `@minimajs/multipart` package provides multiple APIs for handling multipart form data with different memory strategies.
 
 ## Installation
 
@@ -13,306 +13,392 @@ The `@minimajs/multipart` package provides a simple, context-aware API for handl
 npm install @minimajs/multipart
 ```
 
-## Key Features
+## Overview
 
-- ✅ **Native File API** - Returns standard `File` instances (Web Standards)
-- ✅ **Memory Efficient** - Stream files directly without buffering
-- ✅ **Zero Configuration** - Works out of the box
-- ✅ **Context-Aware** - Integrates seamlessly with Minima.js
-- ✅ **TypeScript First** - Full type safety and inference
+The package provides four modules for different use cases:
+
+| Module      | Memory      | Use Case                          |
+| ----------- | ----------- | --------------------------------- |
+| `multipart` | Buffered    | Simple uploads, small files       |
+| `streaming` | Lazy buffer | Large files with File API         |
+| `raw`       | Unbuffered  | Advanced use cases, custom piping |
+| `schema`    | Disk-backed | Validated uploads with Zod        |
 
 ## Quick Start
 
-### Single File Upload
-
-The simplest way to handle file uploads. Returns a native `File` instance.
+### Simple File Upload
 
 ```typescript
 import { multipart, helpers } from "@minimajs/multipart";
 
 export async function uploadAvatar() {
-  // Get file from specific field - returns native File
   const avatar = await multipart.file("avatar");
 
   if (!avatar) {
     return { error: "No file uploaded" };
   }
 
-  // Move file to destination
-  await helpers.move(avatar, "./uploads/avatars");
-
-  // File is a valid Response - renders with correct content-type
-  return avatar;
+  await helpers.save(avatar, "./uploads/avatars");
+  return { success: true, filename: avatar.name };
 }
 ```
 
 ### Streaming Large Files
 
-For large files, use `rawFile()` to stream directly to disk without loading into memory.
+For large files, use the `raw` module to stream directly without memory buffering:
 
 ```typescript
-import { multipart, helpers } from "@minimajs/multipart";
+import { raw, helpers } from "@minimajs/multipart";
 
 export async function uploadVideo() {
-  // Get raw file stream - no memory buffering
-  const video = await multipart.rawFile("video");
+  const video = await raw.file("video");
 
   if (!video) {
     return { error: "No video uploaded" };
   }
 
-  // Stream directly to destination
-  await helpers.move(video, "./uploads/videos");
-
-  return { filename: video.filename, size: "streamed" };
+  await helpers.save(video, "./uploads/videos");
+  return { filename: video.filename };
 }
 ```
 
-## API Reference
+### Validated Uploads with Zod
+
+For type-safe validation, use the schema module:
+
+```typescript
+import { z } from "zod";
+import { createMultipart } from "@minimajs/multipart/schema";
+import { helpers } from "@minimajs/multipart";
+
+const upload = createMultipart({
+  name: z.string().min(1),
+  avatar: z
+    .file()
+    .mime(["image/jpeg", "image/png"])
+    .max(5 * 1024 * 1024),
+});
+
+export async function handleUpload() {
+  const data = await upload();
+  await helpers.save(data.avatar, "./uploads");
+  return { name: data.name };
+}
+```
+
+## multipart Module (Buffered)
+
+Standard approach that loads files into memory as Web API `File` objects. Best for small files.
 
 ### `multipart.file(name, options?)`
 
-Retrieves a single file from the multipart request and loads it into memory as a native `File` instance.
+Retrieves a single file by field name.
 
-**Parameters:**
-- `name` (string) - Field name to match
-- `options` (MultipartOptions) - Optional configuration
+```typescript
+import { multipart } from "@minimajs/multipart";
+
+const avatar = await multipart.file("avatar");
+if (avatar) {
+  console.log(avatar.name); // filename
+  console.log(avatar.type); // MIME type
+  console.log(avatar.size); // bytes
+}
+```
 
 **Returns:** `Promise<File | null>`
 
-**Example:**
-
-```typescript
-const avatar = await multipart.file("avatar");
-if (avatar) {
-  console.log(avatar.name);      // filename
-  console.log(avatar.type);      // MIME type
-  console.log(avatar.size);      // file size
-  await helpers.move(avatar, "./uploads");
-}
-```
-
-### `multipart.rawFile(name, options?)`
-
-Retrieves a single file as a raw stream without buffering into memory. Perfect for large files.
-
-**Parameters:**
-- `name` (string) - Field name to match
-- `options` (MultipartOptions) - Optional configuration
-
-**Returns:** `Promise<MultipartRawFile | null>`
-
-**MultipartRawFile properties:**
-- `fieldname` - The form field name
-- `filename` - Original filename
-- `stream` - Node.js Readable stream
-- `mimeType` - MIME type
-- `transferEncoding` - Transfer encoding
-
-**Example:**
-
-```typescript
-const video = await multipart.rawFile("video");
-if (video) {
-  console.log(video.filename);
-  console.log(video.mimeType);
-  await helpers.move(video, "./uploads");
-}
-```
-
 ### `multipart.firstFile(options?)`
 
-Retrieves the first file from the request, regardless of field name.
-
-**Returns:** `Promise<[fieldName: string, file: File] | null>`
-
-**Example:**
+Retrieves the first file from the request.
 
 ```typescript
 const result = await multipart.firstFile();
 if (result) {
   const [fieldName, file] = result;
-  console.log(`Received ${file.name} from field ${fieldName}`);
-  await helpers.move(file, "./uploads");
+  console.log(`${file.name} from field ${fieldName}`);
 }
 ```
+
+**Returns:** `Promise<[field: string, file: File] | null>`
 
 ### `multipart.files(options?)`
 
-Returns an async iterable that yields all files from the request.
-
-**Returns:** `AsyncGenerator<[fieldName: string, file: File]>`
-
-**Example:**
+Iterates over all files in the request.
 
 ```typescript
-for await (const [fieldName, file] of multipart.files()) {
-  console.log(`Processing ${file.name} from ${fieldName}`);
-  await helpers.move(file, `./uploads/${fieldName}`);
+for await (const [field, file] of multipart.files()) {
+  console.log(`${field}: ${file.name}`);
+  await helpers.save(file, "./uploads");
 }
 ```
 
-### `multipart.fields()`
+**Returns:** `AsyncGenerator<[field: string, file: File]>`
 
-Retrieves all text fields from the multipart request (files are ignored).
+### `multipart.fields<T>()`
 
-**Returns:** `Promise<Record<string, string | string[]>>`
-
-**Example:**
+Retrieves all text fields (files are ignored).
 
 ```typescript
 const fields = await multipart.fields<{ name: string; email: string }>();
-console.log(fields.name);
-console.log(fields.email);
+console.log(fields.name, fields.email);
 ```
+
+**Returns:** `Promise<T>`
 
 ### `multipart.body(options?)`
 
-Returns an async iterable that yields both text fields and files.
-
-**Returns:** `AsyncGenerator<[fieldName: string, value: string | File]>`
-
-**Example:**
-
-```typescript
-import { isFile } from "@minimajs/multipart";
-
-for await (const [name, value] of multipart.body()) {
-  if (isFile(value)) {
-    console.log(`File: ${name} = ${value.name}`);
-    await helpers.move(value, "./uploads");
-  } else {
-    console.log(`Field: ${name} = ${value}`);
-  }
-}
-```
-
-### `multipart.raw(options?)`
-
-Low-level API that returns raw multipart results without processing files into memory.
-
-**Returns:** `AsyncGenerator<MultipartRawResult>`
-
-**Example:**
-
-```typescript
-import { isRawFile } from "@minimajs/multipart";
-
-for await (const body of multipart.raw()) {
-  if (isRawFile(body)) {
-    console.log(`File: ${body.fieldname} = ${body.filename}`);
-    await helpers.move(body, "./dest");
-  } else {
-    console.log(`Field: ${body.fieldname} = ${body.value}`);
-  }
-}
-```
-
-## Helper Functions
-
-### `helpers.move(file, destination, filename?)`
-
-Moves an uploaded file to a destination directory.
-
-**Parameters:**
-- `file` - File, TempFile, or MultipartRawFile
-- `destination` - Destination directory path
-- `filename` - Optional custom filename (auto-generates UUID-based name if omitted)
-
-**Returns:** `Promise<string>` - The saved filename
-
-**Example:**
+Iterates over both fields and files.
 
 ```typescript
 import { helpers } from "@minimajs/multipart";
 
-const avatar = await multipart.file("avatar");
-const savedName = await helpers.move(avatar, "./uploads/avatars");
-console.log(`Saved as: ${savedName}`); // e.g., "a1b2c3d4-e5f6.jpg"
+for await (const [name, value] of multipart.body()) {
+  if (helpers.isFile(value)) {
+    await helpers.save(value, "./uploads");
+  } else {
+    console.log(`${name}: ${value}`);
+  }
+}
+```
 
-// With custom filename
-await helpers.move(avatar, "./uploads", "profile.jpg");
+**Returns:** `AsyncGenerator<[field: string, value: string | File]>`
+
+## streaming Module (Lazy Buffer)
+
+**Recommended for large files.** Returns `StreamFile` instances that don't load into memory until accessed. Stream directly to disk without buffering.
+
+### `streaming.file(name, options?)`
+
+```typescript
+import { streaming } from "@minimajs/multipart";
+
+const file = await streaming.file("video");
+
+// Not buffered - access metadata immediately
+console.log(file.name, file.type);
+
+// Stream directly to disk (no memory buffering)
+import { pipeline } from "node:stream/promises";
+import { createWriteStream } from "node:fs";
+
+await pipeline(file.stream(), createWriteStream("./uploads/video.mp4"));
+```
+
+**Returns:** `Promise<StreamFile | null>`
+
+### `streaming.firstFile(options?)`
+
+```typescript
+const result = await streaming.firstFile();
+if (result) {
+  const [field, file] = result;
+  const buffer = await file.arrayBuffer();
+}
+```
+
+**Returns:** `Promise<[field: string, file: StreamFile] | null>`
+
+### `streaming.body(options?)`
+
+```typescript
+for await (const [name, value] of streaming.body()) {
+  if (typeof value !== "string") {
+    // StreamFile - buffers on read
+    const content = await value.text();
+  }
+}
+```
+
+**Returns:** `AsyncGenerator<[field: string, value: string | StreamFile]>`
+
+### StreamFile API
+
+```typescript
+class StreamFile extends File {
+  stream(): ReadableStream; // Web stream (one-time use)
+  bytes(): Promise<Uint8Array>; // Buffer and return
+  text(): Promise<string>; // Decode as UTF-8
+  arrayBuffer(): Promise<ArrayBuffer>;
+  toReadable(): Readable | null; // Node.js stream
+  toFile(): Promise<File>; // Convert to standard File
+}
+```
+
+## raw Module (Advanced)
+
+Low-level access to busboy streams for advanced use cases. For most large file handling, prefer `streaming` module instead.
+
+### `raw.file(name, options?)`
+
+```typescript
+import { raw, helpers } from "@minimajs/multipart";
+import { pipeline } from "node:stream/promises";
+import { createWriteStream } from "node:fs";
+
+const video = await raw.file("video");
+if (video) {
+  await pipeline(video.stream, createWriteStream(`./uploads/${video.filename}`));
+}
+```
+
+**Returns:** `Promise<MultipartRawFile | null>`
+
+### `raw.firstFile(options?)`
+
+```typescript
+const file = await raw.firstFile();
+if (file) {
+  await helpers.save(file, "./uploads");
+}
+```
+
+**Returns:** `Promise<MultipartRawFile | null>`
+
+### `raw.files(options?)`
+
+```typescript
+for await (const file of raw.files()) {
+  await helpers.save(file, "./uploads");
+}
+```
+
+**Returns:** `AsyncGenerator<MultipartRawFile>`
+
+### `raw.body(options?)`
+
+```typescript
+import { helpers } from "@minimajs/multipart";
+
+for await (const item of raw.body()) {
+  if (helpers.isRawFile(item)) {
+    await helpers.save(item, "./uploads");
+  } else {
+    console.log(`${item.fieldname}: ${item.value}`);
+  }
+}
+```
+
+**Returns:** `AsyncGenerator<MultipartRawResult>`
+
+### Raw Types
+
+```typescript
+interface MultipartRawFile {
+  fieldname: string;
+  filename: string;
+  mimeType: string;
+  transferEncoding: string;
+  stream: BusboyFileStream;
+  [RAW_FILE]: true;
+}
+
+interface MultipartRawField {
+  fieldname: string;
+  value: string;
+  [RAW_FIELD]: true;
+}
+
+type MultipartRawResult = MultipartRawFile | MultipartRawField;
+```
+
+## helpers Module
+
+Utility functions for file handling.
+
+### `helpers.save(file, dest, filename?)`
+
+Saves a file to disk. Works with `File`, `StreamFile`, `TempFile`, or `MultipartRawFile`.
+
+```typescript
+import { helpers } from "@minimajs/multipart";
+
+// Auto-generated UUID filename
+const name = await helpers.save(file, "./uploads");
+// Returns: "550e8400-e29b-41d4-a716-446655440000.jpg"
+
+// Custom filename
+await helpers.save(file, "./uploads", "avatar.jpg");
+```
+
+### `helpers.isFile(value)`
+
+Type guard for Web API `File`.
+
+```typescript
+if (helpers.isFile(value)) {
+  console.log(value.name, value.size);
+}
+```
+
+### `helpers.isRawFile(value)`
+
+Type guard for raw multipart files.
+
+```typescript
+if (helpers.isRawFile(value)) {
+  await pipeline(value.stream, destination);
+}
+```
+
+### `helpers.isRawField(value)`
+
+Type guard for raw multipart fields.
+
+```typescript
+if (helpers.isRawField(value)) {
+  console.log(value.fieldname, value.value);
+}
+```
+
+### `helpers.drain(rawFile)`
+
+Consumes and discards a raw file stream.
+
+```typescript
+// Skip unwanted files
+await helpers.drain(rawFile);
 ```
 
 ### `helpers.randomName(filename)`
 
-Generates a random UUID-based filename while preserving the extension.
-
-**Example:**
+Generates UUID filename preserving extension.
 
 ```typescript
-import { helpers } from "@minimajs/multipart";
-
-const newName = helpers.randomName("avatar.jpg");
-console.log(newName); // e.g., "a1b2c3d4-e5f6-7890-1234-567890abcdef.jpg"
+helpers.randomName("photo.jpg");
+// "550e8400-e29b-41d4-a716-446655440000.jpg"
 ```
 
 ### `helpers.ensurePath(...paths)`
 
-Ensures a directory exists, creating it recursively if needed.
-
-**Example:**
+Creates directory if it doesn't exist.
 
 ```typescript
-import { helpers } from "@minimajs/multipart";
-
-const dir = await helpers.ensurePath("./uploads", "avatars");
-// Creates ./uploads/avatars if it doesn't exist
+await helpers.ensurePath("./uploads", "avatars");
 ```
 
 ### `helpers.humanFileSize(bytes, decimals?)`
 
-Converts bytes to human-readable file size.
-
-**Example:**
+Converts bytes to human-readable format.
 
 ```typescript
-import { helpers } from "@minimajs/multipart";
-
-console.log(helpers.humanFileSize(1024));      // "1.0 KiB"
-console.log(helpers.humanFileSize(5242880));   // "5.0 MiB"
-```
-
-## Type Guards
-
-### `isFile(value)`
-
-Checks if a value is a `File` instance.
-
-```typescript
-import { isFile } from "@minimajs/multipart";
-
-if (isFile(value)) {
-  console.log(value.name);
-}
-```
-
-### `isRawFile(value)`
-
-Checks if a value is a `MultipartRawFile` instance.
-
-```typescript
-import { isRawFile } from "@minimajs/multipart";
-
-if (isRawFile(value)) {
-  console.log(value.filename);
-}
+helpers.humanFileSize(1048576); // "1.0 MiB"
+helpers.humanFileSize(1536, 2); // "1.50 KiB"
 ```
 
 ## Configuration Options
 
-### MultipartOptions
+All modules accept `MultipartOptions`:
 
 ```typescript
 interface MultipartOptions {
   limits?: {
-    fieldNameSize?: number;  // Max field name size (default: 100 bytes)
-    fieldSize?: number;      // Max field value size (default: 1MB)
-    fields?: number;         // Max number of non-file fields (default: Infinity)
-    fileSize?: number;       // Max file size (default: Infinity)
-    files?: number;          // Max number of files (default: Infinity)
-    parts?: number;          // Max number of parts (default: Infinity)
-    headerPairs?: number;    // Max number of header pairs (default: 2000)
+    fieldNameSize?: number; // Max field name size (100 bytes)
+    fieldSize?: number; // Max field value size (1MB)
+    fields?: number; // Max text fields (Infinity)
+    fileSize?: number; // Max file size (Infinity)
+    files?: number; // Max files (Infinity)
+    parts?: number; // Max parts (Infinity)
+    headerPairs?: number; // Max headers (2000)
   };
 }
 ```
@@ -322,38 +408,35 @@ interface MultipartOptions {
 ```typescript
 const avatar = await multipart.file("avatar", {
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB max
-    files: 1,                   // Only 1 file allowed
-  }
+    fileSize: 5 * 1024 * 1024, // 5MB
+    files: 1,
+  },
 });
 ```
 
 ## Complete Example
 
 ```typescript
-import { multipart, helpers, isFile } from "@minimajs/multipart";
+import { multipart, helpers } from "@minimajs/multipart";
 
 export async function handleUpload() {
-  const data: Record<string, any> = {};
+  const result: Record<string, unknown> = {};
 
-  // Process all fields and files
   for await (const [name, value] of multipart.body()) {
-    if (isFile(value)) {
-      // Save file and store filename
-      const savedName = await helpers.move(value, "./uploads");
-      data[name] = {
+    if (helpers.isFile(value)) {
+      const savedName = await helpers.save(value, "./uploads");
+      result[name] = {
         filename: value.name,
         savedAs: savedName,
-        size: value.size,
+        size: helpers.humanFileSize(value.size),
         type: value.type,
       };
     } else {
-      // Store text field
-      data[name] = value;
+      result[name] = value;
     }
   }
 
-  return { success: true, data };
+  return { success: true, data: result };
 }
 ```
 

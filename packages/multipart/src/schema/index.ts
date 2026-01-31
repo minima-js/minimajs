@@ -29,7 +29,7 @@
  *
  * const data = await upload();
  * console.log(data.name); // Type-safe access
- * await helpers.move(data.avatar, "./uploads/avatars");
+ * await helpers.save(data.avatar, "./uploads/avatars");
  * ```
  *
  * @example Multiple files with validation
@@ -43,7 +43,7 @@
  *
  * const data = await upload();
  * for (const photo of data.photos) {
- *   await helpers.move(photo, "./uploads/photos");
+ *   await helpers.save(photo, "./uploads/photos");
  * }
  * ```
  *
@@ -88,7 +88,7 @@ export { type UploadOption } from "./uploaded.js";
  *
  * const data = await upload();
  * console.log(data.name); // Type-safe access
- * await helpers.move(data.avatar, "./uploads/avatars");
+ * await helpers.save(data.avatar, "./uploads/avatars");
  * ```
  */
 export function createMultipart<T extends z.ZodRawShape>(obj: T, option: UploadOption = {}) {

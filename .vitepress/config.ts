@@ -128,6 +128,7 @@ const config = defineConfig({
             items: [
               { text: "Overview", link: "/packages/multipart/" },
               { text: "Schema Validation", link: "/packages/multipart/schema" },
+              { text: "Helpers", link: "/packages/multipart/helpers" },
             ],
           },
           { text: "Cookie", link: "/packages/cookie" },

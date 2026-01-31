@@ -86,8 +86,8 @@ export async function firstFile(options: MultipartOptions = {}): Promise<Multipa
   });
 }
 
-export function files(options: MultipartOptions = {}): AsyncGenerator<MultipartRawResult> {
-  const [stream, iterator] = createAsyncIterator<MultipartRawResult>();
+export function files(options: MultipartOptions = {}): AsyncGenerator<MultipartRawFile> {
+  const [stream, iterator] = createAsyncIterator<MultipartRawFile>();
   const { limits } = options;
   const [bb, stop] = busboy({ ...options, limits: { ...limits, fields: 0 } });
 
@@ -103,7 +103,7 @@ export function files(options: MultipartOptions = {}): AsyncGenerator<MultipartR
     stop();
   });
 
-  return iterator as AsyncGenerator<MultipartRawResult>;
+  return iterator as AsyncGenerator<MultipartRawFile>;
 }
 /**
  * Retrieves both text fields and files from a multipart form request as an async iterable.
@@ -115,7 +115,7 @@ export function files(options: MultipartOptions = {}): AsyncGenerator<MultipartR
  * for await (const body of multipart.raw()) {
  *   if (isRawFile(body)) {
  *     console.log(`File: ${body.fieldname} = ${body.filename}`);
- *     await helpers.move(body, './dest');
+ *     await helpers.save(body, './dest');
  *   } else {
  *     console.log(`Field: ${body.fieldname} = ${body.value}`);
  *   }

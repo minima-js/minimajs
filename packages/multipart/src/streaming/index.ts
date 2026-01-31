@@ -3,6 +3,7 @@ import { isRawFile, raw2streamFile } from "../helpers.js";
 import * as raw from "../raw/index.js";
 import type { StreamFile } from "./file.js";
 
+export * from "./file.js";
 /** Retrieves a specific file field by name as a StreamFile (lazy streaming, not buffered). */
 export async function file(name: string, options: MultipartOptions = {}): Promise<StreamFile | null> {
   const field = await raw.file(name, options);

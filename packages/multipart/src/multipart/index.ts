@@ -1,5 +1,4 @@
-import { busboy } from "../raw/busboy.js";
-import type { MultipartOptions, MultipartRawFile } from "../types.js";
+import type { MultipartOptions } from "../types.js";
 import { isRawFile, raw2file } from "../helpers.js";
 import * as raw from "../raw/index.js";
 
@@ -55,7 +54,7 @@ export async function firstFile(options: MultipartOptions = {}): Promise<[field:
  */
 export async function* files(options: MultipartOptions = {}) {
   const { limits = {} } = options;
-  for await (const field of raw.body<MultipartRawFile>({ ...options, limits: { ...limits, fields: 0 } })) {
+  for await (const field of raw.files({ ...options, limits: { ...limits, fields: 0 } })) {
     yield [field.fieldname, await raw2file(field, limits)] as const;
   }
 }
@@ -74,7 +73,7 @@ export async function* files(options: MultipartOptions = {}) {
  */
 export function fields<T extends Record<string, string | string[]>>() {
   const values: any = {};
-  const [bb] = busboy({
+  const [bb] = raw.busboy({
     limits: { files: 0 },
   });
   bb.on("field", (name, value) => {
@@ -100,7 +99,7 @@ export function fields<T extends Record<string, string | string[]>>() {
  * for await (const [name, value] of multipart.body()) {
  *   if (isFile(value)) {
  *     console.log(`File: ${name} = ${value.name}`);
- *     helpers.move(value, './dest')
+ *     helpers.save(value, './dest')
  *   } else {
  *     console.log(`Field: ${name} = ${value}`);
  *   }

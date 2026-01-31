@@ -18,8 +18,24 @@ npm install @minimajs/multipart zod
 - ✅ **Full TypeScript inference** - Types flow automatically from your schema
 - ✅ **Automatic validation** - File size, MIME type, and field validation
 - ✅ **Memory efficient** - Files saved to disk, not held in memory
-- ✅ **Native File API** - Works with standard `File` methods
+- ✅ **Native File API** - Compatible with Web `File` interface
+- ✅ **Direct response** - Return files directly with correct content-type
 - ✅ **Better errors** - Clear validation error messages
+
+### Return Files Directly
+
+`TempFile` extends the native `File` API, so you can return it directly from handlers:
+
+```typescript
+const upload = createMultipart({
+  avatar: z.file().mime(["image/jpeg", "image/png"]),
+});
+
+export async function getAvatar() {
+  const data = await upload();
+  return data.avatar; // Returns file with correct Content-Type header
+}
+```
 
 ## Quick Start
 
@@ -40,12 +56,12 @@ export async function handleUpload() {
   const data = await upload();
 
   // TypeScript knows the exact types!
-  console.log(data.name);   // string
-  console.log(data.email);  // string
+  console.log(data.name); // string
+  console.log(data.email); // string
   console.log(data.avatar); // TempFile
 
   // Move file to destination
-  await helpers.move(data.avatar, "./uploads/avatars");
+  await helpers.save(data.avatar, "./uploads/avatars");
 
   return { success: true, user: data.name };
 }
@@ -58,6 +74,7 @@ export async function handleUpload() {
 Creates a type-safe multipart parser with Zod validation.
 
 **Parameters:**
+
 - `schema` - Zod schema object (`z.ZodRawShape`)
 - `options` - Optional upload configuration
 
@@ -76,9 +93,10 @@ import { z } from "zod";
 import { createMultipart } from "@minimajs/multipart/schema";
 
 const upload = createMultipart({
-  avatar: z.file()
-    .min(1024)              // Min 1KB
-    .max(5 * 1024 * 1024),  // Max 5MB
+  avatar: z
+    .file()
+    .min(1024) // Min 1KB
+    .max(5 * 1024 * 1024), // Max 5MB
 });
 ```
 
@@ -88,24 +106,14 @@ Use `.mime()` to validate file types.
 
 ```typescript
 const upload = createMultipart({
-  avatar: z.file()
+  avatar: z
+    .file()
     .max(2 * 1024 * 1024)
     .mime(["image/jpeg", "image/png", "image/webp"]),
 });
 ```
 
-### Multiple Validations
-
-Chain multiple validations together.
-
-```typescript
-const upload = createMultipart({
-  photo: z.file()
-    .min(1024)                                    // At least 1KB
-    .max(10 * 1024 * 1024)                        // Max 10MB
-    .mime(["image/jpeg", "image/png"]),           // Only JPEG/PNG
-});
-```
+All [Zod file validations](https://zod.dev/api?id=files) are supported.
 
 ## Multiple Files
 
@@ -120,8 +128,9 @@ import { helpers } from "@minimajs/multipart";
 
 const upload = createMultipart({
   email: z.string().email(),
-  photos: z.array(z.file().max(5 * 1024 * 1024))
-    .min(1)   // At least 1 photo
+  photos: z
+    .array(z.file().max(5 * 1024 * 1024))
+    .min(1) // At least 1 photo
     .max(10), // Max 10 photos
 });
 
@@ -130,46 +139,11 @@ export async function handleGallery() {
 
   // Process each photo
   for (const photo of data.photos) {
-    await helpers.move(photo, "./uploads/gallery");
+    await helpers.save(photo, "./uploads/gallery");
   }
 
   return { count: data.photos.length };
 }
-```
-
-### Optional Files
-
-Make file fields optional with `.optional()`.
-
-```typescript
-const upload = createMultipart({
-  name: z.string(),
-  avatar: z.file()
-    .max(2 * 1024 * 1024)
-    .optional(),  // Avatar is not required
-});
-
-const data = await upload();
-if (data.avatar) {
-  await helpers.move(data.avatar, "./uploads");
-}
-```
-
-## Working with TempFile
-
-Files validated through schemas are returned as `TempFile` instances - disk-backed files that extend the native `File` API.
-
-### TempFile Properties
-
-```typescript
-const data = await upload();
-const file = data.avatar;
-
-console.log(file.name);         // filename
-console.log(file.type);         // MIME type
-console.log(file.size);         // file size in bytes
-console.log(file.path);         // temporary file path on disk
-console.log(file.lastModified); // last modified timestamp
 ```
 
 ### TempFile Methods
@@ -199,7 +173,7 @@ await file.destroy();
 
 ### Moving Files
 
-Use `helpers.move()` to save files to their final destination.
+Use `helpers.save()` to save files to their final destination.
 
 ```typescript
 import { helpers } from "@minimajs/multipart";
@@ -207,11 +181,11 @@ import { helpers } from "@minimajs/multipart";
 const data = await upload();
 
 // Auto-generated filename with UUID
-const savedName = await helpers.move(data.avatar, "./uploads");
+const savedName = await helpers.save(data.avatar, "./uploads");
 console.log(savedName); // e.g., "a1b2c3d4-e5f6.jpg"
 
 // Custom filename
-await helpers.move(data.avatar, "./uploads", "profile.jpg");
+await helpers.save(data.avatar, "./uploads", "profile.jpg");
 ```
 
 ## Advanced Examples
@@ -230,11 +204,13 @@ const profileUpload = createMultipart({
   bio: z.string().max(500).optional(),
 
   // File fields
-  avatar: z.file()
+  avatar: z
+    .file()
     .max(2 * 1024 * 1024)
     .mime(["image/jpeg", "image/png"]),
 
-  coverPhoto: z.file()
+  coverPhoto: z
+    .file()
     .max(5 * 1024 * 1024)
     .mime(["image/jpeg", "image/png"])
     .optional(),
@@ -244,18 +220,12 @@ export async function updateProfile() {
   const data = await profileUpload();
 
   // Save avatar
-  const avatarPath = await helpers.move(
-    data.avatar,
-    "./uploads/avatars"
-  );
+  const avatarPath = await helpers.save(data.avatar, "./uploads/avatars");
 
   // Save cover photo if provided
   let coverPath;
   if (data.coverPhoto) {
-    coverPath = await helpers.move(
-      data.coverPhoto,
-      "./uploads/covers"
-    );
+    coverPath = await helpers.save(data.coverPhoto, "./uploads/covers");
   }
 
   return {
@@ -264,97 +234,6 @@ export async function updateProfile() {
     bio: data.bio,
     avatarUrl: `/uploads/avatars/${avatarPath}`,
     coverUrl: coverPath ? `/uploads/covers/${coverPath}` : null,
-  };
-}
-```
-
-### Document Upload with Multiple Types
-
-```typescript
-const documentUpload = createMultipart({
-  title: z.string().min(1).max(100),
-  category: z.enum(["invoice", "contract", "report"]),
-  documents: z.array(
-    z.file()
-      .max(10 * 1024 * 1024)
-      .mime([
-        "application/pdf",
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      ])
-  ).min(1).max(5),
-});
-
-export async function uploadDocuments() {
-  const data = await documentUpload();
-
-  const savedDocs = [];
-  for (const doc of data.documents) {
-    const filename = await helpers.move(
-      doc,
-      `./documents/${data.category}`
-    );
-    savedDocs.push({
-      originalName: doc.name,
-      savedName: filename,
-      size: doc.size,
-      type: doc.type,
-    });
-  }
-
-  return {
-    title: data.title,
-    category: data.category,
-    documents: savedDocs,
-  };
-}
-```
-
-### Image Gallery with Metadata
-
-```typescript
-const galleryUpload = createMultipart({
-  albumName: z.string().min(1),
-  description: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-  images: z.array(
-    z.file()
-      .min(1024)                  // Min 1KB
-      .max(15 * 1024 * 1024)      // Max 15MB
-      .mime([
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-        "image/gif",
-      ])
-  ).min(1).max(50),  // 1-50 images
-});
-
-export async function createGallery() {
-  const data = await galleryUpload();
-
-  const processedImages = [];
-
-  for (const image of data.images) {
-    const filename = await helpers.move(
-      image,
-      "./uploads/gallery"
-    );
-
-    processedImages.push({
-      filename,
-      originalName: image.name,
-      size: helpers.humanFileSize(image.size),
-      mimeType: image.type,
-    });
-  }
-
-  return {
-    album: data.albumName,
-    description: data.description,
-    tags: data.tags || [],
-    imageCount: processedImages.length,
-    images: processedImages,
   };
 }
 ```
@@ -370,9 +249,9 @@ import type { UploadOption } from "@minimajs/multipart/schema";
 
 const options: UploadOption = {
   limits: {
-    fileSize: 10 * 1024 * 1024,  // 10MB max per file
-    files: 5,                     // Max 5 files total
-    fields: 10,                   // Max 10 text fields
+    fileSize: 10 * 1024 * 1024, // 10MB max per file
+    files: 5, // Max 5 files total
+    fields: 10, // Max 10 text fields
   },
 };
 
@@ -395,7 +274,7 @@ export async function handleUpload() {
       // Handle validation errors
       return {
         success: false,
-        errors: error.errors,  // Array of validation errors
+        errors: error.errors, // Array of validation errors
       };
     }
     throw error;
@@ -425,20 +304,7 @@ const data = await upload();
 
 ## Cleanup
 
-`TempFile` instances are stored on disk. Make sure to either move them or clean them up.
-
-```typescript
-const data = await upload();
-
-try {
-  // Process file
-  await helpers.move(data.avatar, "./uploads");
-} catch (error) {
-  // If something fails, cleanup temp file
-  await data.avatar.destroy();
-  throw error;
-}
-```
+`TempFile` instances are stored on disk. They are **automatically cleaned up** after the request completes via Minima's `defer()` mechanism.
 
 ## Next Steps
 
