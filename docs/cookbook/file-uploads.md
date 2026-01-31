@@ -20,9 +20,9 @@ npm install @minimajs/multipart
 To handle a single file upload, use the `multipart.file()` helper. It's context-aware, so you don't need to pass any request objects. It returns a `Promise` that resolves to a `File` object.
 
 ```typescript
-import { createApp } from "@minimajs/server";
+import { createApp, abort } from "@minimajs/server";
 import { multipart } from "@minimajs/multipart";
-import { createWriteStream } from "fs";
+import { createWriteStream } from "node:fs";
 import { pipeline } from "stream/promises";
 
 const app = createApp();
@@ -34,7 +34,7 @@ app.post("/upload/single", async () => {
   const file = await multipart.file(); // Gets the first file from the request
 
   if (!file) {
-    return { message: "No file uploaded" };
+    return abort({ message: "No file uploaded" }, 400);
   }
 
   // file is a File object with properties like `filename`, `mimetype`, and `stream`.

@@ -160,7 +160,7 @@ export default function (app) {
 - ✅ `File` works as Response automatically
 - ✅ Use `@minimajs/multipart/schema` for multiple files
 
-[See multipart documentation →](/packages/multipart)
+[See multipart documentation →](/packages/multipart/)
 
 ---
 

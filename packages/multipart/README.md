@@ -242,7 +242,7 @@ await multipart.file("avatar", {
 });
 ```
 
-Full documentation available at [minima-js.github.io/packages/multipart](https://minima-js.github.io/packages/multipart).
+Full documentation available at [minima-js.github.io/packages/multipart](https://minima-js.github.io/packages/multipart/).
 
 ## License
 

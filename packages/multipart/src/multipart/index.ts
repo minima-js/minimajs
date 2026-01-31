@@ -11,7 +11,9 @@ import * as raw from "../raw/index.js";
  * ```ts
  * // Get file from specific field
  * const avatar = await multipart.file('avatar');
- * await avatar.move('/uploads');
+ * if (avatar) {
+ *  await helpers.save(avatar, './uploads');
+ * }
  * ```
  */
 export async function file(name: string, options: MultipartOptions = {}) {
@@ -48,7 +50,7 @@ export async function firstFile(options: MultipartOptions = {}): Promise<[field:
  * ```ts
  * for await (const file of multipart.files()) {
  *   console.log(file.filename);
- *   await file.move('/uploads');
+ *   await helpers.save(file, '/uploads');
  * }
  * ```
  */

@@ -6,11 +6,11 @@
  *
  * @example
  * ```ts
- * import { multipart } from "@minimajs/multipart";
+ * import { multipart, helpers } from "@minimajs/multipart";
  *
  * const file = await multipart.file('avatar');
  * console.log(file.filename);
- * await file.move('/uploads/avatars');
+ * await helpers.save(file, '/uploads/avatars');
  * ```
  */
 

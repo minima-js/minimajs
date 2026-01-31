@@ -5,8 +5,6 @@
   "type": "module",
   "exports": {
     ".": "./lib/index.js",
-    "./unstable": "./lib/unstable.js",
-    "./helpers": "./lib/helpers.js",
     "./schema": "./lib/schema/index.js"
   },
   "scripts": {
