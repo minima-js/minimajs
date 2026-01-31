@@ -49,7 +49,7 @@ export async function firstFile(options: MultipartOptions = {}): Promise<[field:
  * @example
  * ```ts
  * for await (const file of multipart.files()) {
- *   console.log(file.filename);
+ *   console.log(file.name);
  *   await helpers.save(file, '/uploads');
  * }
  * ```

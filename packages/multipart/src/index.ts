@@ -9,7 +9,7 @@
  * import { multipart, helpers } from "@minimajs/multipart";
  *
  * const file = await multipart.file('avatar');
- * console.log(file.filename);
+ * console.log(file.name);
  * await helpers.save(file, '/uploads/avatars');
  * ```
  */
