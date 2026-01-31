@@ -28,9 +28,9 @@ await app.listen({ port: 3000 });
 
 Configure discovery via `createApp({ moduleDiscovery: { ... } })`.
 
-### `index` (filename)
+### `index` (filename or pattern)
 
-Use a different filename instead of `module.ts`.
+Use a different filename or a glob pattern instead of `module.ts`.
 
 ```typescript
 // src/index.ts
@@ -52,6 +52,30 @@ src/
 │   └── route.ts
 └── posts/
     └── route.ts
+```
+
+#### Glob Patterns
+
+The `index` option supports glob patterns, allowing you to discover modules based on naming conventions.
+
+```typescript
+// src/index.ts
+const app = createApp({
+  moduleDiscovery: {
+    index: "*.module", // looks for users.module.ts, etc.
+  },
+});
+```
+
+**Resulting pattern:** `**/*.module.{ts,js,mjs}`
+
+```text
+src/
+├── index.ts
+├── users/
+│   └── users.module.ts
+└── posts/
+    └── posts.module.ts
 ```
 
 ### `root` (directory)

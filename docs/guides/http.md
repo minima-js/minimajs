@@ -18,7 +18,6 @@ The request and response objects are globally accessible anywhere from request c
 - [`request()`](#request) - Get native Request object
 - [`request.url()`](#requesturl) - Get URL object
 - [`request.ip()`](#requestip) - Get client IP address
-- [`request.route()`](#requestroute) - Get matched route options
 - [`headers()`](#headers) - Get request headers
 - [`searchParams()`](#searchparams) - Get query string parameters
 - [`params()`](#params) - Get route parameters
@@ -101,25 +100,6 @@ app.get("/", () => {
   const ip = request.ip();
   return { clientIp: ip };
 });
-```
-
-### `request.route()`
-
-Returns the matched route options for the current request.
-
-```ts
-import { request } from "@minimajs/server";
-
-app.get(
-  "/admin",
-  () => {
-    const route = request.route();
-    console.log(route.url); // "/admin"
-    console.log(route.method); // "GET"
-    return "Admin panel";
-  },
-  { name: "admin-panel" }
-);
 ```
 
 ## Headers
