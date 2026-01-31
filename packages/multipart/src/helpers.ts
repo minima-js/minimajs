@@ -138,7 +138,7 @@ export interface Stream2uint8arrayOptions {
 /** Reads a stream into a Uint8Array with optional size limit. */
 export async function stream2uint8array(
   stream: Readable,
-  { fileSize: maxSize = Infinity }: Stream2uint8arrayOptions
+  { fileSize = Infinity }: Stream2uint8arrayOptions = {}
 ): Promise<Uint8Array<ArrayBuffer>> {
   let buffer = new Uint8Array(64 * 1024); // 64KB
   let length = 0;
@@ -149,7 +149,7 @@ export async function stream2uint8array(
 
     const needed = length + uint8.byteLength;
 
-    if (needed > maxSize) {
+    if (needed > fileSize) {
       stream.destroy();
       throw new Error("Body exceeds maxSize");
     }

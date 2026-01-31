@@ -18,7 +18,6 @@ In Minima.js, you can define routes using the application instance. Each route h
 - [`app.route()`](#basic-routing) - Define routes with advanced options
 - [`params()`](#route-parameters) - Get route parameters
 - [`searchParams()`](#query-parameters) - Get query string parameters
-- [`app.prefix`](#prefix) - Set URL prefix for routes
 - [Route metadata](#route-metadata) - Attach metadata to routes
 
 ---

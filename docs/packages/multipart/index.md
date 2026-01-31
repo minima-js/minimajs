@@ -9,7 +9,7 @@ The `@minimajs/multipart` package provides multiple APIs for handling multipart 
 
 ## Installation
 
-```bash npm2yarn
+```bash
 npm install @minimajs/multipart
 ```
 

@@ -43,7 +43,7 @@ features:
   - icon:
       src: /icon-globe.svg
     title: Web Standards, Pure ESM, Zero Abstractions
-    details: "Native Request/Response/File/Blob/URL. Web standard APIs. Pure ESM. No framework-specific wrappers. Write portable, future-proof code."
+    details: "Built on Web APIs you already know—Request, Response, File, Blob, URL. No proprietary abstractions. Your code stays portable and future-proof."
 ---
 
 ## How It Feels to Build
@@ -135,8 +135,8 @@ export async function uploadAvatar() {
   // Returns native File instance - holds data in memory
   const avatar = await multipart.file("avatar");
 
-  // Or use rawFile for streaming without memory overhead
-  // const avatar = multipart.rawFile("avatar");
+  // Or use streaming without memory overhead
+  // const avatar = streaming.file("avatar");
 
   // Move file to destination
   await helpers.save(avatar, "./uploads/avatars");
@@ -156,9 +156,8 @@ export default function (app) {
 
 - ✅ Native `File` instances (Web Standards API)
 - ✅ `multipart.file()` reads entire file into memory
-- ✅ `multipart.rawFile()` streams without memory overhead
 - ✅ `File` works as Response automatically
-- ✅ Use `@minimajs/multipart/schema` for multiple files
+- ✅ Use `@minimajs/multipart/schema` Zod guards your uploads, disk handles the weight
 
 [See multipart documentation →](/packages/multipart/)
 

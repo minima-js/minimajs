@@ -9,7 +9,7 @@ File uploads are a common requirement in modern web applications. Minima.js prov
 
 ## Prerequisites
 
-```bash npm2yarn
+```bash
 npm install @minimajs/multipart
 ```
 

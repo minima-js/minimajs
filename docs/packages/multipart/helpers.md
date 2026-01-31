@@ -188,38 +188,6 @@ for await (const item of raw.body()) {
 }
 ```
 
-## Formatting
-
-### `humanFileSize(bytes, decimals?)`
-
-Converts bytes to a human-readable file size string using binary units (base 1024).
-
-**Parameters:**
-
-- `bytes` - Number of bytes
-- `decimals` - Decimal places (default: 1)
-
-**Returns:** `string` - Formatted size string
-
-```typescript
-helpers.humanFileSize(0); // "0 B"
-helpers.humanFileSize(500); // "500 B"
-helpers.humanFileSize(1024); // "1.0 KiB"
-helpers.humanFileSize(1536); // "1.5 KiB"
-helpers.humanFileSize(1048576); // "1.0 MiB"
-helpers.humanFileSize(1073741824); // "1.0 GiB"
-
-// Custom decimal places
-helpers.humanFileSize(1536, 2); // "1.50 KiB"
-helpers.humanFileSize(1024, 0); // "1 KiB"
-
-// Handles edge cases
-helpers.humanFileSize(Infinity); // "Infinity"
-helpers.humanFileSize(-1024); // "-1.0 KiB"
-```
-
-Available units: B, KiB, MiB, GiB, TiB, PiB, EiB, ZiB, YiB
-
 ## Stream Utilities
 
 ### `stream2uint8array(stream, options?)`
@@ -240,7 +208,7 @@ import { Readable } from "node:stream";
 import { helpers } from "@minimajs/multipart";
 
 const stream = Readable.from(["Hello", " ", "World"]);
-const bytes = await helpers.stream2uint8array(stream, {});
+const bytes = await helpers.stream2uint8array(stream);
 console.log(new TextDecoder().decode(bytes)); // "Hello World"
 
 // With size limit

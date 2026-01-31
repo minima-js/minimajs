@@ -9,7 +9,7 @@ Type-safe multipart form data parsing with Zod schema validation. Files are auto
 
 ## Installation
 
-```bash npm2yarn
+```bash
 npm install @minimajs/multipart zod
 ```
 

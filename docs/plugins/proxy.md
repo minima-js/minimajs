@@ -17,12 +17,14 @@ import { proxy } from "@minimajs/server/plugins";
 By default, calling `proxy()` with no arguments **trusts all proxies** and extracts IP, host, and protocol information from proxy headers:
 
 ```typescript
+import { request } from "@minimajs/server";
+
 // Trust all proxies - extracts IP, host, and proto
 app.register(proxy());
 
-app.get("/client-info", (ctx) => {
-  const clientIp = ctx.locals[kIpAddr];
-  const { host, proto } = ctx.$metadata;
+app.get("/client-info", () => {
+  const clientIp = request.ip();
+  const { host, proto } = request.url();
   return { ip: clientIp, host, proto };
 });
 ```
@@ -72,6 +74,8 @@ app.register(
 );
 
 // Custom trust validator
+import { request } from "@minimajs/server";
+
 app.register(
   proxy({
     trustProxies: (ctx) => {
@@ -94,7 +98,7 @@ Configures IP address extraction from proxy headers. **Enabled by default**. Set
 ```typescript
 interface IpSettings {
   header?: string | string[]; // Custom header(s) to check
-  depth?: number; // Number of IPs to skip from the beginning (implies depth strategy)
+  depth?: number; // 1-based index from the right (server-side) of the X-Forwarded-For header.
   strategy?: "first" | "last"; // Selection strategy for x-forwarded-for
 }
 ```
@@ -111,14 +115,19 @@ app.register(
 
 #### Using Depth (Recommended for Multi-Proxy)
 
-When you specify `depth`, the plugin automatically uses it to extract the IP at that position in the `X-Forwarded-For` chain:
+When you specify `depth`, the plugin automatically uses it to extract the IP at that position in the `X-Forwarded-For` chain. `depth` is a 1-based index from the right (server-side).
+
+For an `X-Forwarded-For` header of `"client, proxy1, proxy2"`:
+- `depth: 1` extracts `proxy2`
+- `depth: 2` extracts `proxy1`
+- `depth: 3` extracts `client`
 
 ```typescript
-// Extract 2nd IP from X-Forwarded-For chain
-// x-forwarded-for: "client, proxy1, proxy2" -> extracts "proxy1"
+// Extract the client IP, assuming 2 trusted proxies
+// x-forwarded-for: "client, proxy1, proxy2"
 app.register(
   proxy({
-    ip: { depth: 2 },
+    ip: { depth: 3 },
   })
 );
 ```
@@ -261,75 +270,6 @@ app.register(
 
 ### `proto`
 
-Configures protocol extraction from proxy headers. **Enabled by default**. Set to `false` to disable.
-
-- **Type**: `ProtoSettings | ((ctx: Context) => string) | false`
-- **Default**: Enabled with default settings
-
-#### ProtoSettings Interface
-
-```typescript
-interface ProtoSettings {
-  header?: string | string[]; // Header(s) to check (default: "x-forwarded-proto")
-}
-```
-
-#### Disabling Proto Extraction
-
-```typescript
-app.register(
-  proxy({
-    proto: false, // Disable proto extraction
-  })
-);
-```
-
-#### Using Settings Object
-
-```typescript
-// Default header
-app.register(
-  proxy({
-    proto: {}, // Uses "x-forwarded-proto"
-  })
-);
-
-// Multiple header fallback for different cloud providers
-app.register(
-  proxy({
-    proto: {
-      header: ["x-forwarded-proto", "cloudfront-forwarded-proto", "x-arr-ssl"],
-    },
-  })
-);
-```
-
-#### Proto Extraction Priority
-
-1. **Custom headers** (if specified via `header` option, checks for `"on"`, `"https"`, or `"http"`)
-2. **SSL headers** (`x-forwarded-ssl` or `x-arr-ssl` with value `"on"`)
-3. **Request URL protocol** (fallback)
-
-#### Using Custom Callback
-
-```typescript
-app.register(
-  proxy({
-    proto: (ctx) => {
-      const proto = ctx.request.headers.get("x-forwarded-proto");
-      return proto === "on" ? "https" : "http";
-    },
-  })
-);
-```
-
-})
-);
-
-````
-
-### `proto`
-
 Configures protocol extraction from proxy headers. Enabled by default, set to `false` to disable.
 
 - **Type**: `ProtoSettings | ProtoCallback | false`
@@ -347,7 +287,7 @@ app.register(
     host: false,
   })
 );
-````
+```
 
 #### Using Settings Object
 
@@ -408,7 +348,7 @@ app.register(proxy());
 app.register(
   proxy({
     trustProxies: ["127.0.0.1"], // Trust localhost NGINX
-    ip: { depth: 1 },
+    ip: { depth: 2 }, // If NGINX is the only proxy, client IP is at depth 2
   })
 );
 ```
@@ -432,7 +372,7 @@ app.register(
 app.register(
   proxy({
     trustProxies: ["10.0.0.1", "10.0.0.2"], // Trust specific proxies
-    ip: { depth: 2 }, // Skip 2 proxies to get real client IP
+    ip: { depth: 3 }, // If there are 2 proxies, client IP is at depth 3
     host: {
       header: ["x-forwarded-host", "x-original-host"],
     },
@@ -501,8 +441,8 @@ app.get("/client-ip", (ctx) => {
 The extracted host and protocol are stored in `ctx.$metadata`:
 
 ```typescript
-import { request } from "@minimajs/request";
-app.get("/request-info", (ctx) => {
+import { request } from "@minimajs/server";
+app.get("/request-info", () => {
   const info = request.url(); // type URL
   return {
     host: info.host,
@@ -539,17 +479,15 @@ app.register(
 
 ### Validate Proxy Depth
 
-Set `depth` based on your infrastructure to get the correct client IP:
+Set `depth` based on your infrastructure to get the correct client IP. If you have `N` trusted proxies, the client IP is at `depth: N + 1`.
 
 ```typescript
-// If you have 2 trusted proxies, use depth: 2 to get the real client IP
+// If you have 2 trusted proxies, the client IP is at depth 3.
 // x-forwarded-for: "client, proxy1, proxy2"
-// depth: 1 -> "client"
-// depth: 2 -> "proxy1"
 app.register(
   proxy({
     trustProxies: ["10.0.1.1", "10.0.1.2"],
-    ip: { depth: 1 }, // Gets first IP (the actual client)
+    ip: { depth: 3 }, // Gets the client IP
   })
 );
 ```
