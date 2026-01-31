@@ -96,7 +96,7 @@ The `error` hook intercepts errors and can handle them in four ways:
 
 1. **Re-throw or abort** (Recommended) - Pass to next error hook or handler
 2. **Return data** - Treated as successful `200 OK` response
-3. **Return Response** - Sent directly (⚠️ bypasses plugins/CORS)
+3. **Return Response** - Sent directly (⚠️ bypasses transform hooks)
 4. **Return undefined** - Pass to next error hook
 
 ### Global Error Handler

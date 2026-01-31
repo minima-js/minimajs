@@ -12,6 +12,6 @@ lib
 # VitePress build output
 .vitepress/dist
 .vitepress/cache
-
+docs/.vitepress/dist
 # TypeDoc generated API docs
 docs/api

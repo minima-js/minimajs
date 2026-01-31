@@ -1,5 +1,6 @@
 import { defineConfig } from "vitepress";
 import { withMermaid } from "vitepress-plugin-mermaid";
+import { withPwa } from "@vite-pwa/vitepress";
 
 const tagId = 'GTM-P9NLW275';
 
@@ -70,6 +71,33 @@ const config = defineConfig({
   mermaidPlugin: {
     class: "mermaid",
   },
+
+  // PWA configuration
+  pwa: {
+    registerType: "autoUpdate",
+    manifest: {
+      name: "Minima.js",
+      short_name: "Minima.js",
+      description: "A cutting-edge Node.js framework for modern web applications",
+      theme_color: "#eb4432",
+      icons: [
+        {
+          src: "/logo.png",
+          sizes: "200x200",
+          type: "image/png",
+        },
+        {
+          src: "/logo.svg",
+          sizes: "any",
+          type: "image/svg+xml",
+        },
+      ],
+    },
+    workbox: {
+      globPatterns: ["**/*.{css,js,html,svg,png,ico,txt,woff2}"],
+    },
+  },
+
   themeConfig: {
     logo: "/logo.svg",
     nav: [
@@ -174,4 +202,4 @@ const config = defineConfig({
   },
 });
 
-export default withMermaid(config);
+export default withPwa(withMermaid(config));

@@ -80,11 +80,11 @@ app.get("/users", () => {
 
 ### `request.ip()`
 
-Returns the client's IP address. Requires configuration via `request.ip.configure()`.
+Returns the client's IP address. Requires the **Proxy** plugin to be registered and configured.
 
 **Configuration:**
 
-Before using `request.ip()`, configure the IP plugin:
+Before using `request.ip()`, register the IP plugin (often via `proxy`):
 
 ```ts
 import { request } from "@minimajs/server";
