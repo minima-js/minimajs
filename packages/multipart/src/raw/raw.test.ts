@@ -5,6 +5,7 @@ import * as raw from "./index.js";
 import { RAW_FILE, RAW_FIELD } from "./index.js";
 import { isRawFile, stream2buffer } from "../helpers.js";
 import type { MultipartRawResult } from "../types.js";
+import { UploadError } from "../errors.js";
 
 async function* multipartStream(
   boundary: string,
@@ -51,6 +52,18 @@ describe("raw", () => {
   test("file() returns null when not found", async () => {
     const stream = multipartStream(boundary, [{ name: "name", data: "John" }]);
     await mockContext(async () => expect(await raw.file("avatar")).toBeNull(), { headers, body: stream });
+  });
+
+  test("file() skips non-matching files and returns null", async () => {
+    const stream = multipartStream(boundary, [
+      { name: "other", filename: "other.txt", data: "other-data" },
+    ]);
+    await mockContext(async () => expect(await raw.file("avatar")).toBeNull(), { headers, body: stream });
+  });
+
+  test("firstFile() returns null when no files", async () => {
+    const stream = multipartStream(boundary, [{ name: "name", data: "John" }]);
+    await mockContext(async () => expect(await raw.firstFile()).toBeNull(), { headers, body: stream });
   });
 
   test("firstFile() returns first file", async () => {
@@ -105,6 +118,25 @@ describe("raw", () => {
         expect((items[1] as any)?.[RAW_FILE]).toBe(true);
       },
       { headers, body: stream }
+    );
+  });
+
+  test("throws UploadError when request body is missing", async () => {
+    await mockContext(
+      async () => {
+        await expect(raw.file("test")).rejects.toThrow(UploadError);
+      },
+      { headers }
+    );
+  });
+
+  test("throws UploadError for invalid content-type", async () => {
+    const stream = multipartStream(boundary, [{ name: "test", data: "data" }]);
+    await mockContext(
+      async () => {
+        await expect(raw.file("test")).rejects.toThrow(UploadError);
+      },
+      { headers: { "content-type": "invalid" }, body: stream }
     );
   });
 });

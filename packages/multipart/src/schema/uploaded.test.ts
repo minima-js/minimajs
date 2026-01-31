@@ -1,10 +1,11 @@
 import { describe, test, expect, afterEach } from "@jest/globals";
 import { z } from "zod";
 import { setTimeout as sleep } from "node:timers/promises";
-import { mkdir, rm } from "node:fs/promises";
+import { mkdir, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { mockContext } from "@minimajs/server/mock";
+import { createApp } from "@minimajs/server";
 import { getUploadedBody } from "./uploaded.js";
 import { isUploadedFile, TempFile } from "./file.js";
 
@@ -34,6 +35,27 @@ function createMockContext(boundary: string, parts: Parameters<typeof createMult
     headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
     body: createMultipartStream(boundary, parts),
   };
+}
+
+function createMultipartBody(
+  boundary: string,
+  parts: Array<{ name: string; filename?: string; contentType?: string; data: string }>
+): string {
+  let body = "";
+  for (const part of parts) {
+    const contentType = part.contentType || "application/octet-stream";
+    body += `--${boundary}\r\n`;
+    if (part.filename) {
+      body += `Content-Disposition: form-data; name="${part.name}"; filename="${part.filename}"\r\n`;
+      body += `Content-Type: ${contentType}\r\n`;
+    } else {
+      body += `Content-Disposition: form-data; name="${part.name}"\r\n`;
+    }
+    body += `\r\n`;
+    body += `${part.data}\r\n`;
+  }
+  body += `--${boundary}--\r\n`;
+  return body;
 }
 
 describe("getUploadedBody", () => {
@@ -319,6 +341,97 @@ describe("getUploadedBody", () => {
         },
         createMockContext(boundary, [{ name: "file", filename: "test.txt", data: "content" }])
       );
+    });
+  });
+
+  describe("file size validation", () => {
+    test("should throw ZodError when file exceeds max size", async () => {
+      const boundary = "----boundary123";
+      await mkdir(testTmpDir, { recursive: true });
+
+      const schema = {
+        file: z.file().max(5), // Max 5 bytes
+      };
+
+      await mockContext(
+        async (ctx) => {
+          await expect(getUploadedBody(schema, ctx, { tmpDir: testTmpDir })).rejects.toThrow(z.ZodError);
+        },
+        createMockContext(boundary, [{ name: "file", filename: "large.txt", data: "This content is way too long" }])
+      );
+    });
+
+    test("should accept file within size limit", async () => {
+      const boundary = "----boundary123";
+      await mkdir(testTmpDir, { recursive: true });
+
+      const schema = {
+        file: z.file().max(1024), // 1KB limit
+      };
+
+      await mockContext(
+        async (ctx) => {
+          const result = await getUploadedBody(schema, ctx, { tmpDir: testTmpDir });
+          expect(isUploadedFile(result.file)).toBe(true);
+        },
+        createMockContext(boundary, [{ name: "file", filename: "small.txt", data: "small" }])
+      );
+    });
+  });
+
+  describe("cleanup", () => {
+    test("should skip fields not in schema", async () => {
+      const boundary = "----boundary123";
+      const schema = {
+        name: z.string(),
+      };
+
+      await mockContext(
+        async (ctx) => {
+          const result = await getUploadedBody(schema, ctx, {});
+          expect(result.name).toBe("test");
+          expect((result as any).unknownField).toBeUndefined();
+        },
+        createMockContext(boundary, [
+          { name: "name", data: "test" },
+          { name: "unknownField", data: "should be ignored" },
+        ])
+      );
+    });
+  });
+
+  describe("defer cleanup", () => {
+    test("should cleanup uploaded files after request completes", async () => {
+      const boundary = "----boundary123";
+      await mkdir(testTmpDir, { recursive: true });
+
+      let uploadedFilePath: string | undefined;
+
+      const app = createApp();
+      app.post("/upload", async (ctx) => {
+        const result = await getUploadedBody({ file: z.file() }, ctx as any, { tmpDir: testTmpDir });
+        uploadedFilePath = (result.file as TempFile).path;
+        // Verify file exists during request
+        await stat(uploadedFilePath);
+        return new Response("ok");
+      });
+
+      const body = createMultipartBody(boundary, [{ name: "file", filename: "test.txt", data: "content" }]);
+
+      const response = await app.handle(
+        new Request("http://localhost/upload", {
+          method: "POST",
+          headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
+          body,
+        })
+      );
+
+      expect(response.status).toBe(200);
+      expect(uploadedFilePath).toBeDefined();
+      // Wait for defer callback to complete (async)
+      await sleep(1);
+      // After request completes, defer should have deleted the file
+      await expect(stat(uploadedFilePath!)).rejects.toThrow();
     });
   });
 });

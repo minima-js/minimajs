@@ -98,7 +98,7 @@ async function validateAndUpload(
   } catch (err) {
     await unlink(filename).catch(() => {});
     if (err instanceof RangeError) {
-      zodError.maxFileSizeError(schema, rawFile, meter.bytes);
+      throw zodError.maxFileSizeError(schema, rawFile, meter.bytes);
     }
     throw err;
   }

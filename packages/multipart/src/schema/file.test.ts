@@ -95,7 +95,7 @@ describe("UploadedFile", () => {
   test("slice() should throw error", () => {
     const uploadedFile = new TempFile("test.txt", { path: testFile, size: 12 });
 
-    expect(() => uploadedFile.slice()).toThrow("UploadedFile.slice() is not supported");
+    expect(() => uploadedFile.slice()).toThrow("TempFile.slice() is not supported. Files are disk-backed and stream-only.");
   });
 
   test("destroy() should destroy inactive streams and delete file", async () => {
@@ -213,6 +213,27 @@ describe("UploadedFile", () => {
     // Calling destroy should just delete the file (no streams to handle)
     const result = await uploadedFile.destroy();
     expect(result).toBe(true);
+  });
+
+  test("Symbol.toStringTag should return TempFile", () => {
+    const uploadedFile = new TempFile("test.txt", { path: testFile, size: 12 });
+    expect(uploadedFile[Symbol.toStringTag]).toBe("TempFile");
+  });
+
+  test("toJSON() should return file metadata including path", () => {
+    const uploadedFile = new TempFile("test.pdf", {
+      path: testFile,
+      size: 1024,
+      type: "application/pdf",
+    });
+
+    const json = uploadedFile.toJSON();
+
+    expect(json.name).toBe("test.pdf");
+    expect(json.size).toBe(1024);
+    expect(json.type).toContain("application/pdf");
+    expect(json.path).toBe(testFile);
+    expect(json.lastModified).toBeDefined();
   });
 });
 

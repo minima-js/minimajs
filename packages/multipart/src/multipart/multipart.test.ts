@@ -133,6 +133,64 @@ describe("multipart", () => {
     });
   });
 
+  describe("firstFile", () => {
+    test("should retrieve first file from multipart body", async () => {
+      const boundary = "----boundary123";
+      const stream = createMultipartStream(boundary, [
+        { name: "avatar", filename: "profile.png", contentType: "image/png", data: "fake-image-data" },
+        { name: "document", filename: "doc.pdf", contentType: "application/pdf", data: "pdf-data" },
+      ]);
+
+      await mockContext(
+        async () => {
+          const result = await multipart.firstFile();
+          expect(result).not.toBeNull();
+          expect(result![0]).toBe("avatar");
+          expect(result![1].name).toBe("profile.png");
+        },
+        {
+          headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
+          body: stream,
+        }
+      );
+    });
+
+    test("should return null when no files in body", async () => {
+      const boundary = "----boundary123";
+      const stream = createMultipartStream(boundary, [
+        { name: "name", data: "John Doe" },
+        { name: "email", data: "john@example.com" },
+      ]);
+
+      await mockContext(
+        async () => {
+          const result = await multipart.firstFile();
+          expect(result).toBeNull();
+        },
+        {
+          headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
+          body: stream,
+        }
+      );
+    });
+
+    test("should return null for empty multipart body", async () => {
+      const boundary = "----boundary123";
+      const stream = createMultipartStream(boundary, []);
+
+      await mockContext(
+        async () => {
+          const result = await multipart.firstFile();
+          expect(result).toBeNull();
+        },
+        {
+          headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
+          body: stream,
+        }
+      );
+    });
+  });
+
   describe("files", () => {
     test("should iterate over all files", async () => {
       const boundary = "----boundary123";
