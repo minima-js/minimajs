@@ -14,6 +14,7 @@ app.register(contextProvider((ctx, next) => executionContext.run(ctx, next)));
 ```
 
 The `contextProvider` callback receives:
+
 - `ctx` - The request context
 - `next` - Function to continue the middleware chain
 
@@ -34,6 +35,7 @@ app.register(
 ```
 
 **Characteristics:**
+
 - Each request gets its own isolated context
 - Context is automatically cleaned up when the request completes
 - Safe for concurrent requests
@@ -56,6 +58,7 @@ app.register(
 ```
 
 **Characteristics:**
+
 - Sets the context for all subsequent async operations in the current execution
 - Does not automatically clean up - context persists until overwritten
 - Useful when integrating with libraries that manage their own async context

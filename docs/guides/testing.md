@@ -156,7 +156,6 @@ describe("User Routes", () => {
 
 :::
 
-
 > **Alternative:** You can also use native `new Request("http://localhost/path", options)` if you need more control over the request object.
 
 ### Testing with Query Parameters
@@ -256,13 +255,19 @@ import { createRequest } from "@minimajs/server/mock";
 test("module routes are isolated", async () => {
   const app = createApp();
 
-  app.register(async (adminApp) => {
-    adminApp.get("/users", () => ({ users: [] }));
-  }, { prefix: "/admin" });
+  app.register(
+    async (adminApp) => {
+      adminApp.get("/users", () => ({ users: [] }));
+    },
+    { prefix: "/admin" }
+  );
 
-  app.register(async (apiApp) => {
-    apiApp.get("/users", () => ({ data: [] }));
-  }, { prefix: "/api" });
+  app.register(
+    async (apiApp) => {
+      apiApp.get("/users", () => ({ data: [] }));
+    },
+    { prefix: "/api" }
+  );
 
   // Test admin module
   const res1 = await app.handle(createRequest("/admin/users"));

@@ -321,7 +321,6 @@ export default async function (app: App) {
 
 💡 **Best Practice:** Put authentication, CORS, rate limiting, and global logging in the root module.
 
-
 ## Common Patterns
 
 ### Pattern 1: API Versioning

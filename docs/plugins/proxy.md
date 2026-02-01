@@ -118,6 +118,7 @@ app.register(
 When you specify `depth`, the plugin automatically uses it to extract the IP at that position in the `X-Forwarded-For` chain. `depth` is a 1-based index from the right (server-side).
 
 For an `X-Forwarded-For` header of `"client, proxy1, proxy2"`:
+
 - `depth: 1` extracts `proxy2`
 - `depth: 2` extracts `proxy1`
 - `depth: 3` extracts `client`

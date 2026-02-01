@@ -152,6 +152,7 @@ export default async function (app) {
 :::
 
 **Your API is ready:**
+
 - `GET /users/list`
 - `GET /users/:id`
 - `GET /posts/list`
@@ -162,13 +163,13 @@ export default async function (app) {
 import { type Meta, hook } from "@minimajs/server";
 
 export const meta: Meta = {
-  plugins: [
-    hook("request", () => console.log("User route accessed"))
-  ]
+  plugins: [hook("request", () => console.log("User route accessed"))],
 };
 
 export default async function (app) {
-  app.get("/list", () => [/* users */]);
+  app.get("/list", () => [
+    /* users */
+  ]);
 }
 ```
 

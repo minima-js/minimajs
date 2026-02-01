@@ -97,7 +97,7 @@ await app.listen({ port: 3000 });
 export default async function (app) {
   app.get("/list", () => [
     { id: 1, name: "Alice" },
-    { id: 2, name: "Bob" }
+    { id: 2, name: "Bob" },
   ]);
 }
 // ✅ Auto-loaded as /users/*
@@ -113,6 +113,7 @@ export default async function (app) {
 :::
 
 **File structure = API structure:**
+
 - `src/users/module.ts` → `/users/*`
 - `src/posts/module.ts` → `/posts/*`
 - `src/api/v1/users/module.ts` → `/api/v1/users/*`
@@ -131,20 +132,20 @@ import { hook } from "@minimajs/server";
 import { cors } from "@minimajs/server/plugins";
 
 export const meta: Meta = {
-  plugins: [
-    cors({ origin: "https://example.com" }),
-    hook("request", () => console.log("User route accessed"))
-  ]
+  plugins: [cors({ origin: "https://example.com" }), hook("request", () => console.log("User route accessed"))],
 };
 
 export default async function (app) {
-  app.get("/list", () => [/* users */]);
+  app.get("/list", () => [
+    /* users */
+  ]);
 }
 ```
 
 :::
 
 **Benefits:**
+
 - **Declarative** - See what affects each module at the top
 - **Scoped** - Plugins only affect this module and its children
 - **Isolated** - Siblings don't interfere with each other
@@ -165,9 +166,9 @@ import { authPlugin } from "./plugins/auth.js";
 export const meta: Meta = {
   prefix: "/api",
   plugins: [
-    authPlugin,           // Global authentication
-    cors({ origin: "*" }) // Global CORS
-  ]
+    authPlugin, // Global authentication
+    cors({ origin: "*" }), // Global CORS
+  ],
 };
 
 export default async function (app) {
@@ -178,7 +179,9 @@ export default async function (app) {
 ```typescript [src/users/module.ts]
 // Automatically inherits authPlugin and CORS from root
 export default async function (app) {
-  app.get("/list", () => [/* users */]);
+  app.get("/list", () => [
+    /* users */
+  ]);
 }
 // ✅ /api/users/list (has auth + CORS from root)
 ```
@@ -186,6 +189,7 @@ export default async function (app) {
 :::
 
 **Perfect for:**
+
 - Global authentication
 - Body parsing
 - CORS configuration
@@ -277,8 +281,8 @@ export const meta: Meta = {
         return { ...data, timestamp: Date.now() };
       }
       return data;
-    })
-  ]
+    }),
+  ],
 };
 
 export default async function (app) {
@@ -290,6 +294,7 @@ export default async function (app) {
 :::
 
 **Available hooks:**
+
 - **`request`** - Before route matching (auth, rate limiting)
 - **`transform`** - Modify response data before serialization
 - **`send`** - After response sent (logging, cleanup)
@@ -297,6 +302,7 @@ export default async function (app) {
 - **`timeout`** - Handle request timeouts
 
 **Application lifecycle hooks:**
+
 - **`hook.lifespan`** - Setup/teardown (database connections)
 - **`ready`** - When app is ready
 - **`listen`** - When server starts

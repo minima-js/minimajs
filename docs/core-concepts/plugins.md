@@ -25,6 +25,7 @@ This guide covers how to create plugins and how to use them in your modules.
 A plugin is a reusable component that extends the functionality of your application. Plugins can add hooks, middleware, authentication, logging, or any cross-cutting concern.
 
 **Key characteristics:**
+
 - Created with `plugin()` or `plugin.sync()`
 - Registered via `meta.plugins` in modules (recommended)
 - Can be registered via `app.register()` (manual)
@@ -124,12 +125,12 @@ export default async function (app) {
 
 :::
 
-
 ## Composing Plugins
 
 The `compose()` function combines multiple plugins into a single plugin, executing them sequentially.
 
 **Common use cases:**
+
 - Group related hooks (lifecycle, logging)
 - Create reusable plugin stacks (security, auth + logging)
 - Organize complex plugin configurations
@@ -145,11 +146,7 @@ import { helmetPlugin } from "../../plugins/helmet.js";
 import { rateLimitPlugin } from "../../plugins/rate-limit.js";
 
 // Compose security plugins
-const securityPlugins = compose(
-  cors({ origin: "https://example.com" }),
-  helmetPlugin(),
-  rateLimitPlugin({ max: 100 })
-);
+const securityPlugins = compose(cors({ origin: "https://example.com" }), helmetPlugin(), rateLimitPlugin({ max: 100 }));
 
 export const meta = {
   plugins: [securityPlugins],
@@ -204,11 +201,9 @@ const withAuthAndLogging = compose.create(authPlugin, loggingPlugin);
 
 // Manually register modules wrapped with plugins
 app.register(
-  withAuthAndLogging(
-    async (app) => {
-      app.get("/users", () => "users");
-    }
-  ),
+  withAuthAndLogging(async (app) => {
+    app.get("/users", () => "users");
+  }),
   { prefix: "/api" }
 );
 
@@ -222,8 +217,6 @@ await app.listen({ port: 3000 });
 1.  **Keep Plugins Focused**: Each plugin should have a single, clear responsibility
 1.  **Use Composition for Reusability**: Group related hooks and setup logic with `compose()`
 1.  **Order Matters in Composition**: Plugins execute in the order they're defined in the array
-
-
 
 ## Practical Examples
 
@@ -395,6 +388,7 @@ await app.listen({ port: 3000 });
 ```
 
 **When to use:**
+
 - Apps without module discovery
 - Registering global plugins in entry files
 - Quick prototypes or single-file apps
@@ -427,9 +421,12 @@ app.register(loggerPlugin);
 app.get("/users", () => "users");
 
 // This module also inherits the logger hook
-app.register(async (app) => {
-  app.get("/list", () => "posts"); // ✅ Logger runs here too
-}, { prefix: "/posts" });
+app.register(
+  async (app) => {
+    app.get("/list", () => "posts"); // ✅ Logger runs here too
+  },
+  { prefix: "/posts" }
+);
 ```
 
 **Module** is a plain function - creates an isolated scope:
@@ -440,33 +437,38 @@ import { createApp, hook } from "@minimajs/server/bun";
 const app = createApp({ moduleDiscovery: false });
 
 // Register a module - creates isolated scope
-app.register(async (app) => {
-  // Hook registered here stays isolated
-  app.register(hook("request", () => console.log("Users only")));
-  
-  app.get("/list", () => "users"); // ✅ Hook runs here
-}, { prefix: "/users" });
+app.register(
+  async (app) => {
+    // Hook registered here stays isolated
+    app.register(hook("request", () => console.log("Users only")));
+
+    app.get("/list", () => "users"); // ✅ Hook runs here
+  },
+  { prefix: "/users" }
+);
 
 // This sibling module doesn't get the hook
-app.register(async (app) => {
-  app.get("/list", () => "posts"); // ❌ Hook does NOT run here
-}, { prefix: "/posts" });
+app.register(
+  async (app) => {
+    app.get("/list", () => "posts"); // ❌ Hook does NOT run here
+  },
+  { prefix: "/posts" }
+);
 ```
 
 ### When to Use Each
 
-| Feature       | Plugin (`plugin()`)          | Module (`async function`)      |
-| ------------- | ---------------------------- | ------------------------------ |
-| **Scope**     | Extends **current** scope    | Creates **new isolated** scope |
-| **Use Case**  | Global hooks, middleware, auth | Feature routes, isolated logic |
-| **Inheritance** | Children inherit it        | Children inherit, siblings don't |
+| Feature         | Plugin (`plugin()`)            | Module (`async function`)        |
+| --------------- | ------------------------------ | -------------------------------- |
+| **Scope**       | Extends **current** scope      | Creates **new isolated** scope   |
+| **Use Case**    | Global hooks, middleware, auth | Feature routes, isolated logic   |
+| **Inheritance** | Children inherit it            | Children inherit, siblings don't |
 
 **Use plugin when:** You want hooks/middleware to apply to everything registered after it (global auth, logging, CORS)
 
 **Use module when:** You want to isolate a feature's routes and logic from other parts of the app
 
 > For a deeper dive into modules and auto-discovery, see the [Modules guide](/core-concepts/modules).
-
 
 ## See Also
 

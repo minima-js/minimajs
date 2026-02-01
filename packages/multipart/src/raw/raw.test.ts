@@ -55,9 +55,7 @@ describe("raw", () => {
   });
 
   test("file() skips non-matching files and returns null", async () => {
-    const stream = multipartStream(boundary, [
-      { name: "other", filename: "other.txt", data: "other-data" },
-    ]);
+    const stream = multipartStream(boundary, [{ name: "other", filename: "other.txt", data: "other-data" }]);
     await mockContext(async () => expect(await raw.file("avatar")).toBeNull(), { headers, body: stream });
   });
 
