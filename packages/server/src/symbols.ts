@@ -66,4 +66,6 @@ export const kBody = Symbol("minimajs.body");
  */
 export const kBodySkip = Symbol("minimajs.body.skip");
 
+export const kMiddlewares = Symbol("minimajs.middlewares");
+
 export const kIpAddr = Symbol("ipAddr");

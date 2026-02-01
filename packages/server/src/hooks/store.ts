@@ -1,7 +1,6 @@
-import { type HookStore, type GenericHookCallback } from "./types.js";
-import type { App } from "../interfaces/app.js";
+import type { App, Context } from "../interfaces/index.js";
 import { kHooks } from "../symbols.js";
-import type { Context, OnErrorHook, OnRequestHook, OnSendHook, OnTransformHook } from "../interfaces/index.js";
+import type { HookStore, GenericHookCallback, OnErrorHook, OnRequestHook, OnSendHook, OnTransformHook } from "./types.js";
 
 /**
  * Hook Execution Order and Direction
@@ -135,7 +134,7 @@ export namespace runHooks {
     return result;
   }
 
-  export async function error<S>(app: App<S>, error: unknown, ctx: Context<S>): Promise<any> {
+  export async function error<S>(app: App<S>, error: unknown, ctx: Context<S>): Promise<unknown> {
     const hooks = findHookToRun<S, OnErrorHook<S>>(app, "error");
     let err = error;
     for (const hook of hooks) {

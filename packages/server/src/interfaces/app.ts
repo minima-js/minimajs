@@ -1,21 +1,15 @@
 import type { Instance as Router, HTTPVersion } from "find-my-way";
-import type { ErrorHandler, Serializer } from "./response.js";
+import type { Serializer } from "./response.js";
 import type { Plugin, PluginOptions, PluginSync, Module, RegisterOptions, Registerable } from "../plugin.js";
 import type { Context } from "./context.js";
 import type { RouteMetaDescriptor, RouteOptions } from "./route.js";
 import type { Logger } from "pino";
-import type { kAppDescriptor, kHooks, kModulesChain } from "../symbols.js";
 import type { HookStore } from "../hooks/types.js";
+import type { kMiddlewares, kHooks, kAppDescriptor, kModulesChain } from "../symbols.js";
 
-export type Container<S = unknown> = {
-  [kHooks]: HookStore;
-  [kAppDescriptor]: RouteMetaDescriptor<S>[];
-  [kModulesChain]: App<S>[];
-  [key: symbol]: unknown;
-};
-
-export type Handler<S = unknown> = (ctx: Context<S>) => unknown;
-
+// ============================================================================
+// App
+// ============================================================================
 export interface App<S = any> {
   server?: S;
   readonly container: Container<S>;
@@ -30,8 +24,6 @@ export interface App<S = any> {
   log: Logger;
 
   serialize: Serializer<S>;
-
-  errorHandler: ErrorHandler<S>;
 
   get(path: string, handler: Handler<S>): this;
   get(path: string, ...args: [...RouteMetaDescriptor<S>[], Handler<S>]): this;
@@ -73,3 +65,27 @@ export interface App<S = any> {
 
   close(): Promise<void>;
 }
+
+// ============================================================================
+// Container
+// ============================================================================
+export type Container<S = unknown> = {
+  $rootMiddleware: Middleware;
+  [kMiddlewares]: Set<Middleware<S>>;
+  [kHooks]: HookStore;
+  [kAppDescriptor]: RouteMetaDescriptor<S>[];
+  [kModulesChain]: App<S>[];
+  [key: symbol]: unknown;
+};
+
+// ============================================================================
+// Handler
+// ============================================================================
+export type Handler<S = unknown> = (ctx: Context<S>) => unknown;
+
+// ============================================================================
+// Middleware Types
+// ============================================================================
+
+export type MiddlewareNext = () => Promise<Response>;
+export type Middleware<S = unknown> = (ctx: Context<S>, next: MiddlewareNext) => Promise<Response>;

@@ -18,7 +18,7 @@
  * app.register(shutdown());
  * ```
  */
-
+export * from "./context-provider/index.js";
 export * from "./body-parser/index.js";
 export * from "./router/index.js";
 export * from "./shutdown/index.js";

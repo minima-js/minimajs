@@ -23,6 +23,10 @@ import { createLogger, logger as defaultLogger } from "../logger.js";
 import { moduleDiscovery } from "../plugins/module-discovery/index.js";
 import type { ModuleDiscoveryOptions } from "../plugins/module-discovery/types.js";
 import { bodyParser, routeLogger } from "../plugins/index.js";
+import { executionContext, hook } from "../index.js";
+import { composeMiddleware } from "../internal/middleware.js";
+import { kMiddlewares } from "../symbols.js";
+import { contextProvider } from "../plugins/context-provider/index.js";
 
 export * from "./server.js";
 
@@ -41,17 +45,27 @@ export interface CreateBaseSeverOptions {
 
 export function createBaseServer<T>(server: ServerAdapter<T>, options: CreateBaseSeverOptions) {
   let logger: Logger | undefined = options.logger === false ? createLogger({ enabled: false }) : options.logger;
+
   logger ??= defaultLogger;
+
   const srv = new Server(server, {
     prefix: options.prefix ?? "",
     logger,
     router: Router({ ignoreTrailingSlash: true, ...options.router }),
   });
+  srv.register(contextProvider((ctx, next) => executionContext.run(ctx, next)));
   srv.register(deferrer());
   srv.register(bodyParser());
   srv.register(routeLogger());
   if (options.moduleDiscovery !== false) {
     srv.register(moduleDiscovery(options.moduleDiscovery ?? {}));
   }
+
+  srv.register(
+    hook("ready", (app) => {
+      app.container.$rootMiddleware = composeMiddleware([...app.container[kMiddlewares]]);
+    })
+  );
+
   return srv;
 }

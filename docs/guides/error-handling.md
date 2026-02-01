@@ -20,7 +20,6 @@ By default, uncaught exceptions result in a generic `500 Internal Server Error` 
 - [`abort`](#the-abort-helper) - Throw HTTP errors with status codes
 - [`redirect`](#the-redirect-helper) - Redirect users to different URLs
 - [`error` hook](#error-hook-behavior) - Handle errors at different scopes
-- [`app.errorHandler`](#custom-error-handler-apperrorhandler) - Global error fallback
 - [`HttpError.toJSON`](#overriding-tojson-method) - Customize error response format
 - [`send` hook](#send-hook) - Post-response cleanup (for both success and errors)
 - [`onError`](#request-scoped-error-handler-onerror) - Request-specific error handling
@@ -101,7 +100,7 @@ The `error` hook intercepts errors and can handle them in four ways:
 
 ### Global Error Handler
 
-Handle errors across your entire application:
+Handle errors across your entire application by registering an error hook at the root level:
 
 ```typescript
 import { hook, abort } from "@minimajs/server";
@@ -110,14 +109,18 @@ app.register(
   hook("error", (error) => {
     console.error("Error occurred:", error);
 
-    if (abort.is(error) && error.statusCode === 404) {
-      abort({ code: "NOT_FOUND", message: "Resource not found" }, 404);
+    // Re-throw HTTP errors with custom format
+    if (abort.is(error)) {
+      abort({ code: "HTTP_ERROR", message: error.message }, error.statusCode);
     }
 
+    // Handle all other errors as 500
     abort({ code: "INTERNAL_ERROR", message: "Server error" }, 500);
   })
 );
 ```
+
+> **Note:** If no error hook handles the error (all return `undefined` or none are registered), unhandled `HttpError` instances render themselves, while other errors result in a generic `500 Internal Server Error` response.
 
 ### Module-Level Error Handler
 
@@ -164,38 +167,6 @@ app.get("/risky", () => {
   return { success: true };
 });
 ```
-
-## Custom Error Handler (`app.errorHandler`)
-
-The `app.errorHandler` is the global fallback when no error hooks handle the error.
-
-```typescript
-import { createApp, response } from "@minimajs/server";
-
-const app = createApp();
-
-app.errorHandler = async (error, ctx) => {
-  ctx.app.log.error(error);
-
-  const isDev = process.env.NODE_ENV === "development";
-  const statusCode = error instanceof Error && "status" in error ? (error as any).status : 500;
-
-  const errorBody = JSON.stringify({
-    success: false,
-    error: isDev ? (error instanceof Error ? error.message : String(error)) : "Internal Server Error",
-    timestamp: new Date().toISOString(),
-    ...(isDev && error instanceof Error && { stack: error.stack }),
-  });
-
-  // Use response() to create response with proper status and headers
-  return response(errorBody, {
-    status: statusCode,
-    headers: { "Content-Type": "application/json" },
-  });
-};
-```
-
-> **Important:** Use `response()` helper to create responses that preserve headers and context state.
 
 ## Customizing Error Responses
 

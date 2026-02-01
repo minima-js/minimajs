@@ -1,9 +1,7 @@
 import { isCallable } from "./utils/callable.js";
-export { safe } from "./internal/context.js";
-export { maybeContext } from "./internal/context.js";
-import { $context as context } from "./internal/context.js";
-
-export { context };
+import assert from "node:assert";
+import { AsyncLocalStorage } from "node:async_hooks";
+import type { Context } from "./index.js";
 
 export type OnceCallback<T> = () => T;
 
@@ -46,4 +44,19 @@ export function createContext<T>(value?: T | (() => T)) {
   }
 
   return [getValue, setValue] as const;
+}
+export const executionContext = new AsyncLocalStorage<Context<any>>();
+
+export function safe<T, U extends unknown[]>(cb: (...args: U) => T) {
+  return (...args: U) => executionContext.run(null as any, cb, ...args) as T;
+}
+
+export function context<S>() {
+  const context = executionContext.getStore();
+  assert.ok(context, "context() was called outside of a request scope");
+  return context as Context<S>;
+}
+
+export function maybeContext<S>() {
+  return (executionContext.getStore() as Context<S>) || null;
 }

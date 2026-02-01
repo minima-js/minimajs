@@ -2,7 +2,7 @@ import { describe, test, expect } from "@jest/globals";
 import { applyRoutePrefix, applyRouteMetadata, getAppRouteDescriptors, result2route } from "./route.js";
 import type { RouteFindResult, RouteConfig, RouteMetaDescriptor, RouteMetadata } from "../interfaces/route.js";
 import { kAppDescriptor } from "../symbols.js";
-import type { App, Container } from "../interfaces/app.js";
+import type { App, Container } from "../interfaces/index.js";
 
 describe("internal/route", () => {
   const tag = Symbol("tag");
