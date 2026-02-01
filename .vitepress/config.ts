@@ -1,5 +1,6 @@
 import { defineConfig } from "vitepress";
 import { withMermaid } from "vitepress-plugin-mermaid";
+import { withPwa } from "@vite-pwa/vitepress";
 
 const tagId = 'GTM-P9NLW275';
 
@@ -12,6 +13,31 @@ const config = defineConfig({
   cleanUrls: true,
 
    head: [
+    // Favicon
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],
+    ['link', { rel: 'icon', type: 'image/png', href: '/logo.png' }],
+    ['link', { rel: 'apple-touch-icon', href: '/logo.png' }],
+
+    // Meta
+    ['meta', { name: 'theme-color', content: '#eb4432' }],
+    ['meta', { name: 'keywords', content: 'nodejs, typescript, web framework, bun, esm, rest api, backend, server, minimajs' }],
+    ['meta', { name: 'author', content: 'Minima.js Team' }],
+
+    // Open Graph
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:title', content: 'Minima.js' }],
+    ['meta', { property: 'og:description', content: 'A cutting-edge Node.js framework for modern web applications' }],
+    ['meta', { property: 'og:image', content: '/logo.png' }],
+    ['meta', { property: 'og:url', content: 'https://minimajs.com' }],
+    ['meta', { property: 'og:site_name', content: 'Minima.js' }],
+
+    // Twitter
+    ['meta', { name: 'twitter:card', content: 'summary' }],
+    ['meta', { name: 'twitter:title', content: 'Minima.js' }],
+    ['meta', { name: 'twitter:description', content: 'A cutting-edge Node.js framework for modern web applications' }],
+    ['meta', { name: 'twitter:image', content: '/logo.png' }],
+
+    // Analytics
     [
       'script',
       { async: '', src: 'https://www.googletagmanager.com/gtag/js?id=' + tagId }
@@ -45,6 +71,33 @@ const config = defineConfig({
   mermaidPlugin: {
     class: "mermaid",
   },
+
+  // PWA configuration
+  pwa: {
+    registerType: "autoUpdate",
+    manifest: {
+      name: "Minima.js",
+      short_name: "Minima.js",
+      description: "A cutting-edge Node.js framework for modern web applications",
+      theme_color: "#eb4432",
+      icons: [
+        {
+          src: "/logo.png",
+          sizes: "200x200",
+          type: "image/png",
+        },
+        {
+          src: "/logo.svg",
+          sizes: "any",
+          type: "image/svg+xml",
+        },
+      ],
+    },
+    workbox: {
+      globPatterns: ["**/*.{css,js,html,svg,png,ico,txt,woff2}"],
+    },
+  },
+
   themeConfig: {
     logo: "/logo.svg",
     nav: [
@@ -124,7 +177,15 @@ const config = defineConfig({
         items: [
           { text: "Auth", link: "/packages/auth" },
           { text: "Schema", link: "/packages/schema" },
-          { text: "Multipart", link: "/packages/multipart" },
+          {
+            text: "Multipart",
+            collapsed: false,
+            items: [
+              { text: "Overview", link: "/packages/multipart/" },
+              { text: "Schema Validation", link: "/packages/multipart/schema" },
+              { text: "Helpers", link: "/packages/multipart/helpers" },
+            ],
+          },
           { text: "Cookie", link: "/packages/cookie" },
         ],
       },
@@ -143,4 +204,4 @@ const config = defineConfig({
   },
 });
 
-export default withMermaid(config);
+export default withPwa(withMermaid(config));

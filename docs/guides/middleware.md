@@ -172,13 +172,13 @@ Request ──►┌────────────────────
 
 Both middleware and hooks allow you to intercept requests, but they serve different purposes:
 
-| Feature                | Middleware                         | Hooks                                  |
-| ---------------------- | ---------------------------------- | -------------------------------------- |
-| **Execution Model**    | Onion (wrap with `next()`)         | Sequential (FIFO/LIFO)                 |
-| **Scope**              | ⚠️ Always global                   | ✅ Module-scoped                       |
-| **Performance**        | ⚠️ Adds overhead per middleware    | ✅ Optimized                           |
-| **Async Context**      | ✅ Preserved through chain         | ⚠️ May break in loop iterations       |
-| **Use Case**           | APM, tracing                       | Logging, error handling, validation    |
+| Feature             | Middleware                      | Hooks                               |
+| ------------------- | ------------------------------- | ----------------------------------- |
+| **Execution Model** | Onion (wrap with `next()`)      | Sequential (FIFO/LIFO)              |
+| **Scope**           | ⚠️ Always global                | ✅ Module-scoped                    |
+| **Performance**     | ⚠️ Adds overhead per middleware | ✅ Optimized                        |
+| **Async Context**   | ✅ Preserved through chain      | ⚠️ May break in loop iterations     |
+| **Use Case**        | APM, tracing                    | Logging, error handling, validation |
 
 > **Important:** Middleware is **always registered globally**, regardless of where you define it. Even if you register middleware inside a module, it will apply to all requests across the entire application. Use hooks for module-scoped behavior.
 

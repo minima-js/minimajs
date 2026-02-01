@@ -6,12 +6,16 @@
  *
  * @example
  * ```ts
- * import { multipart } from "@minimajs/multipart";
+ * import { multipart, helpers } from "@minimajs/multipart";
  *
  * const file = await multipart.file('avatar');
- * console.log(file.filename);
- * await file.move('/uploads/avatars');
+ * console.log(file.name);
+ * await helpers.save(file, '/uploads/avatars');
  * ```
  */
-export * from "./file.js";
-export * from "./multipart.js";
+
+export * as multipart from "./multipart/index.js";
+export * as raw from "./raw/index.js";
+export * as streaming from "./streaming/index.js";
+export * as helpers from "./helpers.js";
+export * from "./types.js";

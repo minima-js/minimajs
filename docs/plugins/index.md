@@ -18,9 +18,7 @@ import { type Meta } from "@minimajs/server";
 import { cors } from "@minimajs/server/plugins";
 
 export const meta: Meta = {
-  plugins: [
-    cors({ origin: "*" })
-  ]
+  plugins: [cors({ origin: "*" })],
 };
 
 export default async function (app) {

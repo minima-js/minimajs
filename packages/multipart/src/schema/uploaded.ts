@@ -1,27 +1,26 @@
-import { z, ZodArray } from "zod";
-import { FileSchema } from "./schema.js";
-import { multipart } from "../multipart.js";
-import { isFile, type File } from "../file.js";
+import { z, ZodArray, ZodFile } from "zod";
 import { defer, type Context } from "@minimajs/server";
 import { v4 as uuid } from "uuid";
-import { tmpdir } from "node:os";
 import { createWriteStream } from "node:fs";
 import { StreamMeter } from "../stream.js";
+import { stream2void } from "../helpers.js";
 import { pipeline } from "node:stream/promises";
-import { ensurePath } from "../helpers.js";
+import { ensurePath, isRawFile } from "../helpers.js";
 import * as validate from "./validate.js";
-import { isUploadedFile, UploadedFile } from "./uploaded-file.js";
-import { pkg } from "../pkg.js";
+import * as zodError from "./zod-error.js";
 import { join } from "node:path";
+import { unlink } from "node:fs/promises";
+import { isUploadedFile, TempFile } from "./file.js";
+import type { MultipartOptions, MultipartRawFile } from "../types.js";
+import * as raw from "../raw/index.js";
+import { TMP_DIR } from "./constants.js";
 
 /**
  * Configuration options for multipart upload handling.
  */
-export interface UploadOption {
+export interface UploadOption extends MultipartOptions {
   /** Directory for storing temporary files. Defaults to system temp directory. */
   tmpDir?: string;
-  /** Maximum total request size in bytes. Validated before processing. */
-  maxSize?: number;
 }
 
 export async function getUploadedBody<T extends z.ZodRawShape>(
@@ -29,64 +28,84 @@ export async function getUploadedBody<T extends z.ZodRawShape>(
   ctx: Context,
   option: UploadOption
 ): Promise<z.infer<z.ZodObject<T>>> {
-  const result: Record<string, unknown> = {} as any;
-  defer(() => deleteUploadedFiles(Object.values(result)));
-  for await (const [field, data] of multipart.body()) {
-    const schema = shape[field];
+  const result: Record<string, unknown> = {};
 
-    if (schema instanceof FileSchema && isFile(data)) {
-      result[field] = await validateAndUpload(data, ctx.request.signal, schema, option);
+  defer(() => {
+    deleteUploadedFiles(Object.values(result)).catch(() => {});
+  });
+
+  for await (const field of raw.body(option)) {
+    const schema = shape[field.fieldname];
+
+    if (schema instanceof ZodFile && isRawFile(field)) {
+      result[field.fieldname] = await validateAndUpload(field, ctx.request.signal, schema, option);
       continue;
     }
 
-    if (schema instanceof ZodArray && schema.element instanceof FileSchema && isFile(data)) {
-      result[field] ??= [];
-      const files = result[field] as UploadedFile[];
-      validate.maximum(schema, files.length, field);
-      files.push(await validateAndUpload(data, ctx.request.signal, schema.element, option));
+    if (schema instanceof ZodArray && schema.element instanceof ZodFile && isRawFile(field)) {
+      result[field.fieldname] ??= [];
+      const files = result[field.fieldname] as TempFile[];
+      validate.maxLength(schema, files.length, field.fieldname);
+      files.push(await validateAndUpload(field, ctx.request.signal, schema.element, option));
       continue;
     }
 
-    if (isFile(data)) {
-      await data.flush();
+    // Drain unexpected file fields or fields not in schema
+    if (isRawFile(field)) {
+      await pipeline(field.stream, stream2void());
       continue;
     }
+
+    // Skip fields not in schema
+    if (!schema) continue;
 
     if (schema instanceof ZodArray) {
-      result[field] ??= [];
-      (result[field] as string[]).push(data);
+      result[field.fieldname] ??= [];
+      (result[field.fieldname] as string[]).push(field.value);
       continue;
     }
-    result[field] = data;
+
+    result[field.fieldname] = field.value;
   }
   return z.object(shape).parse(result);
 }
 
-async function deleteUploadedFiles(files: unknown[]) {
-  for (const file of files) {
+function deleteUploadedFiles(files: unknown[]): Promise<unknown[]> {
+  const promises = files.flatMap((file) => {
     if (Array.isArray(file)) {
-      await deleteUploadedFiles(file);
+      return deleteUploadedFiles(file);
     }
-    if (!isUploadedFile(file)) {
-      continue;
+    if (isUploadedFile(file)) {
+      return file.destroy();
     }
-    await file.destroy();
-  }
+    return [];
+  });
+
+  return Promise.all(promises);
 }
 
-async function validateAndUpload(file: File, signal: AbortSignal, schema: FileSchema, { tmpDir = tmpdir() }: UploadOption) {
-  validate.mimeType(schema, file);
-  const maxSize = schema.def.max ?? Infinity;
+async function validateAndUpload(
+  rawFile: MultipartRawFile,
+  signal: AbortSignal,
+  schema: ZodFile,
+  { tmpDir = TMP_DIR }: UploadOption
+) {
+  const maxSize = schema._zod.bag.maximum ?? Infinity;
   const meter = new StreamMeter(maxSize);
-  const filename = join(await ensurePath(tmpDir, pkg.name), uuid());
+  const filename = join(await ensurePath(tmpDir), uuid());
   try {
-    await pipeline(file.stream.pipe(meter), createWriteStream(filename));
+    await pipeline(rawFile.stream.pipe(meter), createWriteStream(filename), { signal });
   } catch (err) {
+    await unlink(filename).catch(() => {});
     if (err instanceof RangeError) {
-      validate.maxSize(schema, file, meter.bytes);
+      throw zodError.maxFileSizeError(schema, rawFile, meter.bytes);
     }
     throw err;
   }
-  validate.minSize(schema, file, meter.bytes);
-  return new UploadedFile(file, filename, meter.bytes, signal);
+  return new TempFile(rawFile.filename, {
+    path: filename,
+    size: meter.bytes,
+    signal,
+    type: rawFile.mimeType,
+  });
 }

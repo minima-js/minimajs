@@ -26,7 +26,7 @@ The hook system gives you fine-grained control over the application and request 
 
 ### Hook Execution Order
 
-Hooks within the same scope execute in **LIFO** (Last-In-First-Out) order. Register hooks via `meta.plugins`:
+Hooks within the same scope execute in **FIFO** (First-In-First-Out) order for request hooks. Register hooks via `meta.plugins`:
 
 ::: code-group
 

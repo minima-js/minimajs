@@ -214,7 +214,7 @@ src/
 import type { App, Meta } from "@minimajs/server";
 import { cors } from "@minimajs/server/plugins";
 
-// These plugin apply to ALL child modules
+// These plugins apply to ALL child modules
 export const meta: Meta = {
   prefix: "/api/v1",
   plugins: [cors({ origin: "*" })],
@@ -320,7 +320,6 @@ export default async function (app: App) {
 - `GET /api/posts/list` (inherits `/api` prefix + all plugins)
 
 💡 **Best Practice:** Put authentication, CORS, rate limiting, and global logging in the root module.
-
 
 ## Common Patterns
 

@@ -30,6 +30,7 @@
     "@braintree/sanitize-url": "^7.1.1",
     "@changesets/cli": "^2.29.8",
     "@eslint/js": "^9.39.2",
+    "@vite-pwa/vitepress": "^1.1.0",
     "cytoscape": "^3.33.1",
     "cytoscape-cose-bilkent": "^4.1.0",
     "dayjs": "^1.11.19",

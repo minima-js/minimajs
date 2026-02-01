@@ -33,7 +33,7 @@ bun test
 **Example test file** (`app.test.ts`):
 
 ```ts
-import { describe, test, expect } from "@jest/globals";
+import { describe, test, expect } from "bun:test";
 import { createApp } from "@minimajs/server/bun";
 
 describe("App", () => {
@@ -81,7 +81,9 @@ Test individual handlers in isolation.
 
 ### Testing Route Handlers
 
-```ts
+::: code-group
+
+```ts [Bun]
 import { describe, test, expect } from "bun:test";
 import { createApp } from "@minimajs/server/bun";
 import { createRequest } from "@minimajs/server/mock";
@@ -126,12 +128,42 @@ describe("User Routes", () => {
 });
 ```
 
+```ts [Jest/Vitest]
+import { describe, test, expect } from "vitest"; // or @jest/globals
+import { createApp } from "@minimajs/server/node";
+import { createRequest } from "@minimajs/server/mock";
+import { params, body } from "@minimajs/server";
+
+describe("User Routes", () => {
+  test("GET /users/:id returns user", async () => {
+    const app = createApp();
+
+    app.get("/users/:id", () => {
+      const id = params.get("id");
+      return { id, name: "Alice" };
+    });
+
+    const response = await app.handle(createRequest("/users/123"));
+
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data).toEqual({ id: "123", name: "Alice" });
+  });
+
+  // ... other tests
+});
+```
+
+:::
+
 > **Alternative:** You can also use native `new Request("http://localhost/path", options)` if you need more control over the request object.
 
 ### Testing with Query Parameters
 
 ```ts
+import { createApp } from "@minimajs/server/bun";
 import { createRequest } from "@minimajs/server/mock";
+import { searchParams } from "@minimajs/server";
 
 test("GET /search with query params", async () => {
   const app = createApp();
@@ -152,7 +184,9 @@ test("GET /search with query params", async () => {
 ### Testing Headers
 
 ```ts
+import { createApp } from "@minimajs/server/bun";
 import { createRequest } from "@minimajs/server/mock";
+import { headers, response } from "@minimajs/server";
 
 test("requires authorization header", async () => {
   const app = createApp();
@@ -221,11 +255,19 @@ import { createRequest } from "@minimajs/server/mock";
 test("module routes are isolated", async () => {
   const app = createApp();
 
-  const adminModule = app.module("/admin");
-  adminModule.get("/users", () => ({ users: [] }));
+  app.register(
+    async (adminApp) => {
+      adminApp.get("/users", () => ({ users: [] }));
+    },
+    { prefix: "/admin" }
+  );
 
-  const apiModule = app.module("/api");
-  apiModule.get("/users", () => ({ data: [] }));
+  app.register(
+    async (apiApp) => {
+      apiApp.get("/users", () => ({ data: [] }));
+    },
+    { prefix: "/api" }
+  );
 
   // Test admin module
   const res1 = await app.handle(createRequest("/admin/users"));
@@ -245,18 +287,20 @@ test("module routes are isolated", async () => {
 
 ```ts
 import { createRequest } from "@minimajs/server/mock";
+import { hook, createContext } from "@minimajs/server";
 
 test("request hook modifies context", async () => {
   const app = createApp();
+  const [getRequestId, setRequestId] = createContext<string>();
 
   app.register(
     hook("request", () => {
-      context.set("requestId", "test-123");
+      setRequestId("test-123");
     })
   );
 
   app.get("/", () => {
-    const requestId = context.get("requestId");
+    const requestId = getRequestId();
     return { requestId };
   });
 
