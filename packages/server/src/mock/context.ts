@@ -1,4 +1,4 @@
-import { wrap } from "../internal/context.js";
+import { executionContext } from "../context.js";
 import { type Context } from "../interfaces/context.js";
 import { createRequest, type MockRequestOptions } from "./request.js";
 import { kBody } from "../symbols.js";
@@ -61,5 +61,5 @@ export function mockContext<S, T = void>(callback: MockContextCallback<T, S>, op
     context.locals[kBody] = reqOptions.body;
   }
 
-  return wrap(context, () => callback(context));
+  return executionContext.run(context, () => callback(context));
 }

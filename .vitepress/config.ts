@@ -82,6 +82,7 @@ const config = defineConfig({
           { text: "Controllers", link: "/guides/controllers" },
           { text: "HTTP", link: "/guides/http" },
           { text: "Hooks", link: "/guides/hooks" },
+          { text: "Middleware", link: "/guides/middleware" },
           { text: "Error Handling", link: "/guides/error-handling" },
           { text: "Logger", link: "/guides/logger" },
           { text: "Testing", link: "/guides/testing" },
@@ -115,6 +116,7 @@ const config = defineConfig({
           { text: "Module Discovery", link: "/advanced/module-discovery" },
           { text: "Custom Runtime Adapters", link: "/advanced/custom-adapters" },
           { text: "Container & Encapsulation", link: "/advanced/container-encapsulation" },
+          { text: "Context Provider", link: "/advanced/context-provider" },
         ],
       },
       {

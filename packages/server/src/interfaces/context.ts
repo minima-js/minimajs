@@ -21,11 +21,11 @@ export interface ContextLocals {
 }
 
 export interface Context<S = unknown> {
+  readonly $metadata: ContextMetadata;
   readonly app: App<S>;
   readonly server: S;
   readonly serverAdapter: ServerAdapter<S>;
   readonly pathname: string;
-  readonly $metadata: ContextMetadata;
   readonly request: Request; // WebApi Request
   readonly responseState: ResponseState; // Mutable response headers/status
   readonly container: Container<S>; // app.container
