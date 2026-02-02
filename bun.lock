@@ -107,7 +107,7 @@
     },
     "packages/multipart": {
       "name": "@minimajs/multipart",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "dependencies": {
         "@fastify/busboy": "^3.2.0",
         "uuid": "^13.0.0",
@@ -148,8 +148,9 @@
     },
     "packages/server": {
       "name": "@minimajs/server",
-      "version": "0.7.0",
+      "version": "0.8.0",
       "dependencies": {
+        "@types/json-schema": "^7.0.15",
         "avvio": "9",
         "deepmerge": "^4.3.1",
         "find-my-way": "9",
