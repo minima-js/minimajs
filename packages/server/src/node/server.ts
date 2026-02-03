@@ -6,7 +6,14 @@ import {
   type ServerOptions,
 } from "node:http";
 import { toWebRequest, fromWebResponse } from "./utils.js";
-import type { AddressInfo, ServerAdapter, ListenOptions, RequestHandler, ListenResult } from "../interfaces/server.js";
+import type {
+  AddressInfo,
+  ServerAdapter,
+  ListenOptions,
+  RequestHandler,
+  ListenResult,
+  RemoteAddr,
+} from "../interfaces/server.js";
 import type { Server } from "../core/index.js";
 import type { Context } from "../index.js";
 
@@ -15,8 +22,14 @@ export type NodeServerOptions = ServerOptions<typeof IncomingMessage, typeof Ser
 export class NodeServerAdapter implements ServerAdapter<NodeServer> {
   constructor(private readonly serverOptions?: NodeServerOptions) {}
 
-  remoteAddr(ctx: Context<NodeServer>): string | null {
-    return ctx.incomingMessage.socket.remoteAddress || null;
+  remoteAddr({ incomingMessage }: Context<NodeServer>): RemoteAddr | null {
+    const socket = incomingMessage.socket;
+    if (!socket.remoteAddress) return null;
+    return {
+      hostname: socket.remoteAddress,
+      family: socket.remoteFamily as RemoteAddr["family"],
+      port: socket.remotePort || 0,
+    };
   }
 
   getAddress(server: NodeServer): AddressInfo {
@@ -32,7 +45,10 @@ export class NodeServerAdapter implements ServerAdapter<NodeServer> {
         port: 0,
         family: "unix",
         protocol: "http",
-        address: info,
+        href: info,
+        [Symbol.toStringTag]() {
+          return this.href;
+        },
       };
     }
 
@@ -43,7 +59,10 @@ export class NodeServerAdapter implements ServerAdapter<NodeServer> {
       port: info.port,
       family: info.family as AddressInfo["family"],
       protocol: "http",
-      address: `http://${hostname}:${info.port}/`,
+      href: `http://${hostname}:${info.port}/`,
+      [Symbol.toStringTag]() {
+        return this.href;
+      },
     };
   }
 

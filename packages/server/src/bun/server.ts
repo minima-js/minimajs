@@ -1,5 +1,12 @@
 import { type Server as BunServer, type Serve } from "bun";
-import type { AddressInfo, ServerAdapter, ListenOptions, RequestHandler, ListenResult } from "../interfaces/server.js";
+import type {
+  AddressInfo,
+  ServerAdapter,
+  ListenOptions,
+  RequestHandler,
+  ListenResult,
+  RemoteAddr,
+} from "../interfaces/server.js";
 import type { Context, Server } from "../index.js";
 
 export type BunServeOptions<T = unknown> = Omit<Serve.Options<T>, "fetch" | "port" | "hostname">;
@@ -7,8 +14,14 @@ export type BunServeOptions<T = unknown> = Omit<Serve.Options<T>, "fetch" | "por
 export class BunServerAdapter<T = unknown> implements ServerAdapter<BunServer<T>> {
   constructor(private readonly serverOptions: BunServeOptions<T> = {}) {}
 
-  remoteAddr(ctx: Context<BunServer<T>>): string | null {
-    return ctx.server.requestIP(ctx.request)?.address || null;
+  remoteAddr(ctx: Context<BunServer<T>>): RemoteAddr | null {
+    const addr = ctx.server.requestIP(ctx.request);
+    if (!addr) return null;
+    return {
+      hostname: addr.address,
+      family: addr.family,
+      port: addr.port,
+    };
   }
 
   async listen(
@@ -32,7 +45,10 @@ export class BunServerAdapter<T = unknown> implements ServerAdapter<BunServer<T>
       port: server.port!,
       family: (server as any).address?.family, // TODO: fix typing
       protocol: server.protocol!,
-      address: server.url.href,
+      href: server.url.href,
+      [Symbol.toStringTag]() {
+        return this.href;
+      },
     };
 
     return { server, address };

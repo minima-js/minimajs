@@ -12,7 +12,7 @@ describe("Request Abortion Integration Tests", () => {
 
   beforeEach(async () => {
     app = createApp();
-    const { address } = await app.listen({ port: 0 }); // Random port
+    const { href: address } = await app.listen({ port: 0 }); // Random port
     serverUrl = address;
   });
 
