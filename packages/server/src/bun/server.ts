@@ -46,9 +46,10 @@ export class BunServerAdapter<T = unknown> implements ServerAdapter<BunServer<T>
       family: (server as any).address?.family, // TODO: fix typing
       protocol: server.protocol!,
       href: server.url.href,
-      [Symbol.toStringTag]() {
+      toString() {
         return this.href;
       },
+      [Symbol.toStringTag]: "AddressInfo",
     };
 
     return { server, address };

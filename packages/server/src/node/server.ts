@@ -46,9 +46,10 @@ export class NodeServerAdapter implements ServerAdapter<NodeServer> {
         family: "unix",
         protocol: "http",
         href: info,
-        [Symbol.toStringTag]() {
+        toString() {
           return this.href;
         },
+        [Symbol.toStringTag]: "AddressInfo",
       };
     }
 
@@ -60,7 +61,8 @@ export class NodeServerAdapter implements ServerAdapter<NodeServer> {
       family: info.family as AddressInfo["family"],
       protocol: "http",
       href: `http://${hostname}:${info.port}/`,
-      [Symbol.toStringTag]() {
+      [Symbol.toStringTag]: "AddressInfo" as const,
+      toString() {
         return this.href;
       },
     };

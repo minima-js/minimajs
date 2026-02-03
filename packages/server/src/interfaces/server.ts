@@ -22,7 +22,8 @@ export interface AddressInfo {
   protocol: "http" | "https";
   /** The full address string */
   href: string;
-  [Symbol.toStringTag](): string;
+  readonly [Symbol.toStringTag]: string;
+  toString(): string;
 }
 
 /**
