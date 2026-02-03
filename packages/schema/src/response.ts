@@ -51,3 +51,55 @@ export function createResponse<T extends ZodType>(statusCodeOrSchema: number | T
     [kStatusCode]: 200,
   };
 }
+
+/**
+ * Creates a response headers schema descriptor for OpenAPI documentation.
+ *
+ * Unlike request validators, this doesn't perform runtime validation -
+ * it only attaches the schema to route metadata for documentation generation.
+ *
+ * This allows you to document response headers independently from the response body,
+ * enabling different status codes for headers and body schemas.
+ *
+ * @param statusCodeOrSchema - Either a status code (number) or a Zod schema
+ * @param schema - A Zod schema (only when first param is status code)
+ * @returns A SchemaType that can be passed to the `schema()` function
+ *
+ * @example
+ * ```typescript
+ * import { schema, createBody, createResponse, createResponseHeaders } from "@minimajs/schema";
+ * import { z } from "zod";
+ *
+ * const bodySchema = createBody(z.object({ name: z.string() }));
+ * const responseBodySchema = createResponse(z.object({ id: z.string(), name: z.string() }));
+ * const responseHeadersSchema = createResponseHeaders(z.object({ 'x-custom': z.string() }));
+ *
+ * // Different status codes for body and headers
+ * const createdBodySchema = createResponse(201, z.object({ id: z.string() }));
+ * const unauthorizedHeadersSchema = createResponseHeaders(401, z.object({ 'www-authenticate': z.string() }));
+ *
+ * app.post('/users',
+ *   schema(bodySchema, createdBodySchema, responseHeadersSchema, unauthorizedHeadersSchema),
+ *   () => {
+ *     const { name } = bodySchema();
+ *     return { id: crypto.randomUUID(), name };
+ *   }
+ * );
+ * ```
+ */
+export function createResponseHeaders<T extends ZodType>(schema: T): SchemaType;
+export function createResponseHeaders<T extends ZodType>(statusCode: number, schema: T): SchemaType;
+export function createResponseHeaders<T extends ZodType>(statusCodeOrSchema: number | T, schema?: T): SchemaType {
+  if (typeof statusCodeOrSchema === "number") {
+    return {
+      [kDataType]: "responseHeaders",
+      [kSchema]: schema!,
+      [kStatusCode]: statusCodeOrSchema,
+    };
+  }
+  return {
+    [kDataType]: "responseHeaders",
+    [kSchema]: statusCodeOrSchema,
+    [kStatusCode]: 200,
+  };
+}
