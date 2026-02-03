@@ -1,5 +1,3 @@
-import type { z } from "zod";
-
 export interface OpenAPIInfo {
   title: string;
   version: string;
@@ -19,11 +17,14 @@ export interface OpenAPIInfo {
 export interface OpenAPIServer {
   url: string;
   description?: string;
-  variables?: Record<string, {
-    default: string;
-    enum?: string[];
-    description?: string;
-  }>;
+  variables?: Record<
+    string,
+    {
+      default: string;
+      enum?: string[];
+      description?: string;
+    }
+  >;
 }
 
 export interface OpenAPITag {
@@ -96,22 +97,28 @@ export interface OpenAPIParameter {
 
 export interface OpenAPIRequestBody {
   description?: string;
-  content: Record<string, {
-    schema: any;
-    example?: any;
-    examples?: Record<string, any>;
-  }>;
+  content: Record<
+    string,
+    {
+      schema: any;
+      example?: any;
+      examples?: Record<string, any>;
+    }
+  >;
   required?: boolean;
 }
 
 export interface OpenAPIResponse {
   description: string;
   headers?: Record<string, any>;
-  content?: Record<string, {
-    schema: any;
-    example?: any;
-    examples?: Record<string, any>;
-  }>;
+  content?: Record<
+    string,
+    {
+      schema: any;
+      example?: any;
+      examples?: Record<string, any>;
+    }
+  >;
 }
 
 export interface RouteDocumentation {
@@ -120,15 +127,6 @@ export interface RouteDocumentation {
   tags?: string[];
   operationId?: string;
   deprecated?: boolean;
-  body?: z.ZodTypeAny;
-  query?: z.ZodTypeAny;
-  params?: z.ZodTypeAny;
-  headers?: z.ZodTypeAny;
-  responses?: Record<number | "default", {
-    description: string;
-    schema?: z.ZodTypeAny;
-    headers?: z.ZodTypeAny;
-  }>;
   security?: Array<Record<string, string[]>>;
 }
 

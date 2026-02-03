@@ -22,9 +22,7 @@
     "@minimajs/server": ">=0.3.0",
     "zod": "^4.3.2"
   },
-  "dependencies": {
-    "zod-to-json-schema": "^3.24.1"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@minimajs/server": "workspace:*",
     "@types/node": "^25.0.3",

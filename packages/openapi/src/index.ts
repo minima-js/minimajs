@@ -1,6 +1,9 @@
-export { openapi, generateOpenAPIDocument } from "./generator.js";
-export { doc, kOpenAPIDoc } from "./metadata.js";
-export { convertZodToOpenAPI, extractPathParameters } from "./schema-converter.js";
+import { plugin } from "@minimajs/server";
+import { generateOpenAPIDocument } from "./generator.js";
+import type { OpenAPIOptions } from "./types.js";
+
+export { generateOpenAPIDocument } from "./generator.js";
+export { extractPathParameters, cleanJSONSchema } from "./schema-converter.js";
 export type {
   OpenAPIInfo,
   OpenAPIServer,
@@ -16,5 +19,32 @@ export type {
   RouteDocumentation,
   OpenAPIOptions,
 } from "./types.js";
-export type { OpenAPIPluginOptions } from "./generator.js";
-export type { SchemaConverterOptions } from "./schema-converter.js";
+
+export interface OpenAPIPluginOptions extends OpenAPIOptions {
+  path?: string;
+}
+
+export * from "./generator.js";
+
+export function openapi(
+  options: OpenAPIPluginOptions = {
+    info: {
+      title: "Minima.js",
+      version: "1.0.0",
+    },
+  }
+) {
+  const { info, servers = [], tags = [], security, components, externalDocs, path = "/openapi.json" } = options;
+  return plugin.sync((app) => {
+    app.$root.get(path, () => {
+      return generateOpenAPIDocument(app, {
+        info,
+        servers,
+        tags,
+        security,
+        components,
+        externalDocs,
+      });
+    });
+  });
+}
