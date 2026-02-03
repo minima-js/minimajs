@@ -5,7 +5,6 @@ export interface RemoteAddr {
   hostname: string;
   port: number;
   family: "IPv4" | "IPv6";
-  transport?: "tcp" | "udp";
 }
 
 /**
@@ -22,7 +21,7 @@ export interface AddressInfo {
   protocol: "http" | "https";
   /** The full address string */
   href: string;
-  readonly [Symbol.toStringTag]: string;
+
   toString(): string;
 }
 

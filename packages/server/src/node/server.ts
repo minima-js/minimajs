@@ -28,7 +28,7 @@ export class NodeServerAdapter implements ServerAdapter<NodeServer> {
     return {
       hostname: socket.remoteAddress,
       family: socket.remoteFamily as RemoteAddr["family"],
-      port: socket.remotePort || 0,
+      port: socket.remotePort!,
     };
   }
 
@@ -49,7 +49,6 @@ export class NodeServerAdapter implements ServerAdapter<NodeServer> {
         toString() {
           return this.href;
         },
-        [Symbol.toStringTag]: "AddressInfo",
       };
     }
 
@@ -61,7 +60,6 @@ export class NodeServerAdapter implements ServerAdapter<NodeServer> {
       family: info.family as AddressInfo["family"],
       protocol: "http",
       href: `http://${hostname}:${info.port}/`,
-      [Symbol.toStringTag]: "AddressInfo" as const,
       toString() {
         return this.href;
       },
