@@ -1,6 +1,6 @@
 # @minimajs/cookie
 
-Type-safe cookie management for MinimaJS applications.
+Type-safe cookie management for Minima.js applications.
 
 [![npm version](https://img.shields.io/npm/v/@minimajs/cookie.svg)](https://www.npmjs.com/package/@minimajs/cookie)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -242,12 +242,12 @@ app.post("/logout", () => {
    cookies.set("auth-token", token, { maxAge: 900 }); // 15 minutes
    ```
 
-## License
-
-MIT
-
 ## Links
 
 - [Documentation](https://minima-js.github.io/packages/cookie)
 - [GitHub](https://github.com/minima-js/minimajs)
 - [npm](https://www.npmjs.com/package/@minimajs/cookie)
+
+## License
+
+MIT

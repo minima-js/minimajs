@@ -128,6 +128,8 @@ Guards are tightly coupled to the NestJS runtime.
 
 **Minima.js**
 
+Authorization logic is a simple, composable function.
+
 ```ts
 // auth/services.ts
 import { headers, abort } from "@minimajs/server";
@@ -139,17 +141,23 @@ const isAuthenticated = () => {
 };
 ```
 
-Gates are simple functions, composable, and framework-agnostic.
+These functions can be applied as middleware using the composition API.
 
 ```ts
-function profile() {
-  return auth();
-}
+import { plugin, hook, compose } from "@minimajs/server";
+
+// Wrap the auth logic in a plugin
+const authPlugin = plugin((app) => {
+  app.register(hook("request", isAuthenticated));
+});
+
 function adminModule(app: App) {
-  app.get("/profile", profile);
+  app.get("/profile", () => ({ user: "admin" }));
 }
 
-app.register(interceptor([isAuthenticated], adminModule));
+// Apply the plugin to the module
+const protectedAdminModule = compose.create(authPlugin)(adminModule);
+app.register(protectedAdminModule);
 ```
 
 ---

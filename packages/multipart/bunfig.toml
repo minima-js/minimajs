@@ -1,0 +1,14 @@
+[test]
+root = "src"
+smol = true
+
+# Exclude files from test execution
+exclude = [
+  "**/lib/**",
+  "**/*.d.ts",
+]
+
+# Exclude other packages and parent directories from coverage
+coveragePathIgnorePatterns = [
+  "../**"
+]

@@ -1,13 +1,15 @@
 import { describe, test, expect, beforeEach, afterEach, jest } from "@jest/globals";
+import type { Server } from "node:http";
 import { compose } from "./compose.js";
-import { plugin } from "./internal/plugins.js";
+import { plugin } from "./plugin.js";
 import { hook } from "./hooks/index.js";
-import { createApp } from "./bun/index.js";
+import { createApp } from "./node/index.js";
 import { createRequest } from "./mock/request.js";
-import type { App, PluginOptions } from "./interfaces/index.js";
+import type { App } from "./interfaces/index.js";
+import type { PluginOptions } from "./plugin.js";
 
 describe("compose", () => {
-  let app: App;
+  let app: App<Server>;
 
   beforeEach(() => {
     app = createApp({ logger: false });
@@ -251,11 +253,11 @@ describe("compose", () => {
 
     app.register(compose(p1, p2));
 
-    const response1 = await app.inject(createRequest("/test1"));
+    const response1 = await app.handle(createRequest("/test1"));
     const data1 = await response1.json();
     expect(data1).toEqual({ route: "test1" });
 
-    const response2 = await app.inject(createRequest("/test2"));
+    const response2 = await app.handle(createRequest("/test2"));
     const data2 = await response2.json();
     expect(data2).toEqual({ route: "test2" });
   });
@@ -290,13 +292,13 @@ describe("compose", () => {
     expect(usersCalled).toHaveBeenCalled();
     expect(postsCalled).toHaveBeenCalled();
 
-    const authRes = await app.inject(createRequest("/auth"));
+    const authRes = await app.handle(createRequest("/auth"));
     expect(await authRes.json()).toEqual({ module: "auth" });
 
-    const usersRes = await app.inject(createRequest("/users"));
+    const usersRes = await app.handle(createRequest("/users"));
     expect(await usersRes.json()).toEqual({ module: "users" });
 
-    const postsRes = await app.inject(createRequest("/posts"));
+    const postsRes = await app.handle(createRequest("/posts"));
     expect(await postsRes.json()).toEqual({ module: "posts" });
   });
 
@@ -349,7 +351,7 @@ describe("compose", () => {
 
       await app.ready();
 
-      expect(callOrder).toEqual(["pluginA", "pluginB", "module"]);
+      expect(callOrder).toEqual(["module", "pluginA", "pluginB"]);
     });
 
     test("should allow reusing the same composer for multiple modules", async () => {
@@ -394,10 +396,10 @@ describe("compose", () => {
 
       app.register(withAuth(usersModule));
 
-      const authRes = await app.inject(createRequest("/auth-check"));
+      const authRes = await app.handle(createRequest("/auth-check"));
       expect(await authRes.json()).toEqual({ authenticated: true });
 
-      const usersRes = await app.inject(createRequest("/users"));
+      const usersRes = await app.handle(createRequest("/users"));
       expect(await usersRes.json()).toEqual({ users: [] });
     });
 
@@ -433,34 +435,34 @@ describe("compose", () => {
 
     test("should pass options to all plugins and module", async () => {
       interface CustomOpts extends PluginOptions {
-        prefix: string;
+        customValue: string;
       }
 
-      let plugin1Prefix = "";
-      let plugin2Prefix = "";
-      let modulePrefix = "";
+      let plugin1Value = "";
+      let plugin2Value = "";
+      let moduleValue = "";
 
-      const plugin1 = plugin<CustomOpts>((_, opts) => {
-        plugin1Prefix = opts.prefix;
+      const plugin1 = plugin<any, CustomOpts>((_, opts) => {
+        plugin1Value = opts.customValue;
       });
 
-      const plugin2 = plugin<CustomOpts>((_, opts) => {
-        plugin2Prefix = opts.prefix;
+      const plugin2 = plugin<any, CustomOpts>((_, opts) => {
+        plugin2Value = opts.customValue;
       });
 
       const withPlugins = compose.create(plugin1, plugin2);
 
-      const myModule = plugin<CustomOpts>((_, opts) => {
-        modulePrefix = opts.prefix;
-      });
+      const myModule = (_: any, opts: CustomOpts) => {
+        moduleValue = opts.customValue;
+      };
 
-      app.register(withPlugins(myModule), { prefix: "/api" });
+      app.register(withPlugins(myModule), { customValue: "test-value" });
 
       await app.ready();
 
-      expect(plugin1Prefix).toBe("/api");
-      expect(plugin2Prefix).toBe("/api");
-      expect(modulePrefix).toBe("/api");
+      expect(plugin1Value).toBe("test-value");
+      expect(plugin2Value).toBe("test-value");
+      expect(moduleValue).toBe("test-value");
     });
 
     test("should allow chaining multiple composers", async () => {
@@ -489,7 +491,7 @@ describe("compose", () => {
 
       await app.ready();
 
-      expect(calls).toEqual(["auth", "logging", "caching", "module"]);
+      expect(calls).toEqual(["module", "auth", "logging", "caching"]);
     });
 
     test("should handle errors in plugins before module", async () => {
@@ -515,7 +517,7 @@ describe("compose", () => {
 
       const withPlugins = compose.create(plugin1, plugin2);
       const composedModule = withPlugins(myModule);
-
+      expect(plugin.is(composedModule)).toBeTruthy();
       expect(composedModule.name).toBe("composed");
     });
 
@@ -540,35 +542,40 @@ describe("compose", () => {
       const withStandardMiddleware = compose.create(corsPlugin, authPlugin, rateLimitPlugin);
 
       // Users module
-      const usersModule = plugin((app) => {
+      const usersModule = (app: App) => {
         calls.push("usersModule");
         app.get("/users", () => {
           routes.push("users");
           return { users: [] };
         });
-      });
+      };
 
       // Posts module
-      const postsModule = plugin((app) => {
+      const postsModule = (app: App) => {
         calls.push("postsModule");
         app.get("/posts", () => {
           routes.push("posts");
           return { posts: [] };
         });
-      });
+      };
 
       // Apply middleware to both modules
-      app.register(withStandardMiddleware(usersModule));
-      app.register(withStandardMiddleware(postsModule));
+      const usersModulePacked = withStandardMiddleware(usersModule);
+      expect(plugin.is(usersModulePacked)).toBeFalsy();
+      app.register(usersModulePacked);
+
+      const postsModulePacked = withStandardMiddleware(postsModule);
+      expect(plugin.is(postsModulePacked)).toBeFalsy();
+      app.register(postsModulePacked);
 
       await app.ready();
 
       // Verify setup order
-      expect(calls).toEqual(["cors", "auth", "rateLimit", "usersModule", "cors", "auth", "rateLimit", "postsModule"]);
+      expect(calls).toEqual(["usersModule", "cors", "auth", "rateLimit", "postsModule", "cors", "auth", "rateLimit"]);
 
       // Verify routes work
-      await app.inject(createRequest("/users"));
-      await app.inject(createRequest("/posts"));
+      await app.handle(createRequest("/users"));
+      await app.handle(createRequest("/posts"));
 
       expect(routes).toEqual(["users", "posts"]);
     });

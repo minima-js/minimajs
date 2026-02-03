@@ -16,7 +16,7 @@ describe("internal/response", () => {
       app.get("/", () => {
         return "hello world";
       });
-      const response = await app.inject(createRequest("/"));
+      const response = await app.handle(createRequest("/"));
       expect(await response.text()).toBe("hello world");
     });
 
@@ -24,7 +24,7 @@ describe("internal/response", () => {
       app.get("/", () => {
         return { message: "hello world" };
       });
-      const response = await app.inject(createRequest("/"));
+      const response = await app.handle(createRequest("/"));
       expect(await response.text()).toBe(JSON.stringify({ message: "hello world" }));
     });
 
@@ -32,7 +32,7 @@ describe("internal/response", () => {
       app.get("/", async () => {
         return { message: "hello world" };
       });
-      const response = await app.inject(createRequest("/"));
+      const response = await app.handle(createRequest("/"));
       expect(await response.text()).toBe(JSON.stringify({ message: "hello world" }));
     });
 
@@ -40,7 +40,7 @@ describe("internal/response", () => {
       app.get("/", async () => {
         return { message: "hello world" };
       });
-      const response = await app.inject(createRequest("/"));
+      const response = await app.handle(createRequest("/"));
       expect(await response.text()).toBe(JSON.stringify({ message: "hello world" }));
     });
 
@@ -54,10 +54,38 @@ describe("internal/response", () => {
         return generator();
       });
       try {
-        await app.inject(createRequest("/"));
+        await app.handle(createRequest("/"));
       } catch (e) {
         expect(e).toBeInstanceOf(Error);
       }
+    });
+  });
+
+  describe("createResponse", () => {
+    test("should return data as-is if it's already a Response object", async () => {
+      app.get("/response-obj", () => {
+        return new Response("Hello from Response object");
+      });
+
+      const res = await app.handle(createRequest("/response-obj"));
+      expect(await res.text()).toBe("Hello from Response object");
+      expect(res.status).toBe(200);
+    });
+
+    test("should merge headers from options", async () => {
+      // Import createResponse directly
+      const { createResponse } = await import("./response.js");
+      app.get("/test-headers", (ctx) => {
+        return createResponse(
+          "OK",
+          {
+            headers: { "X-Custom-Header": "TestValue" },
+          },
+          ctx
+        );
+      });
+      const response = await app.handle(createRequest("/test-headers"));
+      expect(response?.headers.get("X-Custom-Header")).toBe("TestValue");
     });
   });
 });

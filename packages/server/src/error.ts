@@ -15,18 +15,18 @@
  * ```
  */
 
-import type { Dict, HeadersInit } from "./interfaces/response.js";
-import { toStatusCode, type StatusCode, createResponseFromState } from "./internal/response.js";
+import type { HeadersInit } from "./interfaces/response.js";
+import { toStatusCode, type StatusCode } from "./internal/response.js";
 import type { Context } from "./interfaces/context.js";
+import { response } from "./http.js";
 
 /**
  * Represents the response body of an HTTP error.
  * Can be either a simple string message or a dictionary object with custom error data.
  */
-export type ErrorResponse = string | Dict;
 
 export abstract class BaseHttpError extends Error {
-  abstract statusCode: number;
+  abstract status: number;
   declare code?: string;
   static is(value: unknown): value is BaseHttpError {
     return value instanceof this;
@@ -42,37 +42,35 @@ export interface HttpErrorOptions extends ErrorOptions {
   headers?: HeadersInit;
 }
 
-export class HttpError extends BaseHttpError {
+export class HttpError<R = unknown> extends BaseHttpError {
   public static toJSON = function toJSON<T extends HttpError = HttpError>(err: T): unknown {
     return typeof err.response === "string" ? { message: err.response } : err.response;
   };
   static is(value: unknown): value is HttpError {
     return value instanceof this;
   }
-  public static create(err: unknown, statusCode = 500) {
+  public static create(err: unknown, status = 500): HttpError<string> {
     if (err instanceof Error) {
-      return new HttpError("Unable to process request", statusCode, {
+      return new HttpError("Unable to process request", status, {
         message: err.message,
         name: err.name,
         base: err,
       });
     }
-    return new HttpError("Unable to process request", statusCode, {
+    return new HttpError("Unable to process request", status, {
       base: err,
     });
   }
-  public statusCode: number;
+  public status: number;
+  public response: R;
   public base?: unknown;
   public headers?: HeadersInit;
   declare ["constructor"]: typeof HttpError;
-  constructor(
-    public response: ErrorResponse,
-    statusCode: StatusCode,
-    options?: HttpErrorOptions
-  ) {
+  constructor(response: R, status: StatusCode, options?: HttpErrorOptions) {
     super(typeof response === "string" ? response : "Unknown error");
+    this.response = response;
+    this.status = toStatusCode(status);
     Object.assign(this, options);
-    this.statusCode = toStatusCode(statusCode);
   }
 
   public toJSON(): unknown {
@@ -80,62 +78,54 @@ export class HttpError extends BaseHttpError {
   }
 
   async render(ctx: Context): Promise<Response> {
-    return createResponseFromState(await ctx.app.serialize(this.toJSON(), ctx), {
-      status: this.statusCode,
+    return response(await ctx.app.serialize(this.toJSON(), ctx), {
+      status: this.status,
       headers: this.headers,
     });
   }
 }
 
-export class NotFoundError extends HttpError {
-  constructor(response: ErrorResponse = "", options?: HttpErrorOptions) {
+export class NotFoundError<R = unknown> extends HttpError<R> {
+  constructor(response: R = "" as R, options?: HttpErrorOptions) {
     super(response, 404, options);
     this.message = "Page not found";
   }
 
   async render(ctx: Context): Promise<Response> {
-    this.response ||= `Route ${ctx.request.method} ${ctx.url.pathname} not found`;
+    this.response ||= `Route ${ctx.request.method} ${ctx.pathname} not found` as R;
     return super.render(ctx);
   }
 }
 
 export class RedirectError extends BaseHttpError {
-  public statusCode: number;
-  public headers?: HeadersInit;
+  public status: number;
+  headers?: HeadersInit;
   constructor(
     public readonly url: string,
     isPermanent = false,
     options?: HttpErrorOptions
   ) {
     super();
-    this.statusCode = isPermanent ? 301 : 302;
+    this.status = isPermanent ? 301 : 302;
     Object.assign(this, options);
   }
-  render(_ctx: Context): Response {
+  render({ responseState }: Context): Response {
     // Merge instance headers with Location header
-    const headers = new Headers(this.headers);
-    headers.set("Location", this.url);
-
-    return createResponseFromState(null, {
-      status: this.statusCode,
-      headers,
+    responseState.headers.set("Location", this.url);
+    return response(null, {
+      status: this.status,
+      headers: this.headers,
     });
   }
 }
 
-export class ValidationError extends HttpError {
+export class ValidationError<R = unknown> extends HttpError<R> {
   public static getStatusCode = function getStatusCode<T extends ValidationError>(_error: T) {
     return 422;
   };
 
-  constructor(response: ErrorResponse = "Validation failed", options?: HttpErrorOptions) {
+  constructor(response: R = "Validation failed" as R, options?: HttpErrorOptions) {
     super(response, 422, options);
-    this.statusCode = (this.constructor as typeof ValidationError).getStatusCode(this);
-  }
-}
-
-export class ForbiddenError extends HttpError {
-  constructor(response: ErrorResponse = "Forbidden", options?: HttpErrorOptions) {
-    super(response, 403, options);
+    this.status = (this.constructor as typeof ValidationError).getStatusCode(this);
   }
 }

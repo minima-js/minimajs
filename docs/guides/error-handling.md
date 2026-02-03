@@ -4,113 +4,326 @@ sidebar_position: 6
 tags:
   - error
   - exception
+  - abort
+  - redirect
+  - hooks
 ---
 
 # Error Handling
 
-Proper error handling is crucial for building robust and reliable web applications. Minima.js provides a flexible and powerful error handling mechanism that allows you to catch and handle errors in a predictable way.
+Proper error handling is crucial for building robust and reliable web applications. Minima.js provides a flexible and powerful error handling mechanism centered around hooks and helpers.
 
-By default, Minima.js catches any uncaught exceptions in your route handlers and sends a generic `500 Internal Server Error` response. However, you can customize this behavior to handle different types of errors in different ways.
+By default, uncaught exceptions result in a generic `500 Internal Server Error` response.
 
-## The `HttpError` Class
+## Quick Reference
 
-For handling HTTP-specific errors, Minima.js provides a custom `HttpError` class. You can use this class to create errors with a specific status code and message.
+- [`abort`](#the-abort-helper) - Throw HTTP errors with status codes
+- [`redirect`](#the-redirect-helper) - Redirect users to different URLs
+- [`error` hook](#error-hook-behavior) - Handle errors at different scopes
+- [`HttpError.toJSON`](#overriding-tojson-method) - Customize error response format
+- [`send` hook](#send-hook) - Post-response cleanup (for both success and errors)
+- [`onError`](#request-scoped-error-handler-onerror) - Request-specific error handling
 
-```typescript
-import { HttpError } from "@minimajs/server/error";
+---
 
-throw new HttpError("This is a custom error message", 400);
-```
+## Throwing Errors
 
-When you throw an `HttpError`, Minima.js will automatically use the status code and message to generate the error response.
+### The `abort` Helper
 
-## The `abort` Helper
-
-To make it even easier to throw HTTP errors, Minima.js provides an `abort` helper function. This function is a shorthand for throwing an `HttpError`.
+The `abort` helper throws HTTP-specific errors with status codes and custom payloads.
 
 ```typescript
 import { abort } from "@minimajs/server";
 
 app.get("/users/:id", () => {
-  const { id } = params<{ id: string }>();
-  const user = findUserById(id);
+  const user = findUserById(params.get("id"));
 
   if (!user) {
-    abort("User not found", 404);
+    abort({ error: "User not found" }, 404);
   }
 
   return user;
 });
 ```
 
-## Customizing Error Responses
+**Common shortcuts:**
 
-Minima.js provides several ways to customize the error response format.
+```typescript
+abort.notFound("User not found"); // 404
+abort.badRequest("Invalid input"); // 400
+abort.unauthorized("Login required"); // 401
+abort.forbidden("Access denied"); // 403
+```
+
+**Check if error is from abort:**
+
+```typescript
+if (abort.is(error)) {
+  console.log(error.statusCode); // Access status code
+}
+```
+
+### The `redirect` Helper
+
+Redirect users to different URLs with `redirect`.
+
+```typescript
+import { redirect } from "@minimajs/server";
+
+app.get("/old-path", () => {
+  redirect("/new-path"); // 302 temporary redirect
+});
+
+app.get("/moved", () => {
+  redirect("/permanent", true); // 301 permanent redirect
+});
+```
+
+## Error Handling Flow
+
+<!--@include: ./diagrams/error-handler-flow.md-->
+
+## Handling Errors with Hooks
+
+### `error` Hook Behavior
+
+The `error` hook intercepts errors and can handle them in four ways:
+
+<!--@include: ./diagrams/error-hook-outcomes.md-->
+
+**Four possible outcomes:**
+
+1. **Re-throw or abort** (Recommended) - Pass to next error hook or handler
+2. **Return data** - Treated as successful `200 OK` response
+3. **Return Response** - Sent directly (⚠️ bypasses transform hooks)
+4. **Return undefined** - Pass to next error hook
 
 ### Global Error Handler
 
-The most common way to customize error handling is to set a global error handler using `app.setErrorHandler()`. This handler will be called for all uncaught exceptions in your application.
+Handle errors across your entire application by registering an error hook at the root level:
 
 ```typescript
-app.setErrorHandler((error, request, reply) => {
-  // Log the error
-  console.error(error);
+import { hook, abort } from "@minimajs/server";
 
-  // Send a custom error response
-  reply.status(error.statusCode || 500).send({
-    error: {
-      message: error.message,
-      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
-    },
-  });
-});
+app.register(
+  hook("error", (error) => {
+    console.error("Error occurred:", error);
+
+    // Re-throw HTTP errors with custom format
+    if (abort.is(error)) {
+      abort({ code: "HTTP_ERROR", message: error.message }, error.statusCode);
+    }
+
+    // Handle all other errors as 500
+    abort({ code: "INTERNAL_ERROR", message: "Server error" }, 500);
+  })
+);
 ```
+
+> **Note:** If no error hook handles the error (all return `undefined` or none are registered), unhandled `HttpError` instances render themselves, while other errors result in a generic `500 Internal Server Error` response.
 
 ### Module-Level Error Handler
 
-You can also define an error handler for a specific module using `interceptor.error`.
+Handle errors for specific modules with scoped error hooks:
+
+<!--@include: ./diagrams/error-scope-hierarchy.md-->
 
 ```typescript
-import { interceptor } from "@minimajs/server";
-import { HttpError } from "@minimajs/server/error";
+async function adminModule(app: App) {
+  app.register(
+    hook("error", (error) => {
+      console.error("Admin error:", error);
+      const statusCode = abort.is(error) ? error.statusCode : 500;
+      abort({ adminError: error.message }, statusCode);
+    })
+  );
 
-const errorDecorator = interceptor.error((err) => {
-  if (err instanceof HttpError) {
-    // Customize the response for HttpErrors
-    return new HttpError({ error: err.message }, err.statusCode);
+  app.get("/dashboard", () => {
+    throw new Error("Dashboard failed");
+  });
+}
+
+app.register(adminModule, { prefix: "/admin" });
+```
+
+> **Note:** Error hooks execute in LIFO order, with child scopes running before parent scopes. See the diagram above for the hierarchy.
+
+### Request-Scoped Error Handler (`onError`)
+
+Handle errors for a single request with the `onError` helper:
+
+```typescript
+import { onError } from "@minimajs/server";
+
+app.get("/risky", () => {
+  onError((err) => {
+    console.error("Request failed:", err);
+  });
+
+  if (Math.random() > 0.5) {
+    throw new Error("Random failure!");
   }
-  return err; // Let the default handler take care of other errors
-});
 
-const myModule = interceptor([errorDecorator], (app) => {
-  // ...
+  return { success: true };
 });
 ```
 
-### Customizing the JSON Response
+## Customizing Error Responses
 
-If you just want to change the JSON representation of `HttpError` responses, you can override the `HttpError.toJSON` method.
+### Overriding `toJSON` Method
+
+The quickest way to customize error responses is by overriding the static `toJSON` method on error classes. This method controls how errors are serialized when sent to clients.
+
+**Global override for all HTTP errors:**
 
 ```typescript
 import { HttpError } from "@minimajs/server/error";
 
-HttpError.toJSON = function (err: HttpError) {
+// Override toJSON for all HttpError instances globally
+HttpError.toJSON = (err: HttpError) => {
   return {
-    statusCode: err.statusCode,
-    error: err.message,
-    code: err.code, // Add a custom error code
+    success: false,
+    message: err.response,
+    statusCode: err.status,
+    timestamp: new Date().toISOString(),
   };
 };
+
+// Now all HttpErrors use this format
+app.get("/users/:id", () => {
+  const user = findUser(params.get("id"));
+  if (!user) {
+    abort("User not found", 404);
+  }
+  return user;
+});
+
+// Response: { "success": false, "message": "User not found", "statusCode": 404, "timestamp": "2026-01-10T..." }
 ```
 
-## Handling Not Found Errors
-
-The global error handler does not catch "Not Found" (404) errors. To handle these errors, you need to set a "Not Found" handler using `app.setNotFoundHandler()`.
+**Create custom error class:**
 
 ```typescript
-app.setNotFoundHandler((request, reply) => {
-  reply.status(404).send({ error: "Not Found" });
+import { HttpError } from "@minimajs/server/error";
+
+// Create custom error class with its own toJSON
+class ApiError extends HttpError {
+  static toJSON(err: ApiError) {
+    return {
+      success: false,
+      error: {
+        code: err.code || "UNKNOWN_ERROR",
+        message: err.response,
+        timestamp: new Date().toISOString(),
+      },
+    };
+  }
+
+  constructor(
+    message: string,
+    statusCode: number,
+    public code?: string
+  ) {
+    super(message, statusCode, { code });
+  }
+}
+
+// Use in routes
+app.get("/api/users/:id", () => {
+  const user = findUser(params.get("id"));
+  if (!user) {
+    throw new ApiError("User not found", 404, "USER_NOT_FOUND");
+  }
+  return user;
+});
+
+// Response: { "success": false, "error": { "code": "USER_NOT_FOUND", "message": "User not found", "timestamp": "2026-01-10T..." } }
+```
+
+**Override ValidationError for custom validation format:**
+
+```typescript
+import { ValidationError } from "@minimajs/schema/error";
+import { z } from "zod";
+
+// Override ValidationError.toJSON globally
+ValidationError.toJSON = (err: ValidationError) => {
+  return {
+    success: false,
+    error: "Validation failed",
+    validationErrors: err.issues?.map((issue) => ({
+      field: issue.path.join("."),
+      message: issue.message,
+      code: issue.code,
+    })),
+  };
+};
+
+// Now all ValidationErrors use this format
+app.post("/api/signup", async () => {
+  const schema = z.object({
+    email: z.string().email(),
+    password: z.string().min(8),
+  });
+
+  const data = await body();
+  const result = schema.safeParse(data);
+
+  if (!result.success) {
+    throw ValidationError.createFromZodError(result.error);
+  }
+
+  return { success: true };
+});
+
+// Response: { "success": false, "error": "Validation failed", "validationErrors": [...] }
+```
+
+### Per-Instance Customization
+
+You can also override `toJSON` per instance for one-off customizations:
+
+```typescript
+app.get("/special", () => {
+  const error = new HttpError("Special error", 400);
+  error.toJSON = () => ({ custom: "response", timestamp: Date.now() });
+  throw error;
 });
 ```
 
-This handler will be executed for any request that does not match a defined route.
+> **Tip:** Overriding `toJSON` is preferred over custom error handlers because it:
+>
+> - Keeps error formatting logic with the error class
+> - Works consistently across all error hooks and handlers
+> - Allows different error types to have different formats
+> - Maintains type safety and code organization
+> - Can be set once globally at application startup
+
+## `send` Hook
+
+Execute cleanup tasks after a response is sent (for both successful and error responses):
+
+```typescript
+app.register(
+  hook("send", (response, ctx) => {
+    // Report errors to monitoring service
+    if (response.status >= 400) {
+      reportToSentry(ctx.error, {
+        url: ctx.request.url,
+        method: ctx.request.method,
+        status: response.status,
+      });
+    }
+  })
+);
+```
+
+## Best Practices
+
+- **Use `abort` shortcuts** for common HTTP errors (`abort.notFound()`, `abort.badRequest()`, etc.)
+- **Override `toJSON`** for custom error response formats instead of custom error handlers
+- **Re-throw errors in hooks** to allow other handlers to process them
+- **Log errors** before handling them for debugging and monitoring
+- **Use scoped error hooks** for module-specific error handling
+- **Keep error messages generic in production** to avoid leaking sensitive information
+- **Create custom error classes** for different error types (API errors, validation errors, etc.)

@@ -1,6 +1,6 @@
 # @minimajs/auth
 
-Authentication and authorization utilities for MinimaJS applications with powerful type-safe middleware and guard support.
+Authentication and authorization utilities for Minima.js applications with powerful type-safe middleware and guard support.
 
 ```bash npm2yarn
 npm i @minimajs/auth
@@ -8,7 +8,7 @@ npm i @minimajs/auth
 
 ## Overview
 
-The `@minimajs/auth` package provides a powerful and type-safe way to implement authentication in your MinimaJS applications. It uses the concept of middleware plugins and resource accessors to handle authentication logic, making it easy to protect routes and access authenticated user data throughout your application.
+The `@minimajs/auth` package provides a powerful and type-safe way to implement authentication in your Minima.js applications. It uses the concept of middleware plugins and resource accessors to handle authentication logic, making it easy to protect routes and access authenticated user data throughout your application.
 
 ### Key Features
 
@@ -20,7 +20,7 @@ The `@minimajs/auth` package provides a powerful and type-safe way to implement 
 
 ## Core API: `createAuth`
 
-The `createAuth` function is the primary API for setting up authentication in your MinimaJS application. It creates a middleware plugin and a resource accessor function.
+The `createAuth` function is the primary API for setting up authentication in your Minima.js application. It creates a middleware plugin and a resource accessor function.
 
 ### Signature
 
@@ -112,6 +112,7 @@ Guards are functions that enforce authentication requirements for specific route
 
 ```typescript title="src/auth/guards.ts"
 import { getUser } from "./index";
+import { ForbiddenError } from "@minimajs/auth";
 
 // Simple guard that requires authentication
 export function authenticated() {
@@ -139,12 +140,12 @@ export function requirePermission(permission: string) {
 }
 ```
 
-### Using Guards with Interceptors
+### Using Guards with Composition
 
-Use the `interceptor` function to apply guards to specific routes or route modules:
+Use the `compose` API to apply guards to specific routes or route modules. First, wrap your guard functions in a plugin.
 
 ```typescript title="src/index.ts"
-import { createApp, interceptor } from "@minimajs/server";
+import { createApp, compose, plugin, hook, type App } from "@minimajs/server";
 import { authPlugin, getUser } from "./auth";
 import { authenticated, adminOnly } from "./auth/guards";
 
@@ -178,9 +179,17 @@ function adminRoutes(app: App) {
   });
 }
 
-// Apply guards to route groups
-app.register(interceptor([authenticated], protectedRoutes));
-app.register(interceptor([adminOnly], adminRoutes));
+// 1. Convert guard functions into middleware plugins
+const authenticatedPlugin = plugin((app) => app.register(hook("request", authenticated)));
+const adminOnlyPlugin = plugin((app) => app.register(hook("request", adminOnly)));
+
+// 2. Create composed applicators
+const withAuth = compose.create(authenticatedPlugin);
+const withAdminAuth = compose.create(authenticatedPlugin, adminOnlyPlugin);
+
+// 3. Apply guards to route groups
+app.register(withAuth(protectedRoutes));
+app.register(withAdminAuth(adminRoutes));
 ```
 
 ## Required Authentication Mode
@@ -459,4 +468,8 @@ interface AuthResourceWithRequired<T> {
 
 ## Conclusion
 
-The `@minimajs/auth` package provides a powerful, type-safe, and flexible authentication system for MinimaJS applications. With support for both optional and required authentication modes, combined with guards and interceptors, you can implement sophisticated authentication and authorization patterns while maintaining clean, readable code.
+The `@minimajs/auth` package provides a powerful, type-safe, and flexible authentication system for Minima.js applications. With support for both optional and required authentication modes, combined with guards and composition, you can implement sophisticated authentication and authorization patterns while maintaining clean, readable code.
+
+## License
+
+MIT

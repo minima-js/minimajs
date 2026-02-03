@@ -1,1 +1,1 @@
-export const kSchema = Symbol.for("minimajs.schema.schema");
+export const kSchema = Symbol.for("minimajs.schema");

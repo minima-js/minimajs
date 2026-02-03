@@ -19,10 +19,8 @@
  * cookies.remove("theme");
  * ```
  */
-
-import cookie from "cookie";
-import type { SerializeOptions } from "cookie";
-import { context, defer, headers } from "@minimajs/server";
+import cookie, { type SerializeOptions } from "cookie";
+import { createContext, defer, headers } from "@minimajs/server";
 
 /**
  * Internal cookie storage structure for request scope
@@ -40,7 +38,7 @@ interface CookieStore {
  * Lazily initialized on first access within each request
  * @internal
  */
-const [getCookieStore] = context.create<CookieStore>(() => {
+const [getCookieStore] = createContext<CookieStore>(() => {
   // Parse incoming cookies from request header
   const cookieHeader = headers.get("cookie") ?? "";
   const parsedCookies = cookie.parse(cookieHeader);

@@ -1,6 +1,6 @@
 import { createApp } from "../../bun/index.js";
 import { createRequest, type MockRequestOptions } from "../../mock/request.js";
-import { bodyParser } from "../../plugins/body-parser.js";
+import { bodyParser } from "../../plugins/body-parser/index.js";
 
 /**
  * Helper to reduce boilerplate when testing routes
@@ -10,9 +10,10 @@ import { bodyParser } from "../../plugins/body-parser.js";
  *   return { message: "ok" };
  * });
  */
+
 export async function testRoute(
   handler: () => any,
-  { url = "/test", ...options }: MockRequestOptions & { url?: string } = {}
+  { url = "/test", path = url, ...options }: MockRequestOptions & { url?: string; path?: string } = {}
 ): Promise<Response> {
   const app = createApp({ logger: false });
   app.register(bodyParser());
@@ -20,47 +21,25 @@ export async function testRoute(
 
   switch (method.toUpperCase()) {
     case "GET":
-      app.get(url, handler);
+      app.get(path, handler);
       break;
     case "POST":
-      app.post(url, handler);
+      app.post(path, handler);
       break;
     case "PUT":
-      app.put(url, handler);
+      app.put(path, handler);
       break;
     case "DELETE":
-      app.delete(url, handler);
+      app.delete(path, handler);
       break;
     case "PATCH":
-      app.patch(url, handler);
+      app.patch(path, handler);
       break;
     default:
-      app.get(url, handler);
+      app.get(path, handler);
   }
 
-  const response = await app.inject(createRequest(url, options));
+  const response = await app.handle(createRequest(url, options));
   await app.close();
   return response;
-}
-
-/**
- * Assert that a response has the expected status code
- */
-export function expectStatus(response: Response, statusCode: number) {
-  expect(response.status).toBe(statusCode);
-}
-
-/**
- * Assert that a response has the expected header
- */
-export function expectHeader(response: Response, name: string, value: string) {
-  expect(response.headers.get(name)).toBe(value);
-}
-
-/**
- * Assert that a response has the expected body structure
- */
-export async function expectBodyToMatch(response: Response, matcher: any) {
-  const body = await response.json();
-  expect(body).toMatchObject(matcher);
 }

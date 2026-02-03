@@ -1,19 +1,12 @@
-import { $context } from "./internal/context.js";
+import { context } from "./context.js";
 
-import {
-  RedirectError,
-  HttpError,
-  BaseHttpError,
-  NotFoundError,
-  type ErrorResponse,
-  type HttpErrorOptions,
-} from "./error.js";
-import type { Dict, HttpHeader, HttpHeaderIncoming, ResponseOptions } from "./interfaces/response.js";
-
+import { RedirectError, HttpError, BaseHttpError, NotFoundError, type HttpErrorOptions } from "./error.js";
+import type { HeadersInit, HttpHeader, HttpHeaderIncoming, ResponseBody, ResponseOptions } from "./interfaces/response.js";
 import { toStatusCode, type StatusCode } from "./internal/response.js";
-import { createResponse } from "./internal/response.js";
 import { isAbortError } from "./utils/errors.js";
-import { kBody } from "./symbols.js";
+import { mergeHeaders } from "./utils/headers.js";
+import { kBody, kIpAddr } from "./symbols.js";
+import type { Dict } from "./interfaces/index.js";
 
 // ============================================================================
 //  Response
@@ -24,21 +17,27 @@ import { kBody } from "./symbols.js";
  *
  * @example
  * ```ts
- * return response({ message: 'Hello' }, { status: 200 });
  * return response('Hello World');
- * return response({ data: 'test' }, {
+ * return response(new Blob(['data']));
+ * return response(stream, {
  *   status: 'CREATED',
  *   headers: { 'X-Custom': 'value' }
  * });
  * ```
  * @since v0.2.0
  */
-export async function response(body: unknown, options: ResponseOptions = {}): Promise<Response> {
-  let status: number | undefined = undefined;
+export function response(body: ResponseBody, options: ResponseOptions = {}): Response {
+  const { responseState } = context();
   if (options.status) {
-    status = toStatusCode(options.status);
+    responseState.status = toStatusCode(options.status);
   }
-  return await createResponse(body, { status, headers: options.headers }, $context());
+  if (options.headers) {
+    mergeHeaders(responseState.headers, new Headers(options.headers));
+  }
+  if (options.statusText !== undefined) {
+    responseState.statusText = options.statusText;
+  }
+  return new Response(body, responseState);
 }
 
 /**
@@ -58,7 +57,7 @@ export namespace response {
    * @since v0.2.0
    */
   export function status(statusCode: StatusCode): void {
-    const { responseState: res } = $context();
+    const { responseState: res } = context();
     res.status = toStatusCode(statusCode);
   }
 }
@@ -118,12 +117,8 @@ export function redirect(path: string, isPermanent?: boolean, options?: HttpErro
  * ```
  * @since v0.2.0
  */
-export function abort(
-  response: ErrorResponse = "Bad Request",
-  statusCode: StatusCode = 400,
-  options?: HttpErrorOptions
-): never {
-  throw new HttpError(response, statusCode, options);
+export function abort<R>(response: R = "Bad Request" as R, statusCode: StatusCode = 400, options?: HttpErrorOptions): never {
+  throw new HttpError<R>(response, statusCode, options);
 }
 
 /**
@@ -235,7 +230,7 @@ export namespace abort {
  * @since v0.2.0
  */
 export function request(): Request {
-  const { request: req } = $context();
+  const { request: req } = context();
   return req;
 }
 
@@ -254,42 +249,52 @@ export namespace request {
    * ```
    * @since v0.2.0
    */
+
   export function url(): URL {
-    const { url } = $context();
-    return url;
+    const { $metadata: metadata, request } = context();
+    if (metadata.url) return metadata.url;
+    metadata.proto ??= "http";
+    if (!metadata.host) {
+      metadata.host = request.headers.get("host")!;
+    }
+    const path = request.url.slice(metadata.pathStart);
+    metadata.url = new URL(`${metadata.proto}://${metadata.host}${path}`);
+    return metadata.url;
   }
 
   /**
-   * Retrieves the abort signal for the current request.
-   * When a user cancels a request (e.g., closes a browser tab or navigates away from a page while a request is ongoing),
-   * an `AbortSignal` event is triggered.
-   * Can be attached to any async operation to prevent wasted resources on the server if a request is cancelled mid-flight.
+   * Retrieves the client IP address from the request.
+   * Requires IP address configuration via request.ip.configure().
+   *
+   * @returns The client IP address as a string
+   * @throws Error if IP address plugin is not configured
+   *
    * @example
    * ```ts
    * import { request } from '@minimajs/server';
-   * fetch('https://api.github.com/users', { signal: request.signal() })
+   *
+   * // Then use it in handlers
+   * app.get('/api/info', () => {
+   *   const clientIp = request.ip();
+   *   return { ip: clientIp };
+   * });
    * ```
-   * if the user cancels the request, requesting to github users will be cancelled as well.
-   * @since v0.2.0
    */
-  export function signal(): AbortSignal {
-    return $context().signal;
+  export function ip(): string | null {
+    const { locals } = context();
+    let ipAddr = locals[kIpAddr];
+    if (ipAddr === undefined) {
+      ipAddr = request.remoteAddr();
+      locals[kIpAddr] = ipAddr;
+    }
+    return ipAddr;
+  }
+
+  export function remoteAddr(): string | null {
+    const ctx = context();
+    return ctx.serverAdapter.remoteAddr(ctx);
   }
 }
-
-/**
- * Retrieves the HTTP request object.
- *
- * @example
- * ```ts
- * const req = getRequest();
- * console.log(req.url);
- * ```
- * @see {@link request}
- * @since v0.1.0
- * @internal
- */
-export const getRequest = request;
 
 // ============================================================================
 // Body
@@ -312,12 +317,12 @@ export const getRequest = request;
  * ```
  * @since v0.2.0
  */
-export function body<T = unknown>(): T | undefined {
-  const { locals } = $context();
-  if (!locals.has(kBody)) {
+export function body<T = unknown>(): T {
+  const { locals } = context();
+  if (!(kBody in locals)) {
     throw new Error("Body parser is not registered. Please register bodyParser plugin first.");
   }
-  return locals.get(kBody) as T;
+  return locals[kBody] as T;
 }
 
 /**
@@ -352,7 +357,7 @@ export const getBody = body;
  * @since v0.2.0
  */
 export function params<T = Dict<string>>(): T {
-  const { route } = $context();
+  const { route } = context();
   if (!route) {
     return {} as T;
   }
@@ -414,37 +419,6 @@ export namespace params {
   }
 }
 
-/**
- * Retrieves the request params.
- *
- * @example
- * ```ts
- * const p = getParams<{ id: string }>();
- * console.log(p.id);
- * ```
- * @see {@link params}
- * @since v0.1.0
- * @internal
- */
-export const getParams = params;
-
-/**
- * Retrieves parameters from the current request context.
- *
- * @see {@link params.get}
- * @example
- * ```ts
- * const id = getParam('id')                              // string | undefined
- * const page = getParam('page', (val) => parseInt(val))  // number | undefined
- * const age = getParam('age', (val) => {
- *   const num = parseInt(val);
- *   if (num < 0) throw new Error('must be positive');
- *   return num;
- * });                                                     // number | undefined
- * ```
- */
-export const getParam = params.get;
-
 // ============================================================================
 // Headers
 // ============================================================================
@@ -469,7 +443,7 @@ export const getParam = params.get;
  * @since v0.2.0
  */
 export function headers() {
-  return getRequest().headers;
+  return Object.fromEntries(request().headers);
 }
 
 /**
@@ -532,7 +506,7 @@ export namespace headers {
   }
 
   /**
-   * Sets a response header.
+   * Sets a single response header.
    *
    * @param name - The header name to set
    * @param value - The header value
@@ -541,9 +515,39 @@ export namespace headers {
    * headers.set('x-custom-header', 'value');
    * ```
    */
-  export function set(name: HttpHeader, value: string): void {
-    const { responseState: res } = $context();
-    res.headers.set(name, value);
+  export function set(name: HttpHeader, value: string): void;
+  /**
+   * Sets multiple response headers from a HeadersInit object.
+   *
+   * @param headers - Headers to set (object, array of tuples, or Headers instance)
+   * @example
+   * ```ts
+   * // Object
+   * headers.set({ 'x-custom': 'value', 'x-another': 'value2' });
+   *
+   * // Array of tuples
+   * headers.set([['x-custom', 'value'], ['x-another', 'value2']]);
+   *
+   * // Headers instance
+   * headers.set(new Headers({ 'x-custom': 'value' }));
+   * ```
+   */
+  export function set(headers: HeadersInit): void;
+  export function set(headers: HttpHeader, value: string): void;
+  export function set(name: HttpHeader | HeadersInit, value?: string): void {
+    const { responseState: res } = context();
+
+    // If name is a string, set single header
+    if (typeof name === "string") {
+      if (value === undefined) {
+        throw new Error("Value is required when setting a single header");
+      }
+      res.headers.set(name, value);
+      return;
+    }
+
+    // Otherwise, handle HeadersInit (object, array, or Headers instance)
+    mergeHeaders(res.headers, new Headers(name));
   }
 
   /**
@@ -558,57 +562,16 @@ export namespace headers {
    * ```
    */
   export function append(name: HttpHeader, value: string): void {
-    const { responseState: resInit } = $context();
+    const { responseState: resInit } = context();
     resInit.headers.append(name, value);
   }
 }
-
-/**
- * Retrieves the request headers.
- *
- * @example
- * ```ts
- * const h = getHeaders();
- * console.log(h['content-type']);
- * ```
- * @see {@link headers}
- * @since v0.1.0
- * @internal
- */
-export const getHeaders = headers;
-
-/**
- * Sets a response header.
- *
- * @param name - The header name to set
- * @param value - The header value
- * @example
- * ```ts
- * setHeader('x-custom-header', 'value');
- * ```
- * @see {@link headers.set}
- * @since v0.1.0
- * @internal
- */
-export const setHeader = headers.set;
-
-/**
- * Retrieves a header from the current request context.
- *
- * @see {@link headers.get}
- * @example
- * ```ts
- * const auth = getHeader('authorization')                              // string
- * const token = getHeader('authorization', (val) => val.split(' ')[1]) // string
- * ```
- * @internal
- */
-export const getHeader = headers.get;
 
 // ============================================================================
 // Search Params / Queries
 // ============================================================================
 
+const kSearchParams = Symbol();
 /**
  * Retrieves the search params (query string).
  *
@@ -622,9 +585,14 @@ export const getHeader = headers.get;
  * ```
  * @since v0.2.0
  */
-export function searchParams<T>() {
-  const { url } = $context();
-  return Object.fromEntries(url.searchParams) as T;
+export function searchParams<T extends Record<string, string>>(): T {
+  const ctx = context();
+  let queries = ctx.locals[kSearchParams] as T;
+  if (!queries) {
+    queries = Object.fromEntries(request.url().searchParams) as T;
+    ctx.locals[kSearchParams] = queries;
+  }
+  return queries;
 }
 
 /**
@@ -646,10 +614,10 @@ export namespace searchParams {
   export function get(name: string): string | undefined;
   export function get<R>(name: string, transform: (value: string) => R): R;
   export function get(name: string, transform?: (value: string) => unknown): unknown {
-    const { searchParams } = request.url();
-    const value = searchParams.get(name);
+    const url = request.url();
+    const value = url.searchParams.get(name);
     if (value === null) {
-      return value;
+      return null;
     }
     if (!transform) return value;
     return transform(value);
@@ -669,38 +637,9 @@ export namespace searchParams {
   export function getAll(name: string): string[];
   export function getAll<R>(name: string, transform: (value: string) => R): R[];
   export function getAll(name: string, transform?: (value: string) => unknown): unknown[] {
-    const { searchParams } = request.url();
-    const values = searchParams.getAll(name);
+    const url = request.url();
+    const values = url.searchParams.getAll(name);
     if (!transform) return values;
     return values.map(transform);
   }
 }
-
-/**
- * Retrieves the search params (query string).
- *
- * @example
- * ```ts
- * const query = getSearchParams<{ page: string }>();
- * console.log(query.page);
- * ```
- * @see {@link searchParams}
- * @since v0.1.0
- * @internal
- */
-export const getSearchParams = searchParams;
-/**
- * Retrieves a search param from the current request context.
- *
- * @see {@link searchParams.get}
- * @example
- * ```ts
- * const page = getSearchParam('page')                    // string
- * const pageNum = getSearchParam('page', (val) => {
- *   const num = parseInt(val);
- *   if (num < 1) throw new Error('must be >= 1');
- *   return num;
- * });                                                     // number
- * ```
- */
-export const getSearchParam = searchParams.get;

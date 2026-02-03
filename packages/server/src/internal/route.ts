@@ -1,37 +1,31 @@
-import type { App, Container, RouteHandler, RouteMetadata } from "../interfaces/app.js";
-import type { Route, RouteFindResult, RouteMetaDescriptor } from "../interfaces/route.js";
+import type { Route, RouteConfig, RouteFindResult, RouteMetaDescriptor } from "../interfaces/route.js";
+import type { Container } from "../interfaces/index.js";
 import { kAppDescriptor } from "../symbols.js";
 
-export function getDescriptorsAll<S = unknown>(container: Container) {
-  return container.get(kAppDescriptor) as RouteMetaDescriptor<S>[];
+export function getAppRouteDescriptors<S>(container: Container<S>) {
+  return container[kAppDescriptor];
 }
 
 /**
  * Creates a RouteMetadata map from route descriptors
  */
-export function createRouteMetadata<T>(
-  descriptors: RouteMetaDescriptor<T>[],
-  path: string,
-  handler: RouteHandler<T>,
-  app: App<T>
-): RouteMetadata {
-  const routeContainer: RouteMetadata = new Map();
-  for (const descriptor of [...getDescriptorsAll<T>(app.container), ...descriptors]) {
-    const [name, value] = typeof descriptor === "function" ? descriptor(path, handler, app) : descriptor;
-    if (!routeContainer.has(name)) {
-      routeContainer.set(name, new Set());
+export function applyRouteMetadata<T>(route: RouteConfig<T>, descriptors: RouteMetaDescriptor<T>[]): void {
+  const { app, metadata } = route;
+  for (const descriptor of [...getAppRouteDescriptors<T>(app.container), ...descriptors]) {
+    if (Array.isArray(descriptor)) {
+      const [name, value] = descriptor;
+      metadata[name] = value;
+      continue;
     }
-    routeContainer.get(name)!.add(value);
+    descriptor(route);
   }
-  return routeContainer;
 }
 
 /**
  * Applies prefix to a path, considering exclusions
  */
-export function applyRoutePrefix(path: string, prefix: string, excludeList: string[]): string {
-  const shouldExclude = excludeList.some((excludePath) => path === excludePath || path.startsWith(excludePath + "/"));
-  return shouldExclude ? path : prefix + path;
+export function applyRoutePrefix(path: string, prefix: string): string {
+  return prefix + path;
 }
 
 export function result2route<T>(route: RouteFindResult<T>): Route<T> {

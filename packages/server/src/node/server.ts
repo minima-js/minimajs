@@ -5,19 +5,59 @@ import {
   createServer,
   type ServerOptions,
 } from "node:http";
-import type { AddressInfo as NodeAddr } from "node:net";
 import { toWebRequest, fromWebResponse } from "./utils.js";
 import type { AddressInfo, ServerAdapter, ListenOptions, RequestHandler, ListenResult } from "../interfaces/server.js";
+import type { Server } from "../core/index.js";
+import type { Context } from "../index.js";
 
 export type NodeServerOptions = ServerOptions<typeof IncomingMessage, typeof ServerResponse>;
 
 export class NodeServerAdapter implements ServerAdapter<NodeServer> {
   constructor(private readonly serverOptions?: NodeServerOptions) {}
 
-  async listen(opts: ListenOptions, requestHandler: RequestHandler): Promise<ListenResult<NodeServer>> {
+  remoteAddr(ctx: Context<NodeServer>): string | null {
+    return ctx.incomingMessage.socket.remoteAddress || null;
+  }
+
+  getAddress(server: NodeServer): AddressInfo {
+    const info = server.address();
+    if (!info) {
+      throw new Error("Server is not listening");
+    }
+
+    // server.address() returns a string for pipes/Unix sockets
+    if (typeof info === "string") {
+      return {
+        hostname: info,
+        port: 0,
+        family: "unix",
+        protocol: "http",
+        address: info,
+      };
+    }
+
+    // Use the actual address from server.address(), fallback to provided host
+    const hostname = info.address;
+    return {
+      hostname,
+      port: info.port,
+      family: info.family as AddressInfo["family"],
+      protocol: "http",
+      address: `http://${hostname}:${info.port}/`,
+    };
+  }
+
+  async listen(
+    srv: Server<NodeServer>,
+    opts: ListenOptions,
+    requestHandler: RequestHandler<NodeServer>
+  ): Promise<ListenResult<NodeServer>> {
     async function onRequest(req: IncomingMessage, res: ServerResponse) {
       const request = toWebRequest(req);
-      const response = await requestHandler(request);
+      const response = await requestHandler(srv, request, {
+        incomingMessage: req,
+        serverResponse: res,
+      });
       await fromWebResponse(response, res);
     }
 
@@ -31,16 +71,7 @@ export class NodeServerAdapter implements ServerAdapter<NodeServer> {
       });
     });
 
-    const addr = server.address() as NodeAddr;
-
-    const address: AddressInfo = {
-      hostname,
-      port: addr.port,
-      family: addr.family,
-      protocol: "http",
-      address: `http://${hostname}:${addr.port}/`,
-    };
-
+    const address = this.getAddress(server);
     return { server, address };
   }
 

@@ -2,7 +2,7 @@
  * @minimajs/server/mock - Testing utilities
  *
  * Provides lightweight utilities for creating mock requests in tests.
- * For full integration tests, use `app.inject()` directly.
+ * For full integration tests, use `app.handle()` directly.
  *
  * @module @minimajs/server/mock
  *
@@ -13,8 +13,8 @@
  * // Create a mock request
  * const request = createRequest('/users', { method: 'POST', body: { name: 'John' } });
  *
- * // Use with app.inject
- * const response = await app.inject(request);
+ * // Use with app.handle
+ * const response = await app.handle(request);
  * expect(response.status).toBe(200);
  * ```
  */

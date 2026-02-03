@@ -1,4 +1,4 @@
-import { createContext, interceptor, type Plugin, type InterceptorRegisterOptions } from "@minimajs/server";
+import { createContext, hook, type PluginSync } from "@minimajs/server";
 import { BaseHttpError } from "@minimajs/server/error";
 
 interface AuthResource<T> {
@@ -27,7 +27,7 @@ export interface AuthResourceOptional<T> {
 }
 
 /**
- * Creates an authentication middleware plugin and resource accessor for MinimaJS applications.
+ * Creates an authentication middleware plugin and resource accessor for Minima.js applications.
  *
  * This function sets up authentication by creating a middleware plugin that executes your
  * authentication logic and a resource accessor function to retrieve the authenticated data
@@ -105,16 +105,17 @@ export interface AuthResourceOptional<T> {
  * });
  * ```
  */
-export function createAuth<T>(
+export function createAuth<T, S>(
   callback: AuthCallback<T>,
   option: { required: true }
-): [Plugin<InterceptorRegisterOptions>, AuthResourceWithRequired<T>];
-export function createAuth<T>(callback: AuthCallback<T>): [Plugin<InterceptorRegisterOptions>, AuthResourceOptional<T>];
+): [PluginSync<S>, AuthResourceWithRequired<T>];
 
-export function createAuth<T>(
+export function createAuth<T, S>(callback: AuthCallback<T>): [PluginSync<S>, AuthResourceOptional<T>];
+
+export function createAuth<T, S>(
   callback: AuthCallback<T>,
   option?: AuthOption
-): [Plugin<InterceptorRegisterOptions>, AuthResourceWithRequired<T> | AuthResourceOptional<T>] {
+): [PluginSync<S>, AuthResourceWithRequired<T> | AuthResourceOptional<T>] {
   const [getAuth, setAuth] = createContext<AuthResource<T>>({});
   function resource() {
     if (option?.required) {
@@ -129,7 +130,7 @@ export function createAuth<T>(
     return data!;
   };
 
-  const plugin = interceptor.use(async function middleware() {
+  const plugin = hook<S>("request", async function middleware() {
     try {
       const data = await callback();
       setAuth({ data });
@@ -141,5 +142,5 @@ export function createAuth<T>(
     }
   });
 
-  return [plugin, resource as any] as const;
+  return [plugin, resource] as const;
 }

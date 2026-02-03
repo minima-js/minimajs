@@ -1,10 +1,11 @@
 import { describe, test, expect, beforeEach, afterEach } from "@jest/globals";
 import { createApp } from "../bun/index.js";
-import type { Server } from "../server.js";
-import { plugin } from "../internal/plugins.js";
+import type { Server } from "../core/index.js";
+import { plugin } from "../plugin.js";
 import { getBody, sleep } from "./helpers/index.js";
 import type { App } from "../interfaces/index.js";
 import { createRequest } from "../mock/request.js";
+import { kModulesChain } from "../symbols.js";
 
 describe("Plugin System", () => {
   let app: Server<any>;
@@ -31,7 +32,7 @@ describe("Plugin System", () => {
     await app.ready();
     expect(pluginCalled).toBe(true);
 
-    const response = await app.inject(createRequest("/plugin-route"));
+    const response = await app.handle(createRequest("/plugin-route"));
     const data = await getBody(response);
     expect(data.fromPlugin).toBe(true);
   });
@@ -58,7 +59,7 @@ describe("Plugin System", () => {
     expect(pluginCalled).toBe(true);
     expect(nestedCalled).toBe(true);
 
-    const response = await app.inject(createRequest("/async-route"));
+    const response = await app.handle(createRequest("/async-route"));
     const data = (await response.json()) as any;
     expect(data.async).toBe(true);
   });
@@ -73,7 +74,7 @@ describe("Plugin System", () => {
 
     await app.ready();
 
-    const response = await app.inject(createRequest("/greeting"));
+    const response = await app.handle(createRequest("/greeting"));
     const data = (await response.json()) as any;
     expect(data.message).toBe("Hello World");
   });
@@ -98,7 +99,7 @@ describe("Plugin System", () => {
 
       expect(order).toEqual(["parent-start", "parent-end", "child"]);
 
-      const response = await app.inject(createRequest("/child"));
+      const response = await app.handle(createRequest("/child"));
       const data = (await response.json()) as any;
       expect(data.route).toBe("child");
     });
@@ -125,7 +126,7 @@ describe("Plugin System", () => {
 
       expect(order).toEqual(["parent-start", "parent-end", "child"]);
 
-      const response = await app.inject(createRequest("/async-child"));
+      const response = await app.handle(createRequest("/async-child"));
       const data = (await response.json()) as any;
       expect(data.route).toBe("async-child");
     });
@@ -185,7 +186,7 @@ describe("Plugin System", () => {
 
       expect(order).toEqual(["parent-start", "parent-end", "child-start", "child-end", "grandchild"]);
 
-      const response = await app.inject(createRequest("/deep"));
+      const response = await app.handle(createRequest("/deep"));
       const data = (await response.json()) as any;
       expect(data.level).toBe(3);
     });
@@ -203,11 +204,11 @@ describe("Plugin System", () => {
       app.register(parent, { prefix: "/api" });
       await app.ready();
 
-      const parentRes = await app.inject(createRequest("/api/route"));
+      const parentRes = await app.handle(createRequest("/api/route"));
       const parentData = (await parentRes.json()) as any;
       expect(parentData.scope).toBe("parent");
 
-      const childRes = await app.inject(createRequest("/api/child/route"));
+      const childRes = await app.handle(createRequest("/api/child/route"));
       const childData = (await childRes.json()) as any;
       expect(childData.scope).toBe("child");
     });
@@ -230,11 +231,11 @@ describe("Plugin System", () => {
       await app.ready();
 
       // plugin() sets skip-override: true, so child inherits parent prefix
-      const childRes = await app.inject(createRequest("/v1/child"));
+      const childRes = await app.handle(createRequest("/v1/child"));
       const childData = (await childRes.json()) as any;
       expect(childData.override).toBe(false);
 
-      const parentRes = await app.inject(createRequest("/v1/parent"));
+      const parentRes = await app.handle(createRequest("/v1/parent"));
       const parentData = (await parentRes.json()) as any;
       expect(parentData.route).toBe("parent");
     });
@@ -264,6 +265,39 @@ describe("Plugin System", () => {
 
       // Plugins registered in parent execute sequentially
       expect(order).toEqual(["parent", "child1", "child2"]);
+    });
+
+    test("should maintain module chain across nested plugins", async () => {
+      const chains: App[][] = [];
+
+      const child = async (c: App) => {
+        chains.push(c.container[kModulesChain]);
+      };
+
+      const parent = async (p: App) => {
+        chains.push(p.container[kModulesChain]);
+        p.register(child);
+      };
+
+      chains.push(app.container[kModulesChain]);
+      app.register(parent);
+      await app.ready();
+
+      // Expect snapshots: root chain [root], parent chain [root, parent], child chain [root, parent, child]
+      expect(chains.length).toBe(3);
+      const [rootChain, parentChain, childChain] = chains;
+
+      expect(rootChain).toHaveLength(1);
+      expect(rootChain![0]).toBe(app);
+
+      expect(parentChain).toHaveLength(2);
+      expect(parentChain![0]).toBe(app);
+      expect(parentChain![1]).not.toBe(app);
+
+      expect(childChain).toHaveLength(3);
+      expect(childChain![0]).toBe(app);
+      expect(childChain![1]).not.toBe(app);
+      expect(childChain![2]).not.toBe(app);
     });
   });
 });

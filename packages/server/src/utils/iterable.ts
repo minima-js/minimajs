@@ -1,4 +1,5 @@
 export { default as merge } from "deepmerge";
+import { isCallable } from "./callable.js";
 
 /**
  * Type guard to check if an object is an async iterable.
@@ -6,10 +7,14 @@ export { default as merge } from "deepmerge";
  */
 export function isAsyncIterator<T>(obj: unknown): obj is AsyncIterable<T> {
   if (!isObject(obj)) return false;
-  const method = obj[Symbol.asyncIterator];
-  if (typeof method != "function") return false;
-  const aIter = method.call(obj);
-  return aIter === obj;
+  return isCallable(obj[Symbol.asyncIterator]);
+}
+/**
+ * Type guard to check if an object is an async iterable.
+ * Verifies the presence and validity of the Symbol.asyncIterator method.
+ */
+export function isIterator<T>(obj: unknown): obj is Iterable<T> {
+  return isObject(obj) && isCallable(obj[Symbol.iterator]);
 }
 
 /**

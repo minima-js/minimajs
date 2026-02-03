@@ -20,6 +20,7 @@ import { pino, type LoggerOptions } from "pino";
 import merge from "deepmerge";
 import { maybeContext } from "./context.js";
 import type { App } from "./interfaces/app.js";
+import { kModulesChain, kModuleName } from "./symbols.js";
 
 export const loggerOptions: LoggerOptions = {
   transport: {
@@ -32,6 +33,30 @@ export const loggerOptions: LoggerOptions = {
   },
 };
 
+function getPluginNames(server: App): string {
+  const chain = server.container[kModulesChain].slice(-3);
+  return chain
+    .map((app) => app.container[kModuleName])
+    .filter(Boolean)
+    .join("/");
+}
+
+function getModuleName() {
+  const ctx = maybeContext();
+  if (!ctx) {
+    return null;
+  }
+  const { route, locals } = ctx;
+  if (!locals[kModuleName]) {
+    let name = getPluginNames(ctx.app);
+    const handler = route?.handler.name;
+    if (handler) {
+      name = name + ":" + handler;
+    }
+    locals[kModuleName] = name;
+  }
+  return locals[kModuleName];
+}
 /**
  * Mixin function for Pino logger that enriches log data with module name context.
  * Automatically adds the current module name to log entries if not already present.
@@ -45,35 +70,12 @@ export function mixin(data: Dict<unknown>) {
   return data;
 }
 
-function getPluginNames(_server: App): string {
-  return "";
-}
-
-const kModuleName = Symbol("module name");
-
-function getModuleName() {
-  const ctx = maybeContext();
-  if (!ctx) {
-    return null;
-  }
-  const { route, locals } = ctx;
-  if (!locals.has(kModuleName)) {
-    let name = getPluginNames(ctx.app);
-    const handler = route?.handler.name;
-    if (handler) {
-      name = name + ":" + handler;
-    }
-    locals.set(kModuleName, name);
-  }
-  return locals.get(kModuleName);
-}
-
 /**
  * Creates a Pino logger instance with merged default options and mixin support.
  * Combines default logger options with user-provided options and adds module name context.
  */
-export function createLogger(option: LoggerOptions) {
+export function createLogger(option: LoggerOptions = {}) {
   return pino(merge({ ...loggerOptions, mixin }, option));
 }
 
-export const logger = createLogger({});
+export const logger = createLogger();

@@ -12,6 +12,16 @@ Routing is the process of defining how your application responds to a client req
 
 In Minima.js, you can define routes using the application instance. Each route has a handler function that is executed when the route is matched.
 
+## Quick Reference
+
+- [`app.get/post/put/delete()`](#basic-routing) - Define routes for HTTP methods
+- [`app.route()`](#basic-routing) - Define routes with advanced options
+- [`params()`](#route-parameters) - Get route parameters
+- [`searchParams()`](#query-parameters) - Get query string parameters
+- [Route metadata](#route-metadata) - Attach metadata to routes
+
+---
+
 ## Basic Routing
 
 The most basic way to define a route is to use the `app.get()`, `app.post()`, `app.put()`, `app.delete()` methods, which correspond to the respective HTTP methods.
@@ -107,22 +117,106 @@ app.get("/files/:file(^\\d+).png", () => {
 });
 ```
 
-## Route Options
+## Route Metadata
 
-When defining a route, you can also pass an `options` object to customize its behavior.
+Minima.js allows you to attach custom metadata to your routes. This is a powerful feature for adding route-specific configuration, flags, or contextual information that can be accessed by handlers, hooks, or plugins. Metadata is passed as `[key, value]` tuples directly in the route definition, before the final handler function.
+
+It's recommended to use `Symbol`s as keys for your metadata to avoid potential name collisions.
+
+**Defining Metadata:**
 
 ```typescript
-app.post("/users", { bodyLimit: 1024 * 1024 * 10 }, () => {
-  // ...
+import { createApp } from "@minimajs/server";
+const app = createApp();
+// Define custom symbols for metadata keys
+const kAuthRequired = Symbol("AuthRequired");
+const kPermissions = Symbol("Permissions");
+
+app.get(
+  "/admin",
+  [kAuthRequired, true], // Metadata tuple 1
+  [kPermissions, ["admin", "moderator"]], // Metadata tuple 2
+  () => {
+    return { message: "Welcome, admin!" };
+  }
+);
+
+app.post(
+  "/api/data",
+  [kAuthRequired, false], // This route doesn't require auth
+  () => {
+    return { message: "Data created" };
+  }
+);
+```
+
+**Accessing Metadata in a Handler:**
+
+You can access the metadata for the current route using the `context().route.metadata` object within any handler or any function called within the handler's scope.
+
+```typescript
+import { context } from "@minimajs/server";
+// Assuming kAuthRequired and kPermissions are imported or defined
+const kAuthRequired = Symbol("AuthRequired");
+const kPermissions = Symbol("Permissions");
+
+app.get("/admin-dashboard", [kAuthRequired, true], [kPermissions, ["admin"]], () => {
+  const routeMetadata = context().route.metadata;
+  const authRequired = routeMetadata.get(kAuthRequired); // true
+  const requiredPermissions = routeMetadata.get(kPermissions); // ["admin"]
+
+  console.log(`Auth Required: ${authRequired}`);
+  console.log(`Required Permissions: ${requiredPermissions}`);
+
+  return { authRequired, requiredPermissions };
 });
 ```
 
-The following options are available:
+**Accessing Metadata in a Hook:**
 
-- `bodyLimit`: The maximum size of the request body in bytes.
+Metadata is especially useful in hooks for implementing cross-cutting concerns dynamically. For instance, an authentication hook can check if a route requires authentication based on its metadata.
+
+```typescript
+import { app } from "./your-app-instance"; // Your app instance
+import { hook, context, abort } from "@minimajs/server";
+const kAuthRequired = Symbol("AuthRequired"); // Must be the same Symbol instance
+
+app.register(
+  hook("request", () => {
+    const routeMetadata = context().route.metadata;
+    const authRequired = routeMetadata.get(kAuthRequired);
+
+    if (authRequired) {
+      // Perform actual authentication check
+      const isAuthenticated = false; // Replace with your auth logic
+      if (!isAuthenticated) {
+        abort("Unauthorized", 401);
+      }
+    }
+  })
+);
+
+app.get(
+  "/protected",
+  [kAuthRequired, true], // This route will be checked by the hook
+  () => {
+    return { message: "You accessed a protected route!" };
+  }
+);
+
+app.get(
+  "/public",
+  [kAuthRequired, false], // This route will skip the auth check
+  () => {
+    return { message: "This route is public." };
+  }
+);
+```
+
+By leveraging route metadata, you can create highly configurable and modular applications, where route-specific behavior can be easily defined and managed without cluttering your main handler logic.
 
 ## Structuring Routes with Modules
 
 As your application grows, it's a good practice to organize your routes into modules. This helps you keep your code organized and maintainable.
 
-To learn more about how to structure your application with modules, please refer to the [Modules](/guides/modules) guide.
+To learn more about how to structure your application with modules, please refer to the [Modules](/core-concepts/modules) guide.

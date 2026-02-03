@@ -13,7 +13,10 @@
  * ```
  */
 
-import { logger } from "./logger.js";
+// Re-export core for backwards compatibility (App interface, types, etc.)
+export * from "./core/server.js";
+
+export { logger } from "./logger.js";
 
 // Exporting all types
 export * from "./interfaces/index.js";
@@ -21,14 +24,15 @@ export * from "./interfaces/index.js";
 // Exports Contexts
 export * from "./context.js";
 
-// Export Intercetpros
-export * from "./interceptor.js";
-
 export * from "./http.js";
 export * from "./hooks/index.js";
-export { logger };
 
-export { plugin } from "./internal/plugins.js";
+export { type StatusCode } from "./internal/response.js";
+export { defer, onError, type DeferCallback, type ErrorCallback } from "./plugins/deferrer/index.js";
+export { controller } from "./plugins/controller/index.js";
+
+export * from "./plugin.js";
+export * from "./plugins/module-discovery/types.js";
 export { compose } from "./compose.js";
 
 export { createApp } from "./node/index.js";

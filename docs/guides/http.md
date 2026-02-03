@@ -4,515 +4,366 @@ sidebar_position: 4
 tags:
   - request
   - response
-  - error
   - context
-  - hooks
 ---
 
-The request/response are globally accessible anywhere from request contexts.
-The following functions are exposed from `@minimajs/server` for handling HTTP requests and responses:
+# HTTP Helpers
+
+The request and response objects are globally accessible anywhere from request contexts. This guide covers helper functions for interacting with HTTP requests and responses.
+
+## Quick Reference
+
+### Request Helpers
+
+- [`request()`](#request) - Get native Request object
+- [`request.url()`](#requesturl) - Get URL object
+- [`request.ip()`](#requestip) - Get client IP address
+- [`headers()`](#headers) - Get request headers
+- [`searchParams()`](#searchparams) - Get query string parameters
+- [`params()`](#params) - Get route parameters
+- [`body()`](#body) - Get request body
+
+### Response Helpers
+
+- [`response()`](#response-1) - Get native Response object
+- [`response.status()`](#responsestatus) - Set status code
+- [`headers.set()`](#headersset) - Set response headers
+
+### Customization
+
+- [`app.serialize`](#custom-serializer-appserialize) - Global serialization
+- [`transform` hook](#modifying-response-data-transform-hook) - Modify data before serialization
+- [`send` hook](#modifying-the-final-response-send-hook) - Modify response before sending
+
+---
 
 ## Request
 
-### request
+### `request()`
 
-```typescript
-request(): Request
-```
-
-Retrieves the HTTP request object.
-
-Examples:
+Retrieves the native Web API `Request` object.
 
 ```ts
-import { body, request } from "@minimajs/server";
+import { request } from "@minimajs/server";
+
 app.get("/", () => {
-  // highlight-next-line
   const req = request();
   return req.url;
 });
-app.post("/", () => createUser(body()));
 ```
 
-And even you can use request in nested function calls
+You can use `request()` in nested function calls:
 
 ```ts
 function getURL() {
-  // highlight-next-line
   return request().url;
 }
-app.get("/", () => {
-  const url = getURL();
-  return url;
+
+app.get("/", () => getURL());
+```
+
+### `request.url()`
+
+Returns the parsed URL object from the request.
+
+```ts
+import { request } from "@minimajs/server";
+
+app.get("/users", () => {
+  const url = request.url();
+  console.log(url.pathname); // "/users"
+  console.log(url.searchParams.get("page")); // query param
+  return { path: url.pathname };
 });
 ```
 
-**Namespace utilities:**
+### `request.ip()`
 
-#### request.url
+Returns the client's IP address. Requires the **Proxy** plugin to be registered and configured.
 
-```ts
-request.url(): URL
-```
+**Configuration:**
 
-Retrieves the full request URL.
-
-**Examples:**
-
-```typescript
-const url = request.url();
-console.log(url.pathname);
-console.log(url.searchParams.get("page"));
-```
-
-#### request.route
+Before using `request.ip()`, register the IP plugin (often via `proxy`):
 
 ```ts
-request.route(): RouteOptions
+import { request } from "@minimajs/server";
+import { proxy } from "@minimajs/server/plugins";
+
+// Use custom header (e.g., Cloudflare)
+app.register(proxy({ trustProxies: true, ip: { header: "CF-Connecting-IP" } }));
 ```
 
-Retrieves the matched route options.
+**Example:**
 
-**Examples:**
-
-```typescript
-const routeOpts = request.route();
-console.log(routeOpts.url);
-console.log(routeOpts.method);
+```ts
+app.get("/", () => {
+  const ip = request.ip();
+  return { clientIp: ip };
+});
 ```
 
-### headers
+## Headers
 
-```typescript
-headers(): Record<string, string | string[]>
+### `headers()`
+
+Returns the request headers. Supports direct access and transformation utilities.
+
+```ts
+import { headers } from "@minimajs/server";
+
+app.get("/", () => {
+  const reqHeaders = headers();
+  const auth = reqHeaders.get("authorization");
+  return { auth };
+});
 ```
 
-Retrieves the request headers.
+### `headers.get()`
 
-**Namespace utilities:**
+Gets a single header value with optional transformation.
 
-#### headers.get
+```ts
+import { headers } from "@minimajs/server";
 
-```typescript
-headers.get(name: string): string | undefined
-headers.get<R>(name: string, transform: (value: string) => R): R | undefined
+// Get as string
+const contentType = headers.get("content-type");
+
+// Transform to number
+const contentLength = headers.get("content-length", Number);
 ```
 
-Retrieves a single header value by name with optional transformation.
+### `headers.getAll()`
 
-**Examples:**
+Gets all values for a header with optional transformation.
 
-```typescript
-const auth = headers.get("authorization"); // string | undefined
-const token = headers.get("authorization", (val) => val.split(" ")[1]); // string | undefined
+```ts
+import { headers } from "@minimajs/server";
+
+// Get all values
+const cookies = headers.getAll("cookie");
+
+// Transform each value
+const lengths = headers.getAll("x-custom", Number);
 ```
 
-#### headers.getAll
+## Search Params
 
-```typescript
-headers.getAll(name: string): string[]
-headers.getAll<R>(name: string, transform: (value: string) => R): R[]
+### `searchParams()`
+
+Returns the URL search parameters (query string).
+
+```ts
+import { searchParams } from "@minimajs/server";
+
+app.get("/search", () => {
+  const params = searchParams();
+  const query = params.get("q");
+  return { query };
+});
 ```
 
-Retrieves all values for a header name with optional transformation.
+### `searchParams.get()`
 
-**Examples:**
+Gets a single query parameter with optional transformation.
 
-```typescript
-const cookies = headers.getAll("cookie"); // string[]
-const parsed = headers.getAll("cookie", (val) => val.split("=")); // string[][]
+```ts
+import { searchParams } from "@minimajs/server";
+
+// Get as string
+const query = searchParams.get("q");
+
+// Transform to number
+const page = searchParams.get("page", Number);
 ```
 
-#### headers.set
+### `searchParams.getAll()`
 
-```typescript
-headers.set(name: string, value: string): Response
+Gets all values for a query parameter with optional transformation.
+
+```ts
+import { searchParams } from "@minimajs/server";
+
+// Get all values
+const tags = searchParams.getAll("tag");
+
+// Transform each value
+const ids = searchParams.getAll("id", Number);
 ```
 
-Sets a response header.
+## Route Params
 
-**Examples:**
+### `params()`
 
-```typescript
-headers.set("x-custom-header", "value");
+Returns the route parameters.
+
+```ts
+import { params } from "@minimajs/server";
+
+app.get("/users/:id", () => {
+  const routeParams = params();
+  const userId = routeParams.get("id");
+  return { userId };
+});
 ```
 
-### searchParams
+### `params.get()`
 
-```typescript
-searchParams<T>(): T
+Gets a route parameter with optional transformation.
+
+```ts
+import { params } from "@minimajs/server";
+
+app.get("/users/:id", () => {
+  // Get as string
+  const userId = params.get("id");
+
+  // Transform to number
+  const numericId = params.get("id", Number);
+
+  return { userId, numericId };
+});
 ```
 
-Retrieves the search params (query string).
+## Request Body
 
-**Examples:**
+### `body()`
 
-```typescript
-const query = searchParams<{ page: string }>();
-console.log(query.page);
+Returns the parsed request body. The body parser is **enabled by default** and configured to parse JSON, so you can use `body()` immediately without any setup.
 
-// Or use searchParams.get
-const page = searchParams.get("page");
+```ts
+import { body } from "@minimajs/server";
+
+// Body parser is already enabled - no registration needed!
+app.post("/users", () => {
+  const data = body();
+  return { created: data };
+});
 ```
 
-**Namespace utilities:**
+To change the configuration or disable the body parser, see the [Body Parser plugin documentation](/plugins/body-parser).
 
-#### searchParams.get
-
-```typescript
-searchParams.get(name: string): string | undefined
-searchParams.get<R>(name: string, transform: (value: string) => R): R
-```
-
-Retrieves a single search param by name with optional transformation.
-
-**Examples:**
-
-```typescript
-const page = searchParams.get("page"); // string | undefined
-const pageNum = searchParams.get("page", (val) => parseInt(val)); // number
-```
-
-#### searchParams.getAll
-
-```typescript
-searchParams.getAll(name: string): string[]
-searchParams.getAll<R>(name: string, transform: (value: string) => R): R[]
-```
-
-Retrieves all values for a search param by name with optional transformation.
-
-**Examples:**
-
-```typescript
-const tags = searchParams.getAll("tag"); // string[]
-const tagIds = searchParams.getAll("tag", (val) => parseInt(val)); // number[]
-```
-
-### params
-
-```typescript
-params<T>(): T
-```
-
-Retrieves the request params (route parameters).
-
-**Examples:**
-
-```typescript
-const p = params<{ id: string }>();
-console.log(p.id);
-
-// Or use params.get
-const id = params.get("id");
-```
-
-**Namespace utilities:**
-
-#### params.get
-
-```typescript
-params.get(name: string): string
-params.get<R>(name: string, transform: (value: string) => R): R
-```
-
-Retrieves a single param by name with optional transformation. Throws `NotFoundError` if the param is not found.
-
-**Examples:**
-
-```typescript
-const id = params.get("id"); // string
-const page = params.get("page", (val) => parseInt(val)); // number
-const age = params.get("age", (val) => {
-  const num = parseInt(val);
-  if (num < 0) throw new Error("must be positive");
-  return num;
-}); // number
-```
-
-#### params.optional
-
-```typescript
-params.optional(name: string): string | undefined
-params.optional<R>(name: string, transform: (value: string) => R): R | undefined
-```
-
-Retrieves a single param by name with optional transformation. Returns `undefined` if the param is not found.
-
-**Examples:**
-
-```typescript
-const id = params.optional("id"); // string | undefined
-const page = params.optional("page", (val) => parseInt(val)); // number | undefined
-```
-
-### body
-
-```typescript
-body<T = unknown>(): T
-```
-
-Retrieves the request body.
+---
 
 ## Response
 
-### Return value as response
+### `response()`
 
-just return the value will be a response
+Returns the native `Response` object for the current request context.
 
 ```ts
+import { response } from "@minimajs/server";
+
 app.get("/", () => {
-  return "Hello world";
+  const res = response();
+  console.log(res.status); // 200
+  return "Hello";
 });
 ```
 
-### Async
-
-```ts
-app.get("/", async () => {
-  const response = await fetch("https://.../");
-  return response.json();
-});
-```
-
-### Streams
-
-Any Readable streams are a valid response
-
-```ts
-import { createReadStream } from "node:fs";
-
-app.get("/", async () => {
-  return createReadStream("package.json");
-});
-```
-
-### Generators
-
-```ts
-import { setTimeout as sleep } from "node:timers/promise";
-
-async function* getDates() {
-  yield new Date().toString();
-  await sleep(1000);
-  yield new Date().toString();
-}
-
-app.get("/", getDates);
-```
-
-### response
-
-```typescript
-response(): Response
-```
-
-Retrieves the HTTP response object.
-
-**Namespace utilities:**
-
-#### response.status
-
-```typescript
-response.status(statusCode: keyof typeof StatusCodes | number): Response
-```
+### `response.status()`
 
 Sets the HTTP status code for the response.
 
-**Examples:**
+```ts
+import { response } from "@minimajs/server";
 
-```typescript
-response.status(200);
-response.status("CREATED");
-```
+app.get("/error", () => {
+  response.status(500);
+  return { error: "Internal Server Error" };
+});
 
-### Decorator / Filter
-
-sometimes you need to decorator or modify response.
-
-that's easy. you just need to create a response decorator and register it.
-
-Creating a decorator
-
-```ts title="src/decorator.ts"
-import { interceptor } from "@minimajs/server";
-
-export const decorateResponse = interceptor.response((response) => {
-  return { decorated: true, data: response };
+app.post("/created", () => {
+  response.status(201);
+  return { id: 123 };
 });
 ```
 
-register it
+### `headers.set()`
 
-```ts title="app.ts"
-import { decorateResponse } from "./decorator";
-const app = createApp();
-
-app.register(decorateResponse);
-```
-
-## Hooks
-
-### defer
-
-the `defer` allows scheduling tasks for execution after sending the response.
+Sets response headers.
 
 ```ts
-import { defer } from "@minimajs/server";
-function saveUser() {
-  // saving user
-  // save some log
-  // highlight-start
-  defer(() => {
-    console.log("deleting log");
-    // delete log
-    // this will executed after request context completed
-  });
-  // highlight-end
-}
+import { headers } from "@minimajs/server";
+
+app.get("/", () => {
+  headers.set("X-Custom-Header", "value");
+  headers.set("Content-Type", "application/json");
+  return { message: "Hello" };
+});
 ```
 
-### hook
+---
 
-The `hook` function creates lifecycle hook plugins that execute at specific points in the application lifecycle.
+## Modifying Response
 
-**Available lifecycle events:**
+### Custom Serializer: `app.serialize`
 
-- `ready` - Executes when the application is ready
-- `close` - Executes when the application is closing
-- `listen` - Executes when the server starts listening
-- `send` - Executes before sending the response
-- `serialize` - Executes during response serialization
-- `register` - Executes when a plugin is registered
-
-**Basic Usage:**
+Define global serialization logic for all responses.
 
 ```ts
-import { createApp, hook } from "@minimajs/server";
+import { createApp } from "@minimajs/server";
 
-const app = createApp();
-
-// Register a hook that runs when the app is ready
-app.register(
-  hook("ready", async () => {
-    console.log("Application is ready!");
-  })
-);
-
-// Register a hook that runs when the app is closing
-app.register(
-  hook("close", async () => {
-    console.log("Application shutting down");
-  })
-);
-```
-
-**Composing Multiple Hooks:**
-
-Use `plugin.compose` to register multiple hooks together:
-
-```ts
-import { createApp, hook, plugin } from "@minimajs/server";
-
-const closeDB = hook("close", async () => {
-  await connection.close();
+const app = createApp({
+  serialize: (data) => {
+    // Wrap all responses in a standard format
+    return JSON.stringify({ success: true, data });
+  },
 });
 
-const connectDB = hook("ready", async () => {
-  await connection.connect();
+app.get("/users", () => {
+  return [{ id: 1, name: "Alice" }];
+  // Response: {"success":true,"data":[{"id":1,"name":"Alice"}]}
+});
+```
+
+**Use cases:**
+
+- Add global response wrappers
+- Custom encoding formats
+- Consistent API response structure
+
+### Modifying Response Data: `transform` Hook
+
+Use the `transform` hook to modify response data before serialization.
+
+```ts
+import { hook } from "@minimajs/server";
+
+// Add timestamp to all responses
+hook("transform", (data) => {
+  return { ...data, timestamp: Date.now() };
 });
 
-// Compose and register both hooks together
-app.register(plugin.compose(connectDB, closeDB));
+app.get("/users", () => {
+  return { users: [] };
+  // Response: {"users":[],"timestamp":1234567890}
+});
 ```
 
-For more information about composing plugins, see the [Plugin guide](/guides/plugin.md).
+See [Transform Hook](/guides/hooks#transform) for more details.
 
-## Exceptions
+### Post-Response Tasks: `send` Hook
 
-### redirect
-
-Redirects the client to the specified path.
-
-```typescript
-redirect(path: string, isPermanent?: boolean): never
-```
-
-Throws a RedirectError to redirect the client to a specified path.
-
-Parameters:
-
-1. `path` (string): The URL path to redirect to.
-2. `isPermanent` (boolean): Optional parameter indicating whether the redirect is permanent (HTTP status code 301) or temporary (HTTP status code 302). Default is false.
-
-Examples:
+Use the `send` hook to execute tasks after the response is sent, such as logging or cleanup.
 
 ```ts
-import { redirect } from "@minimajs/server";
+import { hook } from "@minimajs/server";
 
-async function handleRequest() {
-  // Example 1: Redirect to a specific path
-  redirect("/home");
+// Log all responses after they're sent
+hook("send", (response, ctx) => {
+  console.log(`Response sent: ${response.status} for ${ctx.pathname}`);
+});
 
-  // Example 2: Redirect permanently to a different path
-  redirect("/new-home", true);
-}
+app.get("/", () => "Hello");
+// Logs: Response sent: 200 for /
 ```
 
-### abort
+See [Send Hook](/guides/hooks#send) for more details.
 
-Terminates the current operation with an optional message and HTTP status code.
+---
 
-```typescript
-abort(response: string | Record<string, unknown>, statusCode: StatusCode): never
-```
+## Related Guides
 
-Throws an HttpError to abort the current operation with a specified message and status code.
-
-Parameters:
-
-1. `response` (string | Record&lt;string, unknown>): A descriptive message explaining the reason for aborting the operation.
-1. `statusCode` (StatusCode): An optional parameter indicating the HTTP status code associated with the abort.
-
-Examples:
-
-```ts
-import { abort, params } from "@minimajs/server";
-
-async function findUser() {
-  const userId = params.get("user");
-  const user = await User.findOne({ _id: userId });
-  if (!user) {
-    // example 1: status code as number
-    // highlight-next-line
-    abort("User doesn't exists", 404);
-    // i won't be reachable
-  }
-  if (user.type !== "admin") {
-    // Example 2: Abort with a custom message and status code
-    // highlight-next-line
-    abort("Unauthorized access", "UNAUTHORIZED");
-  }
-  return user;
-}
-
-app.get("/users/:user", findUser);
-```
-
-You can also use the namespace utility `abort.notFound()`:
-
-```ts
-import { abort, params } from "@minimajs/server";
-
-async function findUser() {
-  const userId = params.get("user");
-  const user = await User.findOne({ _id: userId });
-  if (!user) {
-    // highlight-next-line
-    abort.notFound();
-  }
-  return user;
-}
-```
-
-These functions provide essential utilities for handling HTTP requests and responses within request context built-in `@minimajs/server`.
+- [Hooks](/guides/hooks) - Request lifecycle and hook system
+- [Error Handling](/guides/error-handling) - Error handling patterns
+- [Context](/core-concepts/context) - Request context management

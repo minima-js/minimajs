@@ -1,14 +1,14 @@
 import { z, ZodError } from "zod";
 import { SchemaError, ValidationError } from "../error.js";
-import { context } from "@minimajs/server";
-import type { SchemaLifecycleTypes } from "./schema.js";
+import { context, type Context } from "@minimajs/server";
+import type { SchemaDataTypes } from "./schema.js";
 
 const kSchemaMetadata = Symbol("minimajs.schema.metadata");
 
 export interface SchemaMetadata<T = unknown> {
-  type: SchemaLifecycleTypes;
+  type: SchemaDataTypes;
   schema: z.ZodTypeAny;
-  callback: () => Promise<T> | T;
+  callback: (ctx: Context) => Promise<T> | T;
 }
 
 export function setSchemaMetadata(cb: any, metadata: SchemaMetadata) {
@@ -31,24 +31,23 @@ export function validatorAsync<T extends z.ZodTypeAny>(
   schema: T,
   data: DataCallback,
   option: ValidationOptions | undefined,
-  type: SchemaLifecycleTypes
+  type: SchemaDataTypes
 ): () => z.infer<T> {
-  const symbol = Symbol("minimajs.schema");
+  const symbol = Symbol("minimajs.schema.data");
   function getData(): z.infer<T> {
     const { locals } = context();
-    if (!locals.has(symbol)) {
+    if (!locals[symbol]) {
       throw new SchemaError("Schema not register");
     }
-    return locals.get(symbol) as z.infer<T>;
+    return locals[symbol] as z.infer<T>;
   }
 
   setSchemaMetadata(getData, {
     schema,
     type,
-    callback: async () => {
-      const { locals } = context();
-      const val = await validateObjectAsync(schema, data(), option);
-      locals.set(symbol, val);
+    callback: async ({ locals }) => {
+      const val = await validateObjectAsync(schema, await data(), option);
+      locals[symbol] = val;
     },
   });
 
@@ -60,7 +59,7 @@ async function validateObjectAsync(schema: z.ZodTypeAny, data: unknown, option?:
     // If passthrough is true, allow unknown properties
     let finalSchema = schema;
     if (option?.stripUnknown === false && schema instanceof z.ZodObject) {
-      finalSchema = schema.passthrough();
+      finalSchema = schema.loose();
     }
 
     return await finalSchema.parseAsync(data);

@@ -8,15 +8,47 @@ tags:
 
 # Context: Access Data from Anywhere
 
-In many Node.js frameworks, you need to pass the `request` and `response` objects down through your application's layers to access request-specific data. This "prop drilling" can lead to cluttered code and tight coupling.
+In many Node.js frameworks, you need to pass `request` and `response` objects down through your application's layers. This "prop drilling" can lead to cluttered code and tight coupling.
 
-Minima.js solves this problem with a powerful **Context** system.
+Minima.js solves this with a powerful **Context** system, powered by Node.js's native `AsyncLocalStorage` API. Each request gets its own context, and you can access request-specific data from **anywhere** in your code without passing `req` or `res`.
 
-At the heart of this system is Node.js's native `AsyncLocalStorage` API. This allows Minima.js to create a unique "storage" for each incoming request. Any data stored in this context is accessible from **anywhere** within the code that is executed during that specific request's lifecycle—without needing to pass `req` or `res` objects around.
+## Access the Full Request Context with `context()`
 
-## Creating and Using a Context
+Use `context()` when you need the complete request scope in one object. It exposes the request, response state, route info, and per-request locals.
 
-To create a context, you use the `createContext` function from `@minimajs/server`.
+```typescript
+import { context } from "@minimajs/server";
+
+function auditRequest() {
+  const ctx = context();
+  const method = ctx.request.method;
+  const path = ctx.pathname;
+  const routeName = ctx.route?.path ?? "unknown";
+
+  console.log(`[AUDIT] ${method} ${path} (${routeName})`);
+}
+
+export default async function (app) {
+  app.get("/users/:id", () => {
+    auditRequest();
+    return { id: "123" };
+  });
+}
+```
+
+**Common fields on `context()`:**
+
+- `request` - native Web API `Request`
+- `responseState` - mutable headers/status
+- `pathname` - current request path
+- `route` - matched route (if any)
+- `locals` - per-request storage
+
+> **Note:** `context()` only works inside a request lifecycle. Calling it outside a request will throw.
+
+## Create Your Own Context with `createContext`
+
+To create custom request-scoped storage, use the `createContext` function from `@minimajs/server`.
 
 ```typescript
 import { createContext } from "@minimajs/server";
@@ -25,25 +57,22 @@ import { createContext } from "@minimajs/server";
 const [getTraceId, setTraceId] = createContext<string>("");
 ```
 
-The `createContext` function returns a tuple with two functions:
+This returns a tuple with a **getter** (`getTraceId`) and a **setter** (`setTraceId`).
 
-- A **getter** (`getTraceId`) to retrieve the value from the context.
-- A **setter** (`setTraceId`) to set the value in the context.
-
-Here's how you might use it:
+Here's how you might use it to apply a `traceId` to every request using a middleware plugin.
 
 ```typescript
-import { createApp, interceptor } from "@minimajs/server";
+import { createApp, hook } from "@minimajs/server";
 import { randomUUID } from "crypto";
 
-// A middleware to set the trace ID for each request
-async function traceIdMiddleware() {
+// 1. Define a hook plugin that runs on every request.
+const traceIdPlugin = hook("request", () => {
   const traceId = randomUUID();
   setTraceId(traceId);
-}
+});
 
 function someDeeplyNestedFunction() {
-  // We can access the trace ID here without any prop drilling!
+  // 3. We can access the trace ID here without any prop drilling!
   const traceId = getTraceId();
   console.log(`Trace ID: ${traceId}`);
 }
@@ -56,75 +85,18 @@ async function mainModule(app) {
 }
 
 const app = createApp();
-const appModule = interceptor([traceIdMiddleware], mainModule);
-app.register(appModule);
+// 2. Apply the middleware plugin to your app.
+app.register(traceIdPlugin);
 
+app.register(mainModule);
 await app.listen({ port: 3000 });
 ```
 
-As you can see, `someDeeplyNestedFunction` can access the `traceId` without having it passed as a parameter. This makes your code cleaner, more decoupled, and easier to reason about.
-
-## A Practical Example: Authentication
-
-The context is perfect for handling authentication. You can create a middleware that authenticates the user and stores the user object in the context. Then, any route handler or service can access the authenticated user directly.
-
-**1. Create the User Context**
-
-```typescript title="src/auth/context.ts"
-import { createContext } from "@minimajs/server";
-
-export interface User {
-  id: number;
-  username: string;
-}
-
-export const [getUser, setUser] = createContext<User | null>(null);
-```
-
-**2. Create the Authentication Middleware**
-
-```typescript title="src/auth/middleware.ts"
-import { createAuth, UnauthorizedError } from "@minimajs/auth";
-import { headers } from "@minimajs/server";
-import { setUser, User } from "./context";
-import { findUserByToken } from "./service"; // Your user service
-
-export const [authMiddleware, guard] = createAuth(async (): Promise<User> => {
-  const token = headers.get("authorization")?.split(" ")[1];
-  const user = await findUserByToken(token);
-
-  if (!user) {
-    throw new UnauthorizedError("Invalid token");
-  }
-
-  // Set the user in the context
-  setUser(user);
-
-  return user;
-});
-```
-
-**3. Access the User in a Route Handler**
-
-```typescript title="src/profile/routes.ts"
-import { type App } from "@minimajs/server";
-import { getUser } from "../auth/context";
-
-export async function profileRoutes(app: App) {
-  app.get("/profile", () => {
-    const user = getUser(); // Easily access the user from the context
-    if (!user) {
-      // This should ideally not happen if the guard is used
-      throw new UnauthorizedError("Not authenticated");
-    }
-    return { id: user.id, username: user.username };
-  });
-}
-```
+As you can see, `someDeeplyNestedFunction` can access the `traceId` without having it passed as a parameter.
 
 ## Benefits of Using Context
 
 - **Cleaner Code:** Eliminates the need to pass `req` and `res` everywhere.
 - **Decoupling:** Your business logic doesn't need to be aware of the underlying HTTP framework.
-- **Easier Third-Party Integration:** Integrate libraries that don't have direct access to `req`/`res` objects by simply calling them from within your request lifecycle code.
-- **Improved Testability:** Your functions become easier to test in isolation as they have fewer dependencies.
+- **Easier Third-Party Integration:** Integrate libraries that don't have direct access to `req`/`res` objects.
+- **Improved Testability:** Your functions become easier to test in isolation.

@@ -1,19 +1,17 @@
 {
   "name": "@minimajs/multipart",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Multipart/form-data handling with file upload support, validation, and schema integration",
   "type": "module",
   "exports": {
     ".": "./lib/index.js",
-    "./unstable": "./lib/unstable.js",
-    "./helpers": "./lib/helpers.js",
     "./schema": "./lib/schema/index.js"
   },
   "scripts": {
     "dev": "tsc -w",
-    "build": "yarn clean && tsc --build",
-    "test": "bun test src/",
-    "test:jest": "yarn node --no-warnings --experimental-vm-modules $(yarn bin jest)",
+    "build": "tsc -p ./tsconfig.build.json",
+    "test": "bun test",
+    "coverage": "bun test --coverage --timeout=2000",
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "devDependencies": {

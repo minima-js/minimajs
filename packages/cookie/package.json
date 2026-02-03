@@ -1,14 +1,17 @@
 {
   "name": "@minimajs/cookie",
   "version": "1.1.0",
-  "description": "Type-safe cookie management for MinimaJS",
+  "description": "Type-safe cookie management for Minima.js",
   "type": "module",
+  "license": "MIT",
   "exports": {
     ".": "./lib/index.js"
   },
   "scripts": {
     "dev": "tsc -w",
-    "build": "yarn clean && tsc --build",
+    "test": "bun test",
+    "coverage": "bun test --coverage",
+    "build": "tsc -p ./tsconfig.build.json",
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "devDependencies": {

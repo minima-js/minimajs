@@ -6,6 +6,7 @@
     "target": "ESNext",
     "module": "NodeNext",
     "strict": true,
+    "strictFunctionTypes": true,
     "esModuleInterop": true,
     "moduleResolution": "NodeNext",
     "skipLibCheck": true,
