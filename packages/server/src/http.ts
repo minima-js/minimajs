@@ -6,7 +6,7 @@ import { toStatusCode, type StatusCode } from "./internal/response.js";
 import { isAbortError } from "./utils/errors.js";
 import { mergeHeaders } from "./utils/headers.js";
 import { kBody, kIpAddr } from "./symbols.js";
-import type { Dict } from "./interfaces/index.js";
+import type { Dict, RemoteAddr } from "./interfaces/index.js";
 
 // ============================================================================
 //  Response
@@ -284,13 +284,14 @@ export namespace request {
     const { locals } = context();
     let ipAddr = locals[kIpAddr];
     if (ipAddr === undefined) {
-      ipAddr = request.remoteAddr();
+      const rAddr = request.remoteAddr();
+      ipAddr = rAddr ? rAddr.hostname : null;
       locals[kIpAddr] = ipAddr;
     }
     return ipAddr;
   }
 
-  export function remoteAddr(): string | null {
+  export function remoteAddr(): RemoteAddr | null {
     const ctx = context();
     return ctx.serverAdapter.remoteAddr(ctx);
   }

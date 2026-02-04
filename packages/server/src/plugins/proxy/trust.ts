@@ -18,7 +18,7 @@ export function createTrustValidator<S>(trustProxies: ProxyOptions<S>["trustProx
   if (Array.isArray(trustProxies)) {
     const evaluate = buildListValidator(trustProxies);
     return (ctx: Context<S>) => {
-      const ip = normalizeRemoteAddress(ctx.serverAdapter.remoteAddr(ctx));
+      const ip = normalizeRemoteAddress(ctx.serverAdapter.remoteAddr(ctx)?.hostname);
       return evaluate(ip);
     };
   }
@@ -26,7 +26,7 @@ export function createTrustValidator<S>(trustProxies: ProxyOptions<S>["trustProx
   const { proxies = [], validator } = trustProxies;
   const evaluate = buildListValidator(proxies);
   return (ctx: Context<S>) => {
-    const ip = normalizeRemoteAddress(ctx.serverAdapter.remoteAddr(ctx));
+    const ip = normalizeRemoteAddress(ctx.serverAdapter.remoteAddr(ctx)?.hostname);
     if (validator && validator(ctx, ip)) {
       return true;
     }
