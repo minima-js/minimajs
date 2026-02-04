@@ -15,6 +15,6 @@ import { kInternal } from "./symbols.js";
  * app.get("/admin/metrics", internal(), () => getMetrics());
  * ```
  */
-export function internal(): RouteMetaDescriptor {
-  return [kInternal, true];
+export function internal(isInternal = true): RouteMetaDescriptor {
+  return [kInternal, isInternal];
 }

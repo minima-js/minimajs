@@ -15,15 +15,19 @@ export interface OpenAPIPluginOptions extends OpenAPIOptions {
 
 export * from "./generator.js";
 
-export function openapi(
-  options: OpenAPIPluginOptions = {
-    info: {
+export function openapi(options: OpenAPIPluginOptions) {
+  const {
+    info = {
       title: "Minima.js",
       version: "1.0.0",
     },
-  }
-) {
-  const { info, servers = [], tags = [], security, components, externalDocs, path = "/openapi.json" } = options;
+    servers = [],
+    tags = [],
+    security,
+    components,
+    externalDocs,
+    path = "/openapi.json",
+  } = options;
 
   return plugin.sync((app) => {
     app.get(path, internal(), () => {

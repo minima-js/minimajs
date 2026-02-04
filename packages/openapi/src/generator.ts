@@ -50,7 +50,7 @@ const HTTP_STATUS_DESCRIPTIONS: Record<number, string> = {
 export function generateOpenAPIDocument(app: App, options: OpenAPIOptions): OpenAPI.Document {
   const document: OpenAPI.Document = {
     openapi: "3.1.0",
-    info: options.info,
+    info: options.info!,
     paths: {},
   };
 
@@ -83,9 +83,8 @@ export function generateOpenAPIDocument(app: App, options: OpenAPIOptions): Open
 
     const requestSchema = store.metadata[kRequestSchema] as RequestSchema | undefined;
     const responseSchema = store.metadata[kResponseSchema] as ResponseSchema | undefined;
-    const describeOptions = store.metadata[kOperation] as OpenAPI.OperationObject | undefined;
-    const operation = buildOperation(params, requestSchema, responseSchema, describeOptions);
-
+    const operation = buildOperation(params, requestSchema, responseSchema);
+    Object.assign(operation, store.metadata[kOperation]);
     (document.paths![openAPIPath] as Record<string, unknown>)[method.toLowerCase()] = operation;
   }
 
@@ -99,11 +98,9 @@ function convertPathToOpenAPI(path: string): string {
 function buildOperation(
   pathParams: string[],
   requestSchema?: RequestSchema,
-  responseSchema?: ResponseSchema,
-  describeOptions?: OpenAPI.OperationObject
+  responseSchema?: ResponseSchema
 ): OpenAPI.OperationObject {
   const operation: OpenAPI.OperationObject = {
-    ...describeOptions,
     responses: {
       default: {
         description: "Default response",
@@ -119,8 +116,8 @@ function buildOperation(
       name,
       in: "path",
       required: true,
-      schema: paramSchema,
-    } as OpenAPI.ParameterObject);
+      schema: paramSchema as OpenAPI.ReferenceObject,
+    });
   }
 
   if (requestSchema?.headers?.properties) {
@@ -129,8 +126,8 @@ function buildOperation(
         name,
         in: "header",
         required: requestSchema.headers.required?.includes(name) || false,
-        schema: propSchema,
-      } as OpenAPI.ParameterObject);
+        schema: propSchema as OpenAPI.ReferenceObject,
+      });
     }
   }
 
@@ -140,8 +137,8 @@ function buildOperation(
         name,
         in: "query",
         required: requestSchema.searchParams.required?.includes(name) || false,
-        schema: propSchema,
-      } as OpenAPI.ParameterObject);
+        schema: propSchema as OpenAPI.ReferenceObject,
+      });
     }
   }
 
