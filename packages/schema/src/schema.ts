@@ -1,8 +1,15 @@
 import { z } from "zod";
 import type { SchemaType } from "./types.js";
 import { kRequestSchema, kResponseSchema } from "@minimajs/server/symbols";
-import type { RouteMetaDescriptor, ResponseSchema } from "@minimajs/server";
+import type { RouteMetaDescriptor } from "@minimajs/server";
 import { kDataType, kSchema, kStatusCode } from "./symbols.js";
+
+type ResponseSchema = {
+  [statusCode: number]: {
+    body?: unknown;
+    headers?: unknown;
+  };
+};
 
 const REQUEST_SCHEMA_TYPES = new Set(["body", "headers", "searchParams", "params"]);
 const RESPONSE_TYPE_MAP: Record<string, "body" | "headers"> = {
@@ -53,7 +60,11 @@ function processResponseSchema(response: ResponseSchema, dataType: string, jsonS
  * ```
  */
 export function schema(...schemas: SchemaType[]): RouteMetaDescriptor {
-  return function (routeConfig) {
+  return function (route) {
+    // Lazy initialize metadata slots
+    route.metadata[kRequestSchema] ??= {};
+    route.metadata[kResponseSchema] ??= {};
+
     const request: Record<string, unknown> = {};
     const response: ResponseSchema = {};
 
@@ -61,7 +72,6 @@ export function schema(...schemas: SchemaType[]): RouteMetaDescriptor {
       const dataType = schemaDescriptor[kDataType];
       const jsonSchema = z.toJSONSchema(schemaDescriptor[kSchema]);
       const statusCode = schemaDescriptor[kStatusCode] ?? 200;
-
       if (REQUEST_SCHEMA_TYPES.has(dataType)) {
         processRequestSchema(request, dataType, jsonSchema);
       } else {
@@ -69,7 +79,7 @@ export function schema(...schemas: SchemaType[]): RouteMetaDescriptor {
       }
     }
 
-    Object.assign(routeConfig.metadata[kRequestSchema], request);
-    Object.assign(routeConfig.metadata[kResponseSchema], response);
+    Object.assign(route.metadata[kRequestSchema] as object, request);
+    Object.assign(route.metadata[kResponseSchema] as object, response);
   };
 }

@@ -1,27 +1,7 @@
 import type { FindResult, HTTPMethod } from "find-my-way";
 import type { App, Handler } from "./app.js";
-import type { kRequestSchema, kResponseSchema } from "../symbols.js";
-import type { JSONSchema7 as JSONSchema } from "json-schema";
-
-export type RequestSchema = {
-  body?: JSONSchema;
-  headers?: JSONSchema;
-  searchParams?: JSONSchema;
-  params?: JSONSchema;
-};
-
-export type ResponseSchemaDefinition = {
-  body?: JSONSchema;
-  headers?: JSONSchema;
-};
-
-export type ResponseSchema = {
-  [statusCode: number]: ResponseSchemaDefinition;
-};
 
 export type RouteMetadata = {
-  [kResponseSchema]: ResponseSchema;
-  [kRequestSchema]: RequestSchema;
   [key: symbol]: unknown;
 };
 

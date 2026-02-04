@@ -5,90 +5,47 @@ OpenAPI 3.1 specification generator for MinimaJS with Zod schema integration.
 ## Installation
 
 ```bash
-bun add @minimajs/openapi zod
+bun add @minimajs/openapi @minimajs/schema zod
 ```
 
 ## Features
 
 - Generate OpenAPI 3.1 specification automatically from your routes
-- Zod schema integration for request/response validation
-- Type-safe route documentation
+- Zod schema integration via `@minimajs/schema`
 - Automatic path parameter extraction
 - Support for query parameters, headers, and request bodies
-- Customizable responses with status codes
+- Multiple response status codes
 - Security scheme definitions
 - Tags and operation metadata
 
 ## Usage
 
-### Basic Setup
-
 ```typescript
 import { createApp } from "@minimajs/server/bun";
-import { openapi, doc } from "@minimajs/openapi";
+import { openapi } from "@minimajs/openapi";
+import { schema, createBody, createResponse } from "@minimajs/schema";
 import { z } from "zod";
 
 const app = createApp();
 
-// Register the OpenAPI plugin
 app.register(
   openapi({
     info: {
       title: "My API",
       version: "1.0.0",
-      description: "API documentation",
     },
-    servers: [
-      {
-        url: "http://localhost:3000",
-        description: "Development server",
-      },
-    ],
   })
 );
 
-// Define your routes with documentation
-app.get(
-  "/users/:id",
-  doc({
-    summary: "Get user by ID",
-    description: "Retrieves a user by their unique identifier",
-    tags: ["users"],
-    params: z.object({
-      id: z.string().uuid(),
-    }),
-    responses: {
-      200: {
-        description: "User found",
-        schema: z.object({
-          id: z.string().uuid(),
-          name: z.string(),
-          email: z.string().email(),
-        }),
-      },
-      404: {
-        description: "User not found",
-      },
-    },
-  }),
-  async (req) => {
-    const { id } = req.params;
-    // Your handler logic
-    return { id, name: "John", email: "john@example.com" };
-  }
-);
-
-await app.listen({ port: 3000 });
+// The OpenAPI specification will be available at /openapi.json
 ```
-
-The OpenAPI specification will be available at `/openapi.json`.
 
 ### Custom OpenAPI Endpoint Path
 
 ```typescript
 app.register(
   openapi({
-    path: "/api/spec.json", // Custom path
+    path: "/api/spec.json",
     info: {
       title: "My API",
       version: "1.0.0",
@@ -97,100 +54,132 @@ app.register(
 );
 ```
 
-### Route Documentation
+## Route Documentation
 
-#### Query Parameters
+Use `@minimajs/schema` to define request/response schemas that automatically appear in the OpenAPI spec.
+
+### Request Body
 
 ```typescript
-import { doc } from "@minimajs/openapi";
+import { schema, createBody, createResponse } from "@minimajs/schema";
 import { z } from "zod";
 
-app.get(
-  "/users",
-  doc({
-    summary: "List users",
-    query: z.object({
-      page: z.number().int().min(1).default(1),
-      limit: z.number().int().min(1).max(100).default(10),
-      search: z.string().optional(),
-    }),
-    responses: {
-      200: {
-        description: "List of users",
-        schema: z.array(
-          z.object({
-            id: z.string(),
-            name: z.string(),
-          })
-        ),
-      },
-    },
-  }),
-  async (req) => {
-    // Handler logic
-  }
+const userBody = createBody(
+  z.object({
+    name: z.string().min(1),
+    email: z.string().email(),
+  })
 );
+
+const userResponse = createResponse(
+  201,
+  z.object({
+    id: z.string().uuid(),
+    name: z.string(),
+    email: z.string(),
+  })
+);
+
+app.post("/users", schema(userBody, userResponse), () => {
+  const { name, email } = userBody();
+  return { id: crypto.randomUUID(), name, email };
+});
 ```
 
-#### Request Body
+### Query Parameters
 
 ```typescript
-app.post(
-  "/users",
-  doc({
-    summary: "Create user",
-    body: z.object({
-      name: z.string().min(1),
-      email: z.string().email(),
-      age: z.number().int().min(0),
-    }),
-    responses: {
-      201: {
-        description: "User created",
-        schema: z.object({
-          id: z.string().uuid(),
-          name: z.string(),
-          email: z.string(),
-        }),
-      },
-      400: {
-        description: "Invalid request body",
-      },
-    },
-  }),
-  async (req) => {
-    // Handler logic
-  }
+import { createSearchParams, createResponse, schema } from "@minimajs/schema";
+
+const queryParams = createSearchParams({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+  search: z.string().optional(),
+});
+
+const listResponse = createResponse(
+  z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+    })
+  )
 );
+
+app.get("/users", schema(queryParams, listResponse), () => {
+  const { page, limit, search } = queryParams();
+  // Handler logic
+  return [];
+});
 ```
 
-#### Headers
+### Headers
 
 ```typescript
+import { createHeaders, schema } from "@minimajs/schema";
+
+const authHeaders = createHeaders({
+  authorization: z.string(),
+  "x-api-key": z.string().optional(),
+});
+
+app.get("/protected", schema(authHeaders), () => {
+  const { authorization } = authHeaders();
+  // Handler logic
+  return { message: "Success" };
+});
+```
+
+### Multiple Response Status Codes
+
+```typescript
+const successResponse = createResponse(
+  200,
+  z.object({ data: z.string() })
+);
+
+const errorResponse = createResponse(
+  400,
+  z.object({ error: z.string() })
+);
+
+const notFoundResponse = createResponse(
+  404,
+  z.object({ message: z.string() })
+);
+
 app.get(
-  "/protected",
-  doc({
-    summary: "Protected endpoint",
-    headers: z.object({
-      authorization: z.string(),
-      "x-api-key": z.string().optional(),
-    }),
-    responses: {
-      200: {
-        description: "Success",
-      },
-      401: {
-        description: "Unauthorized",
-      },
-    },
-  }),
-  async (req) => {
+  "/resource/:id",
+  schema(successResponse, errorResponse, notFoundResponse),
+  () => {
     // Handler logic
+    return { data: "ok" };
   }
 );
 ```
 
-### Tags and Organization
+### Response Headers
+
+```typescript
+import { createResponseHeaders, createResponse, schema } from "@minimajs/schema";
+
+const downloadResponse = createResponse(z.string());
+const downloadHeaders = createResponseHeaders(
+  z.object({
+    "content-type": z.string(),
+    "content-disposition": z.string(),
+  })
+);
+
+app.get("/download", schema(downloadResponse, downloadHeaders), () => {
+  // Handler logic
+  return "file content";
+});
+```
+
+## OpenAPI Configuration
+
+### Tags
 
 ```typescript
 app.register(
@@ -210,17 +199,6 @@ app.register(
       },
     ],
   })
-);
-
-app.get(
-  "/users",
-  doc({
-    summary: "List users",
-    tags: ["users"],
-  }),
-  async (req) => {
-    // Handler logic
-  }
 );
 ```
 
@@ -250,21 +228,36 @@ app.register(
     security: [{ bearerAuth: [] }],
   })
 );
+```
 
-app.get(
-  "/admin/users",
-  doc({
-    summary: "Admin: List all users",
-    tags: ["admin"],
-    security: [{ bearerAuth: [] }, { apiKey: [] }],
-  }),
-  async (req) => {
-    // Handler logic
-  }
+### Servers
+
+```typescript
+app.register(
+  openapi({
+    info: {
+      title: "My API",
+      version: "1.0.0",
+    },
+    servers: [
+      {
+        url: "https://api.example.com",
+        description: "Production",
+      },
+      {
+        url: "https://staging-api.example.com",
+        description: "Staging",
+      },
+      {
+        url: "http://localhost:3000",
+        description: "Development",
+      },
+    ],
+  })
 );
 ```
 
-### Advanced Configuration
+### Full Configuration
 
 ```typescript
 app.register(
@@ -285,48 +278,16 @@ app.register(
       },
     },
     servers: [
-      {
-        url: "https://api.example.com",
-        description: "Production",
-      },
-      {
-        url: "https://staging-api.example.com",
-        description: "Staging",
-      },
-      {
-        url: "http://localhost:3000",
-        description: "Development",
-      },
+      { url: "https://api.example.com", description: "Production" },
+    ],
+    tags: [
+      { name: "users", description: "User operations" },
     ],
     externalDocs: {
       description: "Full documentation",
       url: "https://docs.example.com",
     },
   })
-);
-```
-
-### Response Headers
-
-```typescript
-app.get(
-  "/download",
-  doc({
-    summary: "Download file",
-    responses: {
-      200: {
-        description: "File content",
-        headers: z.object({
-          "content-type": z.string(),
-          "content-length": z.string(),
-          "content-disposition": z.string(),
-        }),
-      },
-    },
-  }),
-  async (req) => {
-    // Handler logic
-  }
 );
 ```
 
@@ -338,77 +299,26 @@ Creates an OpenAPI plugin for your MinimaJS application.
 
 #### Options
 
-- `info` (required): API information
-  - `title`: API title
-  - `version`: API version
-  - `description`: API description
-  - `termsOfService`: Terms of service URL
-  - `contact`: Contact information
-  - `license`: License information
-- `path`: OpenAPI spec endpoint path (default: `/openapi.json`)
-- `servers`: Array of server configurations
-- `tags`: Array of tag definitions
-- `security`: Global security requirements
-- `components`: OpenAPI components (schemas, security schemes, etc.)
-- `externalDocs`: External documentation link
+| Option | Type | Description |
+|--------|------|-------------|
+| `info` | `object` | **Required.** API title, version, description, contact, license |
+| `path` | `string` | OpenAPI spec endpoint path (default: `/openapi.json`) |
+| `servers` | `array` | Server configurations |
+| `tags` | `array` | Tag definitions |
+| `security` | `array` | Global security requirements |
+| `components` | `object` | OpenAPI components (schemas, security schemes) |
+| `externalDocs` | `object` | External documentation link |
 
-### `doc(documentation)`
+### `generateOpenAPIDocument(app, options)`
 
-Route metadata decorator for documenting endpoints.
-
-#### Documentation Object
-
-- `summary`: Short description
-- `description`: Detailed description
-- `tags`: Array of tag names
-- `operationId`: Unique operation identifier
-- `deprecated`: Mark as deprecated
-- `body`: Zod schema for request body
-- `query`: Zod schema for query parameters
-- `params`: Zod schema for path parameters
-- `headers`: Zod schema for request headers
-- `responses`: Response definitions by status code
-- `security`: Security requirements for this endpoint
-
-## Integration with @minimajs/schema
-
-Combine with `@minimajs/schema` for runtime validation:
+Generate the OpenAPI document programmatically without registering an endpoint.
 
 ```typescript
-import { createBody, createSearchParams } from "@minimajs/schema";
-import { doc } from "@minimajs/openapi";
-import { z } from "zod";
+import { generateOpenAPIDocument } from "@minimajs/openapi";
 
-const createUserSchema = z.object({
-  name: z.string().min(1),
-  email: z.string().email(),
+const spec = generateOpenAPIDocument(app, {
+  info: { title: "My API", version: "1.0.0" },
 });
-
-const querySchema = z.object({
-  page: z.number().int().min(1),
-});
-
-app.post(
-  "/users",
-  createBody(createUserSchema),
-  createSearchParams(querySchema),
-  doc({
-    summary: "Create user",
-    body: createUserSchema,
-    query: querySchema,
-    responses: {
-      201: {
-        description: "User created",
-      },
-    },
-  }),
-  async (req) => {
-    // body() and searchParams() are validated
-    const userData = req.body();
-    const { page } = req.searchParams();
-    // Handler logic
-  }
-);
 ```
 
 ## License

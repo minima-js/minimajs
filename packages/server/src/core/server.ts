@@ -14,7 +14,6 @@ import { createBoot, wrapPlugin } from "../internal/boot.js";
 import type { AddressInfo, ServerAdapter, ListenOptions } from "../interfaces/server.js";
 import type { Container, RequestHandlerContext } from "../interfaces/index.js";
 import { createRootContainer } from "../internal/container.js";
-import { kRequestSchema, kResponseSchema } from "../symbols.js";
 
 export interface ServerOptions {
   prefix: string;
@@ -114,10 +113,7 @@ export class Server<S> implements App<S> {
       path: fullPath,
       methods: Array.isArray(method) ? method : [method],
       handler,
-      metadata: {
-        [kRequestSchema]: {},
-        [kResponseSchema]: {},
-      },
+      metadata: {},
     };
     applyRouteMetadata(store, descriptors);
     this.router.on(

@@ -1,13 +1,51 @@
-import type { App, RouteConfig } from "@minimajs/server";
-import type { OpenAPI, OpenAPIOptions, RouteDocumentation } from "./types.js";
-import type { RequestSchema, ResponseSchema } from "@minimajs/server";
-import { extractPathParameters, cleanJSONSchema } from "./schema-converter.js";
+import type { App } from "@minimajs/server";
+import type { OpenAPI, OpenAPIOptions } from "./types.js";
+import { cleanJSONSchema } from "./schema-converter.js";
 import { kRequestSchema, kResponseSchema } from "@minimajs/server/symbols";
+import { kInternal, kOperation } from "./symbols.js";
+import { getRoutes } from "./router.js";
 
-interface RouterRoute {
-  path: string;
-  store?: RouteConfig<unknown>;
-}
+type JSONSchema = {
+  type?: string;
+  properties?: Record<string, unknown>;
+  required?: string[];
+  [key: string]: unknown;
+};
+
+type RequestSchema = {
+  body?: JSONSchema;
+  headers?: JSONSchema;
+  searchParams?: JSONSchema;
+  params?: JSONSchema;
+};
+
+type ResponseSchema = {
+  [statusCode: number]: {
+    body?: JSONSchema;
+    headers?: JSONSchema;
+  };
+};
+
+const HTTP_STATUS_DESCRIPTIONS: Record<number, string> = {
+  200: "OK",
+  201: "Created",
+  202: "Accepted",
+  204: "No Content",
+  301: "Moved Permanently",
+  302: "Found",
+  304: "Not Modified",
+  400: "Bad Request",
+  401: "Unauthorized",
+  403: "Forbidden",
+  404: "Not Found",
+  405: "Method Not Allowed",
+  409: "Conflict",
+  422: "Unprocessable Entity",
+  429: "Too Many Requests",
+  500: "Internal Server Error",
+  502: "Bad Gateway",
+  503: "Service Unavailable",
+};
 
 export function generateOpenAPIDocument(app: App, options: OpenAPIOptions): OpenAPI.Document {
   const document: OpenAPI.Document = {
@@ -36,48 +74,19 @@ export function generateOpenAPIDocument(app: App, options: OpenAPIOptions): Open
     document.externalDocs = options.externalDocs;
   }
 
-  const pathMap = new Map<
-    string,
-    {
-      methods: Set<string>;
-      requestSchema?: RequestSchema;
-      responseSchema?: ResponseSchema;
-      doc?: RouteDocumentation;
-    }
-  >();
-
-  // Collect all routes from router
-  const routes = (app.router as unknown as { routes: RouterRoute[] }).routes ?? [];
-  for (const route of routes) {
-    const { path, store } = route;
-    if (!store) continue;
+  for (const route of getRoutes(app)) {
+    const { method, path, params, store } = route;
+    if (store.metadata[kInternal]) continue;
 
     const openAPIPath = convertPathToOpenAPI(path);
+    document.paths![openAPIPath] ??= {};
 
-    if (!pathMap.has(openAPIPath)) {
-      pathMap.set(openAPIPath, {
-        methods: new Set(),
-        requestSchema: store.metadata[kRequestSchema],
-        responseSchema: store.metadata[kResponseSchema],
-      });
-    }
+    const requestSchema = store.metadata[kRequestSchema] as RequestSchema | undefined;
+    const responseSchema = store.metadata[kResponseSchema] as ResponseSchema | undefined;
+    const describeOptions = store.metadata[kOperation] as OpenAPI.OperationObject | undefined;
+    const operation = buildOperation(params, requestSchema, responseSchema, describeOptions);
 
-    const pathEntry = pathMap.get(openAPIPath)!;
-    for (const method of store.methods) {
-      pathEntry.methods.add(method);
-    }
-  }
-
-  for (const [path, { methods, requestSchema, responseSchema, doc }] of pathMap) {
-    const pathItem: OpenAPI.PathItemObject = document.paths?.[path] || {};
-
-    for (const method of methods) {
-      const methodLower = method.toLowerCase() as OpenAPI.HttpMethods;
-      const operation = buildOperation(path, requestSchema, responseSchema, doc);
-      (pathItem as Record<string, unknown>)[methodLower] = operation;
-    }
-
-    document.paths![path] = pathItem;
+    (document.paths![openAPIPath] as Record<string, unknown>)[method.toLowerCase()] = operation;
   }
 
   return document;
@@ -88,12 +97,13 @@ function convertPathToOpenAPI(path: string): string {
 }
 
 function buildOperation(
-  path: string,
+  pathParams: string[],
   requestSchema?: RequestSchema,
   responseSchema?: ResponseSchema,
-  doc?: RouteDocumentation
+  describeOptions?: OpenAPI.OperationObject
 ): OpenAPI.OperationObject {
   const operation: OpenAPI.OperationObject = {
+    ...describeOptions,
     responses: {
       default: {
         description: "Default response",
@@ -101,42 +111,37 @@ function buildOperation(
     },
   };
 
-  if (doc) {
-    if (doc.summary) operation.summary = doc.summary;
-    if (doc.description) operation.description = doc.description;
-    if (doc.tags) operation.tags = doc.tags;
-    if (doc.operationId) operation.operationId = doc.operationId;
-    if (doc.deprecated) operation.deprecated = doc.deprecated;
-    if (doc.security) operation.security = doc.security;
+  const parameters: OpenAPI.ParameterObject[] = [];
+  // Add path parameters - use schema from createParams() if available
+  for (const name of pathParams) {
+    const paramSchema = requestSchema?.params?.properties?.[name] ?? { type: "string" };
+    parameters.push({
+      name,
+      in: "path",
+      required: true,
+      schema: paramSchema,
+    } as OpenAPI.ParameterObject);
   }
 
-  const parameters: OpenAPI.ParameterObject[] = [];
-  const pathParams = extractPathParameters(path);
-  parameters.push(...pathParams);
-
-  if (requestSchema?.headers) {
-    if (requestSchema.headers.properties) {
-      for (const [name, schema] of Object.entries(requestSchema.headers.properties)) {
-        parameters.push({
-          name,
-          in: "header",
-          required: requestSchema.headers.required?.includes(name) || false,
-          schema: schema as any,
-        });
-      }
+  if (requestSchema?.headers?.properties) {
+    for (const [name, propSchema] of Object.entries(requestSchema.headers.properties)) {
+      parameters.push({
+        name,
+        in: "header",
+        required: requestSchema.headers.required?.includes(name) || false,
+        schema: propSchema,
+      } as OpenAPI.ParameterObject);
     }
   }
 
-  if (requestSchema?.searchParams) {
-    if (requestSchema.searchParams.properties) {
-      for (const [name, schema] of Object.entries(requestSchema.searchParams.properties)) {
-        parameters.push({
-          name,
-          in: "query",
-          required: requestSchema.searchParams.required?.includes(name) || false,
-          schema: schema as any,
-        });
-      }
+  if (requestSchema?.searchParams?.properties) {
+    for (const [name, propSchema] of Object.entries(requestSchema.searchParams.properties)) {
+      parameters.push({
+        name,
+        in: "query",
+        required: requestSchema.searchParams.required?.includes(name) || false,
+        schema: propSchema,
+      } as OpenAPI.ParameterObject);
     }
   }
 
@@ -158,25 +163,24 @@ function buildOperation(
   if (responseSchema && Object.keys(responseSchema).length > 0) {
     operation.responses = {};
     for (const [statusCode, response] of Object.entries(responseSchema)) {
-      const status = statusCode as string;
-      operation.responses[status] = {
-        description: `Response for status ${status}`,
-      };
+      const statusNum = Number(statusCode);
+      const description = HTTP_STATUS_DESCRIPTIONS[statusNum] || `Response ${statusCode}`;
+      operation.responses[statusCode] = { description };
 
       if (response.body) {
-        operation.responses[status]!.content = {
+        operation.responses[statusCode]!.content = {
           "application/json": {
             schema: cleanJSONSchema(response.body),
           },
         };
       }
 
-      if (response.headers) {
-        operation.responses[status]!.headers = {};
-        for (const [headerName, headerSchema] of Object.entries(response.headers.properties || {})) {
-          operation.responses[status]!.headers![headerName] = {
-            schema: headerSchema as any,
-          };
+      if (response.headers?.properties) {
+        operation.responses[statusCode]!.headers = {};
+        for (const [headerName, headerSchema] of Object.entries(response.headers.properties)) {
+          operation.responses[statusCode]!.headers![headerName] = {
+            schema: headerSchema,
+          } as OpenAPI.HeaderObject;
         }
       }
     }

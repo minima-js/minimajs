@@ -8,3 +8,5 @@ export type SchemaType = {
   [kDataType]: SchemaDataTypes;
   [kStatusCode]?: number;
 };
+
+export type SchemaValidator<T> = (() => T) & SchemaType;

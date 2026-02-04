@@ -1,6 +1,6 @@
 import { z, ZodError, ZodType } from "zod";
 import { ValidationError } from "./error.js";
-import type { SchemaDataTypes } from "./types.js";
+import type { SchemaDataTypes, SchemaValidator } from "./types.js";
 import { kDataType, kSchema } from "./symbols.js";
 
 export interface ValidationOptions {
@@ -17,13 +17,13 @@ export function validator<T extends ZodType>(
   data: DataCallback,
   option: ValidationOptions,
   type: SchemaDataTypes
-) {
+): SchemaValidator<z.infer<T>> {
   function getData(): z.infer<T> {
     return validateSchema(schema, data(), option);
   }
   getData[kDataType] = type;
   getData[kSchema] = schema;
-  return getData;
+  return getData as SchemaValidator<z.infer<T>>;
 }
 
 export function validatorAsync<T extends ZodType>(
@@ -31,14 +31,14 @@ export function validatorAsync<T extends ZodType>(
   data: DataCallback,
   option: ValidationOptions,
   type: SchemaDataTypes
-) {
+): SchemaValidator<Promise<z.infer<T>>> {
   function getData(): Promise<z.infer<T>> {
     return validateSchemaAsync(schema, data(), option);
   }
 
   getData[kDataType] = type;
   getData[kSchema] = schema;
-  return getData;
+  return getData as SchemaValidator<Promise<z.infer<T>>>;
 }
 
 function validateSchema<T extends z.ZodTypeAny>(schema: T, data: unknown, option: ValidationOptions): z.infer<T> {

@@ -49,7 +49,6 @@ export class BunServerAdapter<T = unknown> implements ServerAdapter<BunServer<T>
       toString() {
         return this.href;
       },
-      [Symbol.toStringTag]: "AddressInfo",
     };
 
     return { server, address };

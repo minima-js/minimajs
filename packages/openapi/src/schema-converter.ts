@@ -30,24 +30,3 @@ export function cleanJSONSchema(schema: unknown): OpenAPI.SchemaObject {
 
   return cleaned as OpenAPI.SchemaObject;
 }
-
-/**
- * Extracts path parameters from an OpenAPI path string.
- * Converts Express-style parameters (`:id`) to OpenAPI format (`{id}`).
- */
-export function extractPathParameters(path: string): OpenAPI.ParameterObject[] {
-  const paramRegex = /:(\w+)/g;
-  const params: OpenAPI.ParameterObject[] = [];
-
-  let match;
-  while ((match = paramRegex.exec(path)) !== null) {
-    params.push({
-      name: match[1]!,
-      in: "path",
-      required: true,
-      schema: { type: "string" },
-    });
-  }
-
-  return params;
-}

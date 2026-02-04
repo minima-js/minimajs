@@ -30,7 +30,6 @@
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "dependencies": {
-    "@types/json-schema": "^7.0.15",
     "avvio": "9",
     "deepmerge": "^4.3.1",
     "find-my-way": "9",
