@@ -1,13 +1,15 @@
+import type { OpenAPI } from "./types.js";
+
 /**
  * Cleans JSON Schema for OpenAPI compatibility.
  * Removes properties that are valid in JSON Schema but not in OpenAPI.
  */
-export function cleanJSONSchema(schema: any): any {
+export function cleanJSONSchema(schema: unknown): OpenAPI.SchemaObject {
   if (!schema || typeof schema !== "object") {
-    return schema;
+    return schema as OpenAPI.SchemaObject;
   }
 
-  const cleaned: any = {};
+  const cleaned: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(schema)) {
     // Skip JSON Schema meta properties not valid in OpenAPI
@@ -26,26 +28,16 @@ export function cleanJSONSchema(schema: any): any {
     }
   }
 
-  return cleaned;
+  return cleaned as OpenAPI.SchemaObject;
 }
 
 /**
  * Extracts path parameters from an OpenAPI path string.
  * Converts Express-style parameters (`:id`) to OpenAPI format (`{id}`).
  */
-export function extractPathParameters(path: string): Array<{
-  name: string;
-  in: "path";
-  required: true;
-  schema: { type: "string" };
-}> {
+export function extractPathParameters(path: string): OpenAPI.ParameterObject[] {
   const paramRegex = /:(\w+)/g;
-  const params: Array<{
-    name: string;
-    in: "path";
-    required: true;
-    schema: { type: "string" };
-  }> = [];
+  const params: OpenAPI.ParameterObject[] = [];
 
   let match;
   while ((match = paramRegex.exec(path)) !== null) {

@@ -1,11 +1,16 @@
-import type { App } from "@minimajs/server";
-import type { OpenAPIDocument, OpenAPIOperation, OpenAPIOptions, OpenAPIParameter, RouteDocumentation } from "./types.js";
+import type { App, RouteConfig } from "@minimajs/server";
+import type { OpenAPI, OpenAPIOptions, RouteDocumentation } from "./types.js";
 import type { RequestSchema, ResponseSchema } from "@minimajs/server";
 import { extractPathParameters, cleanJSONSchema } from "./schema-converter.js";
 import { kRequestSchema, kResponseSchema } from "@minimajs/server/symbols";
 
-export function generateOpenAPIDocument(app: App, options: OpenAPIOptions): OpenAPIDocument {
-  const document: OpenAPIDocument = {
+interface RouterRoute {
+  path: string;
+  store?: RouteConfig<unknown>;
+}
+
+export function generateOpenAPIDocument(app: App, options: OpenAPIOptions): OpenAPI.Document {
+  const document: OpenAPI.Document = {
     openapi: "3.1.0",
     info: options.info,
     paths: {},
@@ -42,7 +47,7 @@ export function generateOpenAPIDocument(app: App, options: OpenAPIOptions): Open
   >();
 
   // Collect all routes from router
-  const routes = (app.router as any).routes || [];
+  const routes = (app.router as unknown as { routes: RouterRoute[] }).routes ?? [];
   for (const route of routes) {
     const { path, store } = route;
     if (!store) continue;
@@ -52,8 +57,8 @@ export function generateOpenAPIDocument(app: App, options: OpenAPIOptions): Open
     if (!pathMap.has(openAPIPath)) {
       pathMap.set(openAPIPath, {
         methods: new Set(),
-        requestSchema: (store.metadata as any)[kRequestSchema],
-        responseSchema: (store.metadata as any)[kResponseSchema],
+        requestSchema: store.metadata[kRequestSchema],
+        responseSchema: store.metadata[kResponseSchema],
       });
     }
 
@@ -64,15 +69,15 @@ export function generateOpenAPIDocument(app: App, options: OpenAPIOptions): Open
   }
 
   for (const [path, { methods, requestSchema, responseSchema, doc }] of pathMap) {
-    const pathItem = document.paths[path] || {};
+    const pathItem: OpenAPI.PathItemObject = document.paths?.[path] || {};
 
     for (const method of methods) {
-      const methodLower = method.toLowerCase();
+      const methodLower = method.toLowerCase() as OpenAPI.HttpMethods;
       const operation = buildOperation(path, requestSchema, responseSchema, doc);
-      pathItem[methodLower] = operation;
+      (pathItem as Record<string, unknown>)[methodLower] = operation;
     }
 
-    document.paths[path] = pathItem;
+    document.paths![path] = pathItem;
   }
 
   return document;
@@ -87,8 +92,8 @@ function buildOperation(
   requestSchema?: RequestSchema,
   responseSchema?: ResponseSchema,
   doc?: RouteDocumentation
-): OpenAPIOperation {
-  const operation: OpenAPIOperation = {
+): OpenAPI.OperationObject {
+  const operation: OpenAPI.OperationObject = {
     responses: {
       default: {
         description: "Default response",
@@ -105,7 +110,7 @@ function buildOperation(
     if (doc.security) operation.security = doc.security;
   }
 
-  const parameters: OpenAPIParameter[] = [];
+  const parameters: OpenAPI.ParameterObject[] = [];
   const pathParams = extractPathParameters(path);
   parameters.push(...pathParams);
 

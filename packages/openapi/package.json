@@ -19,14 +19,14 @@
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "peerDependencies": {
-    "@minimajs/server": ">=0.3.0",
-    "zod": "^4.3.2"
+    "@minimajs/server": ">=0.9.0"
   },
-  "dependencies": {},
+  "dependencies": {
+    "openapi-types": "^12.1.3"
+  },
   "devDependencies": {
     "@minimajs/server": "workspace:*",
-    "@types/node": "^25.0.3",
-    "zod": "^4.3.2"
+    "@types/node": "^25.0.3"
   },
   "files": [
     "lib"

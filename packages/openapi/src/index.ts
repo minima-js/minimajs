@@ -4,21 +4,7 @@ import type { OpenAPIOptions } from "./types.js";
 
 export { generateOpenAPIDocument } from "./generator.js";
 export { extractPathParameters, cleanJSONSchema } from "./schema-converter.js";
-export type {
-  OpenAPIInfo,
-  OpenAPIServer,
-  OpenAPITag,
-  OpenAPIComponents,
-  OpenAPISecurityScheme,
-  OpenAPIDocument,
-  OpenAPIPath,
-  OpenAPIOperation,
-  OpenAPIParameter,
-  OpenAPIRequestBody,
-  OpenAPIResponse,
-  RouteDocumentation,
-  OpenAPIOptions,
-} from "./types.js";
+export type { OpenAPI, RouteDocumentation, OpenAPIOptions } from "./types.js";
 
 export interface OpenAPIPluginOptions extends OpenAPIOptions {
   path?: string;
