@@ -164,17 +164,119 @@ app.get(
 import { createResponseHeaders, createResponse, schema } from "@minimajs/schema";
 
 const downloadResponse = createResponse(z.string());
-const downloadHeaders = createResponseHeaders(
-  z.object({
-    "content-type": z.string(),
-    "content-disposition": z.string(),
-  })
-);
+const downloadHeaders = createResponseHeaders({
+  "content-type": z.string(),
+  "content-disposition": z.string(),
+});
 
 app.get("/download", schema(downloadResponse, downloadHeaders), () => {
   // Handler logic
   return "file content";
 });
+```
+
+## Route Descriptors
+
+### `describe()` - Operation Metadata
+
+Add OpenAPI operation metadata (summary, description, tags, etc.) to individual routes:
+
+```typescript
+import { describe } from "@minimajs/openapi";
+
+app.get("/users", describe({
+  summary: "List all users",
+  description: "Returns a paginated list of all users.",
+  tags: ["Users"],
+  operationId: "listUsers",
+}), () => {
+  return getUsers();
+});
+
+app.post("/users", describe({
+  summary: "Create a user",
+  tags: ["Users"],
+}), () => {
+  return createUser();
+});
+
+// Mark endpoint as deprecated
+app.get("/v1/users", describe({ deprecated: true }), () => {
+  return legacyGetUsers();
+});
+```
+
+### Combining `describe()` with `schema()`
+
+Use both for complete API documentation:
+
+```typescript
+import { describe } from "@minimajs/openapi";
+import { schema, createBody, createResponse } from "@minimajs/schema";
+
+app.post(
+  "/users",
+  describe({
+    summary: "Create a new user",
+    tags: ["Users"],
+  }),
+  schema(CreateUserBody, UserResponse),
+  () => {
+    const body = CreateUserBody();
+    return UserResponse({ id: "123", ...body });
+  }
+);
+```
+
+### `internal()` - Exclude from OpenAPI
+
+Mark routes as internal to exclude them from the generated specification:
+
+```typescript
+import { internal } from "@minimajs/openapi";
+
+// Health check - not in API docs
+app.get("/health", internal(), () => "ok");
+
+// Metrics endpoint - internal only
+app.get("/metrics", internal(), () => getMetrics());
+```
+
+### Module-Level Descriptors
+
+Use the `descriptor()` plugin to apply metadata to all routes in a module:
+
+```typescript
+import { descriptor } from "@minimajs/server/plugins";
+import { describe } from "@minimajs/openapi";
+
+export const meta = {
+  plugins: [
+    // All routes in this module tagged with "Users"
+    descriptor(describe({ tags: ["Users"] })),
+  ],
+};
+
+export default async function (app) {
+  app.get("/", () => getUsers());       // Tagged: Users
+  app.post("/", () => createUser());    // Tagged: Users
+  app.get("/:id", () => getUser());     // Tagged: Users
+}
+```
+
+Multiple descriptors can be passed at once:
+
+```typescript
+const kAdminOnly = Symbol("admin");
+
+export const meta = {
+  plugins: [
+    descriptor(
+      describe({ tags: ["Admin"], security: [{ bearerAuth: [] }] }),
+      [kAdminOnly, true]
+    ),
+  ],
+};
 ```
 
 ## OpenAPI Configuration
@@ -319,6 +421,34 @@ import { generateOpenAPIDocument } from "@minimajs/openapi";
 const spec = generateOpenAPIDocument(app, {
   info: { title: "My API", version: "1.0.0" },
 });
+```
+
+### `describe(options)`
+
+Creates a route descriptor that adds OpenAPI operation metadata.
+
+```typescript
+import { describe } from "@minimajs/openapi";
+
+describe({
+  summary: "Short description",
+  description: "Detailed description with **markdown** support",
+  tags: ["Tag1", "Tag2"],
+  operationId: "uniqueOperationId",
+  deprecated: false,
+  security: [{ bearerAuth: [] }],
+  externalDocs: { url: "https://docs.example.com" },
+});
+```
+
+### `internal()`
+
+Creates a route descriptor that excludes the route from OpenAPI generation.
+
+```typescript
+import { internal } from "@minimajs/openapi";
+
+app.get("/health", internal(), () => "ok");
 ```
 
 ## License

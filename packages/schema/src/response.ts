@@ -1,4 +1,4 @@
-import type { ZodType } from "zod";
+import { z, type ZodType, type ZodRawShape } from "zod";
 import type { SchemaType } from "./types.js";
 import { kDataType, kSchema, kStatusCode } from "./symbols.js";
 
@@ -61,8 +61,8 @@ export function createResponse<T extends ZodType>(statusCodeOrSchema: number | T
  * This allows you to document response headers independently from the response body,
  * enabling different status codes for headers and body schemas.
  *
- * @param statusCodeOrSchema - Either a status code (number) or a Zod schema
- * @param schema - A Zod schema (only when first param is status code)
+ * @param statusCodeOrObj - Either a status code (number) or an object with Zod schemas
+ * @param obj - An object with Zod schemas (only when first param is status code)
  * @returns A SchemaType that can be passed to the `schema()` function
  *
  * @example
@@ -72,11 +72,11 @@ export function createResponse<T extends ZodType>(statusCodeOrSchema: number | T
  *
  * const bodySchema = createBody(z.object({ name: z.string() }));
  * const responseBodySchema = createResponse(z.object({ id: z.string(), name: z.string() }));
- * const responseHeadersSchema = createResponseHeaders(z.object({ 'x-custom': z.string() }));
+ * const responseHeadersSchema = createResponseHeaders({ 'x-custom': z.string() });
  *
  * // Different status codes for body and headers
  * const createdBodySchema = createResponse(201, z.object({ id: z.string() }));
- * const unauthorizedHeadersSchema = createResponseHeaders(401, z.object({ 'www-authenticate': z.string() }));
+ * const unauthorizedHeadersSchema = createResponseHeaders(401, { 'www-authenticate': z.string() });
  *
  * app.post('/users',
  *   schema(bodySchema, createdBodySchema, responseHeadersSchema, unauthorizedHeadersSchema),
@@ -87,19 +87,19 @@ export function createResponse<T extends ZodType>(statusCodeOrSchema: number | T
  * );
  * ```
  */
-export function createResponseHeaders<T extends ZodType>(schema: T): SchemaType;
-export function createResponseHeaders<T extends ZodType>(statusCode: number, schema: T): SchemaType;
-export function createResponseHeaders<T extends ZodType>(statusCodeOrSchema: number | T, schema?: T): SchemaType {
-  if (typeof statusCodeOrSchema === "number") {
+export function createResponseHeaders<T extends ZodRawShape>(obj: T): SchemaType;
+export function createResponseHeaders<T extends ZodRawShape>(statusCode: number, obj: T): SchemaType;
+export function createResponseHeaders<T extends ZodRawShape>(statusCodeOrObj: number | T, obj?: T): SchemaType {
+  if (typeof statusCodeOrObj === "number") {
     return {
       [kDataType]: "responseHeaders",
-      [kSchema]: schema!,
-      [kStatusCode]: statusCodeOrSchema,
+      [kSchema]: z.object(obj!),
+      [kStatusCode]: statusCodeOrObj,
     };
   }
   return {
     [kDataType]: "responseHeaders",
-    [kSchema]: statusCodeOrSchema,
+    [kSchema]: z.object(statusCodeOrObj),
     [kStatusCode]: 200,
   };
 }
