@@ -1,5 +1,5 @@
 import type { App } from "@minimajs/server";
-import type { OpenAPI, OpenAPIOptions } from "./types.js";
+import type { OpenAPI } from "./types.js";
 import { cleanJSONSchema } from "./schema-converter.js";
 import { kRequestSchema, kResponseSchema } from "@minimajs/server/symbols";
 import { kInternal, kOperation } from "./symbols.js";
@@ -7,6 +7,7 @@ import { getRoutes } from "./router.js";
 
 type JSONSchema = {
   type?: string;
+  title?: string;
   properties?: Record<string, unknown>;
   required?: string[];
   [key: string]: unknown;
@@ -47,33 +48,7 @@ const HTTP_STATUS_DESCRIPTIONS: Record<number, string> = {
   503: "Service Unavailable",
 };
 
-export function generateOpenAPIDocument(app: App, options: OpenAPIOptions): OpenAPI.Document {
-  const document: OpenAPI.Document = {
-    openapi: "3.1.0",
-    info: options.info!,
-    paths: {},
-  };
-
-  if (options.servers && options.servers.length > 0) {
-    document.servers = options.servers;
-  }
-
-  if (options.tags && options.tags.length > 0) {
-    document.tags = options.tags;
-  }
-
-  if (options.security) {
-    document.security = options.security;
-  }
-
-  if (options.components) {
-    document.components = options.components;
-  }
-
-  if (options.externalDocs) {
-    document.externalDocs = options.externalDocs;
-  }
-
+export function generateOpenAPIDocument(app: App, document: OpenAPI.Document): OpenAPI.Document {
   for (const route of getRoutes(app)) {
     const { method, path, params, store } = route;
     if (store.metadata[kInternal]) continue;
@@ -83,7 +58,7 @@ export function generateOpenAPIDocument(app: App, options: OpenAPIOptions): Open
 
     const requestSchema = store.metadata[kRequestSchema] as RequestSchema | undefined;
     const responseSchema = store.metadata[kResponseSchema] as ResponseSchema | undefined;
-    const operation = buildOperation(params, requestSchema, responseSchema);
+    const operation = buildOperation(document, params, requestSchema, responseSchema);
     Object.assign(operation, store.metadata[kOperation]);
     (document.paths![openAPIPath] as Record<string, unknown>)[method.toLowerCase()] = operation;
   }
@@ -95,7 +70,19 @@ function convertPathToOpenAPI(path: string): string {
   return path.replace(/:(\w+)/g, "{$1}");
 }
 
+function resolveSchemaRef(document: OpenAPI.Document, schema: JSONSchema): OpenAPI.SchemaObject | OpenAPI.ReferenceObject {
+  const cleaned = cleanJSONSchema(schema);
+  if (schema.title) {
+    document.components ??= {};
+    document.components.schemas ??= {};
+    document.components.schemas[schema.title] = cleaned;
+    return { $ref: `#/components/schemas/${schema.title}` };
+  }
+  return cleaned;
+}
+
 function buildOperation(
+  document: OpenAPI.Document,
   pathParams: string[],
   requestSchema?: RequestSchema,
   responseSchema?: ResponseSchema
@@ -151,7 +138,7 @@ function buildOperation(
       required: true,
       content: {
         "application/json": {
-          schema: cleanJSONSchema(requestSchema.body),
+          schema: resolveSchemaRef(document, requestSchema.body),
         },
       },
     };
@@ -167,7 +154,7 @@ function buildOperation(
       if (response.body) {
         operation.responses[statusCode]!.content = {
           "application/json": {
-            schema: cleanJSONSchema(response.body),
+            schema: resolveSchemaRef(document, response.body),
           },
         };
       }

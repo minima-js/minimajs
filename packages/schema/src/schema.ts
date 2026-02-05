@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { SchemaType } from "./types.js";
 import { kRequestSchema, kResponseSchema } from "@minimajs/server/symbols";
 import type { RouteMetaDescriptor } from "@minimajs/server";
-import { kDataType, kSchema, kStatusCode } from "./symbols.js";
+import { kDataType, kSchema, kSchemaName, kStatusCode } from "./symbols.js";
 
 type ResponseSchema = {
   [statusCode: number]: {
@@ -71,6 +71,8 @@ export function schema(...schemas: SchemaType[]): RouteMetaDescriptor {
     for (const schemaDescriptor of schemas) {
       const dataType = schemaDescriptor[kDataType];
       const jsonSchema = z.toJSONSchema(schemaDescriptor[kSchema]);
+      const name = schemaDescriptor[kSchemaName];
+      if (name) jsonSchema.title = name;
       const statusCode = schemaDescriptor[kStatusCode] ?? 200;
       if (REQUEST_SCHEMA_TYPES.has(dataType)) {
         processRequestSchema(request, dataType, jsonSchema);

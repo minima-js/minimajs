@@ -1,10 +1,11 @@
 import { z, ZodError, ZodType } from "zod";
 import { ValidationError } from "./error.js";
 import type { SchemaDataTypes, SchemaValidator } from "./types.js";
-import { kDataType, kSchema } from "./symbols.js";
+import { kDataType, kSchema, kSchemaName } from "./symbols.js";
 
 export interface ValidationOptions {
   stripUnknown?: boolean;
+  name?: string;
 }
 
 /**
@@ -15,22 +16,23 @@ export type DataCallback = () => unknown;
 export function validator<T extends ZodType>(
   schema: T,
   data: DataCallback,
-  option: ValidationOptions,
-  type: SchemaDataTypes
+  type: SchemaDataTypes,
+  option: ValidationOptions
 ): SchemaValidator<z.infer<T>> {
   function getData(): z.infer<T> {
     return validateSchema(schema, data(), option);
   }
   getData[kDataType] = type;
   getData[kSchema] = schema;
+  if (option.name) getData[kSchemaName] = option.name;
   return getData as SchemaValidator<z.infer<T>>;
 }
 
 export function validatorAsync<T extends ZodType>(
   schema: T,
   data: DataCallback,
-  option: ValidationOptions,
-  type: SchemaDataTypes
+  type: SchemaDataTypes,
+  option: ValidationOptions
 ): SchemaValidator<Promise<z.infer<T>>> {
   function getData(): Promise<z.infer<T>> {
     return validateSchemaAsync(schema, data(), option);
@@ -38,6 +40,7 @@ export function validatorAsync<T extends ZodType>(
 
   getData[kDataType] = type;
   getData[kSchema] = schema;
+  if (option.name) getData[kSchemaName] = option.name;
   return getData as SchemaValidator<Promise<z.infer<T>>>;
 }
 

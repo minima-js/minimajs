@@ -64,7 +64,7 @@ describe("schema", () => {
   });
 
   test("should attach response headers schema with default status code 200", () => {
-    const headersSchema = z.object({ "content-type": z.string() });
+    const headersSchema = { "content-type": z.string() };
     const descriptor = createResponseHeaders(headersSchema);
 
     const metaDescriptor = schema(descriptor);
@@ -75,7 +75,7 @@ describe("schema", () => {
   });
 
   test("should attach response headers schema with explicit status code", () => {
-    const headersSchema = z.object({ "www-authenticate": z.string() });
+    const headersSchema = { "www-authenticate": z.string() };
     const descriptor = createResponseHeaders(401, headersSchema);
 
     const metaDescriptor = schema(descriptor);
@@ -88,7 +88,7 @@ describe("schema", () => {
 
   test("should support different status codes for body and headers independently", () => {
     const bodySchema = z.object({ id: z.string() });
-    const headersSchema = z.object({ "x-custom": z.string() });
+    const headersSchema = { "x-custom": z.string() };
 
     const descriptors = [createResponse(200, bodySchema), createResponseHeaders(401, headersSchema)];
 
@@ -101,7 +101,7 @@ describe("schema", () => {
 
   test("should merge headers and body for same status code", () => {
     const bodySchema = z.object({ data: z.string() });
-    const headersSchema = z.object({ "x-token": z.string() });
+    const headersSchema = { "x-token": z.string() };
 
     const descriptors = [createResponse(200, bodySchema), createResponseHeaders(200, headersSchema)];
 

@@ -4,33 +4,33 @@ import { body, headers, params, searchParams } from "@minimajs/server";
 import { validator, validatorAsync, type ValidationOptions } from "./validation.js";
 
 export function createBody<T extends ZodType>(schema: T, option: ValidationOptions = {}) {
-  return validator(schema, body, option, "body");
+  return validator(schema, body, "body", option);
 }
 
 export function createBodyAsync<T extends ZodType>(schema: T, option: ValidationOptions = {}) {
-  return validatorAsync(schema, body, option, "body");
+  return validatorAsync(schema, body, "body", option);
 }
 
 export function createHeaders<T extends z.ZodRawShape>(obj: T, option: ValidationOptions = {}) {
-  return validator(z.object(obj), headers, option, "headers");
+  return validator(z.object(obj), headers, "headers", option);
 }
 
 export function createHeadersAsync<T extends z.ZodRawShape>(obj: T, option: ValidationOptions = {}) {
-  return validatorAsync(z.object(obj), headers, option, "headers");
+  return validatorAsync(z.object(obj), headers, "headers", option);
 }
 
 export function createSearchParams<T extends z.ZodRawShape>(obj: T, option: ValidationOptions = {}) {
-  return validator(z.object(obj), searchParams, option, "searchParams");
+  return validator(z.object(obj), searchParams, "searchParams", option);
 }
 
 export function createSearchParamsAsync<T extends z.ZodRawShape>(obj: T, option: ValidationOptions = {}) {
-  return validatorAsync(z.object(obj), searchParams, option, "searchParams");
+  return validatorAsync(z.object(obj), searchParams, "searchParams", option);
 }
 
 export function createParams<T extends z.ZodRawShape>(obj: T, option: ValidationOptions = {}) {
-  return validator(z.object(obj), params, option, "params");
+  return validator(z.object(obj), params, "params", option);
 }
 
 export function createParamsAsync<T extends z.ZodRawShape>(obj: T, option: ValidationOptions = {}) {
-  return validatorAsync(z.object(obj), params, option, "params");
+  return validatorAsync(z.object(obj), params, "params", option);
 }
