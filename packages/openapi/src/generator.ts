@@ -60,6 +60,7 @@ export function generateOpenAPIDocument(app: App, document: OpenAPI.Document): O
     const responseSchema = store.metadata[kResponseSchema] as ResponseSchema | undefined;
     const operation = buildOperation(document, params, requestSchema, responseSchema);
     Object.assign(operation, store.metadata[kOperation]);
+    operation.operationId ??= generateOperationId(method, path);
     (document.paths![openAPIPath] as Record<string, unknown>)[method.toLowerCase()] = operation;
   }
 
@@ -68,6 +69,15 @@ export function generateOpenAPIDocument(app: App, document: OpenAPI.Document): O
 
 function convertPathToOpenAPI(path: string): string {
   return path.replace(/:(\w+)/g, "{$1}");
+}
+
+function generateOperationId(method: string, path: string): string {
+  const parts = path.split("/").filter(Boolean);
+  const camelParts = parts.map((part) => {
+    const name = part.startsWith(":") ? part.slice(1) : part;
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  });
+  return method.toLowerCase() + camelParts.join("");
 }
 
 function resolveSchemaRef(document: OpenAPI.Document, schema: JSONSchema): OpenAPI.SchemaObject | OpenAPI.ReferenceObject {
@@ -135,7 +145,7 @@ function buildOperation(
 
   if (requestSchema?.body) {
     operation.requestBody = {
-      required: true,
+      required: (requestSchema.body["$meta-body-required"] as boolean) ?? true,
       content: {
         "application/json": {
           schema: resolveSchemaRef(document, requestSchema.body),

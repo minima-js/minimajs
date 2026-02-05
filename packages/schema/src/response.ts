@@ -1,6 +1,6 @@
 import { z, type ZodType, type ZodRawShape } from "zod";
 import type { SchemaType } from "./types.js";
-import { kDataType, kSchema, kStatusCode } from "./symbols.js";
+import { kDataType, kSchema, kSchemaName, kStatusCode } from "./symbols.js";
 
 /**
  * Creates a response body schema descriptor for OpenAPI documentation.
@@ -35,19 +35,25 @@ import { kDataType, kSchema, kStatusCode } from "./symbols.js";
  * );
  * ```
  */
-export function createResponse<T extends ZodType>(schema: T): SchemaType;
-export function createResponse<T extends ZodType>(statusCode: number, schema: T): SchemaType;
-export function createResponse<T extends ZodType>(statusCodeOrSchema: number | T, schema?: T): SchemaType {
+export function createResponse<T extends ZodType>(schema: T, options?: { name?: string }): SchemaType;
+export function createResponse<T extends ZodType>(statusCode: number, schema: T, options?: { name?: string }): SchemaType;
+export function createResponse<T extends ZodType>(
+  statusCodeOrSchema: number | T,
+  schemaOrOptions?: T | { name?: string },
+  options?: { name?: string }
+): SchemaType {
   if (typeof statusCodeOrSchema === "number") {
     return {
       [kDataType]: "responseBody",
-      [kSchema]: schema!,
+      [kSchema]: schemaOrOptions as T,
+      [kSchemaName]: options?.name,
       [kStatusCode]: statusCodeOrSchema,
     };
   }
   return {
     [kDataType]: "responseBody",
     [kSchema]: statusCodeOrSchema,
+    [kSchemaName]: (schemaOrOptions as { name?: string } | undefined)?.name,
     [kStatusCode]: 200,
   };
 }
@@ -87,19 +93,29 @@ export function createResponse<T extends ZodType>(statusCodeOrSchema: number | T
  * );
  * ```
  */
-export function createResponseHeaders<T extends ZodRawShape>(obj: T): SchemaType;
-export function createResponseHeaders<T extends ZodRawShape>(statusCode: number, obj: T): SchemaType;
-export function createResponseHeaders<T extends ZodRawShape>(statusCodeOrObj: number | T, obj?: T): SchemaType {
+export function createResponseHeaders<T extends ZodRawShape>(obj: T, options?: { name?: string }): SchemaType;
+export function createResponseHeaders<T extends ZodRawShape>(
+  statusCode: number,
+  obj: T,
+  options?: { name?: string }
+): SchemaType;
+export function createResponseHeaders<T extends ZodRawShape>(
+  statusCodeOrObj: number | T,
+  objOrOptions?: T | { name?: string },
+  options?: { name?: string }
+): SchemaType {
   if (typeof statusCodeOrObj === "number") {
     return {
       [kDataType]: "responseHeaders",
-      [kSchema]: z.object(obj!),
+      [kSchema]: z.object(objOrOptions as T),
+      [kSchemaName]: options?.name,
       [kStatusCode]: statusCodeOrObj,
     };
   }
   return {
     [kDataType]: "responseHeaders",
     [kSchema]: z.object(statusCodeOrObj),
+    [kSchemaName]: (objOrOptions as { name?: string } | undefined)?.name,
     [kStatusCode]: 200,
   };
 }

@@ -13,7 +13,7 @@ export function cleanJSONSchema(schema: unknown): OpenAPI.SchemaObject {
 
   for (const [key, value] of Object.entries(schema)) {
     // Skip JSON Schema meta properties not valid in OpenAPI
-    if (key === "$schema" || key === "$id" || key === "$defs") {
+    if (key === "$schema" || key === "$id" || key.startsWith("$meta-")) {
       continue;
     }
 

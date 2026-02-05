@@ -27,6 +27,13 @@ function processRequestSchema(request: Record<string, unknown>, dataType: string
 /**
  * Helper function to process a response schema
  */
+function resolveBodySchema(schema: z.ZodType, dataType: string): [z.ZodType, boolean] {
+  if (dataType === "body" && schema instanceof z.ZodOptional) {
+    return [schema.unwrap() as z.ZodType, true];
+  }
+  return [schema, false];
+}
+
 function processResponseSchema(response: ResponseSchema, dataType: string, jsonSchema: unknown, statusCode: number): void {
   const responseKey = RESPONSE_TYPE_MAP[dataType];
   if (!responseKey) return;
@@ -70,9 +77,11 @@ export function schema(...schemas: SchemaType[]): RouteMetaDescriptor {
 
     for (const schemaDescriptor of schemas) {
       const dataType = schemaDescriptor[kDataType];
-      const jsonSchema = z.toJSONSchema(schemaDescriptor[kSchema]);
+      const [zodSchema, isOptional] = resolveBodySchema(schemaDescriptor[kSchema], dataType);
+      const jsonSchema = z.toJSONSchema(zodSchema);
       const name = schemaDescriptor[kSchemaName];
       if (name) jsonSchema.title = name;
+      if (isOptional) jsonSchema["$meta-body-required"] = false;
       const statusCode = schemaDescriptor[kStatusCode] ?? 200;
       if (REQUEST_SCHEMA_TYPES.has(dataType)) {
         processRequestSchema(request, dataType, jsonSchema);
