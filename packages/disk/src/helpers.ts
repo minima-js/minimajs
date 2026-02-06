@@ -1,6 +1,6 @@
 import { basename } from "node:path";
 import { randomUUID } from "node:crypto";
-import type { DiskData, PutOptions } from "./types.js";
+import type { DiskData, FileSource, PutOptions } from "./types.js";
 
 export function isBlob(value: unknown): value is Blob {
   return typeof Blob !== "undefined" && value instanceof Blob;
@@ -8,6 +8,13 @@ export function isBlob(value: unknown): value is Blob {
 
 export function isFile(value: unknown): value is File {
   return typeof File !== "undefined" && value instanceof File;
+}
+
+/**
+ * Resolve key from string or any File with a key property
+ */
+export function resolveKey(from: FileSource): string {
+  return typeof from === "string" ? from : from.key;
 }
 
 export function isArrayBuffer(value: unknown): value is ArrayBuffer {

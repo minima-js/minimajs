@@ -4,6 +4,9 @@ import { v4 as uuid } from "uuid";
 import type { BlobUploadCommonResponse } from "@azure/storage-blob";
 import type { Readable } from "node:stream";
 
+// Export the new disk driver
+export { createAzureBlobDriver, type AzureBlobDriverOptions } from "./driver.js";
+
 export interface StorageConfig {
   container: string;
   connection: string;

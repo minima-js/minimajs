@@ -3,6 +3,10 @@
   "version": "0.0.1",
   "type": "module",
   "private": true,
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js"
+  },
   "scripts": {
     "test": "bun test"
   },

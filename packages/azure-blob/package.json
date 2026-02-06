@@ -3,12 +3,18 @@
   "version": "0.0.1",
   "type": "module",
   "private": true,
+  "main": "./lib/index.js",
+  "exports": "./lib/index.js",
   "devDependencies": {
     "@types/node": "^25.0.3",
     "@types/uuid": "^11.0.0"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.29.1",
+    "@minimajs/disk": "workspace:*",
     "uuid": "^13.0.0"
+  },
+  "peerDependencies": {
+    "@minimajs/disk": ">=0.1.0"
   }
 }

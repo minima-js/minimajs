@@ -53,11 +53,15 @@
       "version": "0.0.1",
       "dependencies": {
         "@azure/storage-blob": "^12.29.1",
+        "@minimajs/disk": "workspace:*",
         "uuid": "^13.0.0",
       },
       "devDependencies": {
         "@types/node": "^25.0.3",
         "@types/uuid": "^11.0.0",
+      },
+      "peerDependencies": {
+        "@minimajs/disk": ">=0.1.0",
       },
     },
     "packages/cookie": {
