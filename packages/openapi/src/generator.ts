@@ -71,13 +71,28 @@ function convertPathToOpenAPI(path: string): string {
   return path.replace(/:(\w+)/g, "{$1}");
 }
 
-function generateOperationId(method: string, path: string): string {
-  const parts = path.split("/").filter(Boolean);
-  const camelParts = parts.map((part) => {
-    const name = part.startsWith(":") ? part.slice(1) : part;
-    return name.charAt(0).toUpperCase() + name.slice(1);
-  });
-  return method.toLowerCase() + camelParts.join("");
+export function generateOperationId(method: string, path: string): string {
+  function toCamelCase(input: string): string {
+    let result = "";
+    let upperNext = false;
+
+    for (const ch of input) {
+      if (/[a-zA-Z0-9]/.test(ch)) {
+        result += upperNext ? ch.toUpperCase() : ch.toLowerCase();
+        upperNext = false;
+      } else {
+        upperNext = result.length > 0;
+      }
+    }
+
+    return result;
+  }
+
+  const normalized = `${method} ${path}`
+    .replace(/[{}:]/g, "") // support :id and {id}
+    .replace(/\//g, " "); // path boundaries
+
+  return toCamelCase(normalized);
 }
 
 function resolveSchemaRef(document: OpenAPI.Document, schema: JSONSchema): OpenAPI.SchemaObject | OpenAPI.ReferenceObject {
