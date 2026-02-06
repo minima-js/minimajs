@@ -6,7 +6,10 @@ import { mockContext } from "../../mock/context.js";
 describe("trust", () => {
   function mockCtx(remoteAddr?: string | null): Context<unknown> {
     const ctx = mockContext((ctx) => {
-      return { ...ctx, serverAdapter: { remoteAddr: () => remoteAddr ?? null } } as unknown as Context<unknown>;
+      return {
+        ...ctx,
+        serverAdapter: { remoteAddr: () => (remoteAddr ? { hostname: remoteAddr } : null) },
+      } as unknown as Context<unknown>;
     });
     return ctx;
   }
