@@ -134,7 +134,7 @@
     },
     "packages/openapi": {
       "name": "@minimajs/openapi",
-      "version": "0.1.0",
+      "version": "0.0.0",
       "dependencies": {
         "openapi-types": "^12.1.3",
       },
