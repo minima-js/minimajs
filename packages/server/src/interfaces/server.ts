@@ -1,6 +1,12 @@
 import type { Context, RequestHandlerContext } from "./index.js";
 import type { Server } from "../core/server.js";
 
+export interface RemoteAddr {
+  hostname: string;
+  port: number;
+  family: "IPv4" | "IPv6";
+}
+
 /**
  * Information about the server's network address and binding.
  */
@@ -14,7 +20,9 @@ export interface AddressInfo {
   /** The protocol being used */
   protocol: "http" | "https";
   /** The full address string */
-  address: string;
+  href: string;
+
+  toString(): string;
 }
 
 /**
@@ -82,7 +90,7 @@ export interface ServerAdapter<T> {
    */
   listen(server: Server<T>, opts: ListenOptions, requestHandler: RequestHandler<T>): Promise<ListenResult<T>>;
 
-  remoteAddr(ctx: Context<T>): string | null;
+  remoteAddr(ctx: Context<T>): RemoteAddr | null;
 
   /**
    * Stops the server and closes all connections.

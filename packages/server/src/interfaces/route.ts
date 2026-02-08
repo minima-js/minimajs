@@ -1,7 +1,9 @@
 import type { FindResult, HTTPMethod } from "find-my-way";
 import type { App, Handler } from "./app.js";
 
-export type RouteMetadata = Record<symbol, unknown>;
+export type RouteMetadata = {
+  [key: symbol]: unknown;
+};
 
 export interface Route<S> {
   methods: HTTPMethod[];

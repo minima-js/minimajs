@@ -12,7 +12,7 @@ const mockAdapter: ServerAdapter<any> = {
       port: 3000,
       family: "IPv4",
       protocol: "http",
-      address: "http://localhost:3000/",
+      href: "http://localhost:3000/",
     } as AddressInfo,
   }),
   close: async () => {},

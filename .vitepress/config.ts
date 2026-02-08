@@ -139,12 +139,14 @@ const config = defineConfig({
           { text: "Error Handling", link: "/guides/error-handling" },
           { text: "Logger", link: "/guides/logger" },
           { text: "Testing", link: "/guides/testing" },
+          { text: "Route Descriptors", link: "/guides/route-descriptors" },
         ],
       },
       {
         text: "Plugins",
         items: [
           { text: "Introduction", link: "/plugins/index" },
+          { text: "Descriptor", link: "/plugins/descriptor" },
           { text: "Body Parser", link: "/plugins/body-parser" },
           { text: "CORS", link: "/plugins/cors" },
           { text: "Proxy", link: "/plugins/proxy" },
@@ -177,6 +179,7 @@ const config = defineConfig({
         items: [
           { text: "Auth", link: "/packages/auth" },
           { text: "Schema", link: "/packages/schema" },
+          { text: "OpenAPI", link: "/packages/openapi" },
           {
             text: "Multipart",
             collapsed: false,

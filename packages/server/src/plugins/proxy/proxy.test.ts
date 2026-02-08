@@ -91,7 +91,7 @@ describe("plugins/proxy", () => {
 
   test("should not extract when trustProxies is false", async () => {
     app.register(proxy({ host: false, proto: false }));
-    app.adapter.remoteAddr = () => "127.0.0.1";
+    app.adapter.remoteAddr = () => ({ hostname: "127.0.0.1" }) as any;
     app.get("/ip", (ctx) => ctx.locals[kIpAddr]);
 
     const req = new Request("http://localhost/ip", {
@@ -160,7 +160,7 @@ describe("plugins/proxy", () => {
 
   test("proxy.ip should extract IP only", async () => {
     app.register(proxy.ip());
-    app.adapter.remoteAddr = () => "127.0.0.1";
+    app.adapter.remoteAddr = () => ({ hostname: "127.0.0.1" }) as any;
     app.get("/ip", (ctx) => ctx.locals[kIpAddr] || "null");
 
     const req = new Request("http://localhost/ip", {
@@ -173,7 +173,7 @@ describe("plugins/proxy", () => {
   test("proxy.ip should not extract when not trusted", async () => {
     // Empty array means no proxies are trusted
     app.register(proxy.ip({ trustProxies: [] }));
-    app.adapter.remoteAddr = () => "192.168.1.1"; // Not in trust list
+    app.adapter.remoteAddr = () => ({ hostname: "192.168.1.1" }) as any; // Not in trust list
     app.get("/ip", (ctx) => {
       const ip = ctx.locals[kIpAddr];
       return ip ? ip : "null";
@@ -187,7 +187,10 @@ describe("plugins/proxy", () => {
   });
 
   test("should handle null/undefined extractor results", async () => {
-    app.adapter.remoteAddr = () => "127.0.0.1";
+    app.adapter.remoteAddr = () =>
+      ({
+        hostname: "127.0.0.1",
+      }) as any;
     app.register(
       proxy({
         ip: () => null,

@@ -36,7 +36,7 @@ export async function handleRequest<S>(
     server: server.server!,
     serverAdapter: server.adapter,
     route,
-    locals: {},
+    locals: partial.locals || {},
     container: app.container,
     request: req,
     responseState: { headers: new Headers() }, // Initialize mutable response headers

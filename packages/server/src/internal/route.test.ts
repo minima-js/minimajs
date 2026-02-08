@@ -26,7 +26,7 @@ describe("internal/route", () => {
 
   describe("applyRouteMetadata", () => {
     test("should apply array descriptor to metadata", () => {
-      const metadata: RouteMetadata = {};
+      const metadata: RouteMetadata = {} as any;
       const container: Container = { [kAppDescriptor]: [] } as unknown as Container;
 
       const routeConfig: RouteConfig<unknown> = {
@@ -45,7 +45,7 @@ describe("internal/route", () => {
     });
 
     test("should apply function descriptor to route config", () => {
-      const metadata: RouteMetadata = {};
+      const metadata: RouteMetadata = {} as any;
       const container: Container = { [kAppDescriptor]: [] } as unknown as Container;
 
       const routeConfig: RouteConfig<unknown> = {
@@ -66,7 +66,7 @@ describe("internal/route", () => {
     });
 
     test("should apply both app-level and route-level descriptors", () => {
-      const metadata: RouteMetadata = {};
+      const metadata: RouteMetadata = {} as any;
       const container: Container = {} as any;
       const appDescriptor: RouteMetaDescriptor<unknown> = [appKey, "appValue"];
       container[kAppDescriptor] = [appDescriptor];
@@ -88,7 +88,7 @@ describe("internal/route", () => {
     });
 
     test("should apply mixed array and function descriptors", () => {
-      const metadata: RouteMetadata = {};
+      const metadata: RouteMetadata = {} as any;
       const container: Container = { [kAppDescriptor]: [] } as unknown as Container;
 
       const routeConfig: RouteConfig<unknown> = {
@@ -140,7 +140,7 @@ describe("internal/route", () => {
   describe("result2route", () => {
     test("should convert route find result to route", () => {
       const handler = () => "test";
-      const metadata: RouteMetadata = {};
+      const metadata: RouteMetadata = {} as any;
       metadata[tag] = new Set(["api"]);
 
       const routeFindResult: RouteFindResult<any> = {

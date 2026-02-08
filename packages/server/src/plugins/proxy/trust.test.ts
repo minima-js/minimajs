@@ -6,7 +6,10 @@ import { mockContext } from "../../mock/context.js";
 describe("trust", () => {
   function mockCtx(remoteAddr?: string | null): Context<unknown> {
     const ctx = mockContext((ctx) => {
-      return { ...ctx, serverAdapter: { remoteAddr: () => remoteAddr ?? null } } as unknown as Context<unknown>;
+      return {
+        ...ctx,
+        serverAdapter: { remoteAddr: () => (remoteAddr ? { hostname: remoteAddr } : null) },
+      } as unknown as Context<unknown>;
     });
     return ctx;
   }
@@ -18,7 +21,7 @@ describe("trust", () => {
     });
 
     test("should return function when trustProxies is function", () => {
-      const validator = createTrustValidator((ctx) => ctx.serverAdapter.remoteAddr(ctx) === "1.2.3.4");
+      const validator = createTrustValidator((ctx) => ctx.serverAdapter.remoteAddr(ctx)?.hostname === "1.2.3.4");
       expect(validator(mockCtx("1.2.3.4"))).toBe(true);
       expect(validator(mockCtx("5.6.7.8"))).toBe(false);
     });
@@ -53,7 +56,7 @@ describe("trust", () => {
     test("should handle object with validator function", () => {
       const validator = createTrustValidator({
         proxies: ["127.0.0.1"],
-        validator: (ctx) => ctx.serverAdapter.remoteAddr(ctx) === "10.0.0.1",
+        validator: (ctx) => ctx.serverAdapter.remoteAddr(ctx)?.hostname === "10.0.0.1",
       });
 
       expect(validator(mockCtx("10.0.0.1"))).toBe(true); // validator takes precedence

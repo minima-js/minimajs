@@ -60,7 +60,7 @@ export function createIpExtractor<S>(config: ProxyOptions<S>["ip"]): IpExtractor
     if (realIp) return realIp;
 
     // Fallback to socket IP (only available in Node.js HTTP server)
-    return ctx.serverAdapter.remoteAddr(ctx) || null;
+    return ctx.serverAdapter.remoteAddr(ctx)?.hostname || null;
   };
 }
 

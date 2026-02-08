@@ -6,7 +6,6 @@
   "type": "module",
   "exports": {
     ".": "./lib/index.js",
-    "./resource": "./lib/resource/index.js",
     "./validation": "./lib/validation.js"
   },
   "scripts": {
@@ -17,7 +16,7 @@
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "peerDependencies": {
-    "@minimajs/server": ">=0.3.0",
+    "@minimajs/server": ">=0.9.0",
     "zod": "^4.3.2"
   },
   "devDependencies": {
