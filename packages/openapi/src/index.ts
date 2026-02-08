@@ -18,9 +18,9 @@ export * from "./generator.js";
 
 const kOpenAPISpec = Symbol("minimajs.openapi.specs");
 
-export function openapi({ path = "/openapi.json", info, ...baseOptions }: OpenAPIPluginOptions = {}) {
+export function openapi({ path = "/openapi.json", info, ...options }: OpenAPIPluginOptions = {}) {
   const document: OpenAPI.Document = {
-    ...baseOptions,
+    ...options,
     openapi: "3.1.0",
     info: info ?? { title: "Minima.js", version: "1.0.0" },
     paths: {},
