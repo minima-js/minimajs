@@ -1,5 +1,11 @@
 # @minimajs/server
 
+## 0.9.0
+
+### Minor Changes
+
+- 8874965: openapi support
+
 ## 0.8.0
 
 ### Minor Changes
