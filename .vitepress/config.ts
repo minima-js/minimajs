@@ -3,6 +3,7 @@ import { withMermaid } from "vitepress-plugin-mermaid";
 import { withPwa } from "@vite-pwa/vitepress";
 
 const tagId = 'GTM-P9NLW275';
+const hostname = 'https://minima-js.github.io';
 
 
 const config = defineConfig({
@@ -11,6 +12,9 @@ const config = defineConfig({
   base: "/",
   srcDir: "docs",
   cleanUrls: true,
+  sitemap: {
+    hostname,
+  },
 
    head: [
     // Favicon
@@ -27,15 +31,15 @@ const config = defineConfig({
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:title', content: 'Minima.js' }],
     ['meta', { property: 'og:description', content: 'A cutting-edge Node.js framework for modern web applications' }],
-    ['meta', { property: 'og:image', content: '/logo.png' }],
-    ['meta', { property: 'og:url', content: 'https://minimajs.com' }],
+    ['meta', { property: 'og:image', content: `${hostname}/logo.png` }],
+    ['meta', { property: 'og:url', content: hostname }],
     ['meta', { property: 'og:site_name', content: 'Minima.js' }],
 
     // Twitter
     ['meta', { name: 'twitter:card', content: 'summary' }],
     ['meta', { name: 'twitter:title', content: 'Minima.js' }],
     ['meta', { name: 'twitter:description', content: 'A cutting-edge Node.js framework for modern web applications' }],
-    ['meta', { name: 'twitter:image', content: '/logo.png' }],
+    ['meta', { name: 'twitter:image', content: `${hostname}/logo.png` }],
 
     // Analytics
     [

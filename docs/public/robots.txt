@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://minima-js.github.io/sitemap.xml
