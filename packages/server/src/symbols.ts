@@ -54,6 +54,7 @@ export const kModulesChain = Symbol("minimajs.modules.chain");
  */
 export const kAppDescriptor = Symbol("minimajs.app.descriptor");
 
+export const kHandlerDescriptor = Symbol("minimajs.handler.descriptor");
 /**
  * Symbol for request body storage in context.
  * Used by body parser plugin to store parsed body.

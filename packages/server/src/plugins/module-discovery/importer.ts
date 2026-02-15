@@ -20,10 +20,11 @@ export async function tryImport(modulePath: string): Promise<ImportedModule | nu
     const filePath = modulePath + ext;
     try {
       const url = pathToFileURL(filePath);
-      const { default: module, meta } = await import(url.href);
+      const { default: module, meta, routes } = await import(url.href);
       moveToFront(tryExt, i);
       return {
         dir: path.dirname(modulePath),
+        routes,
         module: typeof module === "function" ? module : undefined,
         meta,
       };
@@ -45,11 +46,12 @@ export async function importModule(modulePath: string): Promise<ImportedModule> 
   const dir = path.dirname(modulePath);
   const moduleName = path.basename(dir);
   const url = pathToFileURL(modulePath);
-  const { default: module, meta } = await import(url.href);
+  const { default: module, meta, routes } = await import(url.href);
 
   return {
     dir,
     module: typeof module === "function" ? module : undefined,
+    routes,
     meta: { name: moduleName, prefix: `/${moduleName}`, ...meta },
   };
 }

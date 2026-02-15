@@ -4,7 +4,26 @@ import { plugin } from "../../plugin.js";
 import { getRunningFilePath } from "../../utils/fs.js";
 import { importModule, tryImport } from "./importer.js";
 import { scanModules } from "./scanner.js";
-import type { ImportedModule, ModuleDiscoveryOptions } from "./types.js";
+import type { ImportedModule, ModuleDiscoveryOptions, Routes } from "./types.js";
+import type { HTTPMethod } from "find-my-way";
+
+import { getHandlerDescriptors } from "../../internal/route.js";
+
+function addRoutes(app: App, routes: Routes) {
+  for (const [path, route] of Object.entries(routes)) {
+    for (const [method, handler] of Object.entries(route)) {
+      const descriptors = getHandlerDescriptors(handler);
+      app.route(
+        {
+          path,
+          method: method as HTTPMethod,
+        },
+        ...descriptors,
+        handler
+      );
+    }
+  }
+}
 
 /**
  * Module discovery plugin
@@ -16,6 +35,10 @@ export function moduleDiscovery(options: ModuleDiscoveryOptions) {
   async function loadModules(app: App, current: ImportedModule): Promise<void> {
     app.register(async function unknown(child: App, opts: any) {
       current.meta.plugins?.forEach((x) => child.register(x));
+
+      if (current.routes) {
+        addRoutes(child, current.routes);
+      }
 
       if (current.module) {
         await current.module(child, opts);
