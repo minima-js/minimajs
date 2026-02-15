@@ -159,21 +159,16 @@ interface S3DriverOptions {
   prefix?: string;
 
   /** Default ACL for uploaded objects */
-  acl?: "private" | "public-read" | "public-read-write" | "authenticated-read";
+  acl?: ObjectCannedACL;
 
   /** Default storage class */
-  storageClass?:
-    | "STANDARD"
-    | "REDUCED_REDUNDANCY"
-    | "STANDARD_IA"
-    | "ONEZONE_IA"
-    | "INTELLIGENT_TIERING"
-    | "GLACIER"
-    | "DEEP_ARCHIVE"
-    | "GLACIER_IR";
+  storageClass?: StorageClass;
 
   /** Server-side encryption */
-  serverSideEncryption?: "AES256" | "aws:kms";
+  serverSideEncryption?: ServerSideEncryption;
+
+  /** CDN URL (e.g., 'https://cdn.example.com' or 'https://d1234567890.cloudfront.net') */
+  cdnUrl?: string;
 
   /** Part size for multipart uploads (default: 5MB) */
   partSize?: number;

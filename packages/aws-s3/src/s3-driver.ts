@@ -11,7 +11,7 @@ import {
   type StorageClass,
   type ServerSideEncryption,
 } from "@aws-sdk/client-s3";
-import type { DiskDriver, FileMetadata, PutOptions, UrlOptions, ListOptions } from "@minimajs/disk";
+import type { DiskDriver, FileMetadata, PutOptions, ListOptions } from "@minimajs/disk";
 import { Readable } from "node:stream";
 import { lookup as lookupMimeType } from "mime-types";
 
@@ -23,19 +23,13 @@ export interface S3DriverOptions extends S3ClientConfig {
   /** Base prefix/path within the bucket */
   prefix?: string;
   /** Default ACL for uploaded objects */
-  acl?: "private" | "public-read" | "public-read-write" | "authenticated-read";
+  acl?: ObjectCannedACL;
   /** Default storage class */
-  storageClass?:
-    | "STANDARD"
-    | "REDUCED_REDUNDANCY"
-    | "STANDARD_IA"
-    | "ONEZONE_IA"
-    | "INTELLIGENT_TIERING"
-    | "GLACIER"
-    | "DEEP_ARCHIVE"
-    | "GLACIER_IR";
+  storageClass?: StorageClass;
   /** Default server-side encryption */
-  serverSideEncryption?: "AES256" | "aws:kms";
+  serverSideEncryption?: ServerSideEncryption;
+  /** CDN URL (e.g., 'https://cdn.example.com' or 'https://d1234567890.cloudfront.net') */
+  cdnUrl?: string;
 }
 
 /**
@@ -72,9 +66,11 @@ class S3Driver implements DiskDriver {
   private readonly acl?: ObjectCannedACL;
   private readonly storageClass?: StorageClass;
   private readonly serverSideEncryption?: ServerSideEncryption;
+  private readonly cdnUrl?: string;
+  private readonly s3Config: S3ClientConfig;
 
   constructor(options: S3DriverOptions) {
-    const { bucket, region, prefix = "", acl, storageClass, serverSideEncryption, ...s3Config } = options;
+    const { bucket, region, prefix = "", acl, storageClass, serverSideEncryption, cdnUrl, ...s3Config } = options;
 
     this.bucket = bucket;
     this.region = region;
@@ -82,6 +78,8 @@ class S3Driver implements DiskDriver {
     this.acl = acl;
     this.storageClass = storageClass;
     this.serverSideEncryption = serverSideEncryption;
+    this.cdnUrl = cdnUrl;
+    this.s3Config = s3Config;
     this.client = new S3Client({ region, ...s3Config });
   }
 
@@ -89,41 +87,56 @@ class S3Driver implements DiskDriver {
    * Extract bucket and S3 key from href
    * Supports:
    * - s3://bucket/key (when bucket is not in constructor)
+   * - https://cdn.example.com/key (when CDN URL is configured)
    * - key (when bucket is in constructor)
    */
   private hrefToKey(href: string): { bucket: string; key: string } {
-    let bucket: string;
-    let key: string;
+    // Handle CDN URL - convert back to S3 key
+    if (this.cdnUrl && href.startsWith(this.cdnUrl)) {
+      if (!this.bucket) {
+        throw new Error("Bucket must be specified in driver config when using CDN URLs");
+      }
+
+      // Remove CDN URL prefix and leading slash
+      const key = href.slice(this.cdnUrl.length).replace(/^\/+/, "");
+
+      if (!key) {
+        throw new Error("S3 key cannot be empty");
+      }
+
+      return { bucket: this.bucket, key };
+    }
 
     // Handle s3:// protocol
     if (href.startsWith("s3://")) {
       try {
         const url = new URL(href);
-        bucket = url.hostname;
-        key = url.pathname.slice(1);
+        const bucket = url.hostname;
+        const key = url.pathname.slice(1);
 
         if (!key) {
           throw new Error("S3 key cannot be empty");
         }
+
+        return { bucket, key };
       } catch (error) {
         throw new Error(`Invalid S3 href format: ${href}`);
       }
     }
-    // Handle plain paths (only when bucket is configured)
-    else {
-      if (!this.bucket) {
-        throw new Error(`Bucket must be specified in driver config or use s3:// protocol. Received: ${href}`);
-      }
-      bucket = this.bucket;
-      // Remove leading slash if present
-      key = href.startsWith("/") ? href.slice(1) : href;
 
-      if (!key) {
-        throw new Error("S3 key cannot be empty");
-      }
+    // Handle plain paths (only when bucket is configured)
+    if (!this.bucket) {
+      throw new Error(`Bucket must be specified in driver config or use s3:// protocol. Received: ${href}`);
     }
 
-    return { bucket, key };
+    // Remove leading slash if present
+    const key = href.startsWith("/") ? href.slice(1) : href;
+
+    if (!key) {
+      throw new Error("S3 key cannot be empty");
+    }
+
+    return { bucket: this.bucket, key };
   } /**
    * Build full S3 key with prefix
    */
@@ -251,38 +264,49 @@ class S3Driver implements DiskDriver {
     }
   }
 
-  async url(href: string, urlOptions?: UrlOptions): Promise<string> {
+  async url(href: string): Promise<string> {
     const { bucket, key } = this.hrefToKey(href);
     const fullKey = this.buildKey(key);
 
-    // For public-read buckets, return direct URL
-    if (this.acl === "public-read") {
-      return `https://${bucket}.s3.${this.region}.amazonaws.com/${fullKey}`;
+    // If CDN URL is configured, return CDN URL
+    if (this.cdnUrl) {
+      return `${this.cdnUrl}/${fullKey}`;
     }
 
-    // Generate presigned URL (dynamically import the presigner)
-    try {
-      const { getSignedUrl } = await import("@aws-sdk/s3-request-presigner");
+    // If custom endpoint is configured
+    if (this.s3Config.endpoint) {
+      // Extract endpoint URL string
+      let endpointUrl: string;
+      if (typeof this.s3Config.endpoint === "string") {
+        endpointUrl = this.s3Config.endpoint;
+      } else if (typeof this.s3Config.endpoint === "object" && "url" in this.s3Config.endpoint) {
+        endpointUrl = this.s3Config.endpoint.url.toString();
+      } else {
+        // Fallback to default AWS S3
+        endpointUrl = `https://s3.${this.region}.amazonaws.com`;
+      }
 
-      const command = new GetObjectCommand({
-        Bucket: bucket,
-        Key: fullKey,
-        ResponseContentDisposition: urlOptions?.download
-          ? typeof urlOptions.download === "string"
-            ? `attachment; filename="${urlOptions.download}"`
-            : "attachment"
-          : undefined,
-      });
+      // Ensure protocol
+      if (!endpointUrl.startsWith("http")) {
+        endpointUrl = `https://${endpointUrl}`;
+      }
 
-      return getSignedUrl(this.client, command, {
-        expiresIn: urlOptions?.expiresIn || 3600, // Default 1 hour
-      });
-    } catch (error) {
-      throw new Error(
-        "Failed to generate presigned URL. Please install @aws-sdk/s3-request-presigner: " +
-          "npm install @aws-sdk/s3-request-presigner"
-      );
+      if (this.s3Config.forcePathStyle) {
+        // Path-style: https://endpoint/bucket/key
+        return `${endpointUrl}/${bucket}/${fullKey}`;
+      }
+
+      // Virtual-hosted style: https://bucket.endpoint/key
+      const [protocol, rest] = endpointUrl.split("://");
+      return `${protocol}://${bucket}.${rest}/${fullKey}`;
     }
+
+    // Default AWS S3 URL
+    if (this.s3Config.forcePathStyle) {
+      return `https://s3.${this.region}.amazonaws.com/${bucket}/${fullKey}`;
+    }
+
+    return `https://${bucket}.s3.${this.region}.amazonaws.com/${fullKey}`;
   }
 
   async copy(from: string, to: string): Promise<void> {
