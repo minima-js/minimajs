@@ -1,6 +1,8 @@
 import { basename } from "node:path";
 import { randomUUID } from "node:crypto";
 import type { DiskData, FileSource, PutOptions } from "./types.js";
+import { DiskFile } from "./file.js";
+import { lookup as lookupMimeType } from "mime-types";
 
 export function isBlob(value: unknown): value is Blob {
   return typeof Blob !== "undefined" && value instanceof Blob;
@@ -10,11 +12,15 @@ export function isFile(value: unknown): value is File {
   return typeof File !== "undefined" && value instanceof File;
 }
 
+export function isDiskFile(value: unknown): value is DiskFile {
+  return value instanceof DiskFile;
+}
+
 /**
- * Resolve key from string or any File with a key property
+ * Resolve key from string or DiskFile
  */
 export function resolveKey(from: FileSource): string {
-  return typeof from === "string" ? from : from.key;
+  return typeof from === "string" ? from : from.href;
 }
 
 export function isArrayBuffer(value: unknown): value is ArrayBuffer {
@@ -107,9 +113,10 @@ export function resolveFilename(key: string, data: DiskData): string {
 
 /**
  * Resolve content type from options or data
+ * Uses FilePropertyBag's 'type' property (web-native)
  */
 export function resolveContentType(data: DiskData, options?: PutOptions): string | undefined {
-  if (options?.contentType) return options.contentType;
+  if (options?.type) return options.type;
   if (isFile(data)) return data.type || undefined;
   if (isBlob(data)) return data.type || undefined;
   return undefined;
@@ -144,4 +151,12 @@ export function sanitizeFilename(name: string): string {
 
 export function randomName(base: string): string {
   return `${randomUUID()}-${sanitizeFilename(base)}`;
+}
+
+/**
+ * Detect MIME type from file path/key using the mime-types library
+ */
+export function getMimeType(pathOrKey: string): string | undefined {
+  const result = lookupMimeType(pathOrKey);
+  return result || undefined;
 }

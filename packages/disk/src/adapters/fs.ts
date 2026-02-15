@@ -1,8 +1,11 @@
-import { mkdir, rm, stat, writeFile, access, copyFile, rename, readdir } from "node:fs/promises";
-import { basename, dirname, resolve, join, relative } from "node:path";
-import type { DiskDriver, DiskData, PutOptions, UrlOptions, ListOptions, FileMetadata, FileSource } from "../types.js";
-import { DiskFile } from "../file.js";
-import { resolveContentType, resolveKey, sanitizeKey, toBuffer } from "../helpers.js";
+import { mkdir, rm, stat, access, copyFile, rename, readdir } from "node:fs/promises";
+import { dirname, resolve, join, relative } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { createReadStream, createWriteStream } from "node:fs";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
+import type { DiskDriver, PutOptions, UrlOptions, ListOptions, FileMetadata } from "../types.js";
+import { getMimeType } from "../helpers.js";
 
 export interface FsDriverOptions {
   /** Root directory for file storage */
@@ -17,110 +20,104 @@ export function createFsDriver(options: FsDriverOptions): DiskDriver {
   return {
     name: "fs",
 
-    async put(key: string, data: DiskData, putOptions?: PutOptions): Promise<DiskFile> {
-      const safeKey = sanitizeKey(key);
-      const destination = resolve(root, safeKey);
-      const filename = basename(safeKey);
+    async put(href: string, stream: ReadableStream<Uint8Array>, putOptions?: PutOptions): Promise<FileMetadata> {
+      const filepath = fileURLToPath(href);
+      const destination = resolve(root, relative("/", filepath));
 
       await mkdir(dirname(destination), { recursive: true });
-      const buffer = await toBuffer(data);
-      await writeFile(destination, buffer);
 
-      return new DiskFile(filename, {
-        key: safeKey,
-        url: options.publicUrl ? `${options.publicUrl.replace(/\/$/, "")}/${safeKey}` : undefined,
-        size: buffer.length,
-        mimeType: resolveContentType(data, putOptions),
+      // Stream directly to file using pipeline
+      await pipeline(Readable.fromWeb(stream as any), createWriteStream(destination));
+
+      const stats = await stat(destination);
+
+      return {
+        href: pathToFileURL(destination).href,
+        size: stats.size,
+        type: putOptions?.type ?? getMimeType(destination),
+        lastModified: stats.mtime.getTime(),
         metadata: putOptions?.metadata,
-        path: destination,
-      });
+      };
     },
 
-    async get(key: string): Promise<DiskFile | null> {
-      const safeKey = sanitizeKey(key);
-      const filepath = resolve(root, safeKey);
+    async get(href: string): Promise<[ReadableStream<Uint8Array>, FileMetadata] | null> {
+      const filepath = fileURLToPath(href);
+      const destination = resolve(root, relative("/", filepath));
 
       try {
-        const stats = await stat(filepath);
-        return new DiskFile(basename(safeKey), {
-          key: safeKey,
+        const stats = await stat(destination);
+
+        // Create web ReadableStream from Node.js stream
+        const nodeStream = createReadStream(destination);
+        const webStream = Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>;
+
+        const metadata: FileMetadata = {
+          href: pathToFileURL(destination).href,
           size: stats.size,
-          path: filepath,
-        });
+          type: getMimeType(destination),
+          lastModified: stats.mtime.getTime(),
+        };
+
+        return [webStream, metadata];
       } catch {
         return null;
       }
     },
 
-    async delete(key: string): Promise<void> {
-      const safeKey = sanitizeKey(key);
-      const filepath = resolve(root, safeKey);
-      await rm(filepath, { force: true });
+    async delete(href: string): Promise<void> {
+      const filepath = fileURLToPath(href);
+      const destination = resolve(root, relative("/", filepath));
+      await rm(destination, { force: true });
     },
 
-    async exists(key: string): Promise<boolean> {
-      const safeKey = sanitizeKey(key);
-      const filepath = resolve(root, safeKey);
+    async exists(href: string): Promise<boolean> {
+      const filepath = fileURLToPath(href);
+      const destination = resolve(root, relative("/", filepath));
       try {
-        await access(filepath);
+        await access(destination);
         return true;
       } catch {
         return false;
       }
     },
 
-    async url(key: string, _urlOptions?: UrlOptions): Promise<string> {
+    async url(href: string, _urlOptions?: UrlOptions): Promise<string> {
       if (!options.publicUrl) {
         throw new Error("publicUrl is required to generate a url");
       }
-      const safeKey = sanitizeKey(key);
-      return `${options.publicUrl.replace(/\/$/, "")}/${safeKey}`;
+      const filepath = fileURLToPath(href);
+      const relativePath = relative(root, resolve(root, relative("/", filepath)));
+      return `${options.publicUrl.replace(/\/$/, "")}/${relativePath}`;
     },
 
-    async copy(from: FileSource, to: string): Promise<DiskFile> {
-      const safeFrom = sanitizeKey(resolveKey(from));
-      const safeTo = sanitizeKey(to);
-      const srcPath = resolve(root, safeFrom);
-      const destPath = resolve(root, safeTo);
+    async copy(from: string, to: string): Promise<void> {
+      const srcPath = fileURLToPath(from);
+      const destPath = fileURLToPath(to);
+      const srcDest = resolve(root, relative("/", srcPath));
+      const destDest = resolve(root, relative("/", destPath));
 
-      await mkdir(dirname(destPath), { recursive: true });
-      await copyFile(srcPath, destPath);
-
-      const stats = await stat(destPath);
-      return new DiskFile(basename(safeTo), {
-        key: safeTo,
-        url: options.publicUrl ? `${options.publicUrl.replace(/\/$/, "")}/${safeTo}` : undefined,
-        size: stats.size,
-        path: destPath,
-      });
+      await mkdir(dirname(destDest), { recursive: true });
+      await copyFile(srcDest, destDest);
     },
 
-    async move(from: FileSource, to: string): Promise<DiskFile> {
-      const safeFrom = sanitizeKey(resolveKey(from));
-      const safeTo = sanitizeKey(to);
-      const srcPath = resolve(root, safeFrom);
-      const destPath = resolve(root, safeTo);
+    async move(from: string, to: string): Promise<void> {
+      const srcPath = fileURLToPath(from);
+      const destPath = fileURLToPath(to);
+      const srcDest = resolve(root, relative("/", srcPath));
+      const destDest = resolve(root, relative("/", destPath));
 
-      await mkdir(dirname(destPath), { recursive: true });
-      await rename(srcPath, destPath);
-
-      const stats = await stat(destPath);
-      return new DiskFile(basename(safeTo), {
-        key: safeTo,
-        url: options.publicUrl ? `${options.publicUrl.replace(/\/$/, "")}/${safeTo}` : undefined,
-        size: stats.size,
-        path: destPath,
-      });
+      await mkdir(dirname(destDest), { recursive: true });
+      await rename(srcDest, destDest);
     },
 
-    async *list(prefix?: string, listOptions?: ListOptions): AsyncIterable<DiskFile> {
-      const safePrefix = prefix ? sanitizeKey(prefix) : "";
-      const searchDir = safePrefix ? resolve(root, safePrefix) : root;
+    async *list(prefix?: string, listOptions?: ListOptions): AsyncIterable<FileMetadata> {
+      const searchDir = prefix ? fileURLToPath(prefix) : root;
+      const searchPath = prefix ? resolve(root, relative("/", searchDir)) : root;
       const recursive = listOptions?.recursive ?? true;
       let count = 0;
       const limit = listOptions?.limit;
 
-      async function* walkDir(dir: string): AsyncGenerator<DiskFile> {
+      async function* walkDir(dir: string): AsyncGenerator<FileMetadata> {
         let entries;
         try {
           entries = await readdir(dir, { withFileTypes: true });
@@ -132,16 +129,15 @@ export function createFsDriver(options: FsDriverOptions): DiskDriver {
           if (limit !== undefined && count >= limit) return;
 
           const fullPath = join(dir, entry.name);
-          const key = relative(root, fullPath);
 
           if (entry.isFile()) {
             const stats = await stat(fullPath);
-            yield new DiskFile(entry.name, {
-              key,
+            yield {
+              href: pathToFileURL(fullPath).href,
               size: stats.size,
-              path: fullPath,
-              url: options.publicUrl ? `${options.publicUrl.replace(/\/$/, "")}/${key}` : undefined,
-            });
+              type: getMimeType(fullPath),
+              lastModified: stats.mtime.getTime(),
+            };
             count++;
           } else if (entry.isDirectory() && recursive) {
             yield* walkDir(fullPath);
@@ -149,19 +145,20 @@ export function createFsDriver(options: FsDriverOptions): DiskDriver {
         }
       }
 
-      yield* walkDir(searchDir);
+      yield* walkDir(searchPath);
     },
 
-    async getMetadata(key: string): Promise<FileMetadata | null> {
-      const safeKey = sanitizeKey(key);
-      const filepath = resolve(root, safeKey);
+    async getMetadata(href: string): Promise<FileMetadata | null> {
+      const filepath = fileURLToPath(href);
+      const destination = resolve(root, relative("/", filepath));
 
       try {
-        const stats = await stat(filepath);
+        const stats = await stat(destination);
         return {
-          key: safeKey,
+          href: pathToFileURL(destination).href,
+          type: getMimeType(destination),
           size: stats.size,
-          lastModified: stats.mtime,
+          lastModified: stats.mtime.getTime(),
         };
       } catch {
         return null;

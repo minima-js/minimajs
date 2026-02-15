@@ -1,7 +1,3 @@
-import { Readable } from "node:stream";
-import { readFile } from "node:fs/promises";
-import { createReadStream } from "node:fs";
-
 /**
  * Symbol to identify disk-managed files
  * Custom drivers can use this to mark their File instances
@@ -9,28 +5,33 @@ import { createReadStream } from "node:fs";
 export const kDiskFile = Symbol.for("minimajs.disk.file");
 
 /**
- * Interface for any file that has a storage key
- * This allows cross-disk operations with any File-like object
+ * Wraps a Promise<ReadableStream> into a ReadableStream
  */
-export interface KeyedFile extends File {
-  readonly key: string;
-}
-
-/**
- * Check if a value is a keyed file (has a key property)
- */
-export function isKeyedFile(value: unknown): value is KeyedFile {
-  return value instanceof File && "key" in value && typeof (value as KeyedFile).key === "string";
+function wrapAsyncStream(streamPromise: Promise<ReadableStream>): ReadableStream {
+  return new ReadableStream({
+    async start(controller) {
+      try {
+        const actualStream = await streamPromise;
+        const reader = actualStream.getReader();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          controller.enqueue(value);
+        }
+        controller.close();
+      } catch (error) {
+        controller.error(error);
+      }
+    },
+  });
 }
 
 export interface DiskFileInit extends FilePropertyBag {
-  key: string;
-  url?: string;
+  /** Absolute URL/URI with protocol (e.g., file:///path, s3://bucket/key) */
+  href: string;
   size?: number;
-  mimeType?: string;
   metadata?: Record<string, string>;
-  path?: string;
-  stream?: () => ReadableStream;
+  stream: () => ReadableStream | Promise<ReadableStream>;
 }
 
 export class DiskFile extends File {
@@ -38,18 +39,15 @@ export class DiskFile extends File {
 
   #buffer: Uint8Array<ArrayBuffer> | null = null;
   #size: number;
-  readonly key: string;
-  readonly url?: string;
+  /** Absolute URL/URI with protocol identifying this file */
+  readonly href: string;
   readonly metadata?: Record<string, string>;
-  readonly path?: string;
-  #streamFactory?: () => ReadableStream;
+  #streamFactory: () => ReadableStream | Promise<ReadableStream>;
 
-  constructor(filename: string, { key, url, size, mimeType, metadata, path, stream, ...propertyBag }: DiskFileInit) {
-    super([], filename, { type: mimeType, ...propertyBag });
-    this.key = key;
-    this.url = url;
+  constructor(filename: string, { href, size, metadata, stream, ...propertyBag }: DiskFileInit) {
+    super([], filename, propertyBag);
+    this.href = href;
     this.metadata = metadata;
-    this.path = path;
     this.#size = size ?? 0;
     this.#streamFactory = stream;
   }
@@ -59,17 +57,12 @@ export class DiskFile extends File {
   }
 
   stream(): ReadableStream {
-    if (this.#streamFactory) {
-      return this.#streamFactory();
+    const result = this.#streamFactory();
+    // If async, wrap it in a ReadableStream
+    if (result instanceof Promise) {
+      return wrapAsyncStream(result);
     }
-    if (this.path) {
-      return Readable.toWeb(createReadStream(this.path)) as ReadableStream;
-    }
-    return new ReadableStream({
-      start(controller) {
-        controller.close();
-      },
-    });
+    return result;
   }
 
   async arrayBuffer(): Promise<ArrayBuffer> {
@@ -83,11 +76,7 @@ export class DiskFile extends File {
 
   async bytes(): Promise<Uint8Array<ArrayBuffer>> {
     if (!this.#buffer) {
-      if (this.path) {
-        this.#buffer = await readFile(this.path);
-      } else {
-        this.#buffer = await readStreamToBytes(this.stream() as ReadableStream<Uint8Array>);
-      }
+      this.#buffer = await readStreamToBytes(this.stream() as ReadableStream<Uint8Array>);
     }
     return this.#buffer;
   }

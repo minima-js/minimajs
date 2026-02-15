@@ -1,0 +1,49 @@
+{
+  "name": "@minimajs/aws-s3",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "description": "AWS S3 storage driver for @minimajs/disk",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "bun test",
+    "clean": "rm -rf lib"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.990.0",
+    "@minimajs/disk": "workspace:*",
+    "mime-types": "^3.0.2"
+  },
+  "peerDependencies": {
+    "@aws-sdk/s3-request-presigner": "^3.990.0"
+  },
+  "peerDependenciesMeta": {
+    "@aws-sdk/s3-request-presigner": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@aws-sdk/s3-request-presigner": "^3.990.0",
+    "@types/mime-types": "^3.0.1",
+    "@types/node": "^25.0.3",
+    "typescript": "^5.7.3"
+  },
+  "keywords": [
+    "minimajs",
+    "disk",
+    "storage",
+    "s3",
+    "aws",
+    "file-upload",
+    "cloud-storage"
+  ],
+  "author": "MinimaJS Team",
+  "files": [
+    "lib"
+  ],
+  "license": "MIT"
+}

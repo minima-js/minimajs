@@ -1,6 +1,6 @@
 {
   "name": "@minimajs/disk",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "type": "module",
   "private": true,
   "main": "./lib/index.js",
@@ -11,6 +11,14 @@
     "test": "bun test"
   },
   "devDependencies": {
+    "@jest/globals": "^30.2.0",
+    "@types/mime-types": "^3.0.1",
     "@types/node": "^25.0.3"
-  }
+  },
+  "dependencies": {
+    "mime-types": "^3.0.2"
+  },
+  "files": [
+    "lib"
+  ]
 }

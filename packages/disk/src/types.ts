@@ -1,21 +1,20 @@
-import type { DiskFile, KeyedFile } from "./file.js";
+import type { DiskFile } from "./file.js";
 
 /**
- * Data types accepted for upload - matches web fetch BodyInit
+ * Data types accepted for upload at Disk level (will be converted to streams)
  */
-export type DiskData = ReadableStream | Blob | ArrayBufferView | ArrayBuffer | FormData | string;
+export type DiskData = ReadableStream | Blob | ArrayBufferView | ArrayBuffer | FormData | string | File;
 
 /**
- * Source for copy/move operations - string key or any File with a key property
+ * Source for copy/move operations - string key or DiskFile
  */
-export type FileSource = string | KeyedFile;
+export type FileSource = string | DiskFile;
 
 /**
  * Options for putting/storing a file
+ * Extends FilePropertyBag to stay web-native
  */
-export interface PutOptions {
-  /** MIME type of the file */
-  contentType?: string;
+export interface PutOptions extends FilePropertyBag {
   /** Custom metadata to store with the file */
   metadata?: Record<string, string>;
   /** Cache-Control header value */
@@ -46,96 +45,134 @@ export interface ListOptions {
 
 /**
  * File metadata without content
+ * Extends FilePropertyBag to stay web-native
  */
-export interface FileMetadata {
-  key: string;
+export interface FileMetadata extends FilePropertyBag {
+  /** Absolute URL/URI with protocol (e.g., file:///path, s3://bucket/key, https://...) */
+  href: string;
   size: number;
-  contentType?: string;
-  lastModified?: Date;
+  /** Custom metadata to store with the file */
   metadata?: Record<string, string>;
 }
 
 /**
- * Storage driver interface - implement this for custom storage backends
+ * Low-level storage driver interface - works with streams
+ * Adapters only deal with ReadableStream/WritableStream
+ * Drivers work with absolute URLs/URIs with protocols:
+ * - file:///absolute/path/to/file
+ * - s3://bucket-name/path/to/file
+ * - https://storage.example.com/path/to/file
  */
 export interface DiskDriver {
   /** Driver name (e.g., 'fs', 's3', 'azure') */
   readonly name: string;
 
   /**
-   * Store data at the given key
-   * @param key - Storage path/key
-   * @param data - File, Blob, ReadableStream, ArrayBuffer, or string
+   * Store data from a ReadableStream
+   * @param href - Absolute URL/URI with protocol
+   * @param stream - ReadableStream of data to store
    * @param options - Optional metadata and content type
+   * @returns FileMetadata about the stored file
+   */
+  put(href: string, stream: ReadableStream<Uint8Array>, options?: PutOptions): Promise<FileMetadata>;
+
+  /**
+   * Retrieve file as a ReadableStream with metadata
+   * @param href - Absolute URL/URI with protocol
+   * @returns Tuple of [stream, metadata] or null if not found
+   */
+  get(href: string): Promise<[file: ReadableStream<Uint8Array>, property: FileMetadata] | null>;
+
+  /**
+   * Delete file by href
+   * @param href - Absolute URL/URI with protocol
+   */
+  delete(href: string): Promise<void>;
+
+  /**
+   * Check if file exists
+   * @param href - Absolute URL/URI with protocol
+   */
+  exists(href: string): Promise<boolean>;
+
+  /**
+   * Generate a URL for the file
+   * @param href - Absolute URL/URI with protocol
+   * @param options - URL options (expiration, download disposition)
+   */
+  url(href: string, options?: UrlOptions): Promise<string>;
+
+  /**
+   * Copy a file to a new location
+   * @param from - Source absolute URL/URI
+   * @param to - Destination absolute URL/URI
+   */
+  copy(from: string, to: string): Promise<void>;
+
+  /**
+   * Move a file to a new location
+   * @param from - Source absolute URL/URI
+   * @param to - Destination absolute URL/URI
+   */
+  move(from: string, to: string): Promise<void>;
+
+  /**
+   * List files with optional prefix
+   * @param prefix - Filter by href prefix
+   * @param options - Pagination options
+   */
+  list(prefix?: string, options?: ListOptions): AsyncIterable<FileMetadata>;
+
+  /**
+   * Get file metadata without content
+   * @param href - Absolute URL/URI with protocol
+   */
+  getMetadata(href: string): Promise<FileMetadata | null>;
+}
+
+/**
+ * Disk instance - high-level API that converts data types to/from streams
+ * This is the user-facing interface that handles DiskFile creation
+ */
+export interface Disk {
+  readonly driver: DiskDriver;
+
+  /**
+   * Store data at the given key
+   * Converts various data types to ReadableStream for the driver
    */
   put(key: string, data: DiskData, options?: PutOptions): Promise<DiskFile>;
 
   /**
    * Retrieve file by key
-   * @param key - Storage path/key
-   * @returns DiskFile or null if not found
+   * Converts driver's ReadableStream into a DiskFile
    */
   get(key: string): Promise<DiskFile | null>;
 
-  /**
-   * Delete file by key
-   * @param key - Storage path/key
-   */
   delete(key: string): Promise<void>;
-
-  /**
-   * Check if file exists
-   * @param key - Storage path/key
-   */
   exists(key: string): Promise<boolean>;
-
-  /**
-   * Generate a URL for the file
-   * @param key - Storage path/key
-   * @param options - URL options (expiration, download disposition)
-   */
   url(key: string, options?: UrlOptions): Promise<string>;
-
-  /**
-   * Copy a file to a new key
-   * @param from - Source key or any File with a key property
-   * @param to - Destination key
-   */
   copy(from: FileSource, to: string): Promise<DiskFile>;
-
-  /**
-   * Move a file to a new key
-   * @param from - Source key or any File with a key property
-   * @param to - Destination key
-   */
   move(from: FileSource, to: string): Promise<DiskFile>;
-
-  /**
-   * List files with optional prefix
-   * @param prefix - Filter by key prefix
-   * @param options - Pagination options
-   */
   list(prefix?: string, options?: ListOptions): AsyncIterable<DiskFile>;
-
-  /**
-   * Get file metadata without content
-   * @param key - Storage path/key
-   */
   getMetadata(key: string): Promise<FileMetadata | null>;
 }
 
 /**
- * Disk instance returned by createDisk()
+ * Options for creating a protocol-aware disk that can route operations
+ * to different drivers based on URL prefixes (protocol + optional base path)
  */
-export interface Disk {
-  readonly driver: DiskDriver;
-  put(key: string, data: DiskData, options?: PutOptions): Promise<DiskFile>;
-  get(key: string): Promise<DiskFile | null>;
-  delete(key: string): Promise<void>;
-  exists(key: string): Promise<boolean>;
-  url(key: string, options?: UrlOptions): Promise<string>;
-  copy(from: FileSource, to: string): Promise<DiskFile>;
-  move(from: FileSource, to: string): Promise<DiskFile>;
-  list(prefix?: string, options?: ListOptions): AsyncIterable<DiskFile>;
-  getMetadata(key: string): Promise<FileMetadata | null>;
+export interface ProtocolDiskOptions {
+  /**
+   * Map of URL prefixes to their respective drivers
+   * Supports both protocol-only and full prefix matching:
+   * - Protocol only: 'file://', 's3://', 'https://'
+   * - Full prefix: 's3://bucket-1/', 's3://bucket-2/', 'https://cdn.example.com/'
+   * Longer prefixes are matched first (most specific wins)
+   */
+  protocols: Record<string, DiskDriver>;
+  /** Default protocol/prefix to use for relative paths */
+  defaultProtocol?: string;
+  /** Base path for resolving relative paths */
+  basePath?: string;
 }

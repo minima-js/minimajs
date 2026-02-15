@@ -1,6 +1,6 @@
 {
   "name": "@minimajs/azure-blob",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "type": "module",
   "private": true,
   "main": "./lib/index.js",
@@ -16,5 +16,8 @@
   },
   "peerDependencies": {
     "@minimajs/disk": ">=0.1.0"
-  }
+  },
+  "files": [
+    "lib"
+  ]
 }

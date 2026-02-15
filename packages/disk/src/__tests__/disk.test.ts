@@ -1,4 +1,4 @@
-import { describe, test, beforeEach, afterEach } from "node:test";
+import { describe, test, beforeEach, afterEach } from "@jest/globals";
 import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -24,18 +24,18 @@ describe("disk fs driver", () => {
     });
 
     const blob = new Blob(["hello world"], { type: "text/plain" });
-    const stored = await disk.put("uploads/hello.txt", blob, { contentType: "text/plain" });
+    const stored = await disk.put("uploads/hello.txt", blob, { type: "text/plain" });
 
-    assert.equal(stored.key, "uploads/hello.txt");
+    assert.equal(stored.href, `file://${rootDir}/uploads/hello.txt`);
     assert.ok(stored.type.startsWith("text/plain"));
 
-    const result = await disk.get(stored.key);
+    const result = await disk.get("uploads/hello.txt");
     assert.ok(result);
     const text = await result.text();
     assert.equal(text, "hello world");
 
-    await disk.delete(stored.key);
-    const missing = await disk.get(stored.key);
+    await disk.delete("uploads/hello.txt");
+    const missing = await disk.get("uploads/hello.txt");
     assert.equal(missing, null);
   });
 
@@ -46,8 +46,8 @@ describe("disk fs driver", () => {
 
     const stored = await disk.put("docs/readme.txt", "Hello from string");
 
-    assert.equal(stored.key, "docs/readme.txt");
-    const result = await disk.get(stored.key);
+    assert.ok(stored.href.endsWith("docs/readme.txt"));
+    const result = await disk.get("docs/readme.txt");
     assert.ok(result);
     assert.equal(await result.text(), "Hello from string");
   });
@@ -60,8 +60,8 @@ describe("disk fs driver", () => {
     const data = new TextEncoder().encode("binary data");
     const stored = await disk.put("data/binary.bin", data);
 
-    assert.equal(stored.key, "data/binary.bin");
-    const result = await disk.get(stored.key);
+    assert.ok(stored.href.endsWith("data/binary.bin"));
+    const result = await disk.get("data/binary.bin");
     assert.ok(result);
     assert.equal(await result.text(), "binary data");
   });
@@ -108,7 +108,7 @@ describe("disk fs driver", () => {
     });
 
     const stored = await disk.put("../../../etc/passwd", "malicious");
-    assert.equal(stored.key, "etc/passwd");
+    assert.ok(stored.href.endsWith("etc/passwd"));
   });
 
   test("stores with custom metadata", async () => {
@@ -131,7 +131,7 @@ describe("disk fs driver", () => {
     await disk.put("original.txt", "original content");
     const copied = await disk.copy("original.txt", "copied.txt");
 
-    assert.equal(copied.key, "copied.txt");
+    assert.ok(copied.href.endsWith("copied.txt"));
     assert.equal(await disk.exists("original.txt"), true);
     assert.equal(await disk.exists("copied.txt"), true);
 
@@ -147,7 +147,7 @@ describe("disk fs driver", () => {
     const original = await disk.put("original.txt", "original content");
     const copied = await disk.copy(original, "copied-from-file.txt");
 
-    assert.equal(copied.key, "copied-from-file.txt");
+    assert.ok(copied.href.endsWith("copied-from-file.txt"));
     assert.equal(await disk.exists("original.txt"), true);
     assert.equal(await disk.exists("copied-from-file.txt"), true);
   });
@@ -160,7 +160,7 @@ describe("disk fs driver", () => {
     await disk.put("source.txt", "source content");
     const moved = await disk.move("source.txt", "destination.txt");
 
-    assert.equal(moved.key, "destination.txt");
+    assert.ok(moved.href.endsWith("destination.txt"));
     assert.equal(await disk.exists("source.txt"), false);
     assert.equal(await disk.exists("destination.txt"), true);
 
@@ -176,7 +176,7 @@ describe("disk fs driver", () => {
     const source = await disk.put("source.txt", "source content");
     const moved = await disk.move(source, "moved-from-file.txt");
 
-    assert.equal(moved.key, "moved-from-file.txt");
+    assert.ok(moved.href.endsWith("moved-from-file.txt"));
     assert.equal(await disk.exists("source.txt"), false);
     assert.equal(await disk.exists("moved-from-file.txt"), true);
   });
@@ -192,12 +192,12 @@ describe("disk fs driver", () => {
 
     const files: string[] = [];
     for await (const file of disk.list("images")) {
-      files.push(file.key);
+      files.push(file.href);
     }
 
     assert.equal(files.length, 2);
-    assert.ok(files.includes("images/a.jpg"));
-    assert.ok(files.includes("images/b.jpg"));
+    assert.ok(files.some((f) => f.endsWith("images/a.jpg")));
+    assert.ok(files.some((f) => f.endsWith("images/b.jpg")));
   });
 
   test("lists all files", async () => {
@@ -211,7 +211,7 @@ describe("disk fs driver", () => {
 
     const files: string[] = [];
     for await (const file of disk.list()) {
-      files.push(file.key);
+      files.push(file.href);
     }
 
     assert.equal(files.length, 3);
@@ -228,7 +228,7 @@ describe("disk fs driver", () => {
 
     const files: string[] = [];
     for await (const file of disk.list(undefined, { limit: 2 })) {
-      files.push(file.key);
+      files.push(file.href);
     }
 
     assert.equal(files.length, 2);
@@ -243,7 +243,7 @@ describe("disk fs driver", () => {
     const metadata = await disk.getMetadata("meta.txt");
 
     assert.ok(metadata);
-    assert.equal(metadata.key, "meta.txt");
+    assert.ok(metadata.href.endsWith("meta.txt"));
     assert.equal(metadata.size, 12); // "some content" = 12 bytes
     assert.ok(metadata.lastModified instanceof Date);
   });
@@ -264,7 +264,7 @@ describe("disk memory driver", () => {
     const disk = createDisk({ driver });
 
     const stored = await disk.put("test.txt", "hello memory");
-    assert.equal(stored.key, "test.txt");
+    assert.ok(stored.href.includes("test.txt"));
 
     const result = await disk.get("test.txt");
     assert.ok(result);
@@ -300,7 +300,7 @@ describe("disk memory driver", () => {
 
     const files: string[] = [];
     for await (const file of disk.list("images/")) {
-      files.push(file.key);
+      files.push(file.href);
     }
 
     assert.equal(files.length, 2);
@@ -311,11 +311,11 @@ describe("disk memory driver", () => {
     const driver = createMemoryDriver();
     const disk = createDisk({ driver });
 
-    await disk.put("file.json", '{"key": "value"}', { contentType: "application/json" });
+    await disk.put("file.json", '{"key": "value"}', { type: "application/json" });
     const metadata = await disk.getMetadata("file.json");
 
     assert.ok(metadata);
-    assert.equal(metadata.contentType, "application/json");
+    assert.equal(metadata.type, "application/json");
     assert.equal(metadata.size, 16);
 
     driver.clear();
@@ -326,11 +326,11 @@ describe("disk memory driver", () => {
     const disk = createDisk({ driver });
 
     await assert.rejects(() => disk.copy("missing.txt", "dest.txt"), {
-      message: "File not found: missing.txt",
+      name: "DiskFileNotFoundError",
     });
 
     await assert.rejects(() => disk.move("missing.txt", "dest.txt"), {
-      message: "File not found: missing.txt",
+      name: "DiskFileNotFoundError",
     });
   });
 });
