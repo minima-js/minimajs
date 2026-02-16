@@ -5,13 +5,22 @@
   "private": true,
   "main": "./lib/index.js",
   "exports": "./lib/index.js",
+  "scripts": {
+    "dev": "tsc -w",
+    "build": "tsc -p ./tsconfig.build.json",
+    "test": "bun test --timeout=2000",
+    "coverage": "bun test --coverage --timeout=2000",
+    "clean": "rimraf -g '*.tsbuildinfo' lib"
+  },
   "devDependencies": {
+    "@types/mime-types": "^3.0.1",
     "@types/node": "^25.0.3",
     "@types/uuid": "^11.0.0"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.29.1",
     "@minimajs/disk": "workspace:*",
+    "mime-types": "^3.0.2",
     "uuid": "^13.0.0"
   },
   "peerDependencies": {

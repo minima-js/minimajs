@@ -74,9 +74,11 @@
       "dependencies": {
         "@azure/storage-blob": "^12.29.1",
         "@minimajs/disk": "workspace:*",
+        "mime-types": "^3.0.2",
         "uuid": "^13.0.0",
       },
       "devDependencies": {
+        "@types/mime-types": "^3.0.1",
         "@types/node": "^25.0.3",
         "@types/uuid": "^11.0.0",
       },

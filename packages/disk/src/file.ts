@@ -1,30 +1,10 @@
+import { stream2uint8array, async2stream } from "./helpers.js";
+
 /**
  * Symbol to identify disk-managed files
  * Custom drivers can use this to mark their File instances
  */
 export const kDiskFile = Symbol.for("minimajs.disk.file");
-
-/**
- * Wraps a Promise<ReadableStream> into a ReadableStream
- */
-function wrapAsyncStream(streamPromise: Promise<ReadableStream>): ReadableStream {
-  return new ReadableStream({
-    async start(controller) {
-      try {
-        const actualStream = await streamPromise;
-        const reader = actualStream.getReader();
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          controller.enqueue(value);
-        }
-        controller.close();
-      } catch (error) {
-        controller.error(error);
-      }
-    },
-  });
-}
 
 export interface DiskFileInit extends FilePropertyBag {
   /** Absolute URL/URI with protocol (e.g., file:///path, s3://bucket/key) */
@@ -60,7 +40,7 @@ export class DiskFile extends File {
     const result = this.#streamFactory();
     // If async, wrap it in a ReadableStream
     if (result instanceof Promise) {
-      return wrapAsyncStream(result);
+      return async2stream(result);
     }
     return result;
   }
@@ -76,7 +56,7 @@ export class DiskFile extends File {
 
   async bytes(): Promise<Uint8Array<ArrayBuffer>> {
     if (!this.#buffer) {
-      this.#buffer = await readStreamToBytes(this.stream() as ReadableStream<Uint8Array>);
+      this.#buffer = await stream2uint8array(this.stream());
     }
     return this.#buffer;
   }
@@ -84,28 +64,4 @@ export class DiskFile extends File {
   get [Symbol.toStringTag]() {
     return "DiskFile";
   }
-}
-
-async function readStreamToBytes(stream: ReadableStream<Uint8Array>): Promise<Uint8Array<ArrayBuffer>> {
-  const reader = stream.getReader();
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    if (value) {
-      chunks.push(value);
-      total += value.byteLength;
-    }
-  }
-
-  const buffer = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    buffer.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-
-  return buffer as Uint8Array<ArrayBuffer>;
 }

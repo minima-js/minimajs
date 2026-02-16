@@ -9,10 +9,11 @@
     ".": "./lib/index.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
     "dev": "tsc -w",
-    "test": "bun test",
-    "clean": "rm -rf lib"
+    "build": "tsc -p ./tsconfig.build.json",
+    "test": "bun test --timeout=2000",
+    "coverage": "bun test --coverage --timeout=2000",
+    "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.990.0",

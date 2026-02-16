@@ -8,7 +8,11 @@
     ".": "./lib/index.js"
   },
   "scripts": {
-    "test": "bun test"
+    "dev": "tsc -w",
+    "build": "tsc -p ./tsconfig.build.json",
+    "test": "bun test --timeout=2000",
+    "coverage": "bun test --coverage --timeout=2000",
+    "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "devDependencies": {
     "@jest/globals": "^30.2.0",

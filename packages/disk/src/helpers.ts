@@ -65,53 +65,6 @@ export function toReadableStream(data: DiskData): ReadableStream<Uint8Array> {
 }
 
 /**
- * Convert DiskData to Buffer for Node.js file operations
- */
-export async function toBuffer(data: DiskData): Promise<Buffer> {
-  if (typeof data === "string") {
-    return Buffer.from(data);
-  }
-  if (isArrayBuffer(data)) {
-    return Buffer.from(data);
-  }
-  if (isArrayBufferView(data)) {
-    return Buffer.from(data.buffer, data.byteOffset, data.byteLength);
-  }
-  if (isBlob(data)) {
-    return Buffer.from(await data.arrayBuffer());
-  }
-  if (data instanceof ReadableStream) {
-    const reader = data.getReader();
-    const chunks: Uint8Array[] = [];
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      chunks.push(value);
-    }
-    return Buffer.concat(chunks);
-  }
-  throw new Error("Unsupported data type for disk upload");
-}
-
-/**
- * Resolve filename from key or File object
- */
-export function resolveFilename(key: string, data: DiskData): string {
-  // Use the key's basename as filename
-  const keyBasename = basename(key);
-  if (keyBasename && keyBasename !== key) {
-    return sanitizeFilename(keyBasename);
-  }
-  // If key has no path separator, use it directly
-  if (keyBasename) {
-    return sanitizeFilename(keyBasename);
-  }
-  // Fallback to file name or random
-  if (isFile(data)) return sanitizeFilename(data.name);
-  return randomName("file");
-}
-
-/**
  * Resolve content type from options or data
  * Uses FilePropertyBag's 'type' property (web-native)
  */
@@ -159,4 +112,56 @@ export function randomName(base: string): string {
 export function getMimeType(pathOrKey: string): string | undefined {
   const result = lookupMimeType(pathOrKey);
   return result || undefined;
+}
+
+export async function stream2uint8array(stream: ReadableStream<Uint8Array>): Promise<Uint8Array<ArrayBuffer>> {
+  const reader = stream.getReader();
+  let buffer = new Uint8Array(64 * 1024); // 64KB initial size
+  let length = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    if (value) {
+      const needed = length + value.byteLength;
+
+      // Grow buffer if needed (amortized O(n))
+      if (needed > buffer.byteLength) {
+        let newSize = buffer.byteLength;
+        while (newSize < needed) {
+          newSize *= 2;
+        }
+
+        const next = new Uint8Array(newSize);
+        next.set(buffer, 0);
+        buffer = next;
+      }
+
+      buffer.set(value, length);
+      length += value.byteLength;
+    }
+  }
+
+  return buffer.subarray(0, length) as Uint8Array<ArrayBuffer>;
+} /**
+ * Wraps a Promise<ReadableStream> into a ReadableStream
+ */
+export function async2stream(streamPromise: Promise<ReadableStream>): ReadableStream {
+  return new ReadableStream({
+    async start(controller) {
+      try {
+        const actualStream = await streamPromise;
+        const reader = actualStream.getReader();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          controller.enqueue(value);
+        }
+        controller.close();
+      } catch (error) {
+        controller.error(error);
+      }
+    },
+  });
 }

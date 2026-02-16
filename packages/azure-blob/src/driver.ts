@@ -1,267 +1,261 @@
-import {
-  BlobServiceClient,
-  ContainerClient,
-  BlobSASPermissions,
-  generateBlobSASQueryParameters,
-  StorageSharedKeyCredential,
-} from "@azure/storage-blob";
+import { BlobServiceClient } from "@azure/storage-blob";
 import { Readable } from "node:stream";
-import type { DiskDriver, DiskData, PutOptions, UrlOptions, ListOptions, FileMetadata, FileSource } from "@minimajs/disk";
-import { DiskFile, resolveKey } from "@minimajs/disk";
+import type { DiskDriver, PutOptions, ListOptions, FileMetadata } from "@minimajs/disk";
+import { lookup as lookupMimeType } from "mime-types";
 
 export interface AzureBlobDriverOptions {
   /** Azure Storage connection string */
   connectionString: string;
-  /** Container name */
-  container: string;
+  /** Container name (optional if using azure:// URLs) */
+  container?: string;
   /** Custom domain/CDN URL (optional) */
   cdnUrl?: string;
 }
 
 /**
- * Convert DiskData to Buffer for Azure upload
+ * Azure Blob Storage driver for @minimajs/disk
  */
-async function toBuffer(data: DiskData): Promise<Buffer> {
-  if (typeof data === "string") {
-    return Buffer.from(data);
-  }
-  if (data instanceof ArrayBuffer) {
-    return Buffer.from(data);
-  }
-  if (ArrayBuffer.isView(data)) {
-    return Buffer.from(data.buffer, data.byteOffset, data.byteLength);
-  }
-  if (data instanceof Blob) {
-    return Buffer.from(await data.arrayBuffer());
-  }
-  if (data instanceof ReadableStream) {
-    const reader = data.getReader();
-    const chunks: Uint8Array[] = [];
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      chunks.push(value);
+export class AzureBlobDriver implements DiskDriver {
+  readonly name = "azure-blob";
+  private readonly client: BlobServiceClient;
+  private readonly accountName: string;
+  private readonly options: AzureBlobDriverOptions;
+
+  constructor(options: AzureBlobDriverOptions) {
+    this.options = options;
+    this.client = BlobServiceClient.fromConnectionString(options.connectionString);
+    this.accountName = this.client.accountName;
+  } /**
+   * Parse href to get container and blob name
+   * Supports:
+   * - https://<account>.blob.core.windows.net/<container>/<blob> (Azure standard URL)
+   * - https://<cdn>.azureedge.net/<blob> (when CDN URL is configured)
+   * - blob (when container is in config)
+   */
+  private hrefToBlob(href: string): { container: string; blob: string } {
+    // Handle Azure Blob Storage URL
+    if (href.startsWith("https://") && href.includes(".blob.core.windows.net/")) {
+      try {
+        const url = new URL(href);
+        const pathParts = url.pathname.slice(1).split("/");
+        const container = pathParts[0];
+        const blob = pathParts.slice(1).join("/");
+
+        if (!container || !blob) {
+          throw new Error("Container and blob name cannot be empty");
+        }
+
+        return { container, blob };
+      } catch (error) {
+        throw new Error(`Invalid Azure Blob URL format: ${href}`);
+      }
     }
-    return Buffer.concat(chunks);
-  }
-  throw new Error("Unsupported data type for Azure Blob upload");
-}
 
-/**
- * Parse connection string to get account name and key
- */
-function parseConnectionString(connectionString: string): { accountName: string; accountKey: string } {
-  const parts: Record<string, string> = {};
-  for (const part of connectionString.split(";")) {
-    const [key, ...valueParts] = part.split("=");
-    if (key) {
-      parts[key] = valueParts.join("=");
+    // Handle CDN URL - convert back to blob name
+    if (this.options.cdnUrl && href.startsWith(this.options.cdnUrl)) {
+      if (!this.options.container) {
+        throw new Error("Container must be specified in driver config when using CDN URLs");
+      }
+
+      // Remove CDN URL prefix and leading slash
+      const blob = href.slice(this.options.cdnUrl.length).replace(/^\/+/, "");
+
+      if (!blob) {
+        throw new Error("Blob name cannot be empty");
+      }
+
+      return { container: this.options.container, blob };
+    }
+
+    // Handle plain paths (only when container is configured)
+    if (!this.options.container) {
+      throw new Error(`Container must be specified in driver config or use Azure Blob URL format. Received: ${href}`);
+    }
+
+    // Remove leading slash if present
+    const blob = href.startsWith("/") ? href.slice(1) : href;
+
+    if (!blob) {
+      throw new Error("Blob name cannot be empty");
+    }
+
+    return { container: this.options.container, blob };
+  }
+
+  private blobToHref(container: string, blob: string): string {
+    return `https://${this.accountName}.blob.core.windows.net/${container}/${blob}`;
+  }
+
+  async put(href: string, stream: ReadableStream<Uint8Array>, putOptions?: PutOptions): Promise<FileMetadata> {
+    const { container, blob } = this.hrefToBlob(href);
+    const containerClient = this.client.getContainerClient(container);
+    const blobClient = containerClient.getBlockBlobClient(blob);
+
+    // Convert ReadableStream to Node.js Readable
+    const nodeStream = Readable.fromWeb(stream);
+
+    await blobClient.uploadStream(nodeStream, undefined, undefined, {
+      blobHTTPHeaders: {
+        blobContentType: putOptions?.type || lookupMimeType(blob) || "application/octet-stream",
+        blobCacheControl: putOptions?.cacheControl,
+      },
+      metadata: putOptions?.metadata,
+    });
+
+    const properties = await blobClient.getProperties();
+
+    return {
+      href: this.blobToHref(container, blob),
+      size: properties.contentLength ?? 0,
+      type: properties.contentType || "application/octet-stream",
+      lastModified: properties.lastModified?.getTime() || Date.now(),
+      metadata: properties.metadata,
+    };
+  }
+
+  async get(href: string): Promise<[ReadableStream<Uint8Array>, FileMetadata] | null> {
+    const { container, blob } = this.hrefToBlob(href);
+    const containerClient = this.client.getContainerClient(container);
+    const blobClient = containerClient.getBlockBlobClient(blob);
+
+    try {
+      const [properties, downloadResponse] = await Promise.all([blobClient.getProperties(), blobClient.download()]);
+
+      const nodeStream = downloadResponse.readableStreamBody;
+      if (!nodeStream) {
+        return null;
+      }
+
+      // Convert Node.js stream to web stream
+      const webStream = Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>;
+
+      const metadata: FileMetadata = {
+        href: this.blobToHref(container, blob),
+        size: properties.contentLength ?? 0,
+        type: properties.contentType || "application/octet-stream",
+        lastModified: properties.lastModified?.getTime() || Date.now(),
+        metadata: properties.metadata,
+      };
+
+      return [webStream, metadata];
+    } catch (error: unknown) {
+      if ((error as { statusCode?: number }).statusCode === 404) {
+        return null;
+      }
+      throw error;
     }
   }
 
-  if (!parts.AccountName || !parts.AccountKey) {
-    throw new Error("Invalid connection string: missing AccountName or AccountKey");
+  async delete(href: string): Promise<void> {
+    const { container, blob } = this.hrefToBlob(href);
+    const containerClient = this.client.getContainerClient(container);
+    const blobClient = containerClient.getBlockBlobClient(blob);
+    await blobClient.deleteIfExists();
   }
 
-  return { accountName: parts.AccountName, accountKey: parts.AccountKey };
+  async exists(href: string): Promise<boolean> {
+    const { container, blob } = this.hrefToBlob(href);
+    const containerClient = this.client.getContainerClient(container);
+    const blobClient = containerClient.getBlockBlobClient(blob);
+    return blobClient.exists();
+  }
+
+  async url(href: string): Promise<string> {
+    const { container, blob } = this.hrefToBlob(href);
+    const containerClient = this.client.getContainerClient(container);
+    const blobClient = containerClient.getBlockBlobClient(blob);
+
+    // If CDN URL is configured, return CDN URL
+    if (this.options.cdnUrl) {
+      return `${this.options.cdnUrl}/${blob}`;
+    }
+
+    // Return direct Azure Blob URL
+    return blobClient.url;
+  }
+
+  async copy(from: string, to: string): Promise<void> {
+    const { container: fromContainer, blob: fromBlob } = this.hrefToBlob(from);
+    const { container: toContainer, blob: toBlob } = this.hrefToBlob(to);
+
+    const sourceClient = this.client.getContainerClient(fromContainer);
+    const sourceBlobClient = sourceClient.getBlockBlobClient(fromBlob);
+
+    const destClient = this.client.getContainerClient(toContainer);
+    const destBlobClient = destClient.getBlockBlobClient(toBlob);
+
+    const poller = await destBlobClient.beginCopyFromURL(sourceBlobClient.url);
+    await poller.pollUntilDone();
+  }
+
+  async move(from: string, to: string): Promise<void> {
+    await this.copy(from, to);
+    await this.delete(from);
+  }
+
+  async *list(prefixHref?: string, listOptions?: ListOptions): AsyncIterable<FileMetadata> {
+    let container: string;
+    let prefix: string | undefined;
+
+    if (prefixHref) {
+      const parsed = this.hrefToBlob(prefixHref);
+      container = parsed.container;
+      prefix = parsed.blob;
+    } else {
+      if (!this.options.container) {
+        throw new Error("Container must be specified either in constructor or in list prefix href");
+      }
+      container = this.options.container;
+    }
+
+    const containerClient = this.client.getContainerClient(container);
+    const iterator = containerClient.listBlobsFlat({
+      prefix: prefix ?? undefined,
+    });
+
+    let count = 0;
+    const limit = listOptions?.limit;
+
+    for await (const blob of iterator) {
+      if (limit !== undefined && count >= limit) break;
+
+      yield {
+        href: this.blobToHref(container, blob.name),
+        size: blob.properties.contentLength ?? 0,
+        type: blob.properties.contentType || lookupMimeType(blob.name) || "application/octet-stream",
+        lastModified: blob.properties.lastModified?.getTime() || Date.now(),
+      } satisfies FileMetadata;
+      count++;
+    }
+  }
+
+  async getMetadata(href: string): Promise<FileMetadata | null> {
+    const { container, blob } = this.hrefToBlob(href);
+    const containerClient = this.client.getContainerClient(container);
+    const blobClient = containerClient.getBlockBlobClient(blob);
+
+    try {
+      const properties = await blobClient.getProperties();
+      return {
+        href: this.blobToHref(container, blob),
+        size: properties.contentLength ?? 0,
+        type: properties.contentType || "application/octet-stream",
+        lastModified: properties.lastModified?.getTime() || Date.now(),
+        metadata: properties.metadata,
+      };
+    } catch (error: unknown) {
+      if ((error as { statusCode?: number }).statusCode === 404) {
+        return null;
+      }
+      throw error;
+    }
+  }
 }
 
 /**
  * Create an Azure Blob Storage driver for @minimajs/disk
+ * @deprecated Use `new AzureBlobDriver(options)` instead
  */
 export function createAzureBlobDriver(options: AzureBlobDriverOptions): DiskDriver {
-  const client = BlobServiceClient.fromConnectionString(options.connectionString);
-  const container: ContainerClient = client.getContainerClient(options.container);
-  const { accountName, accountKey } = parseConnectionString(options.connectionString);
-  const credential = new StorageSharedKeyCredential(accountName, accountKey);
-
-  function getBlobUrl(key: string): string {
-    if (options.cdnUrl) {
-      return `${options.cdnUrl.replace(/\/$/, "")}/${key}`;
-    }
-    return container.getBlockBlobClient(key).url;
-  }
-
-  return {
-    name: "azure-blob",
-
-    async put(key: string, data: DiskData, putOptions?: PutOptions): Promise<DiskFile> {
-      const blobClient = container.getBlockBlobClient(key);
-      const buffer = await toBuffer(data);
-
-      await blobClient.upload(buffer, buffer.length, {
-        blobHTTPHeaders: {
-          blobContentType: putOptions?.contentType,
-          blobCacheControl: putOptions?.cacheControl,
-        },
-        metadata: putOptions?.metadata,
-      });
-
-      return new DiskFile(key.split("/").pop() || key, {
-        key,
-        url: getBlobUrl(key),
-        size: buffer.length,
-        mimeType: putOptions?.contentType,
-        metadata: putOptions?.metadata,
-        stream: () =>
-          new ReadableStream({
-            start(controller) {
-              controller.enqueue(new Uint8Array(buffer));
-              controller.close();
-            },
-          }),
-      });
-    },
-
-    async get(key: string): Promise<DiskFile | null> {
-      const blobClient = container.getBlockBlobClient(key);
-
-      try {
-        const properties = await blobClient.getProperties();
-        const downloadResponse = await blobClient.download();
-
-        return new DiskFile(key.split("/").pop() || key, {
-          key,
-          url: getBlobUrl(key),
-          size: properties.contentLength ?? 0,
-          mimeType: properties.contentType,
-          metadata: properties.metadata,
-          stream: () => {
-            const nodeStream = downloadResponse.readableStreamBody;
-            if (!nodeStream) {
-              return new ReadableStream({
-                start(controller) {
-                  controller.close();
-                },
-              });
-            }
-            // Convert Node.js stream to web stream
-            return Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>;
-          },
-        });
-      } catch (error: unknown) {
-        if ((error as { statusCode?: number }).statusCode === 404) {
-          return null;
-        }
-        throw error;
-      }
-    },
-
-    async delete(key: string): Promise<void> {
-      const blobClient = container.getBlockBlobClient(key);
-      await blobClient.deleteIfExists();
-    },
-
-    async exists(key: string): Promise<boolean> {
-      const blobClient = container.getBlockBlobClient(key);
-      return blobClient.exists();
-    },
-
-    async url(key: string, urlOptions?: UrlOptions): Promise<string> {
-      // If no expiration, return public URL
-      if (!urlOptions?.expiresIn) {
-        return getBlobUrl(key);
-      }
-
-      // Generate SAS URL
-      const blobClient = container.getBlockBlobClient(key);
-      const startsOn = new Date();
-      const expiresOn = new Date(startsOn.getTime() + urlOptions.expiresIn * 1000);
-
-      const permissions = new BlobSASPermissions();
-      permissions.read = true;
-
-      const sasToken = generateBlobSASQueryParameters(
-        {
-          containerName: options.container,
-          blobName: key,
-          permissions,
-          startsOn,
-          expiresOn,
-          contentDisposition: urlOptions.download
-            ? typeof urlOptions.download === "string"
-              ? `attachment; filename="${urlOptions.download}"`
-              : "attachment"
-            : undefined,
-        },
-        credential
-      ).toString();
-
-      return `${blobClient.url}?${sasToken}`;
-    },
-
-    async copy(from: FileSource, to: string): Promise<DiskFile> {
-      const fromKey = resolveKey(from);
-      const sourceBlobClient = container.getBlockBlobClient(fromKey);
-      const destBlobClient = container.getBlockBlobClient(to);
-
-      await destBlobClient.beginCopyFromURL(sourceBlobClient.url);
-
-      // Wait for copy to complete
-      let properties = await destBlobClient.getProperties();
-      while (properties.copyStatus === "pending") {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        properties = await destBlobClient.getProperties();
-      }
-
-      if (properties.copyStatus !== "success") {
-        throw new Error(`Copy failed with status: ${properties.copyStatus}`);
-      }
-
-      return new DiskFile(to.split("/").pop() || to, {
-        key: to,
-        url: getBlobUrl(to),
-        size: properties.contentLength ?? 0,
-        mimeType: properties.contentType,
-        metadata: properties.metadata,
-      });
-    },
-
-    async move(from: FileSource, to: string): Promise<DiskFile> {
-      const result = await this.copy(from, to);
-      await this.delete(resolveKey(from));
-      return result;
-    },
-
-    async *list(prefix?: string, listOptions?: ListOptions): AsyncIterable<DiskFile> {
-      const iterator = container.listBlobsFlat({
-        prefix: prefix ?? undefined,
-      });
-
-      let count = 0;
-      const limit = listOptions?.limit;
-
-      for await (const blob of iterator) {
-        if (limit !== undefined && count >= limit) break;
-
-        yield new DiskFile(blob.name.split("/").pop() || blob.name, {
-          key: blob.name,
-          url: getBlobUrl(blob.name),
-          size: blob.properties.contentLength ?? 0,
-          mimeType: blob.properties.contentType,
-        });
-        count++;
-      }
-    },
-
-    async getMetadata(key: string): Promise<FileMetadata | null> {
-      const blobClient = container.getBlockBlobClient(key);
-
-      try {
-        const properties = await blobClient.getProperties();
-        return {
-          key,
-          size: properties.contentLength ?? 0,
-          contentType: properties.contentType,
-          lastModified: properties.lastModified,
-          metadata: properties.metadata,
-        };
-      } catch (error: unknown) {
-        if ((error as { statusCode?: number }).statusCode === 404) {
-          return null;
-        }
-        throw error;
-      }
-    },
-  } satisfies DiskDriver;
+  return new AzureBlobDriver(options);
 }
