@@ -42,7 +42,7 @@ describe("Module Discovery Glob Pattern", () => {
     }
   });
 
-  it("supports *.module pattern in index", async () => {
+  it("supports *.module.ts pattern in index", async () => {
     await mkdir(path.join(TEST_DIR, "users"), { recursive: true });
     await writeFile(
       path.join(TEST_DIR, "users", "users.module.ts"),
@@ -50,7 +50,7 @@ describe("Module Discovery Glob Pattern", () => {
     );
 
     const server = createServer();
-    server.register(moduleDiscovery({ root: TEST_DIR, index: "*.module" }));
+    server.register(moduleDiscovery({ root: TEST_DIR, index: "*.module.{js,ts}" }));
     await server.ready();
 
     expect(hasRoute(server, "GET", "/users/list")).toBe(true);

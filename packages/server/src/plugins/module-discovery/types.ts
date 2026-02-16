@@ -13,7 +13,7 @@ export interface ImportedModule {
   dir: string;
   meta: Meta;
   routes?: Routes;
-  module?: Module;
+  default?: Module;
 }
 
 export interface ModuleDiscoveryOptions {
@@ -22,6 +22,6 @@ export interface ModuleDiscoveryOptions {
   scanner?: ModuleScanner;
 }
 
-export type ModuleScanner = (dir: string, index: string) => AsyncGenerator<string>;
+export type ModuleScanner = (pattern: string) => AsyncGenerator<string>;
 
 export type Routes<S = any> = Record<`${HTTPMethod} ${string}`, Handler<S>>;

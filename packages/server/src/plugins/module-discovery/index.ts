@@ -1,8 +1,7 @@
-import path from "node:path";
 import type { App } from "../../interfaces/index.js";
 import { plugin } from "../../plugin.js";
 import { getRunningFilePath } from "../../utils/fs.js";
-import { importModule, tryImport } from "./importer.js";
+import { importModule, importRootModule } from "./importer.js";
 import { scanModules } from "./scanner.js";
 import type { ImportedModule, ModuleDiscoveryOptions, Routes } from "./types.js";
 import type { HTTPMethod } from "find-my-way";
@@ -22,7 +21,7 @@ function addRoutes(app: App, routes: Routes) {
  * Uses Node.js's built-in import caching for performance
  */
 export function moduleDiscovery(options: ModuleDiscoveryOptions) {
-  const { index = "module", scanner = scanModules, root: modulesPath = getRunningFilePath() } = options;
+  const { index = "module.{ts,js}", scanner = scanModules, root: modulesPath = getRunningFilePath() } = options;
 
   async function loadModules(app: App, current: ImportedModule): Promise<void> {
     app.register(async function unknown(child: App, opts: any) {
@@ -32,25 +31,24 @@ export function moduleDiscovery(options: ModuleDiscoveryOptions) {
         addRoutes(child, current.routes);
       }
 
-      if (current.module) {
-        await current.module(child, opts);
+      if (current.default) {
+        await current.default(child, opts);
       }
       // Scan and load child modules
-      for await (const entry of scanner(current.dir, index)) {
+      for await (const entry of scanner(`${current.dir}/*/${index}`)) {
         await loadModules(child, await importModule(entry));
       }
     }, current.meta);
   }
 
   return plugin(async function moduleDiscovery(app) {
-    const root = await tryImport(path.join(modulesPath, index));
+    const root = await importRootModule(scanner(`${modulesPath}/${index}`));
     if (root) {
-      root.meta = { name: "root", ...root.meta };
       await loadModules(app, root);
       return;
     }
 
-    for await (const entry of scanner(modulesPath, index)) {
+    for await (const entry of scanner(`${modulesPath}/*/${index}`)) {
       await loadModules(app, await importModule(entry));
     }
   });

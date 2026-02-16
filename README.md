@@ -88,7 +88,7 @@ Your routes are automatically available:
 const app = createApp({
   moduleDiscovery: {
     root: "./modules", // Custom directory (default: entry file's directory)
-    index: "route", // Custom filename (default: 'module')
+    index: "route.ts", // or route.js Custom filename (default: 'module.{js,ts}')
   },
 });
 

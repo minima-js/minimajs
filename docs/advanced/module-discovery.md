@@ -38,7 +38,7 @@ import { createApp } from "@minimajs/server/bun";
 
 const app = createApp({
   moduleDiscovery: {
-    index: "route", // looks for route.ts
+    index: "route.ts", // or route.{ts,js}
   },
 });
 ```
@@ -62,12 +62,12 @@ The `index` option supports glob patterns, allowing you to discover modules base
 // src/index.ts
 const app = createApp({
   moduleDiscovery: {
-    index: "*.module", // looks for users.module.ts, etc.
+    index: "*.module.ts", // or *.module.js if using compiled, looks for users.module.ts, etc.
   },
 });
 ```
 
-**Resulting pattern:** `**/*.module.{ts,js,mjs}`
+**Resulting pattern:** `**/*.module.{ts,js}`
 
 ```text
 src/
@@ -118,12 +118,12 @@ import path from "node:path";
 const app = createApp({
   moduleDiscovery: {
     root: path.resolve(import.meta.dir, "app"),
-    index: "route",
+    index: "route.js",
   },
 });
 ```
 
-**Resulting pattern:** `app/**/route.{ts,js,mjs}`
+**Resulting pattern:** `app/**/route.{ts,js}`
 
 ## Custom Scanner
 

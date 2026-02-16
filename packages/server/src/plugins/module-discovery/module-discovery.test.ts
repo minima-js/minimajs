@@ -215,16 +215,12 @@ describe("Module Discovery", () => {
         path.join(TEST_DIR, "test", "module.js"),
         `export default function(app) { app.get('/js-route', () => 'js'); }; export const meta = {};`
       );
-      await writeFile(
-        path.join(TEST_DIR, "test", "module.mjs"),
-        `export default function(app) { app.get('/mjs-route', () => 'mjs'); }; export const meta = {};`
-      );
+
       const server = createServer();
       server.register(moduleDiscovery({ root: TEST_DIR }));
       await server.ready();
       expect(hasRoute(server, "GET", "/test/ts-route")).toBe(true);
       expect(hasRoute(server, "GET", "/test/js-route")).toBe(true);
-      expect(hasRoute(server, "GET", "/test/mjs-route")).toBe(true);
     });
   });
 
@@ -240,7 +236,7 @@ describe("Module Discovery", () => {
         `export default function(app) { app.get('/root', () => 'root'); }; export const meta = {};`
       );
       const server = createServer();
-      server.register(moduleDiscovery({ root: TEST_DIR, index: "index" }));
+      server.register(moduleDiscovery({ root: TEST_DIR, index: "index.{js,ts}" }));
       await server.ready();
       expect(hasRoute(server, "GET", "/users/custom")).toBe(true);
       expect(hasRoute(server, "GET", "/root")).toBe(true);
