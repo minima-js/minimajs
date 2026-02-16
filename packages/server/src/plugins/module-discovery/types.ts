@@ -24,6 +24,4 @@ export interface ModuleDiscoveryOptions {
 
 export type ModuleScanner = (dir: string, index: string) => AsyncGenerator<string>;
 
-export type Routes<S = any> = {
-  [key: string]: Partial<Record<HTTPMethod, Handler<S>>>;
-};
+export type Routes<S = any> = Record<`${HTTPMethod} ${string}`, Handler<S>>;

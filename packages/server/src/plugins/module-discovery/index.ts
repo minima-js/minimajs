@@ -10,18 +10,17 @@ import type { HTTPMethod } from "find-my-way";
 import { getHandlerDescriptors } from "../../internal/route.js";
 
 function addRoutes(app: App, routes: Routes) {
-  for (const [path, route] of Object.entries(routes)) {
-    for (const [method, handler] of Object.entries(route)) {
-      const descriptors = getHandlerDescriptors(handler);
-      app.route(
-        {
-          path,
-          method: method as HTTPMethod,
-        },
-        ...descriptors,
-        handler
-      );
-    }
+  for (const [route, handler] of Object.entries(routes)) {
+    const [method, path] = route.split(" ") as [HTTPMethod, string];
+    const descriptors = getHandlerDescriptors(handler);
+    app.route(
+      {
+        path,
+        method,
+      },
+      ...descriptors,
+      handler
+    );
   }
 }
 
