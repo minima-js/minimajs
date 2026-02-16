@@ -4,6 +4,7 @@ import { cleanJSONSchema } from "./schema-converter.js";
 import { kRequestSchema, kResponseSchema } from "@minimajs/server/symbols";
 import { kInternal, kOperation } from "./symbols.js";
 import { getRoutes } from "./router.js";
+import { generateOperationId, getDefaultTags } from "./helpers.js";
 
 type JSONSchema = {
   type?: string;
@@ -59,8 +60,11 @@ export function generateOpenAPIDocument(app: App, document: OpenAPI.Document): O
     const requestSchema = store.metadata[kRequestSchema] as RequestSchema | undefined;
     const responseSchema = store.metadata[kResponseSchema] as ResponseSchema | undefined;
     const operation = buildOperation(document, params, requestSchema, responseSchema);
+
     Object.assign(operation, store.metadata[kOperation]);
+    operation.tags ??= getDefaultTags(route.store.app);
     operation.operationId ??= generateOperationId(method, path);
+
     (document.paths![openAPIPath] as Record<string, unknown>)[method.toLowerCase()] = operation;
   }
 
@@ -69,30 +73,6 @@ export function generateOpenAPIDocument(app: App, document: OpenAPI.Document): O
 
 function convertPathToOpenAPI(path: string): string {
   return path.replace(/:(\w+)/g, "{$1}");
-}
-
-export function generateOperationId(method: string, path: string): string {
-  function toCamelCase(input: string): string {
-    let result = "";
-    let upperNext = false;
-
-    for (const ch of input) {
-      if (/[a-zA-Z0-9]/.test(ch)) {
-        result += upperNext ? ch.toUpperCase() : ch.toLowerCase();
-        upperNext = false;
-      } else {
-        upperNext = result.length > 0;
-      }
-    }
-
-    return result;
-  }
-
-  const normalized = `${method} ${path}`
-    .replace(/[{}:]/g, "") // support :id and {id}
-    .replace(/\//g, " "); // path boundaries
-
-  return toCamelCase(normalized);
 }
 
 function resolveSchemaRef(document: OpenAPI.Document, schema: JSONSchema): OpenAPI.SchemaObject | OpenAPI.ReferenceObject {

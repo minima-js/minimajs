@@ -1,6 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach } from "@jest/globals";
 import { createApp } from "@minimajs/server/bun";
-import { generateOpenAPIDocument, generateOperationId } from "./generator.js";
+import { generateOpenAPIDocument } from "./generator.js";
+import { generateOperationId } from "./helpers.js";
 import { kRequestSchema, kResponseSchema } from "@minimajs/server/symbols";
 import { kOperation } from "./symbols.js";
 import type { OpenAPI } from "./types.js";
