@@ -13,14 +13,7 @@ function addRoutes(app: App, routes: Routes) {
   for (const [route, handler] of Object.entries(routes)) {
     const [method, path] = route.split(" ") as [HTTPMethod, string];
     const descriptors = getHandlerDescriptors(handler);
-    app.route(
-      {
-        path,
-        method,
-      },
-      ...descriptors,
-      handler
-    );
+    app.route({ method, path }, ...descriptors, handler);
   }
 }
 
