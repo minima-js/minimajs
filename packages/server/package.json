@@ -22,7 +22,7 @@
     "./mock": "./lib/mock/index.js"
   },
   "scripts": {
-    "dev": "tsc -w",
+    "dev": "tsc -w --preserveWatchOutput",
     "build": "tsc -p ./tsconfig.build.json",
     "test": "bun test --timeout=2000",
     "test:jest": "node --no-warnings --experimental-vm-modules node_modules/.bin/jest --detectOpenHandles",

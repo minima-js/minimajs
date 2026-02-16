@@ -1,4 +1,4 @@
-import { describe, test, beforeEach, afterEach } from "@jest/globals";
+import { describe, test, beforeEach, expect, afterEach } from "@jest/globals";
 import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -245,7 +245,7 @@ describe("disk fs driver", () => {
     assert.ok(metadata);
     assert.ok(metadata.href.endsWith("meta.txt"));
     assert.equal(metadata.size, 12); // "some content" = 12 bytes
-    assert.ok(metadata.lastModified instanceof Date);
+    expect(metadata.lastModified).not.toBeNaN();
   });
 
   test("returns null for missing file metadata", async () => {

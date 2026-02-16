@@ -9,7 +9,7 @@
     ".": "./lib/index.js"
   },
   "scripts": {
-    "dev": "tsc -w",
+    "dev": "tsc -w --preserveWatchOutput",
     "build": "tsc -p ./tsconfig.build.json",
     "test": "bun test --timeout=2000",
     "coverage": "bun test --coverage --timeout=2000",

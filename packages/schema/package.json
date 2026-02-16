@@ -9,7 +9,7 @@
     "./validation": "./lib/validation.js"
   },
   "scripts": {
-    "dev": "tsc -w",
+    "dev": "tsc -w --preserveWatchOutput",
     "test": "bun test",
     "coverage": "bun test --coverage",
     "build": "tsc -p ./tsconfig.build.json",

@@ -14,7 +14,7 @@
     ".": "./lib/index.js"
   },
   "scripts": {
-    "dev": "tsc -w",
+    "dev": "tsc -w --preserveWatchOutput",
     "build": "bun run clean && tsc --build",
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
