@@ -10,12 +10,13 @@ tags:
 
 Routing is the process of defining how your application responds to a client request to a particular endpoint, which is a URI (or path) and a specific HTTP request method (GET, POST, and so on).
 
-In Minima.js, you can define routes using the application instance. Each route has a handler function that is executed when the route is matched.
+In Minima.js, you can define routes using the `routes` export in a module file, or programmatically using the application instance. Each route has a handler function that is executed when the route is matched.
 
 ## Quick Reference
 
-- [`app.get/post/put/delete()`](#basic-routing) - Define routes for HTTP methods
-- [`app.route()`](#basic-routing) - Define routes with advanced options
+- [`export const routes`](#basic-routing) - Define routes declaratively using the `Routes` type
+- [`app.get/post/put/delete()`](#programmatic-routing) - Define routes programmatically
+- [`app.route()`](#programmatic-routing) - Define routes with advanced options
 - [`params()`](#route-parameters) - Get route parameters
 - [`searchParams()`](#query-parameters) - Get query string parameters
 - [Route metadata](#route-metadata) - Attach metadata to routes
@@ -24,9 +25,39 @@ In Minima.js, you can define routes using the application instance. Each route h
 
 ## Basic Routing
 
-The most basic way to define a route is to use the `app.get()`, `app.post()`, `app.put()`, `app.delete()` methods, which correspond to the respective HTTP methods.
+The recommended way to define routes is by exporting a `routes` object from a module file. The `Routes` type is a record that maps `"<METHOD> /path"` keys to handler functions.
 
 ```typescript
+import type { Routes } from "@minimajs/server";
+
+function getHome() {
+  return "Hello, World!";
+}
+
+function createUser() {
+  return { message: "User created" };
+}
+
+export const routes: Routes = {
+  // GET /
+  "GET /": getHome,
+
+  // POST /users
+  "POST /users": createUser,
+};
+```
+
+The key format is `"METHOD /path"`, where `METHOD` is an uppercase HTTP method and `/path` is the route path.
+
+### Programmatic Routing
+
+You can also define routes programmatically using the `app.get()`, `app.post()`, `app.put()`, `app.delete()` methods on the application instance. This is useful for standalone app scripts or when you need dynamic route registration.
+
+```typescript
+import { createApp } from "@minimajs/server";
+
+const app = createApp();
+
 // GET /
 app.get("/", () => "Hello, World!");
 
@@ -46,7 +77,20 @@ app.route({
 
 ### Available Methods
 
-Minima.js supports all the standard HTTP methods:
+Minima.js supports all the standard HTTP methods.
+
+**Routes key format:**
+
+- `"GET /path"` - GET requests
+- `"POST /path"` - POST requests
+- `"PUT /path"` - PUT requests
+- `"PATCH /path"` - PATCH requests
+- `"DELETE /path"` - DELETE requests
+- `"HEAD /path"` - HEAD requests
+- `"OPTIONS /path"` - OPTIONS requests
+- `"ALL /path"` - matches all methods
+
+**Programmatic app methods:**
 
 - `app.get(path, handler)`
 - `app.post(path, handler)`
@@ -62,23 +106,35 @@ Minima.js supports all the standard HTTP methods:
 Route parameters are named URL segments that are used to capture the values specified at their position in the URL. The captured values are populated in the `params` object, which can be accessed from the `@minimajs/server` package.
 
 ```typescript
+import type { Routes } from "@minimajs/server";
 import { params } from "@minimajs/server";
 
-// GET /users/123
-app.get("/users/:id", () => {
+function getUser() {
   const { id } = params<{ id: string }>();
   return { id };
-});
+}
+
+export const routes: Routes = {
+  // GET /users/123
+  "GET /users/:id": getUser,
+};
 ```
 
 You can define multiple parameters in a single route:
 
 ```typescript
-// GET /users/123/posts/456
-app.get("/users/:userId/posts/:postId", () => {
+import type { Routes } from "@minimajs/server";
+import { params } from "@minimajs/server";
+
+function getPost() {
   const { userId, postId } = params<{ userId: string; postId: string }>();
   return { userId, postId };
-});
+}
+
+export const routes: Routes = {
+  // GET /users/123/posts/456
+  "GET /users/:userId/posts/:postId": getPost,
+};
 ```
 
 ### Optional Parameters
@@ -86,11 +142,18 @@ app.get("/users/:userId/posts/:postId", () => {
 You can make a route parameter optional by adding a question mark (`?`) to the end of its name.
 
 ```typescript
-// GET /users/123 or /users
-app.get("/users/:id?", () => {
+import type { Routes } from "@minimajs/server";
+import { params } from "@minimajs/server";
+
+function getUser() {
   const { id } = params<{ id?: string }>();
   return { id: id || "No ID provided" };
-});
+}
+
+export const routes: Routes = {
+  // GET /users/123 or /users
+  "GET /users/:id?": getUser,
+};
 ```
 
 ## Wildcards
@@ -98,11 +161,18 @@ app.get("/users/:id?", () => {
 Wildcards (`*`) can be used to match any character in a URL segment.
 
 ```typescript
-// Matches /posts/foo, /posts/bar, etc.
-app.get("/posts/*", () => {
+import type { Routes } from "@minimajs/server";
+import { params } from "@minimajs/server";
+
+function getWildcard() {
   const wildcard = params.get("*");
   return { wildcard };
-});
+}
+
+export const routes: Routes = {
+  // Matches /posts/foo, /posts/bar, etc.
+  "GET /posts/*": getWildcard,
+};
 ```
 
 ## Regular Expressions
@@ -110,11 +180,18 @@ app.get("/posts/*", () => {
 You can also use regular expressions to define routes. This is useful for more advanced matching scenarios.
 
 ```typescript
-// Matches /files/123.png
-app.get("/files/:file(^\\d+).png", () => {
+import type { Routes } from "@minimajs/server";
+import { params } from "@minimajs/server";
+
+function getFile() {
   const { file } = params<{ file: string }>();
   return { file }; // { file: '123' }
-});
+}
+
+export const routes: Routes = {
+  // Matches /files/123.png
+  "GET /files/:file(^\\d+).png": getFile,
+};
 ```
 
 ## Route Metadata
@@ -123,31 +200,55 @@ Minima.js allows you to attach custom metadata to your routes. This is a powerfu
 
 It's recommended to use `Symbol`s as keys for your metadata to avoid potential name collisions.
 
-**Defining Metadata:**
+**Defining Metadata with the `routes` export:**
+
+When using the `routes` object, you can attach metadata using the `handler()` function. This function takes any number of descriptors (metadata tuples or functions) and a final handler callback.
 
 ```typescript
-import { createApp } from "@minimajs/server";
-const app = createApp();
+import { handler, type Routes } from "@minimajs/server";
+
 // Define custom symbols for metadata keys
 const kAuthRequired = Symbol("AuthRequired");
 const kPermissions = Symbol("Permissions");
 
-app.get(
-  "/admin",
-  [kAuthRequired, true], // Metadata tuple 1
-  [kPermissions, ["admin", "moderator"]], // Metadata tuple 2
-  () => {
-    return { message: "Welcome, admin!" };
-  }
-);
+function getAdmin() {
+  return { message: "Welcome, admin!" };
+}
 
-app.post(
-  "/api/data",
-  [kAuthRequired, false], // This route doesn't require auth
-  () => {
-    return { message: "Data created" };
-  }
-);
+function createData() {
+  return { message: "Data created" };
+}
+
+// Wrap handlers with descriptors using the handler() helper
+const adminHandler = handler([kAuthRequired, true], [kPermissions, ["admin", "moderator"]], getAdmin);
+
+const dataHandler = handler([kAuthRequired, false], createData);
+
+export const routes: Routes = {
+  "GET /admin": adminHandler,
+  "POST /api/data": dataHandler,
+};
+```
+
+**Defining Metadata programmatically:**
+
+Programmatic methods like `app.get()` and `app.post()` support variadic descriptors passed directly before the handler callback.
+
+```typescript
+import { createApp } from "@minimajs/server";
+const app = createApp();
+
+const kAuthRequired = Symbol("AuthRequired");
+const kPermissions = Symbol("Permissions");
+
+// Descriptors are passed between path and handler
+app.get("/admin", [kAuthRequired, true], [kPermissions, ["admin", "moderator"]], () => {
+  return { message: "Welcome, admin!" };
+});
+
+app.post("/api/data", [kAuthRequired, false], () => {
+  return { message: "Data created" };
+});
 ```
 
 **Accessing Metadata in a Handler:**
@@ -184,7 +285,7 @@ const kAuthRequired = Symbol("AuthRequired"); // Must be the same Symbol instanc
 app.register(
   hook("request", () => {
     const routeMetadata = context().route.metadata;
-    const authRequired = routeMetadata.get(kAuthRequired);
+    const authRequired = routeMetadata[kAuthRequired];
 
     if (authRequired) {
       // Perform actual authentication check
@@ -217,6 +318,31 @@ By leveraging route metadata, you can create highly configurable and modular app
 
 ## Structuring Routes with Modules
 
-As your application grows, it's a good practice to organize your routes into modules. This helps you keep your code organized and maintainable.
+As your application grows, it's a good practice to organize your routes into modules. Each module file can export a `routes` object typed as `Routes`, and the framework will automatically discover and register them.
+
+```typescript
+// modules/users/index.ts
+import type { Routes } from "@minimajs/server";
+import { params } from "@minimajs/server";
+
+function listUsers() {
+  return "List users";
+}
+
+function getUser() {
+  const { id } = params<{ id: string }>();
+  return { id };
+}
+
+function createUser() {
+  return { message: "User created" };
+}
+
+export const routes: Routes = {
+  "GET /": listUsers,
+  "GET /:id": getUser,
+  "POST /": createUser,
+};
+```
 
 To learn more about how to structure your application with modules, please refer to the [Modules](/core-concepts/modules) guide.

@@ -14,23 +14,28 @@ import { bodyParser } from "@minimajs/server/plugins";
 
 **The body parser is automatically enabled by default**. It is configured to parse `application/json` content types, so you can use the `body()` function immediately without any setup.
 
-```typescript
-import { createApp } from "@minimajs/server/bun";
-import { body } from "@minimajs/server";
+::: code-group
 
-const app = createApp();
+```typescript [src/users/module.ts]
+import { body, type Routes } from "@minimajs/server";
 
-// Body parser is already enabled - no registration needed!
-app.post("/users", () => {
+function createUser() {
   const newUser = body<{ name: string; email: string }>();
   // ... create user
   return { created: newUser };
-});
+}
+
+export const routes: Routes = {
+  // Body parser is already enabled - no registration needed!
+  "POST /": createUser,
+};
 ```
+
+:::
 
 ## Configuration
 
-You can override the default configuration or disable the body parser by re-registering it with different options.
+You can override the default configuration or disable the body parser by re-registering it with different options in your module's `meta.plugins`.
 
 ### `type`
 
@@ -39,16 +44,29 @@ Specifies the content types to parse. Re-registering with a different `type` wil
 - **Type**: `("json" | "text" | "form" | "arrayBuffer" | "blob")[]`
 - **Default**: `["json"]`
 
-```typescript
-// Override to parse JSON and plain text
-app.register(bodyParser({ type: ["json", "text"] }));
+::: code-group
 
-app.post("/text-log", () => {
+```typescript [src/logs/module.ts]
+import { bodyParser } from "@minimajs/server/plugins";
+import { body, type Meta, type Routes } from "@minimajs/server";
+
+// Override to parse JSON and plain text for this module
+export const meta: Meta = {
+  plugins: [bodyParser({ type: ["json", "text"] })],
+};
+
+function logText() {
   const logMessage = body<string>();
   console.log(logMessage);
   return { status: "logged" };
-});
+}
+
+export const routes: Routes = {
+  "POST /text": logText,
+};
 ```
+
+:::
 
 ### `clone`
 
@@ -58,8 +76,9 @@ Clones the request object before parsing the body. This can be useful if you nee
 - **Default**: `false`
 
 ```typescript
-// Override default configuration to enable cloning
-app.register(bodyParser({ type: "json", clone: true }));
+export const meta: Meta = {
+  plugins: [bodyParser({ type: "json", clone: true })],
+};
 ```
 
 ### `enabled`
@@ -69,51 +88,76 @@ Disables the body parser when set to `false`. This removes the body parser entir
 - **Type**: `boolean`
 - **Default**: `true` (enabled by default)
 
-```typescript
-// Disable body parser
-app.register(bodyParser({ enabled: false }));
+::: code-group
 
-// You can re-enable it later with a different configuration
-app.register(bodyParser({ type: "text" }));
+```typescript [src/raw/module.ts]
+import { bodyParser } from "@minimajs/server/plugins";
+import { type Meta } from "@minimajs/server";
+
+// Disable body parser for this module
+export const meta: Meta = {
+  plugins: [bodyParser({ enabled: false })],
+};
 ```
+
+:::
 
 ## Examples
 
 ### Using Default Configuration
 
-Since body parser is enabled by default, you can use it immediately:
+Since body parser is enabled by default, you can use it immediately in any module:
 
-```typescript
-import { createApp } from "@minimajs/server/bun";
-import { body } from "@minimajs/server";
+::: code-group
 
-const app = createApp();
+```typescript [src/api/module.ts]
+import { body, type Routes } from "@minimajs/server";
 
-app.post("/api/users", () => {
+function createUser() {
   const user = body<{ name: string; email: string }>();
   return { created: user };
-});
+}
+
+export const routes: Routes = {
+  "POST /users": createUser,
+};
 ```
+
+:::
 
 ### Overriding Configuration
 
-Re-register the body parser to change its configuration:
+Re-register the body parser in your root module to change its configuration application-wide:
 
-```typescript
-// Change from JSON-only to support both JSON and text
-app.register(bodyParser({ type: ["json", "text"] }));
+::: code-group
 
-app.post("/api/logs", () => {
+```typescript [src/module.ts]
+import { bodyParser } from "@minimajs/server/plugins";
+import { body, type Meta, type Routes } from "@minimajs/server";
+
+// Change from JSON-only to support both JSON and text globally
+export const meta: Meta = {
+  plugins: [bodyParser({ type: ["json", "text"] })],
+};
+
+function logItem() {
   const log = body<string>(); // Can now parse text/plain
   return { logged: log };
-});
+}
+
+export const routes: Routes = {
+  "POST /logs": logItem,
+};
 ```
+
+:::
 
 ### Disabling Body Parser
 
 If you don't need body parsing, you can disable it:
 
 ```typescript
-// Disable body parser
-app.register(bodyParser({ enabled: false }));
+export const meta: Meta = {
+  plugins: [bodyParser({ enabled: false })],
+};
 ```

@@ -45,21 +45,35 @@ Retrieves the native Web API `Request` object.
 
 ```ts
 import { request } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
 
-app.get("/", () => {
+function getURL() {
   const req = request();
   return req.url;
-});
+}
+
+export const routes: Routes = {
+  "GET /": getURL,
+};
 ```
 
 You can use `request()` in nested function calls:
 
 ```ts
-function getURL() {
+import { request } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
+
+function fetchURL() {
   return request().url;
 }
 
-app.get("/", () => getURL());
+function getURL() {
+  return fetchURL();
+}
+
+export const routes: Routes = {
+  "GET /": getURL,
+};
 ```
 
 ### `request.url()`
@@ -68,13 +82,18 @@ Returns the parsed URL object from the request.
 
 ```ts
 import { request } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
 
-app.get("/users", () => {
+function getUsers() {
   const url = request.url();
   console.log(url.pathname); // "/users"
   console.log(url.searchParams.get("page")); // query param
   return { path: url.pathname };
-});
+}
+
+export const routes: Routes = {
+  "GET /users": getUsers,
+};
 ```
 
 ### `request.ip()`
@@ -96,10 +115,16 @@ app.register(proxy({ trustProxies: true, ip: { header: "CF-Connecting-IP" } }));
 **Example:**
 
 ```ts
-app.get("/", () => {
+import type { Routes } from "@minimajs/server";
+
+function getIP() {
   const ip = request.ip();
   return { clientIp: ip };
-});
+}
+
+export const routes: Routes = {
+  "GET /": getIP,
+};
 ```
 
 ## Headers
@@ -110,12 +135,17 @@ Returns the request headers. Supports direct access and transformation utilities
 
 ```ts
 import { headers } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
 
-app.get("/", () => {
+function getHeaders() {
   const reqHeaders = headers();
   const auth = reqHeaders.get("authorization");
   return { auth };
-});
+}
+
+export const routes: Routes = {
+  "GET /": getHeaders,
+};
 ```
 
 ### `headers.get()`
@@ -154,12 +184,17 @@ Returns the URL search parameters (query string).
 
 ```ts
 import { searchParams } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
 
-app.get("/search", () => {
+function search() {
   const params = searchParams();
   const query = params.get("q");
   return { query };
-});
+}
+
+export const routes: Routes = {
+  "GET /search": search,
+};
 ```
 
 ### `searchParams.get()`
@@ -198,12 +233,17 @@ Returns the route parameters.
 
 ```ts
 import { params } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
 
-app.get("/users/:id", () => {
+function getUser() {
   const routeParams = params();
   const userId = routeParams.get("id");
   return { userId };
-});
+}
+
+export const routes: Routes = {
+  "GET /users/:id": getUser,
+};
 ```
 
 ### `params.get()`
@@ -212,8 +252,9 @@ Gets a route parameter with optional transformation.
 
 ```ts
 import { params } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
 
-app.get("/users/:id", () => {
+function getUser() {
   // Get as string
   const userId = params.get("id");
 
@@ -221,7 +262,11 @@ app.get("/users/:id", () => {
   const numericId = params.get("id", Number);
 
   return { userId, numericId };
-});
+}
+
+export const routes: Routes = {
+  "GET /users/:id": getUser,
+};
 ```
 
 ## Request Body
@@ -232,12 +277,17 @@ Returns the parsed request body. The body parser is **enabled by default** and c
 
 ```ts
 import { body } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
 
-// Body parser is already enabled - no registration needed!
-app.post("/users", () => {
+function createUser() {
   const data = body();
   return { created: data };
-});
+}
+
+// Body parser is already enabled - no registration needed!
+export const routes: Routes = {
+  "POST /users": createUser,
+};
 ```
 
 To change the configuration or disable the body parser, see the [Body Parser plugin documentation](/plugins/body-parser).
@@ -252,44 +302,60 @@ Returns the native `Response` object for the current request context.
 
 ```ts
 import { response } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
 
-app.get("/", () => {
+function getResponse() {
   const res = response();
   console.log(res.status); // 200
   return "Hello";
-});
+}
+
+export const routes: Routes = {
+  "GET /": getResponse,
+};
 ```
 
 ### `response.status()`
 
 Sets the HTTP status code for the response.
 
-```ts
+```ts [module.ts]
 import { response } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
 
-app.get("/error", () => {
+function throwError() {
   response.status(500);
   return { error: "Internal Server Error" };
-});
+}
 
-app.post("/created", () => {
+function createItem() {
   response.status(201);
   return { id: 123 };
-});
+}
+
+export const routes: Routes = {
+  "GET /error": throwError,
+  "POST /created": createItem,
+};
 ```
 
 ### `headers.set()`
 
 Sets response headers.
 
-```ts
+```ts [module.ts]
 import { headers } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
 
-app.get("/", () => {
+function getHome() {
   headers.set("X-Custom-Header", "value");
   headers.set("Content-Type", "application/json");
   return { message: "Hello" };
-});
+}
+
+export const routes: Routes = {
+  "GET /": getHome,
+};
 ```
 
 ---

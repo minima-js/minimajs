@@ -139,14 +139,21 @@ await app.listen({ port: 3000 });
 
 ```typescript [src/users/module.ts]
 import { params } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
 
-export default async function (app) {
-  app.get("/list", () => [{ id: 1, name: "John" }]);
-  app.get("/:id", () => {
-    const id = params.get("id");
-    return { id, name: "John" };
-  });
+function listUsers() {
+  return [{ id: 1, name: "John" }];
 }
+
+function getUser() {
+  const id = params.get("id");
+  return { id, name: "John" };
+}
+
+export const routes: Routes = {
+  "GET /list": listUsers,
+  "GET /:id": getUser,
+};
 ```
 
 :::
@@ -160,17 +167,21 @@ export default async function (app) {
 **Want to add plugins to a module?** Use `meta.plugins`:
 
 ```typescript
-import { type Meta, hook } from "@minimajs/server";
+import { type Meta, type Routes, hook } from "@minimajs/server";
 
 export const meta: Meta = {
   plugins: [hook("request", () => console.log("User route accessed"))],
 };
 
-export default async function (app) {
-  app.get("/list", () => [
+function listUsers() {
+  return [
     /* users */
-  ]);
+  ];
 }
+
+export const routes: Routes = {
+  "GET /list": listUsers,
+};
 ```
 
 Learn more: [Module Tutorial](/core-concepts/modules)

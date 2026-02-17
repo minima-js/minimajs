@@ -12,14 +12,14 @@ This guide covers advanced configuration for Minima.js module discovery. Use it 
 By default, Minima.js:
 
 - Scans the directory of your entry file
-- Looks for `module.{ts,js,mjs}` files
+- Looks for `module.{ts,js}` files
 - Treats a `module.ts` in the root as the **root module**
 
 ```typescript
 // src/index.ts
 import { createApp } from "@minimajs/server/bun";
 
-const app = createApp(); // defaults: root = entry dir, index = "module"
+const app = createApp(); // defaults: root = entry dir, index = "module.{ts,js}"
 
 await app.listen({ port: 3000 });
 ```
@@ -28,9 +28,9 @@ await app.listen({ port: 3000 });
 
 Configure discovery via `createApp({ moduleDiscovery: { ... } })`.
 
-### `index` (filename or pattern)
+### `index` (glob pattern)
 
-Use a different filename or a glob pattern instead of `module.ts`.
+Use a different glob pattern instead of the default `module.{ts,js}`.
 
 ```typescript
 // src/index.ts
@@ -38,12 +38,12 @@ import { createApp } from "@minimajs/server/bun";
 
 const app = createApp({
   moduleDiscovery: {
-    index: "route.ts", // or route.{ts,js}
+    index: "route.{ts,js}", // or "route.ts" if using bun/tsx
   },
 });
 ```
 
-**Resulting pattern:** `**/route.{ts,js,mjs}`
+**Resulting pattern:** `**/route.{ts,js}`
 
 ```text
 src/
@@ -62,7 +62,7 @@ The `index` option supports glob patterns, allowing you to discover modules base
 // src/index.ts
 const app = createApp({
   moduleDiscovery: {
-    index: "*.module.ts", // or *.module.js if using compiled, looks for users.module.ts, etc.
+    index: "*.module.{ts,js}", // or "*.module.ts" if using bun/tsx
   },
 });
 ```
@@ -94,7 +94,7 @@ const app = createApp({
 });
 ```
 
-**Resulting pattern:** `features/**/module.{ts,js,mjs}`
+**Resulting pattern:** `features/**/module.{ts,js}`
 
 ```text
 src/
@@ -118,7 +118,7 @@ import path from "node:path";
 const app = createApp({
   moduleDiscovery: {
     root: path.resolve(import.meta.dir, "app"),
-    index: "route.js",
+    index: "route.{ts,js}",
   },
 });
 ```
@@ -172,7 +172,7 @@ const app = createApp({
 
 **Modules not discovered? Check:**
 
-1. ✅ Is the filename correct? (`module.ts` by default)
+1. ✅ Is the filename correct? (`module.{ts,js}` by default)
 2. ✅ Is `moduleDiscovery` enabled? (it is by default)
 3. ✅ Is the root path absolute?
 4. ✅ Is the file inside the discovery root?

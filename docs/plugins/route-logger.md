@@ -6,7 +6,7 @@ This is incredibly useful for debugging and for quickly understanding the overal
 
 ## Usage
 
-Route logger is enabled by default
+The route logger is **automatically enabled by default**. No configuration is required to see your route tree on startup.
 
 When you start your application, you will see output similar to this in your console:
 
@@ -20,37 +20,57 @@ When you start your application, you will see output similar to this in your con
 
 ## Configuration
 
+You can customize or disable the route logger by re-registering it in your root module's `meta.plugins`.
+
 ### `enabled`
 
-If you don't want, just disable it.
+Disables the route logger completely when set to `false`.
 
 - **Type**: `boolean`
 - **Default**: `true`
 
-```typescript
+::: code-group
+
+```typescript [src/module.ts]
 import { routeLogger } from "@minimajs/server/plugins";
-app.register(routeLogger({ enabled: false }));
+import { type Meta } from "@minimajs/server";
+
+export const meta: Meta = {
+  plugins: [
+    routeLogger({ enabled: false }),
+  ],
+};
 ```
+
+:::
 
 ### `logger`
 
 Allows you to provide a custom logging function to display the route tree.
 
 - **Type**: `(message: string) => void`
-- **Default**: A function that logs to the console.
+- **Default**: A function that logs to the console using `app.log.info`.
 
-```typescript
+::: code-group
+
+```typescript [src/module.ts]
 import { routeLogger } from "@minimajs/server/plugins";
-app.register(
-  routeLogger({
-    logger: (routes) => {
-      console.log("--- Registered Application Routes ---");
-      console.log(routes);
-      console.log("------------------------------------");
-    },
-  })
-);
+import { type Meta } from "@minimajs/server";
+
+export const meta: Meta = {
+  plugins: [
+    routeLogger({
+      logger: (routes) => {
+        console.log("--- Registered Application Routes ---");
+        console.log(routes);
+        console.log("------------------------------------");
+      },
+    }),
+  ],
+};
 ```
+
+:::
 
 ### `commonPrefix`
 
@@ -58,3 +78,18 @@ Determines whether to display routes with their full path or with the common pre
 
 - **Type**: `boolean`
 - **Default**: `false`
+
+::: code-group
+
+```typescript [src/module.ts]
+import { routeLogger } from "@minimajs/server/plugins";
+import { type Meta } from "@minimajs/server";
+
+export const meta: Meta = {
+  plugins: [
+    routeLogger({ commonPrefix: true }),
+  ],
+};
+```
+
+:::

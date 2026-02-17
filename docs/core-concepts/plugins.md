@@ -68,6 +68,7 @@ export const apiPlugin = (options: ApiPluginOptions) =>
 ```
 
 ```typescript [src/api/module.ts]
+import type { Routes } from "@minimajs/server";
 import { apiPlugin } from "../../plugins/api-key.js";
 
 // Register plugin with options in meta
@@ -80,9 +81,13 @@ export const meta = {
   ],
 };
 
-export default async function (app) {
-  app.get("/data", () => "protected data");
+function getData() {
+  return "protected data";
 }
+
+export const routes: Routes = {
+  "GET /data": getData,
+};
 ```
 
 :::
@@ -112,15 +117,20 @@ export const corsPlugin = plugin.sync(function cors(app) {
 ```
 
 ```typescript [src/api/module.ts]
+import type { Routes } from "@minimajs/server";
 import { corsPlugin } from "../../plugins/cors.js";
 
 export const meta = {
   plugins: [corsPlugin],
 };
 
-export default async function (app) {
-  app.get("/data", () => ({ data: "value" }));
+function getData() {
+  return { data: "value" };
 }
+
+export const routes: Routes = {
+  "GET /data": getData,
+};
 ```
 
 :::
@@ -140,7 +150,7 @@ The `compose()` function combines multiple plugins into a single plugin, executi
 ::: code-group
 
 ```typescript [src/api/module.ts]
-import { compose } from "@minimajs/server";
+import { compose, type Routes } from "@minimajs/server";
 import { cors } from "@minimajs/server/plugins";
 import { helmetPlugin } from "../../plugins/helmet.js";
 import { rateLimitPlugin } from "../../plugins/rate-limit.js";
@@ -152,13 +162,17 @@ export const meta = {
   plugins: [securityPlugins],
 };
 
-export default async function (app) {
-  app.get("/secure", () => "protected");
+function getSecureData() {
+  return "protected";
 }
+
+export const routes: Routes = {
+  "GET /secure": getSecureData,
+};
 ```
 
 ```typescript [src/module.ts]
-import { compose, hook } from "@minimajs/server";
+import { compose, hook, type Routes } from "@minimajs/server";
 
 // Group lifecycle hooks
 const appLifecycle = compose(
@@ -176,9 +190,13 @@ export const meta = {
   plugins: [appLifecycle],
 };
 
-export default async function (app) {
-  app.get("/health", () => "ok");
+function getHealth() {
+  return "ok";
 }
+
+export const routes: Routes = {
+  "GET /health": getHealth,
+};
 ```
 
 :::
@@ -258,6 +276,7 @@ export const authPlugin = (options: AuthOptions) =>
 ```
 
 ```typescript [src/api/module.ts]
+import type { Routes } from "@minimajs/server";
 import { authPlugin } from "../../plugins/auth.js";
 
 export const meta = {
@@ -269,9 +288,13 @@ export const meta = {
   ],
 };
 
-export default async function (app) {
-  app.get("/protected", () => ({ data: "secret" }));
+function getProtectedData() {
+  return { data: "secret" };
 }
+
+export const routes: Routes = {
+  "GET /protected": getProtectedData,
+};
 ```
 
 :::
@@ -299,6 +322,7 @@ export const requestLogger = plugin(async function logger(app) {
 ```
 
 ```typescript [src/module.ts]
+import type { Routes } from "@minimajs/server";
 import { requestLogger } from "../plugins/logger.js";
 
 // Register logger in root module - applies to all child modules
@@ -306,9 +330,13 @@ export const meta = {
   plugins: [requestLogger],
 };
 
-export default async function (app) {
-  app.get("/health", () => "ok");
+function getHealth() {
+  return "ok";
 }
+
+export const routes: Routes = {
+  "GET /health": getHealth,
+};
 ```
 
 :::
@@ -352,6 +380,7 @@ export const connectDatabase = (options: DbOptions) =>
 ```
 
 ```typescript [src/module.ts]
+import type { Routes } from "@minimajs/server";
 import { connectDatabase } from "../database/connection.js";
 
 // Register database plugin in root module
@@ -363,9 +392,13 @@ export const meta = {
   ],
 };
 
-export default async function (app) {
-  app.get("/health", () => "ok");
+function getHealth() {
+  return "ok";
 }
+
+export const routes: Routes = {
+  "GET /health": getHealth,
+};
 ```
 
 :::
