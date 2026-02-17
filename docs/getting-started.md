@@ -31,9 +31,20 @@ mkdir minimajs-app
 cd minimajs-app
 npm init -y
 npm install @minimajs/server
+npm install -D typescript tsx @types/node
 ```
 
-If using Node.js, add `"type": "module"` to your `package.json`.
+Update your `package.json` to enable ES modules and add a start script:
+
+```json
+{
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts"
+  }
+}
+```
 
 ## A Minimal Application
 

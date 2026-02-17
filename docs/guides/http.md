@@ -369,12 +369,11 @@ Define global serialization logic for all responses.
 ```ts
 import { createApp } from "@minimajs/server";
 
-const app = createApp({
-  serialize: (data) => {
-    // Wrap all responses in a standard format
-    return JSON.stringify({ success: true, data });
-  },
-});
+const app = createApp();
+
+app.serialize = function serialize(data) {
+  return JSON.stringify({ success: true, data });
+};
 
 app.get("/users", () => {
   return [{ id: 1, name: "Alice" }];

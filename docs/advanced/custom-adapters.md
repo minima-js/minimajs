@@ -18,7 +18,7 @@ interface ServerAdapter<T> {
   /**
    * Gets the remote address from the context
    */
-  remoteAddr(ctx: Context<T>): string | null;
+  remoteAddr(ctx: Context<T>): RemoteAddr | null;
 
   /**
    * Stops the server and closes all connections
@@ -29,7 +29,7 @@ interface ServerAdapter<T> {
 
 Where:
 
-- `T` is your native server type (e.g., `Deno.HttpServer`, `uWS.TemplatedApp`)
+- `T` is your native server type (e.g., `Deno.HttpServer`)
 - `ListenOptions` contains `port` and optional `host`
 - `RequestHandler` is a function that processes Web standard `Request` → `Response`
 
@@ -38,59 +38,48 @@ Where:
 Here's how to create an adapter for Deno:
 
 ```typescript
-import type { ServerAdapter, ListenOptions, RequestHandler, ListenResult } from "@minimajs/server/interfaces";
-import type { Server, Context } from "@minimajs/server";
+import type { ServerAdapter, ListenOptions, RequestHandler, ListenResult, AddressInfo } from "@minimajs/server";
+import type { Server, Context, RemoteAddr } from "@minimajs/server";
 
-export interface DenoServerOptions {
-  /** TLS certificate options */
-  cert?: string;
-  key?: string;
-  /** Additional Deno.serve options */
-  signal?: AbortSignal;
-}
+const kReqInfo = Symbol("deno.request-info");
 
 export class DenoServerAdapter implements ServerAdapter<Deno.HttpServer> {
-  constructor(private readonly options: DenoServerOptions = {}) {}
-
-  remoteAddr(ctx: Context<Deno.HttpServer>): string | null {
-    // Deno provides remote address in request info
-    const info = ctx.server.addr;
-    if (info.transport === "tcp") {
-      return info.hostname;
-    }
-    return null;
+  remoteAddr(ctx: Context<Deno.HttpServer>): RemoteAddr | null {
+    const addr = ctx.locals[kReqInfo] as Deno.NetAddr;
+    return {
+      hostname: addr.hostname,
+      port: addr.port,
+      family: "IPv4",
+    };
   }
 
-  async listen(
-    srv: Server,
+  listen(
+    srv: Server<Deno.HttpServer>,
     opts: ListenOptions,
     requestHandler: RequestHandler<Deno.HttpServer>
   ): Promise<ListenResult<Deno.HttpServer>> {
     const hostname = opts.host || "0.0.0.0";
     const port = opts.port;
 
-    // Deno.serve returns HttpServer
     const server = Deno.serve({
       hostname,
       port,
-      cert: this.options.cert,
-      key: this.options.key,
-      signal: this.options.signal,
       handler: (request, info) => {
         // Pass additional context
-        return requestHandler(srv, request, { info });
+        return requestHandler(srv, request, {
+          locals: { [kReqInfo]: info },
+        });
       },
     });
 
-    const address = {
+    const address: AddressInfo = {
       hostname,
       port,
       family: "IPv4" as const,
-      protocol: (this.options.cert ? "https" : "http") as const,
-      address: `${this.options.cert ? "https" : "http"}://${hostname}:${port}/`,
+      protocol: "http",
+      href: `http://${hostname}:${port}/`,
     };
-
-    return { server, address };
+    return Promise.resolve({ server, address });
   }
 
   async close(server: Deno.HttpServer): Promise<void> {
@@ -105,139 +94,13 @@ export class DenoServerAdapter implements ServerAdapter<Deno.HttpServer> {
 import { createBaseServer } from "@minimajs/server/core";
 import { DenoServerAdapter } from "./deno-adapter.ts";
 
-const adapter = new DenoServerAdapter({
-  cert: await Deno.readTextFile("./cert.pem"),
-  key: await Deno.readTextFile("./key.pem"),
-});
+const adapter = new DenoServerAdapter();
 
-const app = createBaseServer(adapter, {
-  logger: false,
-});
+const app = createBaseServer(adapter);
 
 app.get("/", () => ({ message: "Hello from Deno!" }));
 
 await app.listen({ port: 3000 });
-```
-
-## Creating a uWebSockets.js Adapter
-
-For high-performance scenarios, you might want to use uWebSockets.js:
-
-```typescript
-import uWS from "uWebSockets.js";
-import type { ServerAdapter, ListenOptions, RequestHandler, ListenResult } from "@minimajs/server/interfaces";
-
-export interface UWSServerOptions {
-  /** SSL certificate file path */
-  cert_file_name?: string;
-  /** SSL key file path */
-  key_file_name?: string;
-  /** Maximum payload size */
-  maxPayloadLength?: number;
-}
-
-export class UWSServerAdapter implements ServerAdapter<uWS.TemplatedApp> {
-  constructor(private readonly options: UWSServerOptions = {}) {}
-
-  remoteAddr(ctx: Context<uWS.TemplatedApp>): string | null {
-    // uWS provides IP in response object
-    return ctx.uwsResponse?.getRemoteAddressAsText() || null;
-  }
-
-  async listen(
-    srv: Server,
-    opts: ListenOptions,
-    requestHandler: RequestHandler<uWS.TemplatedApp>
-  ): Promise<ListenResult<uWS.TemplatedApp>> {
-    const hostname = opts.host || "0.0.0.0";
-    const port = opts.port;
-
-    // Create SSL or non-SSL app
-    const server = this.options.cert_file_name ? uWS.SSLApp(this.options) : uWS.App();
-
-    // Handle all routes with wildcard
-    server.any("/*", async (res, req) => {
-      // Convert uWS request to Web Request
-      const url = `http://${hostname}:${port}${req.getUrl()}`;
-      const method = req.getMethod().toUpperCase();
-
-      const headers = new Headers();
-      req.forEach((key, value) => headers.set(key, value));
-
-      // Read body if present
-      let body: ArrayBuffer | null = null;
-      if (method !== "GET" && method !== "HEAD") {
-        body = await new Promise((resolve) => {
-          let buffer = new ArrayBuffer(0);
-          res.onData((chunk, isLast) => {
-            const arr = new Uint8Array(buffer.byteLength + chunk.byteLength);
-            arr.set(new Uint8Array(buffer));
-            arr.set(new Uint8Array(chunk), buffer.byteLength);
-            buffer = arr.buffer;
-            if (isLast) resolve(buffer);
-          });
-        });
-      }
-
-      const request = new Request(url, {
-        method,
-        headers,
-        body: body,
-      });
-
-      // Process request through Minima.js
-      const response = await requestHandler(srv, request, {
-        uwsResponse: res,
-      });
-
-      // Send response back through uWS
-      res.cork(() => {
-        res.writeStatus(`${response.status} ${response.statusText}`);
-        response.headers.forEach((value, key) => {
-          res.writeHeader(key, value);
-        });
-
-        if (response.body) {
-          const reader = response.body.getReader();
-          const pump = async () => {
-            const { done, value } = await reader.read();
-            if (done) {
-              res.end();
-              return;
-            }
-            res.write(value);
-            pump();
-          };
-          pump();
-        } else {
-          res.end();
-        }
-      });
-    });
-
-    // Start listening
-    await new Promise<void>((resolve) => {
-      server.listen(hostname, port, () => resolve());
-    });
-
-    const protocol = this.options.cert_file_name ? "https" : "http";
-    const address = {
-      hostname,
-      port,
-      family: "IPv4" as const,
-      protocol: protocol as "http" | "https",
-      address: `${protocol}://${hostname}:${port}/`,
-    };
-
-    return { server, address };
-  }
-
-  async close(server: uWS.TemplatedApp): Promise<void> {
-    // uWS doesn't have a close method, it closes automatically
-    // You might need to track the listen socket and close it
-    return Promise.resolve();
-  }
-}
 ```
 
 ## Key Considerations
@@ -251,21 +114,11 @@ Your adapter must convert between the runtime's native request/response format a
 
 ### 2. Context Enrichment
 
-The `RequestHandlerContext` can include runtime-specific objects:
+The `RequestHandler` can include runtime-specific objects:
 
-```typescript
-type RequestHandlerContext<S> = {
-  server?: S;
-  [key: string]: any;
-};
+```ts
+type RequestHandlerContext = { locals };
 ```
-
-For example:
-
-- Node.js: `{ incomingMessage, serverResponse }`
-- Bun: `{}` (uses Web standards natively)
-- Deno: `{ info: Deno.ServeHandlerInfo }`
-- uWS: `{ uwsResponse: uWS.HttpResponse }`
 
 ### 3. Address Information
 
@@ -274,8 +127,7 @@ Return accurate `AddressInfo` with:
 - `hostname`: Bind address
 - `port`: Port number
 - `family`: "IPv4", "IPv6", or "unix"
-- `protocol`: "http" or "https"
-- `address`: Full URL string
+- `href`: Full URL string
 
 ### 4. Graceful Shutdown
 
@@ -312,8 +164,7 @@ const adapter = new MyCustomAdapter({
 });
 
 const app = createBaseServer(adapter, {
-  prefix: "/api",
-  logger: true,
+  logger: false, // or use custom pino logger
 });
 
 app.get("/health", () => ({ status: "ok" }));
