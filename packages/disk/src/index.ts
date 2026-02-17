@@ -6,7 +6,7 @@ export * from "./errors.js";
 
 // Disk implementations
 export * from "./disk.js";
-export * from "./protocol-disk.js";
+export * from "./proto-disk.js";
 
 // Adapters
 export * from "./adapters/fs.js";

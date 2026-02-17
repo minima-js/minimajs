@@ -133,9 +133,10 @@ export interface DiskDriver {
 /**
  * Disk instance - high-level API that converts data types to/from streams
  * This is the user-facing interface that handles DiskFile creation
+ * @template TDriver - The specific driver type for type-safe access to driver-specific features
  */
-export interface Disk {
-  readonly driver: DiskDriver;
+export interface Disk<TDriver extends DiskDriver = DiskDriver> extends AsyncIterable<DiskFile> {
+  readonly driver: TDriver;
 
   /**
    * Store data at the given key
@@ -159,10 +160,10 @@ export interface Disk {
 }
 
 /**
- * Options for creating a protocol-aware disk that can route operations
+ * Options for creating a proto disk that can route operations
  * to different drivers based on URL prefixes (protocol + optional base path)
  */
-export interface ProtocolDiskOptions {
+export interface ProtoDiskOptions {
   /**
    * Map of URL prefixes to their respective drivers
    * Supports both protocol-only and full prefix matching:

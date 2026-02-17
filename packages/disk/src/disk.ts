@@ -2,20 +2,21 @@ import type { Disk, DiskDriver, DiskData, PutOptions, UrlOptions, ListOptions, F
 import { DiskFile } from "./file.js";
 import { toReadableStream, resolveContentType } from "./helpers.js";
 import { DiskReadError, DiskMetadataError } from "./errors.js";
+import { createFsDriver, FsDriver } from "./adapters/fs.js";
 
-export interface CreateDiskOptions {
-  driver: DiskDriver;
+export interface CreateDiskOptions<TDriver extends DiskDriver = DiskDriver> {
+  driver?: TDriver;
 }
 
 /**
  * Disk implementation that wraps a driver
  * Paths are passed directly to the driver for interpretation
  */
-class DiskImpl implements Disk {
-  readonly driver: DiskDriver;
+class DiskImpl<TDriver extends DiskDriver = DiskDriver> implements Disk<TDriver> {
+  readonly driver: TDriver;
 
-  constructor(options: CreateDiskOptions) {
-    this.driver = options.driver;
+  constructor(driver: TDriver) {
+    this.driver = driver;
   }
 
   async put(path: string, data: DiskData, putOptions?: PutOptions): Promise<DiskFile> {
@@ -155,6 +156,11 @@ class DiskImpl implements Disk {
     }
   }
 
+  // Make Disk iterable - allows `for await (const file of disk)`
+  async *[Symbol.asyncIterator](): AsyncIterableIterator<DiskFile> {
+    yield* this.list();
+  }
+
   async getMetadata(path: string): Promise<import("./types.js").FileMetadata | null> {
     return this.driver.getMetadata(path);
   }
@@ -168,13 +174,18 @@ class DiskImpl implements Disk {
  * ```typescript
  * import { createDisk, createFsDriver } from '@minimajs/disk';
  *
+ * // With custom driver
  * const disk = createDisk({
  *   driver: createFsDriver({ root: '/tmp/uploads' })
  * });
  *
+ * // With default filesystem driver (uses cwd)
+ * const disk = createDisk();
+ *
  * await disk.put('avatar.jpg', imageData);
  * ```
  */
-export function createDisk(options: CreateDiskOptions): Disk {
-  return new DiskImpl(options);
+export function createDisk<TDriver extends DiskDriver = FsDriver>(options: CreateDiskOptions<TDriver> = {}): Disk<TDriver> {
+  const driver = (options.driver ?? createFsDriver({ root: process.cwd() })) as TDriver;
+  return new DiskImpl(driver);
 }

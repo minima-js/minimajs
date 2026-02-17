@@ -14,155 +14,164 @@ export interface FsDriverOptions {
   publicUrl?: string;
 }
 
-export function createFsDriver(options: FsDriverOptions): DiskDriver {
-  const root = resolve(options.root);
+/**
+ * Filesystem storage driver for @minimajs/disk
+ */
+export class FsDriver implements DiskDriver {
+  readonly name = "fs";
+  private readonly root: string;
+  private readonly publicUrl?: string;
 
-  return {
-    name: "fs",
+  constructor(options: FsDriverOptions) {
+    this.root = resolve(options.root);
+    this.publicUrl = options.publicUrl;
+  }
 
-    async put(href: string, stream: ReadableStream<Uint8Array>, putOptions?: PutOptions): Promise<FileMetadata> {
-      const filepath = fileURLToPath(href);
-      const destination = resolve(root, relative("/", filepath));
+  async put(href: string, stream: ReadableStream<Uint8Array>, putOptions?: PutOptions): Promise<FileMetadata> {
+    const filepath = fileURLToPath(href);
+    const destination = resolve(this.root, relative("/", filepath));
 
-      await mkdir(dirname(destination), { recursive: true });
+    await mkdir(dirname(destination), { recursive: true });
 
-      // Stream directly to file using pipeline
-      await pipeline(Readable.fromWeb(stream as any), createWriteStream(destination));
+    // Stream directly to file using pipeline
+    await pipeline(Readable.fromWeb(stream as any), createWriteStream(destination));
 
+    const stats = await stat(destination);
+
+    return {
+      href: pathToFileURL(destination).href,
+      size: stats.size,
+      type: putOptions?.type ?? getMimeType(destination),
+      lastModified: stats.mtime.getTime(),
+      metadata: putOptions?.metadata,
+    };
+  }
+
+  async get(href: string): Promise<[ReadableStream<Uint8Array>, FileMetadata] | null> {
+    const filepath = fileURLToPath(href);
+    const destination = resolve(this.root, relative("/", filepath));
+
+    try {
       const stats = await stat(destination);
 
-      return {
+      // Create web ReadableStream from Node.js stream
+      const nodeStream = createReadStream(destination);
+      const webStream = Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>;
+
+      const metadata: FileMetadata = {
         href: pathToFileURL(destination).href,
         size: stats.size,
-        type: putOptions?.type ?? getMimeType(destination),
+        type: getMimeType(destination),
         lastModified: stats.mtime.getTime(),
-        metadata: putOptions?.metadata,
       };
-    },
 
-    async get(href: string): Promise<[ReadableStream<Uint8Array>, FileMetadata] | null> {
-      const filepath = fileURLToPath(href);
-      const destination = resolve(root, relative("/", filepath));
+      return [webStream, metadata];
+    } catch {
+      return null;
+    }
+  }
 
+  async delete(href: string): Promise<void> {
+    const filepath = fileURLToPath(href);
+    const destination = resolve(this.root, relative("/", filepath));
+    await rm(destination, { force: true });
+  }
+
+  async exists(href: string): Promise<boolean> {
+    const filepath = fileURLToPath(href);
+    const destination = resolve(this.root, relative("/", filepath));
+    try {
+      await access(destination);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async url(href: string, _urlOptions?: UrlOptions): Promise<string> {
+    if (!this.publicUrl) {
+      throw new Error("publicUrl is required to generate a url");
+    }
+    const filepath = fileURLToPath(href);
+    const relativePath = relative(this.root, resolve(this.root, relative("/", filepath)));
+    return `${this.publicUrl.replace(/\/$/, "")}/${relativePath}`;
+  }
+
+  async copy(from: string, to: string): Promise<void> {
+    const srcPath = fileURLToPath(from);
+    const destPath = fileURLToPath(to);
+    const srcDest = resolve(this.root, relative("/", srcPath));
+    const destDest = resolve(this.root, relative("/", destPath));
+
+    await mkdir(dirname(destDest), { recursive: true });
+    await copyFile(srcDest, destDest);
+  }
+
+  async move(from: string, to: string): Promise<void> {
+    const srcPath = fileURLToPath(from);
+    const destPath = fileURLToPath(to);
+    const srcDest = resolve(this.root, relative("/", srcPath));
+    const destDest = resolve(this.root, relative("/", destPath));
+
+    await mkdir(dirname(destDest), { recursive: true });
+    await rename(srcDest, destDest);
+  }
+
+  async *list(prefix?: string, listOptions?: ListOptions): AsyncIterable<FileMetadata> {
+    const searchPath = prefix ? join(this.root, prefix) : this.root;
+    const recursive = listOptions?.recursive ?? true;
+    let count = 0;
+    const limit = listOptions?.limit;
+
+    async function* walkDir(dir: string): AsyncGenerator<FileMetadata> {
+      let entries;
       try {
-        const stats = await stat(destination);
-
-        // Create web ReadableStream from Node.js stream
-        const nodeStream = createReadStream(destination);
-        const webStream = Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>;
-
-        const metadata: FileMetadata = {
-          href: pathToFileURL(destination).href,
-          size: stats.size,
-          type: getMimeType(destination),
-          lastModified: stats.mtime.getTime(),
-        };
-
-        return [webStream, metadata];
+        entries = await readdir(dir, { withFileTypes: true });
       } catch {
-        return null;
+        return;
       }
-    },
 
-    async delete(href: string): Promise<void> {
-      const filepath = fileURLToPath(href);
-      const destination = resolve(root, relative("/", filepath));
-      await rm(destination, { force: true });
-    },
+      for (const entry of entries) {
+        if (limit !== undefined && count >= limit) return;
 
-    async exists(href: string): Promise<boolean> {
-      const filepath = fileURLToPath(href);
-      const destination = resolve(root, relative("/", filepath));
-      try {
-        await access(destination);
-        return true;
-      } catch {
-        return false;
-      }
-    },
+        const fullPath = join(dir, entry.name);
 
-    async url(href: string, _urlOptions?: UrlOptions): Promise<string> {
-      if (!options.publicUrl) {
-        throw new Error("publicUrl is required to generate a url");
-      }
-      const filepath = fileURLToPath(href);
-      const relativePath = relative(root, resolve(root, relative("/", filepath)));
-      return `${options.publicUrl.replace(/\/$/, "")}/${relativePath}`;
-    },
-
-    async copy(from: string, to: string): Promise<void> {
-      const srcPath = fileURLToPath(from);
-      const destPath = fileURLToPath(to);
-      const srcDest = resolve(root, relative("/", srcPath));
-      const destDest = resolve(root, relative("/", destPath));
-
-      await mkdir(dirname(destDest), { recursive: true });
-      await copyFile(srcDest, destDest);
-    },
-
-    async move(from: string, to: string): Promise<void> {
-      const srcPath = fileURLToPath(from);
-      const destPath = fileURLToPath(to);
-      const srcDest = resolve(root, relative("/", srcPath));
-      const destDest = resolve(root, relative("/", destPath));
-
-      await mkdir(dirname(destDest), { recursive: true });
-      await rename(srcDest, destDest);
-    },
-
-    async *list(prefix?: string, listOptions?: ListOptions): AsyncIterable<FileMetadata> {
-      const searchDir = prefix ? fileURLToPath(prefix) : root;
-      const searchPath = prefix ? resolve(root, relative("/", searchDir)) : root;
-      const recursive = listOptions?.recursive ?? true;
-      let count = 0;
-      const limit = listOptions?.limit;
-
-      async function* walkDir(dir: string): AsyncGenerator<FileMetadata> {
-        let entries;
-        try {
-          entries = await readdir(dir, { withFileTypes: true });
-        } catch {
-          return;
-        }
-
-        for (const entry of entries) {
-          if (limit !== undefined && count >= limit) return;
-
-          const fullPath = join(dir, entry.name);
-
-          if (entry.isFile()) {
-            const stats = await stat(fullPath);
-            yield {
-              href: pathToFileURL(fullPath).href,
-              size: stats.size,
-              type: getMimeType(fullPath),
-              lastModified: stats.mtime.getTime(),
-            };
-            count++;
-          } else if (entry.isDirectory() && recursive) {
-            yield* walkDir(fullPath);
-          }
+        if (entry.isFile()) {
+          const stats = await stat(fullPath);
+          yield {
+            href: pathToFileURL(fullPath).href,
+            size: stats.size,
+            type: getMimeType(fullPath),
+            lastModified: stats.mtime.getTime(),
+          };
+          count++;
+        } else if (entry.isDirectory() && recursive) {
+          yield* walkDir(fullPath);
         }
       }
+    }
 
-      yield* walkDir(searchPath);
-    },
+    yield* walkDir(searchPath);
+  }
 
-    async getMetadata(href: string): Promise<FileMetadata | null> {
-      const filepath = fileURLToPath(href);
-      const destination = resolve(root, relative("/", filepath));
+  async getMetadata(href: string): Promise<FileMetadata | null> {
+    const filepath = fileURLToPath(href);
+    const destination = resolve(this.root, relative("/", filepath));
 
-      try {
-        const stats = await stat(destination);
-        return {
-          href: pathToFileURL(destination).href,
-          type: getMimeType(destination),
-          size: stats.size,
-          lastModified: stats.mtime.getTime(),
-        };
-      } catch {
-        return null;
-      }
-    },
-  } satisfies DiskDriver;
+    try {
+      const stats = await stat(destination);
+      return {
+        href: pathToFileURL(destination).href,
+        type: getMimeType(destination),
+        size: stats.size,
+        lastModified: stats.mtime.getTime(),
+      };
+    } catch {
+      return null;
+    }
+  }
+}
+
+export function createFsDriver(options: FsDriverOptions): DiskDriver {
+  return new FsDriver(options);
 }

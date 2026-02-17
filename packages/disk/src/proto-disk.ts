@@ -6,7 +6,7 @@ import type {
   UrlOptions,
   ListOptions,
   FileSource,
-  ProtocolDiskOptions,
+  ProtoDiskOptions,
   FileMetadata,
 } from "./types.js";
 import { DiskFile } from "./file.js";
@@ -15,17 +15,17 @@ import { DiskReadError, DiskFileNotFoundError, DiskMetadataError, DiskConfigErro
 import { pathToFileURL } from "node:url";
 
 /**
- * Protocol-aware Disk implementation that routes operations to different drivers
+ * Proto disk implementation that routes operations to different drivers
  * based on URL prefixes (protocol + optional base path).
  */
-class ProtocolDisk implements Disk {
+class ProtoDisk implements Disk {
   readonly driver: DiskDriver;
   private readonly protocols: Record<string, DiskDriver>;
   private readonly defaultProtocol: string;
   private readonly basePath: string;
   private readonly sortedPrefixes: string[];
 
-  constructor(options: ProtocolDiskOptions) {
+  constructor(options: ProtoDiskOptions) {
     const { protocols, defaultProtocol = "file://", basePath = process.cwd() } = options;
 
     this.protocols = protocols;
@@ -343,6 +343,11 @@ class ProtocolDisk implements Disk {
     }
   }
 
+  // Make ProtoDisk iterable - allows `for await (const file of disk)`
+  async *[Symbol.asyncIterator](): AsyncIterableIterator<DiskFile> {
+    yield* this.list();
+  }
+
   async getMetadata(path: string): Promise<FileMetadata | null> {
     const href = this.toHref(path);
     const driver = this.getDriver(href);
@@ -351,7 +356,7 @@ class ProtocolDisk implements Disk {
 }
 
 /**
- * Create a protocol-aware Disk instance that routes operations to different drivers
+ * Create a proto disk instance that routes operations to different drivers
  * based on URL prefixes (protocol + optional base path).
  *
  * Supports granular routing by matching longest prefix first:
@@ -361,7 +366,7 @@ class ProtocolDisk implements Disk {
  *
  * @example
  * ```typescript
- * const disk = createProtocolDisk({
+ * const disk = createProtoDisk({
  *   protocols: {
  *     'file://': fsDriver,
  *     's3://images-bucket/': s3ImagesDriver,
@@ -382,6 +387,6 @@ class ProtocolDisk implements Disk {
  * await disk.copy('s3://images-bucket/file.jpg', 's3://videos-bucket/file.jpg');
  * ```
  */
-export function createProtocolDisk(options: ProtocolDiskOptions): Disk {
-  return new ProtocolDisk(options);
+export function createProtoDisk(options: ProtoDiskOptions): Disk {
+  return new ProtoDisk(options);
 }

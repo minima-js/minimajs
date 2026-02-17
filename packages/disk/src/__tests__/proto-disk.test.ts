@@ -1,9 +1,9 @@
 import { describe, beforeEach, it, expect, jest } from "@jest/globals";
-import { createProtocolDisk } from "../protocol-disk.js";
+import { createProtoDisk } from "../proto-disk.js";
 import { createMemoryDriver } from "../adapters/memory.js";
 import type { DiskDriver } from "../types.js";
 
-describe("Protocol Disk - Prefix-Based Routing", () => {
+describe("ProtoDisk - Prefix-Based Routing", () => {
   let bucket1Driver: DiskDriver;
   let bucket2Driver: DiskDriver;
   let fsDriver: DiskDriver;
@@ -17,7 +17,7 @@ describe("Protocol Disk - Prefix-Based Routing", () => {
 
   describe("Longest Prefix Matching", () => {
     it("should route to most specific prefix match", async () => {
-      const disk = createProtocolDisk({
+      const disk = createProtoDisk({
         protocols: {
           "s3://": bucket1Driver, // Generic S3
           "s3://bucket-2/": bucket2Driver, // Specific bucket
@@ -39,7 +39,7 @@ describe("Protocol Disk - Prefix-Based Routing", () => {
     });
 
     it("should fallback to shorter prefix if longer doesn't match", async () => {
-      const disk = createProtocolDisk({
+      const disk = createProtoDisk({
         protocols: {
           "s3://": bucket1Driver,
           "s3://bucket-2/": bucket2Driver,
@@ -59,7 +59,7 @@ describe("Protocol Disk - Prefix-Based Routing", () => {
 
   describe("Bucket-Specific Routing", () => {
     it("should route different buckets to different drivers", async () => {
-      const disk = createProtocolDisk({
+      const disk = createProtoDisk({
         protocols: {
           "s3://images-bucket/": bucket1Driver,
           "s3://videos-bucket/": bucket2Driver,
@@ -84,7 +84,7 @@ describe("Protocol Disk - Prefix-Based Routing", () => {
 
   describe("Domain-Specific Routing", () => {
     it("should route different domains to different drivers", async () => {
-      const disk = createProtocolDisk({
+      const disk = createProtoDisk({
         protocols: {
           "https://cdn1.example.com/": bucket1Driver,
           "https://cdn2.example.com/": bucket2Driver,
@@ -104,7 +104,7 @@ describe("Protocol Disk - Prefix-Based Routing", () => {
 
   describe("Cross-Driver Operations", () => {
     it("should copy files between different prefixes/drivers", async () => {
-      const disk = createProtocolDisk({
+      const disk = createProtoDisk({
         protocols: {
           "s3://bucket-1/": bucket1Driver,
           "s3://bucket-2/": bucket2Driver,
@@ -131,7 +131,7 @@ describe("Protocol Disk - Prefix-Based Routing", () => {
     });
 
     it("should move files between different prefixes/drivers", async () => {
-      const disk = createProtocolDisk({
+      const disk = createProtoDisk({
         protocols: {
           "s3://bucket-1/": bucket1Driver,
           "s3://bucket-2/": bucket2Driver,
@@ -158,7 +158,7 @@ describe("Protocol Disk - Prefix-Based Routing", () => {
     it("should use native driver copy for same prefix", async () => {
       const copySpy = jest.spyOn(bucket1Driver, "copy");
 
-      const disk = createProtocolDisk({
+      const disk = createProtoDisk({
         protocols: {
           "s3://bucket-1/": bucket1Driver,
         },
@@ -174,7 +174,7 @@ describe("Protocol Disk - Prefix-Based Routing", () => {
     it("should use native driver move for same prefix", async () => {
       const moveSpy = jest.spyOn(bucket1Driver, "move");
 
-      const disk = createProtocolDisk({
+      const disk = createProtoDisk({
         protocols: {
           "s3://bucket-1/": bucket1Driver,
         },
@@ -190,7 +190,7 @@ describe("Protocol Disk - Prefix-Based Routing", () => {
 
   describe("Error Handling", () => {
     it("should throw error for unregistered prefix", async () => {
-      const disk = createProtocolDisk({
+      const disk = createProtoDisk({
         protocols: {
           "s3://bucket-1/": bucket1Driver,
         },
@@ -200,7 +200,7 @@ describe("Protocol Disk - Prefix-Based Routing", () => {
     });
 
     it("should provide helpful error message with available prefixes", async () => {
-      const disk = createProtocolDisk({
+      const disk = createProtoDisk({
         protocols: {
           "s3://bucket-1/": bucket1Driver,
           "s3://bucket-2/": bucket2Driver,
@@ -220,7 +220,7 @@ describe("Protocol Disk - Prefix-Based Routing", () => {
 
   describe("Default Protocol", () => {
     it("should use default protocol for relative paths", async () => {
-      const disk = createProtocolDisk({
+      const disk = createProtoDisk({
         protocols: {
           "s3://bucket-1/": bucket1Driver,
           "file://": fsDriver,
