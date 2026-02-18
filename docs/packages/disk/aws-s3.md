@@ -1,12 +1,13 @@
 # AWS S3 Driver
 
-AWS S3 storage driver for universal cloud storage. Store files on Amazon S3 with full streaming support and optional signed URLs.
+**AWS S3 storage driver for @minimajs/disk.** Use web-native File APIs to interact with AWS S3—forget the AWS SDK and its inconsistent APIs.
 
 ## Features
 
+- 🌐 **Web-Native APIs** - Use File, Blob, ReadableStream instead of AWS SDK methods
 - ✅ **Streaming Uploads** - Efficient streaming uploads to S3
 - ✅ **Streaming Downloads** - Direct streaming from S3 without buffering
-- ✅ **Presigned URLs** - Generate temporary signed URLs (optional)
+- ✅ **CloudFront Integration** - Configure CDN URLs for public file serving
 - ✅ **Metadata Support** - Store and retrieve custom metadata
 - ✅ **Server-Side Copy** - Fast native S3 copy operations
 - ✅ **List Operations** - Paginated file listing with prefix support
@@ -23,14 +24,6 @@ npm install @minimajs/aws-s3 @minimajs/disk
 bun add @minimajs/aws-s3 @minimajs/disk
 ```
 
-**For presigned URL support** (optional):
-
-```bash
-npm install @aws-sdk/s3-request-presigner
-```
-
-> The presigner package is only loaded when generating signed URLs. For public buckets, you don't need it.
-
 ## Usage
 
 ### Basic Configuration
@@ -39,6 +32,7 @@ npm install @aws-sdk/s3-request-presigner
 import { createS3Driver } from "@minimajs/aws-s3";
 import { createDisk } from "@minimajs/disk";
 
+// Create S3 disk - driver is required for S3
 const disk = createDisk({
   driver: createS3Driver({
     bucket: "my-bucket",
@@ -50,43 +44,97 @@ const disk = createDisk({
   }),
 });
 
-// Store file
-const file = await disk.put("uploads/avatar.jpg", imageData);
-console.log(file.href); // s3://my-bucket/uploads/avatar.jpg
+// Web-native API - works like browser File API
+const file = new File(["Hello World"], "hello.txt");
+await disk.put(file); // Auto-generates unique filename
 
-// Retrieve file
+// Or specify path
+await disk.put("uploads/avatar.jpg", imageBuffer);
+
+// Retrieve file - standard File methods
 const retrieved = await disk.get("uploads/avatar.jpg");
 if (retrieved) {
-  const buffer = await retrieved.arrayBuffer();
-  const stream = retrieved.stream();
+  const buffer = await retrieved.arrayBuffer(); // Standard File.arrayBuffer()
+  const blob = await retrieved.blob(); // Standard File.blob()
+  const text = await retrieved.text(); // Standard File.text()
+  const stream = retrieved.stream(); // Standard File.stream()
 }
 
 // Delete file
 await disk.delete("uploads/avatar.jpg");
 ```
 
+::: tip Default Filesystem Driver
+`createDisk()` defaults to a filesystem driver with `process.cwd()` as root when no driver is specified.
+Only use `createFsDriver()` if you need to customize the root directory or publicUrl.
+
+```typescript
+// Default filesystem (uses current working directory)
+const defaultDisk = createDisk();
+
+// Custom filesystem root
+import { createFsDriver } from "@minimajs/disk/adapters";
+const customDisk = createDisk({
+  driver: createFsDriver({
+    root: "./uploads",
+    publicUrl: "https://example.com/files",
+  }),
+});
+```
+
+:::
+
 ### Multi-Bucket Setup
 
-When bucket is NOT configured, use full `s3://` URLs:
+When bucket is NOT configured in the driver, use full `s3://` URLs:
 
 ```typescript
 const disk = createDisk({
   driver: createS3Driver({
     region: "us-east-1",
     credentials: {
-      /* ... */
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
     },
   }),
 });
 
-// Specify bucket in path
-await disk.put("s3://bucket-1/file.txt", data);
-await disk.put("s3://bucket-2/file.txt", data);
+// Specify bucket in URL
+await disk.put("s3://bucket-1/file.txt", "Data for bucket 1");
+await disk.put("s3://bucket-2/file.txt", "Data for bucket 2");
+
+// Retrieve from specific bucket
+const file = await disk.get("s3://bucket-1/file.txt");
 ```
 
-### With Public URLs
+### CloudFront CDN Integration
 
-For public buckets or signed URLs:
+For public file serving via CloudFront CDN:
+
+```typescript
+const disk = createDisk({
+  driver: createS3Driver({
+    bucket: "my-bucket",
+    region: "us-east-1",
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    },
+    publicUrl: "https://d1234567890.cloudfront.net", // CloudFront distribution URL
+    acl: "public-read", // Make files publicly accessible
+  }),
+});
+
+await disk.put("images/logo.png", logoBuffer);
+
+// Get CloudFront URL
+const url = await disk.url("images/logo.png");
+console.log(url); // https://d1234567890.cloudfront.net/images/logo.png
+```
+
+### Public S3 URLs
+
+For public buckets without CloudFront:
 
 ```typescript
 const disk = createDisk({
@@ -94,42 +142,19 @@ const disk = createDisk({
     bucket: "my-public-bucket",
     region: "us-east-1",
     credentials: {
-      /* ... */
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
     },
     acl: "public-read", // Makes files publicly accessible
   }),
 });
 
-await disk.put("avatar.jpg", imageData);
+await disk.put("avatar.jpg", imageBuffer);
 
-// Get public URL
+// Get public S3 URL
 const url = await disk.url("avatar.jpg");
+console.log(url);
 // https://my-public-bucket.s3.us-east-1.amazonaws.com/avatar.jpg
-```
-
-### Presigned URLs
-
-For private buckets, generate temporary signed URLs:
-
-```typescript
-const disk = createDisk({
-  driver: createS3Driver({
-    bucket: "my-private-bucket",
-    region: "us-east-1",
-    credentials: {
-      /* ... */
-    },
-    // Don't set acl - files are private by default
-  }),
-});
-
-await disk.put("document.pdf", pdfData);
-
-// Generate signed URL (expires in 1 hour)
-const url = await disk.url("document.pdf", {
-  expiresIn: 3600,
-});
-// https://my-private-bucket.s3.amazonaws.com/document.pdf?X-Amz-...
 ```
 
 ## Configuration
@@ -156,42 +181,16 @@ interface S3DriverOptions {
   };
 
   /**
-   * Access Control List
-   * @default "private"
+   * Public URL for serving files (e.g., CloudFront CDN URL)
+   * When set, disk.url() returns URLs with this prefix
    */
-  acl?: "private" | "public-read" | "public-read-write" | "authenticated-read";
+  publicUrl?: string;
 
   /**
-   * Storage class for new objects
-   * @default "STANDARD"
+   * Base prefix/path within the bucket
+   * All file operations will be prefixed with this path
    */
-  storageClass?:
-    | "STANDARD"
-    | "REDUCED_REDUNDANCY"
-    | "STANDARD_IA"
-    | "ONEZONE_IA"
-    | "INTELLIGENT_TIERING"
-    | "GLACIER"
-    | "DEEP_ARCHIVE";
-
-  /**
-   * Server-side encryption
-   */
-  encryption?: {
-    type: "AES256" | "aws:kms";
-    kmsKeyId?: string; // Required for aws:kms
-  };
-
-  /**
-   * S3 client endpoint (for S3-compatible services)
-   */
-  endpoint?: string;
-
-  /**
-   * Force path-style URLs
-   * @default false
-   */
-  forcePathStyle?: boolean;
+  prefix?: string;
 }
 ```
 
@@ -200,7 +199,7 @@ interface S3DriverOptions {
 ### Upload with Metadata
 
 ```typescript
-await disk.put("documents/report.pdf", pdfData, {
+await disk.put("documents/report.pdf", pdfBuffer, {
   type: "application/pdf",
   metadata: {
     author: "John Doe",
@@ -211,68 +210,99 @@ await disk.put("documents/report.pdf", pdfData, {
 
 // Retrieve with metadata
 const file = await disk.get("documents/report.pdf");
-console.log(file.metadata); // { author: "John Doe", ... }
+console.log(file.type); // "application/pdf"
+console.log(file.metadata); // { author: "John Doe", department: "Finance", year: "2024" }
+```
+
+### Using Web-Native File Objects
+
+```typescript
+// Upload File directly - auto-generates unique filename
+const textFile = new File(["Hello World"], "greeting.txt", {
+  type: "text/plain",
+});
+await disk.put(textFile);
+
+// Upload with custom path
+const imageFile = new File([imageBuffer], "photo.jpg", {
+  type: "image/jpeg",
+});
+await disk.put("uploads/2024/photo.jpg", imageFile);
+
+// Upload Blob
+const blob = new Blob(["JSON data"], { type: "application/json" });
+await disk.put("data/config.json", blob);
 ```
 
 ### Storage Classes
 
 ```typescript
 // Standard storage (default)
-const standard = createS3Driver({
-  bucket: "hot-data",
-  region: "us-east-1",
-  credentials: {
-    /* ... */
-  },
+const standardDisk = createDisk({
+  driver: createS3Driver({
+    bucket: "hot-data",
+    region: "us-east-1",
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    },
+  }),
 });
 
 // Infrequent Access (cheaper for rarely accessed files)
-const coldStorage = createS3Driver({
-  bucket: "cold-data",
-  region: "us-east-1",
-  credentials: {
-    /* ... */
-  },
-  storageClass: "STANDARD_IA",
+const coldDisk = createDisk({
+  driver: createS3Driver({
+    bucket: "cold-data",
+    region: "us-east-1",
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    },
+    storageClass: "STANDARD_IA",
+  }),
 });
 
-// Glacier (archive storage, very cheap)
-const archive = createS3Driver({
-  bucket: "archive",
-  region: "us-east-1",
-  credentials: {
-    /* ... */
-  },
-  storageClass: "GLACIER",
+// Glacier (archive storage, very cheap but slow retrieval)
+const archiveDisk = createDisk({
+  driver: createS3Driver({
+    bucket: "archive",
+    region: "us-east-1",
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    },
+    storageClass: "GLACIER",
+  }),
 });
 ```
 
 ### Encryption
 
 ```typescript
-// AES256 encryption
-const encrypted = createS3Driver({
-  bucket: "secure-bucket",
-  region: "us-east-1",
-  credentials: {
-    /* ... */
-  },
-  encryption: {
-    type: "AES256",
-  },
+// AES256 server-side encryption
+const encryptedDisk = createDisk({
+  driver: createS3Driver({
+    bucket: "secure-bucket",
+    region: "us-east-1",
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    },
+    serverSideEncryption: "AES256",
+  }),
 });
 
 // KMS encryption
-const kmsEncrypted = createS3Driver({
-  bucket: "very-secure-bucket",
-  region: "us-east-1",
-  credentials: {
-    /* ... */
-  },
-  encryption: {
-    type: "aws:kms",
-    kmsKeyId: "arn:aws:kms:us-east-1:123456789:key/...",
-  },
+const kmsDisk = createDisk({
+  driver: createS3Driver({
+    bucket: "very-secure-bucket",
+    region: "us-east-1",
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    },
+    serverSideEncryption: "aws:kms",
+  }),
 });
 ```
 
@@ -282,34 +312,55 @@ const kmsEncrypted = createS3Driver({
 // List all files with prefix
 for await (const file of disk.list("uploads/2024/")) {
   console.log(file.name, file.size, file.lastModified);
+  console.log(file.href); // s3://my-bucket/uploads/2024/photo.jpg
 }
 
 // List with limit
 for await (const file of disk.list("uploads/", { limit: 100 })) {
   console.log(file.href);
 }
+
+// Get file metadata while listing
+for await (const file of disk.list("documents/")) {
+  console.log(file.type); // MIME type
+  console.log(file.metadata); // Custom metadata
+}
 ```
 
 ### Copy Between Buckets
 
 ```typescript
-import { createProtocolDisk } from "@minimajs/disk";
+import { createProtoDisk } from "@minimajs/disk";
+import { createS3Driver } from "@minimajs/aws-s3";
 
-const disk = createProtocolDisk({
+const credentials = {
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+};
+
+const disk = createProtoDisk({
   protocols: {
-    "s3://prod-bucket/": createS3Driver({ bucket: "prod-bucket", region: "us-east-1", credentials }),
-    "s3://backup-bucket/": createS3Driver({ bucket: "backup-bucket", region: "us-west-2", credentials }),
+    "s3://prod/": createS3Driver({
+      bucket: "prod-bucket",
+      region: "us-east-1",
+      credentials,
+    }),
+    "s3://backup/": createS3Driver({
+      bucket: "backup-bucket",
+      region: "us-west-2",
+      credentials,
+    }),
   },
 });
 
 // Server-side copy within same bucket (fast)
-await disk.copy("s3://prod-bucket/file.jpg", "s3://prod-bucket/backup/file.jpg");
+await disk.copy("s3://prod/file.jpg", "s3://prod/backup/file.jpg");
 
-// Streaming copy between buckets
-await disk.copy("s3://prod-bucket/file.jpg", "s3://backup-bucket/file.jpg");
+// Streaming copy between different buckets
+await disk.copy("s3://prod/file.jpg", "s3://backup/file.jpg");
 ```
 
-### CloudFront Integration
+### CloudFront CDN URLs
 
 ```typescript
 const disk = createDisk({
@@ -317,70 +368,118 @@ const disk = createDisk({
     bucket: "my-bucket",
     region: "us-east-1",
     credentials: {
-      /* ... */
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
     },
+    publicUrl: "https://d1234567890.cloudfront.net",
     acl: "public-read",
   }),
 });
 
 // Upload to S3
-await disk.put("images/logo.png", logoData);
+await disk.put("images/logo.png", logoBuffer);
 
-// Access via CloudFront
-const cdnUrl = `https://d1234567890.cloudfront.net/images/logo.png`;
+// Get CloudFront URL
+const cdnUrl = await disk.url("images/logo.png");
+console.log(cdnUrl);
+// https://d1234567890.cloudfront.net/images/logo.png
 ```
 
 ## S3-Compatible Services
 
-Use with MinIO, DigitalOcean Spaces, or other S3-compatible services:
+Works with MinIO, DigitalOcean Spaces, Cloudflare R2, and other S3-compatible services:
+
+### MinIO
 
 ```typescript
-// MinIO
-const minioDriver = createS3Driver({
-  bucket: "my-bucket",
-  region: "us-east-1",
-  endpoint: "http://localhost:9000",
-  forcePathStyle: true,
-  credentials: {
-    accessKeyId: "minioadmin",
-    secretAccessKey: "minioadmin",
-  },
+import { createS3Driver } from "@minimajs/aws-s3";
+import { createDisk } from "@minimajs/disk";
+
+const disk = createDisk({
+  driver: createS3Driver({
+    bucket: "my-bucket",
+    region: "us-east-1",
+    endpoint: "http://localhost:9000",
+    forcePathStyle: true,
+    credentials: {
+      accessKeyId: "minioadmin",
+      secretAccessKey: "minioadmin",
+    },
+  }),
 });
 
-// DigitalOcean Spaces
-const spacesDriver = createS3Driver({
-  bucket: "my-space",
-  region: "nyc3",
-  endpoint: "https://nyc3.digitaloceanspaces.com",
-  credentials: {
-    accessKeyId: process.env.SPACES_KEY!,
-    secretAccessKey: process.env.SPACES_SECRET!,
-  },
+// Use same web-native API
+await disk.put("test.txt", "Hello MinIO");
+const file = await disk.get("test.txt");
+const text = await file.text();
+```
+
+### DigitalOcean Spaces
+
+```typescript
+const disk = createDisk({
+  driver: createS3Driver({
+    bucket: "my-space",
+    region: "nyc3",
+    endpoint: "https://nyc3.digitaloceanspaces.com",
+    credentials: {
+      accessKeyId: process.env.SPACES_KEY!,
+      secretAccessKey: process.env.SPACES_SECRET!,
+    },
+  }),
+});
+```
+
+### Cloudflare R2
+
+```typescript
+const disk = createDisk({
+  driver: createS3Driver({
+    bucket: "my-bucket",
+    region: "auto",
+    endpoint: `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+    },
+  }),
 });
 ```
 
 ## Performance Tips
 
-### Large Files
+### Streaming Large Files
 
-For large files, streaming is automatic:
+Streaming is automatic and efficient:
 
 ```typescript
-// Efficient - streams data
-const file = await disk.put("large-video.mp4", largeFileStream);
+// Efficient - streams upload to S3
+const largeFile = new File([largeBuffer], "video.mp4");
+await disk.put("videos/large-video.mp4", largeFile);
 
-// Efficient - streams download
-const downloaded = await disk.get("large-video.mp4");
-const stream = downloaded.stream();
+// Efficient - streams download from S3
+const downloaded = await disk.get("videos/large-video.mp4");
+const readableStream = downloaded.stream(); // Standard ReadableStream
+
+// Pipe to response (e.g., in HTTP server)
+return new Response(readableStream, {
+  headers: {
+    "Content-Type": downloaded.type,
+    "Content-Length": String(downloaded.size),
+  },
+});
 ```
 
 ### Concurrent Operations
 
-S3 handles concurrent operations well:
+S3 handles concurrent operations efficiently:
 
 ```typescript
 // Upload multiple files in parallel
-await Promise.all([disk.put("file1.txt", data1), disk.put("file2.txt", data2), disk.put("file3.txt", data3)]);
+await Promise.all([disk.put("file1.txt", "Data 1"), disk.put("file2.txt", "Data 2"), disk.put("file3.txt", "Data 3")]);
+
+// Download multiple files in parallel
+const [file1, file2, file3] = await Promise.all([disk.get("file1.txt"), disk.get("file2.txt"), disk.get("file3.txt")]);
 ```
 
 ## Error Handling
@@ -389,12 +488,20 @@ await Promise.all([disk.put("file1.txt", data1), disk.put("file2.txt", data2), d
 import { DiskFileNotFoundError, DiskWriteError, DiskReadError } from "@minimajs/disk";
 
 try {
-  await disk.get("missing.txt");
+  const file = await disk.get("missing.txt");
 } catch (error) {
   if (error instanceof DiskFileNotFoundError) {
     console.log("File not found in S3");
   } else if (error instanceof DiskReadError) {
     console.log("Failed to read from S3:", error.message);
+  }
+}
+
+try {
+  await disk.put("uploads/photo.jpg", imageBuffer);
+} catch (error) {
+  if (error instanceof DiskWriteError) {
+    console.log("Failed to upload to S3:", error.message);
   }
 }
 ```
@@ -409,12 +516,29 @@ export AWS_SECRET_ACCESS_KEY=your-secret-key
 export AWS_REGION=us-east-1
 ```
 
-### IAM Roles (EC2/ECS)
+Then in your code:
 
-When running on AWS infrastructure, use IAM roles instead of credentials:
+```typescript
+const disk = createDisk({
+  driver: createS3Driver({
+    bucket: "my-bucket",
+    region: process.env.AWS_REGION!,
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    },
+  }),
+});
+```
+
+### IAM Roles (EC2/ECS/Lambda)
+
+When running on AWS infrastructure, use IAM roles for automatic credential management:
 
 ```typescript
 import { fromInstanceMetadata } from "@aws-sdk/credential-providers";
+import { createS3Driver } from "@minimajs/aws-s3";
+import { createDisk } from "@minimajs/disk";
 
 const disk = createDisk({
   driver: createS3Driver({
@@ -429,6 +553,8 @@ const disk = createDisk({
 
 ```typescript
 import { fromIni } from "@aws-sdk/credential-providers";
+import { createS3Driver } from "@minimajs/aws-s3";
+import { createDisk } from "@minimajs/disk";
 
 const disk = createDisk({
   driver: createS3Driver({
@@ -439,20 +565,18 @@ const disk = createDisk({
 });
 ```
 
-## Comparison
+## Related Documentation
 
-| Feature       | S3              | Filesystem    | Memory     |
-| ------------- | --------------- | ------------- | ---------- |
-| Speed         | 🌐 Network      | 🚀 Fast       | ⚡ Fastest |
-| Scalability   | ♾️ Unlimited    | 📦 Limited    | 🔒 RAM     |
-| Redundancy    | ✅ Multi-region | ❌ Single     | ❌ None    |
-| Cost          | 💰💰 Usage      | 💰 Storage    | Free       |
-| Global Access | ✅ Worldwide    | ❌ Local only | ❌ Local   |
-| Use Case      | Production      | Development   | Testing    |
+- [Core Disk Package](./index.md) - Main documentation
+- [ProtoDisk](./protocol-disk.md) - Multi-cloud routing
+- [Azure Blob Driver](./azure-blob.md) - Azure Blob Storage
+- [Filesystem Driver](./filesystem.md) - Local filesystem storage
 
-## See Also
+## Key Benefits
 
-- [Main Documentation](./index.md)
-- [Protocol Disk](./protocol-disk.md) - Multi-bucket routing
-- [Filesystem Driver](./filesystem.md)
-- [Examples](./examples.md)
+✅ **Web-Native APIs** - Use familiar File, Blob, ReadableStream APIs  
+✅ **No AWS SDK Learning Curve** - Forget complex SDK methods  
+✅ **Provider Agnostic** - Same code works with filesystem, Azure, etc.  
+✅ **Type-Safe** - Full TypeScript support  
+✅ **Streaming** - Efficient large file handling  
+✅ **Multi-Cloud** - Easy to switch or combine providers

@@ -1,9 +1,10 @@
 # @minimajs/aws-s3
 
-AWS S3 storage driver for [@minimajs/disk](../disk).
+**AWS S3 storage driver for [@minimajs/disk](../disk).** Use web-native File APIs to interact with S3—forget the AWS SDK and its inconsistent APIs.
 
 ## Features
 
+- 🌐 **Web-Native APIs** - Use File, Blob, ReadableStream instead of AWS SDK methods
 - ✅ **Streaming uploads** - Efficient streaming uploads to S3
 - ✅ **Streaming downloads** - Direct streaming from S3 without buffering
 - ✅ **Presigned URLs** - Generate temporary signed URLs (optional peer dependency)

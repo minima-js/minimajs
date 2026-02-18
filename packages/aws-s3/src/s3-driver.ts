@@ -13,7 +13,6 @@ import {
 } from "@aws-sdk/client-s3";
 import type { DiskDriver, FileMetadata, PutOptions, ListOptions } from "@minimajs/disk";
 import { Readable } from "node:stream";
-import { lookup as lookupMimeType } from "mime-types";
 
 export interface S3DriverOptions extends S3ClientConfig {
   /** S3 bucket name (optional if bucket is in the href path) */
@@ -28,35 +27,44 @@ export interface S3DriverOptions extends S3ClientConfig {
   storageClass?: StorageClass;
   /** Default server-side encryption */
   serverSideEncryption?: ServerSideEncryption;
-  /** CDN URL (e.g., 'https://cdn.example.com' or 'https://d1234567890.cloudfront.net') */
-  cdnUrl?: string;
+  /** Public URL for serving files (e.g., CloudFront CDN URL) */
+  publicUrl?: string;
 }
 
 /**
- * Create an S3 storage driver for use with @minimajs/disk
+ * AWS S3 storage driver for @minimajs/disk
+ *
+ * Provides a web-native File API interface for AWS S3,
+ * eliminating the need to learn AWS SDK methods.
  *
  * @example
  * ```typescript
- * import { createS3Driver } from '@minimajs/aws-s3';
+ * import { S3Driver } from '@minimajs/aws-s3';
  * import { createDisk } from '@minimajs/disk';
  *
- * const s3Driver = createS3Driver({
+ * const driver = new S3Driver({
  *   bucket: 'my-bucket',
  *   region: 'us-east-1',
  *   credentials: {
- *     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
- *     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
- *   }
+ *     accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+ *     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+ *   },
+ *   publicUrl: 'https://d1234.cloudfront.net',
+ *   storageClass: 'STANDARD_IA',
  * });
  *
- * const disk = createDisk({ driver: s3Driver });
+ * const disk = createDisk({ driver });
+ *
+ * // Web-native API - works like browser File API
+ * const file = new File(['content'], 'test.txt');
+ * await disk.put(file); // Auto-generates filename
+ * await disk.put('photos/sunset.jpg', imageBuffer);
+ *
+ * const retrieved = await disk.get('photos/sunset.jpg');
+ * const arrayBuffer = await retrieved.arrayBuffer(); // Standard File.arrayBuffer()
  * ```
  */
-export function createS3Driver(options: S3DriverOptions): DiskDriver {
-  return new S3Driver(options);
-}
-
-class S3Driver implements DiskDriver {
+export class S3Driver implements DiskDriver {
   readonly name = "s3";
 
   private readonly client: S3Client;
@@ -66,11 +74,11 @@ class S3Driver implements DiskDriver {
   private readonly acl?: ObjectCannedACL;
   private readonly storageClass?: StorageClass;
   private readonly serverSideEncryption?: ServerSideEncryption;
-  private readonly cdnUrl?: string;
+  private readonly publicUrl?: string;
   private readonly s3Config: S3ClientConfig;
 
   constructor(options: S3DriverOptions) {
-    const { bucket, region, prefix = "", acl, storageClass, serverSideEncryption, cdnUrl, ...s3Config } = options;
+    const { bucket, region, prefix = "", acl, storageClass, serverSideEncryption, publicUrl, ...s3Config } = options;
 
     this.bucket = bucket;
     this.region = region;
@@ -78,7 +86,7 @@ class S3Driver implements DiskDriver {
     this.acl = acl;
     this.storageClass = storageClass;
     this.serverSideEncryption = serverSideEncryption;
-    this.cdnUrl = cdnUrl;
+    this.publicUrl = publicUrl;
     this.s3Config = s3Config;
     this.client = new S3Client({ region, ...s3Config });
   }
@@ -87,18 +95,18 @@ class S3Driver implements DiskDriver {
    * Extract bucket and S3 key from href
    * Supports:
    * - s3://bucket/key (when bucket is not in constructor)
-   * - https://cdn.example.com/key (when CDN URL is configured)
+   * - https://cdn.example.com/key (when public URL is configured)
    * - key (when bucket is in constructor)
    */
   private hrefToKey(href: string): { bucket: string; key: string } {
-    // Handle CDN URL - convert back to S3 key
-    if (this.cdnUrl && href.startsWith(this.cdnUrl)) {
+    // Handle public URL - convert back to S3 key
+    if (this.publicUrl && href.startsWith(this.publicUrl)) {
       if (!this.bucket) {
-        throw new Error("Bucket must be specified in driver config when using CDN URLs");
+        throw new Error("Bucket must be specified in driver config when using public URLs");
       }
 
-      // Remove CDN URL prefix and leading slash
-      const key = href.slice(this.cdnUrl.length).replace(/^\/+/, "");
+      // Remove public URL prefix and leading slash
+      const key = href.slice(this.publicUrl.length).replace(/^\/+/, "");
 
       if (!key) {
         throw new Error("S3 key cannot be empty");
@@ -151,7 +159,7 @@ class S3Driver implements DiskDriver {
     return `s3://${bucket}/${key}`;
   }
 
-  async put(href: string, stream: ReadableStream<Uint8Array>, putOptions?: PutOptions): Promise<FileMetadata> {
+  async put(href: string, stream: ReadableStream<Uint8Array>, putOptions: PutOptions): Promise<FileMetadata> {
     const { bucket, key } = this.hrefToKey(href);
     const fullKey = this.buildKey(key);
 
@@ -169,7 +177,7 @@ class S3Driver implements DiskDriver {
       Bucket: bucket,
       Key: fullKey,
       Body: nodeStream,
-      ContentType: putOptions?.type || lookupMimeType(key) || "application/octet-stream",
+      ContentType: putOptions.type,
       Metadata: metadata,
       ACL: this.acl,
       StorageClass: this.storageClass,
@@ -218,7 +226,7 @@ class S3Driver implements DiskDriver {
       const metadata: FileMetadata = {
         href: this.keyToHref(bucket, fullKey),
         size: response.ContentLength || 0,
-        type: response.ContentType || "application/octet-stream",
+        type: response.ContentType,
         lastModified: response.LastModified?.getTime() || Date.now(),
         metadata: response.Metadata,
       };
@@ -268,9 +276,9 @@ class S3Driver implements DiskDriver {
     const { bucket, key } = this.hrefToKey(href);
     const fullKey = this.buildKey(key);
 
-    // If CDN URL is configured, return CDN URL
-    if (this.cdnUrl) {
-      return `${this.cdnUrl}/${fullKey}`;
+    // If public URL is configured, return public URL
+    if (this.publicUrl) {
+      return `${this.publicUrl}/${fullKey}`;
     }
 
     // If custom endpoint is configured
@@ -368,10 +376,12 @@ class S3Driver implements DiskDriver {
         for (const item of response.Contents) {
           if (!item.Key) continue;
 
+          // Note: ListObjectsV2 doesn't return ContentType
+          // We'd need HeadObject for accurate type, but that's expensive
+          // For now, return undefined and let consumer fetch metadata if needed
           yield {
             href: this.keyToHref(bucket, item.Key),
             size: item.Size || 0,
-            type: lookupMimeType(item.Key) || "application/octet-stream",
             lastModified: item.LastModified?.getTime() || Date.now(),
           };
 
@@ -401,7 +411,7 @@ class S3Driver implements DiskDriver {
       return {
         href: this.keyToHref(bucket, fullKey),
         size: response.ContentLength || 0,
-        type: response.ContentType || "application/octet-stream",
+        type: response.ContentType,
         lastModified: response.LastModified?.getTime() || Date.now(),
         metadata: response.Metadata,
       };

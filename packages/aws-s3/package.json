@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "type": "module",
   "private": true,
-  "description": "AWS S3 storage driver for @minimajs/disk",
+  "description": "AWS S3 storage driver for @minimajs/disk—use web-native File APIs instead of AWS SDK",
   "main": "./lib/index.js",
   "exports": {
     ".": "./lib/index.js"
@@ -16,20 +16,13 @@
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.990.0",
-    "@minimajs/disk": "workspace:*",
-    "mime-types": "^3.0.2"
+    "@aws-sdk/client-s3": "^3.990.0"
   },
   "peerDependencies": {
-    "@aws-sdk/s3-request-presigner": "^3.990.0"
-  },
-  "peerDependenciesMeta": {
-    "@aws-sdk/s3-request-presigner": {
-      "optional": true
-    }
+    "@minimajs/disk": ">=0.0.1"
   },
   "devDependencies": {
-    "@types/mime-types": "^3.0.1",
+    "@minimajs/disk": "workspace:*",
     "@types/node": "^25.0.3",
     "typescript": "^5.7.3"
   },
@@ -42,7 +35,7 @@
     "file-upload",
     "cloud-storage"
   ],
-  "author": "MinimaJS Team",
+  "author": "Adil <adil.sudo@gmail.com>",
   "files": [
     "lib"
   ],

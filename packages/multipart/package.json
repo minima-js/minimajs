@@ -39,6 +39,7 @@
       "optional": true
     }
   },
+  "author": "Adil <adil.sudo@gmail.com>",
   "files": [
     "lib"
   ]

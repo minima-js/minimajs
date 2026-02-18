@@ -1,9 +1,10 @@
 # @minimajs/azure-blob
 
-Azure Blob Storage driver for [@minimajs/disk](../disk).
+**Azure Blob Storage driver for [@minimajs/disk](../disk).** Use web-native File APIs to interact with Azure Blob—forget the Azure SDK and its inconsistent APIs.
 
 ## Features
 
+- 🌐 **Web-Native APIs** - Use File, Blob, ReadableStream instead of Azure SDK methods
 - ✅ **Streaming uploads** - Efficient streaming uploads to Azure Blob Storage
 - ✅ **Streaming downloads** - Direct streaming from Azure without buffering
 - ✅ **SAS URLs** - Generate shared access signature URLs

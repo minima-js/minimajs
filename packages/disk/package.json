@@ -3,9 +3,11 @@
   "version": "0.0.0",
   "type": "module",
   "private": true,
+  "description": "Web-native File API for any storage provider. Interact with filesystem, S3, Azure Blob, and more using consistent APIs—forget provider-specific SDKs.",
   "main": "./lib/index.js",
   "exports": {
-    ".": "./lib/index.js"
+    ".": "./lib/index.js",
+    "./adapters": "./lib/adapters/index.js"
   },
   "scripts": {
     "dev": "tsc -w --preserveWatchOutput",
@@ -22,6 +24,19 @@
   "dependencies": {
     "mime-types": "^3.0.2"
   },
+  "keywords": [
+    "minimajs",
+    "disk",
+    "storage",
+    "filesystem",
+    "s3",
+    "azure",
+    "file-upload",
+    "cloud-storage",
+    "driver"
+  ],
+  "author": "Adil <adil.sudo@gmail.com>",
+  "license": "MIT",
   "files": [
     "lib"
   ]

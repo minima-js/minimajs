@@ -1,16 +1,17 @@
 # @minimajs/disk
 
-Universal disk storage abstraction with support for multiple storage backends.
+**Web-native File API for any storage provider.** Interact with filesystem, S3, Azure Blob, and more using consistent APIs—forget the inconsistency of dealing with multiple providers using different SDKs.
 
 ## Features
 
-- ✅ **Unified API** - Same interface for all storage backends
+- 🌐 **Web-Native APIs** - Use familiar File, Blob, and ReadableStream APIs across all storage providers
+- 🔄 **Universal Interface** - Write once, deploy anywhere—switch storage backends without changing code
+- 🚀 **Zero Provider Lock-in** - No need to learn provider-specific SDKs (AWS SDK, Azure SDK, etc.)
 - ✅ **Type-Safe** - Full TypeScript support with strict types
-- ✅ **Streaming** - Efficient handling of large files
-- ✅ **Protocol Routing** - Route by URL prefix (s3://, file://, etc.)
-- ✅ **Web Standards** - Works with File, Blob, and ReadableStream
-- ✅ **Error Handling** - Typed error classes for better error management
-- ✅ **Metadata** - Attach custom metadata to files
+- 📦 **Streaming** - Efficient handling of large files
+- 🎯 **Protocol Routing** - Route by URL prefix (s3://, file://, azure://, etc.)
+- 🏷️ **Metadata** - Attach custom metadata to files
+- ⚡ **Error Handling** - Typed error classes for better error management
 
 ## Installation
 

@@ -1,5 +1,5 @@
 import { describe, beforeEach, it, expect, jest } from "@jest/globals";
-import { createProtoDisk } from "../proto-disk.js";
+import { createProtoDisk } from "../index.js";
 import { createMemoryDriver } from "../adapters/memory.js";
 import type { DiskDriver } from "../types.js";
 

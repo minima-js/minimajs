@@ -26,6 +26,7 @@
   "peerDependencies": {
     "@minimajs/server": ">=0.3.0"
   },
+  "author": "Adil <adil.sudo@gmail.com>",
   "files": [
     "lib"
   ]

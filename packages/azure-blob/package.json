@@ -3,8 +3,11 @@
   "version": "0.0.0",
   "type": "module",
   "private": true,
+  "description": "Azure Blob Storage driver for @minimajs/disk—use web-native File APIs instead of Azure SDK",
   "main": "./lib/index.js",
-  "exports": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js"
+  },
   "scripts": {
     "dev": "tsc -w --preserveWatchOutput",
     "build": "tsc -p ./tsconfig.build.json",
@@ -13,19 +16,26 @@
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "devDependencies": {
-    "@types/mime-types": "^3.0.1",
-    "@types/node": "^25.0.3",
-    "@types/uuid": "^11.0.0"
+    "@minimajs/disk": "workspace:*",
+    "@types/node": "^25.0.3"
   },
   "dependencies": {
-    "@azure/storage-blob": "^12.29.1",
-    "@minimajs/disk": "workspace:*",
-    "mime-types": "^3.0.2",
-    "uuid": "^13.0.0"
+    "@azure/storage-blob": "^12.29.1"
   },
   "peerDependencies": {
-    "@minimajs/disk": ">=0.1.0"
+    "@minimajs/disk": ">=0.0.1"
   },
+  "keywords": [
+    "minimajs",
+    "disk",
+    "storage",
+    "azure",
+    "azure-blob",
+    "file-upload",
+    "cloud-storage"
+  ],
+  "author": "Adil <adil.sudo@gmail.com>",
+  "license": "MIT",
   "files": [
     "lib"
   ]

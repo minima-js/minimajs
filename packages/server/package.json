@@ -75,5 +75,6 @@
     "router",
     "app",
     "api"
-  ]
+  ],
+  "author": "Adil <adil.sudo@gmail.com>"
 }

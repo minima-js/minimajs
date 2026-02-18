@@ -10,15 +10,17 @@ import type {
   FileMetadata,
 } from "./types.js";
 import { DiskFile } from "./file.js";
-import { toReadableStream, resolveContentType } from "./helpers.js";
+import { toReadableStream, getMimeType } from "./helpers.js";
 import { DiskReadError, DiskFileNotFoundError, DiskMetadataError, DiskConfigError } from "./errors.js";
 import { pathToFileURL } from "node:url";
+import { randomUUID } from "node:crypto";
+import { extname, basename } from "node:path";
 
 /**
  * Proto disk implementation that routes operations to different drivers
  * based on URL prefixes (protocol + optional base path).
  */
-class ProtoDisk implements Disk {
+export class ProtoDisk implements Disk<DiskDriver> {
   readonly driver: DiskDriver;
   private readonly protocols: Record<string, DiskDriver>;
   private readonly defaultProtocol: string;
@@ -46,7 +48,7 @@ class ProtoDisk implements Disk {
   /**
    * Get driver for a given href based on longest matching prefix
    */
-  private getDriver(href: string): DiskDriver {
+  public getDriver(href: string): DiskDriver {
     // Find the longest matching prefix
     for (const prefix of this.sortedPrefixes) {
       if (href.startsWith(prefix)) {
@@ -76,24 +78,45 @@ class ProtoDisk implements Disk {
     return `${this.defaultProtocol}${this.basePath ? `${this.basePath}/` : ""}${normalizedPath}`;
   }
 
-  async put(path: string, data: DiskData, putOptions?: PutOptions): Promise<DiskFile> {
+  // Overload: put with File auto-generates path
+  async put(data: File, putOptions?: PutOptions): Promise<DiskFile>;
+  async put(path: string, data: DiskData, putOptions?: PutOptions): Promise<DiskFile>;
+  async put(pathOrData: string | File, dataOrOptions?: DiskData | PutOptions, putOptions?: PutOptions): Promise<DiskFile> {
+    // Check if first argument is a File - auto-generate filename
+    if (pathOrData instanceof File) {
+      const ext = extname(pathOrData.name);
+      const generatedPath = `${randomUUID()}${ext}`;
+      const mergedOptions: PutOptions = (dataOrOptions as PutOptions) ?? {};
+      mergedOptions.type ??= pathOrData.type;
+      return this.put(generatedPath, pathOrData, mergedOptions);
+    }
+
+    // Standard usage: path + data
+    const path = pathOrData as string;
+    const data = dataOrOptions as DiskData;
+    const options = { ...putOptions };
+
     const href = this.toHref(path);
     const driver = this.getDriver(href);
 
     // Convert data to ReadableStream
     const stream = toReadableStream(data);
 
-    // Resolve content type
-    const contentType = resolveContentType(data, putOptions);
+    // Resolve content type from Blob or file extension
+    if (!options.type) {
+      if (data instanceof Blob) {
+        options.type = data.type;
+      } else {
+        // Extract MIME type from file path extension
+        options.type = getMimeType(path);
+      }
+    }
 
     // Call driver with stream
-    const metadata = await driver.put(href, stream, {
-      ...putOptions,
-      type: contentType,
-    });
+    const metadata = await driver.put(href, stream, options);
 
     // Create DiskFile from metadata
-    const filename = path.split("/").pop() || path;
+    const filename = basename(path);
     return new DiskFile(filename, {
       href: metadata.href,
       size: metadata.size,
@@ -120,11 +143,11 @@ class ProtoDisk implements Disk {
     // Track if the first stream has been consumed
     let firstStreamUsed = false;
 
-    const filename = path.split("/").pop() || path;
+    const filename = basename(path);
     return new DiskFile(filename, {
       href: metadata.href,
       size: metadata.size,
-      type: metadata.type,
+      type: metadata.type || getMimeType(metadata.href),
       lastModified: metadata.lastModified,
       metadata: metadata.metadata,
       stream: async () => {
@@ -175,11 +198,11 @@ class ProtoDisk implements Disk {
       const metadata = await destDriver.getMetadata(toHrefResolved);
       if (!metadata) throw new DiskMetadataError(toHrefResolved, "Failed to get metadata for copied file");
 
-      const filename = to.split("/").pop() || to;
+      const filename = basename(to);
       return new DiskFile(filename, {
         href: metadata.href,
         size: metadata.size,
-        type: metadata.type,
+        type: metadata.type || getMimeType(metadata.href),
         lastModified: metadata.lastModified,
         metadata: metadata.metadata,
         stream: async () => {
@@ -198,21 +221,17 @@ class ProtoDisk implements Disk {
     const [stream, sourceMetadata] = result;
 
     // Copy to destination with source metadata
-    await destDriver.put(toHrefResolved, stream, {
+    const metadata = await destDriver.put(toHrefResolved, stream, {
       type: sourceMetadata.type,
       lastModified: sourceMetadata.lastModified,
       metadata: sourceMetadata.metadata,
     });
 
-    // Get metadata of the newly copied file
-    const metadata = await destDriver.getMetadata(toHrefResolved);
-    if (!metadata) throw new DiskMetadataError(toHrefResolved, "Failed to get metadata for copied file");
-
-    const filename = to.split("/").pop() || to;
+    const filename = basename(to);
     return new DiskFile(filename, {
       href: metadata.href,
       size: metadata.size,
-      type: metadata.type,
+      type: metadata.type || getMimeType(metadata.href),
       lastModified: metadata.lastModified,
       metadata: metadata.metadata,
       stream: async () => {
@@ -239,11 +258,11 @@ class ProtoDisk implements Disk {
       const metadata = await destDriver.getMetadata(toHrefResolved);
       if (!metadata) throw new DiskMetadataError(toHrefResolved, "Failed to get metadata for moved file");
 
-      const filename = to.split("/").pop() || to;
+      const filename = basename(to);
       return new DiskFile(filename, {
         href: metadata.href,
         size: metadata.size,
-        type: metadata.type,
+        type: metadata.type || getMimeType(metadata.href),
         lastModified: metadata.lastModified,
         metadata: metadata.metadata,
         stream: async () => {
@@ -262,7 +281,7 @@ class ProtoDisk implements Disk {
     const [stream, sourceMetadata] = result;
 
     // Copy to destination
-    await destDriver.put(toHrefResolved, stream, {
+    const metadata = await destDriver.put(toHrefResolved, stream, {
       type: sourceMetadata.type,
       lastModified: sourceMetadata.lastModified,
       metadata: sourceMetadata.metadata,
@@ -271,15 +290,11 @@ class ProtoDisk implements Disk {
     // Delete source
     await sourceDriver.delete(fromHref);
 
-    // Get metadata of the newly moved file
-    const metadata = await destDriver.getMetadata(toHrefResolved);
-    if (!metadata) throw new DiskMetadataError(toHrefResolved, "Failed to get metadata for moved file");
-
-    const filename = to.split("/").pop() || to;
+    const filename = basename(to);
     return new DiskFile(filename, {
       href: metadata.href,
       size: metadata.size,
-      type: metadata.type,
+      type: metadata.type || getMimeType(metadata.href),
       lastModified: metadata.lastModified,
       metadata: metadata.metadata,
       stream: async () => {
@@ -299,11 +314,11 @@ class ProtoDisk implements Disk {
       const driver = this.getDriver(prefixHref);
 
       for await (const metadata of driver.list(prefixHref, listOptions)) {
-        const filename = metadata.href.split("/").pop() || "unknown";
+        const filename = basename(metadata.href);
         yield new DiskFile(filename, {
           href: metadata.href,
           size: metadata.size,
-          type: metadata.type,
+          type: metadata.type || getMimeType(metadata.href),
           lastModified: metadata.lastModified,
           metadata: metadata.metadata,
           stream: async () => {
@@ -321,11 +336,11 @@ class ProtoDisk implements Disk {
     for (const [_protocol, driver] of Object.entries(this.protocols)) {
       try {
         for await (const metadata of driver.list(undefined, listOptions)) {
-          const filename = metadata.href.split("/").pop() || "unknown";
+          const filename = basename(metadata.href);
           yield new DiskFile(filename, {
             href: metadata.href,
             size: metadata.size,
-            type: metadata.type,
+            type: metadata.type || getMimeType(metadata.href),
             lastModified: metadata.lastModified,
             metadata: metadata.metadata,
             stream: async () => {
@@ -353,40 +368,4 @@ class ProtoDisk implements Disk {
     const driver = this.getDriver(href);
     return driver.getMetadata(href);
   }
-}
-
-/**
- * Create a proto disk instance that routes operations to different drivers
- * based on URL prefixes (protocol + optional base path).
- *
- * Supports granular routing by matching longest prefix first:
- * - Protocol-only: 'file://', 's3://', 'https://'
- * - Bucket-specific: 's3://images-bucket/', 's3://videos-bucket/'
- * - Domain-specific: 'https://cdn1.example.com/', 'https://cdn2.example.com/'
- *
- * @example
- * ```typescript
- * const disk = createProtoDisk({
- *   protocols: {
- *     'file://': fsDriver,
- *     's3://images-bucket/': s3ImagesDriver,
- *     's3://videos-bucket/': s3VideosDriver,
- *     'https://cdn.example.com/': azureDriver
- *   },
- *   defaultProtocol: 'file://',
- *   basePath: '/uploads'
- * });
- *
- * // Routes to s3ImagesDriver
- * await disk.put('s3://images-bucket/avatar.jpg', file);
- *
- * // Routes to s3VideosDriver
- * await disk.put('s3://videos-bucket/intro.mp4', file);
- *
- * // Cross-storage copy between different buckets
- * await disk.copy('s3://images-bucket/file.jpg', 's3://videos-bucket/file.jpg');
- * ```
- */
-export function createProtoDisk(options: ProtoDiskOptions): Disk {
-  return new ProtoDisk(options);
 }

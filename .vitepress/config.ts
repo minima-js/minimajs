@@ -190,6 +190,16 @@ const config = defineConfig({
             ],
           },
           { text: "Cookie", link: "/packages/cookie" },
+          {
+            text: "Disk",
+            collapsed: false,
+            items: [
+              { text: "Overview", link: "/packages/disk/" },
+              { text: "AWS S3", link: "/packages/disk/aws-s3" },
+              { text: "Azure Blob", link: "/packages/disk/azure-blob" },
+              { text: "Filesystem", link: "/packages/disk/filesystem" },
+            ],
+          },
         ],
       },
       {

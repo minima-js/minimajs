@@ -1,8 +1,9 @@
 import type { Disk, DiskDriver, DiskData, PutOptions, UrlOptions, ListOptions, FileSource } from "./types.js";
 import { DiskFile } from "./file.js";
-import { toReadableStream, resolveContentType } from "./helpers.js";
+import { toReadableStream, getMimeType } from "./helpers.js";
 import { DiskReadError, DiskMetadataError } from "./errors.js";
-import { createFsDriver, FsDriver } from "./adapters/fs.js";
+import { randomUUID } from "node:crypto";
+import { extname, basename } from "node:path";
 
 export interface CreateDiskOptions<TDriver extends DiskDriver = DiskDriver> {
   driver?: TDriver;
@@ -12,28 +13,49 @@ export interface CreateDiskOptions<TDriver extends DiskDriver = DiskDriver> {
  * Disk implementation that wraps a driver
  * Paths are passed directly to the driver for interpretation
  */
-class DiskImpl<TDriver extends DiskDriver = DiskDriver> implements Disk<TDriver> {
+export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Disk<TDriver> {
   readonly driver: TDriver;
 
   constructor(driver: TDriver) {
     this.driver = driver;
   }
 
-  async put(path: string, data: DiskData, putOptions?: PutOptions): Promise<DiskFile> {
+  // Overload: put with File auto-generates path
+  async put(data: File, putOptions?: PutOptions): Promise<DiskFile>;
+  async put(path: string, data: DiskData, putOptions?: PutOptions): Promise<DiskFile>;
+  async put(pathOrData: string | File, dataOrOptions?: DiskData | PutOptions, putOptions?: PutOptions): Promise<DiskFile> {
+    // Check if first argument is a File - auto-generate filename
+    if (pathOrData instanceof File) {
+      const ext = extname(pathOrData.name);
+      const generatedPath = `${randomUUID()}${ext}`;
+      const mergedOptions: PutOptions = (dataOrOptions as PutOptions) ?? {};
+      mergedOptions.type ??= pathOrData.type;
+      return this.put(generatedPath, pathOrData, mergedOptions);
+    }
+
+    // Standard usage: path + data
+    const path = pathOrData as string;
+    const data = dataOrOptions as DiskData;
+    const options = { ...putOptions };
+
     // Convert data to ReadableStream
     const stream = toReadableStream(data);
 
-    // Resolve content type from FilePropertyBag.type
-    const contentType = resolveContentType(data, putOptions);
+    // Resolve content type from Blob or file extension
+    if (!options.type) {
+      if (data instanceof Blob) {
+        options.type = data.type;
+      } else {
+        // Extract MIME type from file path extension
+        options.type = getMimeType(path);
+      }
+    }
 
     // Call driver with path directly
-    const metadata = await this.driver.put(path, stream, {
-      ...putOptions,
-      type: contentType,
-    });
+    const metadata = await this.driver.put(path, stream, options);
 
     // Create DiskFile from metadata
-    const filename = path.split("/").pop() || path;
+    const filename = basename(path);
     return new DiskFile(filename, {
       href: metadata.href,
       size: metadata.size,
@@ -57,11 +79,11 @@ class DiskImpl<TDriver extends DiskDriver = DiskDriver> implements Disk<TDriver>
     // Track if the first stream has been consumed
     let firstStreamUsed = false;
 
-    const filename = path.split("/").pop() || path;
+    const filename = basename(path);
     return new DiskFile(filename, {
       href: metadata.href,
       size: metadata.size,
-      type: metadata.type,
+      type: metadata.type || getMimeType(metadata.href),
       lastModified: metadata.lastModified,
       metadata: metadata.metadata,
       stream: async () => {
@@ -99,11 +121,11 @@ class DiskImpl<TDriver extends DiskDriver = DiskDriver> implements Disk<TDriver>
     const metadata = await this.driver.getMetadata(to);
     if (!metadata) throw new DiskMetadataError(to, "Failed to get metadata for copied file");
 
-    const filename = to.split("/").pop() || to;
+    const filename = basename(to);
     return new DiskFile(filename, {
       href: metadata.href,
       size: metadata.size,
-      type: metadata.type,
+      type: metadata.type || getMimeType(metadata.href),
       lastModified: metadata.lastModified,
       metadata: metadata.metadata,
       stream: async () => {
@@ -123,11 +145,11 @@ class DiskImpl<TDriver extends DiskDriver = DiskDriver> implements Disk<TDriver>
     const metadata = await this.driver.getMetadata(to);
     if (!metadata) throw new DiskMetadataError(to, "Failed to get metadata for moved file");
 
-    const filename = to.split("/").pop() || to;
+    const filename = basename(to);
     return new DiskFile(filename, {
       href: metadata.href,
       size: metadata.size,
-      type: metadata.type,
+      type: metadata.type || getMimeType(metadata.href),
       lastModified: metadata.lastModified,
       metadata: metadata.metadata,
       stream: async () => {
@@ -140,11 +162,11 @@ class DiskImpl<TDriver extends DiskDriver = DiskDriver> implements Disk<TDriver>
 
   async *list(prefix?: string, listOptions?: ListOptions): AsyncIterable<DiskFile> {
     for await (const metadata of this.driver.list(prefix, listOptions)) {
-      const filename = metadata.href.split("/").pop() || "unknown";
+      const filename = basename(metadata.href);
       yield new DiskFile(filename, {
         href: metadata.href,
         size: metadata.size,
-        type: metadata.type,
+        type: metadata.type || getMimeType(metadata.href),
         lastModified: metadata.lastModified,
         metadata: metadata.metadata,
         stream: async () => {
@@ -164,28 +186,4 @@ class DiskImpl<TDriver extends DiskDriver = DiskDriver> implements Disk<TDriver>
   async getMetadata(path: string): Promise<import("./types.js").FileMetadata | null> {
     return this.driver.getMetadata(path);
   }
-}
-
-/**
- * Create a Disk instance that wraps a driver
- * Paths are passed directly to the driver for interpretation
- *
- * @example
- * ```typescript
- * import { createDisk, createFsDriver } from '@minimajs/disk';
- *
- * // With custom driver
- * const disk = createDisk({
- *   driver: createFsDriver({ root: '/tmp/uploads' })
- * });
- *
- * // With default filesystem driver (uses cwd)
- * const disk = createDisk();
- *
- * await disk.put('avatar.jpg', imageData);
- * ```
- */
-export function createDisk<TDriver extends DiskDriver = FsDriver>(options: CreateDiskOptions<TDriver> = {}): Disk<TDriver> {
-  const driver = (options.driver ?? createFsDriver({ root: process.cwd() })) as TDriver;
-  return new DiskImpl(driver);
 }

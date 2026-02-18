@@ -74,7 +74,7 @@ export interface DiskDriver {
    * @param options - Optional metadata and content type
    * @returns FileMetadata about the stored file
    */
-  put(href: string, stream: ReadableStream<Uint8Array>, options?: PutOptions): Promise<FileMetadata>;
+  put(href: string, stream: ReadableStream<Uint8Array>, options: PutOptions): Promise<FileMetadata>;
 
   /**
    * Retrieve file as a ReadableStream with metadata
@@ -142,6 +142,7 @@ export interface Disk<TDriver extends DiskDriver = DiskDriver> extends AsyncIter
    * Store data at the given key
    * Converts various data types to ReadableStream for the driver
    */
+  put(data: File, options?: PutOptions): Promise<DiskFile>;
   put(key: string, data: DiskData, options?: PutOptions): Promise<DiskFile>;
 
   /**

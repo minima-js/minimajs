@@ -27,6 +27,7 @@
     "ts-jest": "^29.4.6",
     "typescript": "^5.9.3"
   },
+  "author": "Adil <adil.sudo@gmail.com>",
   "files": [
     "lib"
   ]

@@ -5,7 +5,6 @@ import { createReadStream, createWriteStream } from "node:fs";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import type { DiskDriver, PutOptions, UrlOptions, ListOptions, FileMetadata } from "../types.js";
-import { getMimeType } from "../helpers.js";
 
 export interface FsDriverOptions {
   /** Root directory for file storage */
@@ -27,9 +26,24 @@ export class FsDriver implements DiskDriver {
     this.publicUrl = options.publicUrl;
   }
 
-  async put(href: string, stream: ReadableStream<Uint8Array>, putOptions?: PutOptions): Promise<FileMetadata> {
+  /**
+   * Convert href to local file path
+   * Handles both file:// URLs and public URLs
+   */
+  private hrefToPath(href: string): string {
+    // If public URL is configured and href starts with it, convert to file path
+    if (this.publicUrl && href.startsWith(this.publicUrl)) {
+      const relativePath = href.slice(this.publicUrl.length).replace(/^\/+/, "");
+      return resolve(this.root, relativePath);
+    }
+
+    // Handle file:// protocol
     const filepath = fileURLToPath(href);
-    const destination = resolve(this.root, relative("/", filepath));
+    return resolve(this.root, relative("/", filepath));
+  }
+
+  async put(href: string, stream: ReadableStream<Uint8Array>, putOptions: PutOptions): Promise<FileMetadata> {
+    const destination = this.hrefToPath(href);
 
     await mkdir(dirname(destination), { recursive: true });
 
@@ -41,15 +55,14 @@ export class FsDriver implements DiskDriver {
     return {
       href: pathToFileURL(destination).href,
       size: stats.size,
-      type: putOptions?.type ?? getMimeType(destination),
+      type: putOptions.type,
       lastModified: stats.mtime.getTime(),
-      metadata: putOptions?.metadata,
+      metadata: putOptions.metadata,
     };
   }
 
   async get(href: string): Promise<[ReadableStream<Uint8Array>, FileMetadata] | null> {
-    const filepath = fileURLToPath(href);
-    const destination = resolve(this.root, relative("/", filepath));
+    const destination = this.hrefToPath(href);
 
     try {
       const stats = await stat(destination);
@@ -61,7 +74,6 @@ export class FsDriver implements DiskDriver {
       const metadata: FileMetadata = {
         href: pathToFileURL(destination).href,
         size: stats.size,
-        type: getMimeType(destination),
         lastModified: stats.mtime.getTime(),
       };
 
@@ -72,14 +84,12 @@ export class FsDriver implements DiskDriver {
   }
 
   async delete(href: string): Promise<void> {
-    const filepath = fileURLToPath(href);
-    const destination = resolve(this.root, relative("/", filepath));
+    const destination = this.hrefToPath(href);
     await rm(destination, { force: true });
   }
 
   async exists(href: string): Promise<boolean> {
-    const filepath = fileURLToPath(href);
-    const destination = resolve(this.root, relative("/", filepath));
+    const destination = this.hrefToPath(href);
     try {
       await access(destination);
       return true;
@@ -92,26 +102,22 @@ export class FsDriver implements DiskDriver {
     if (!this.publicUrl) {
       throw new Error("publicUrl is required to generate a url");
     }
-    const filepath = fileURLToPath(href);
-    const relativePath = relative(this.root, resolve(this.root, relative("/", filepath)));
+    const destination = this.hrefToPath(href);
+    const relativePath = relative(this.root, destination);
     return `${this.publicUrl.replace(/\/$/, "")}/${relativePath}`;
   }
 
   async copy(from: string, to: string): Promise<void> {
-    const srcPath = fileURLToPath(from);
-    const destPath = fileURLToPath(to);
-    const srcDest = resolve(this.root, relative("/", srcPath));
-    const destDest = resolve(this.root, relative("/", destPath));
+    const srcDest = this.hrefToPath(from);
+    const destDest = this.hrefToPath(to);
 
     await mkdir(dirname(destDest), { recursive: true });
     await copyFile(srcDest, destDest);
   }
 
   async move(from: string, to: string): Promise<void> {
-    const srcPath = fileURLToPath(from);
-    const destPath = fileURLToPath(to);
-    const srcDest = resolve(this.root, relative("/", srcPath));
-    const destDest = resolve(this.root, relative("/", destPath));
+    const srcDest = this.hrefToPath(from);
+    const destDest = this.hrefToPath(to);
 
     await mkdir(dirname(destDest), { recursive: true });
     await rename(srcDest, destDest);
@@ -141,7 +147,6 @@ export class FsDriver implements DiskDriver {
           yield {
             href: pathToFileURL(fullPath).href,
             size: stats.size,
-            type: getMimeType(fullPath),
             lastModified: stats.mtime.getTime(),
           };
           count++;
@@ -155,14 +160,12 @@ export class FsDriver implements DiskDriver {
   }
 
   async getMetadata(href: string): Promise<FileMetadata | null> {
-    const filepath = fileURLToPath(href);
-    const destination = resolve(this.root, relative("/", filepath));
+    const destination = this.hrefToPath(href);
 
     try {
       const stats = await stat(destination);
       return {
         href: pathToFileURL(destination).href,
-        type: getMimeType(destination),
         size: stats.size,
         lastModified: stats.mtime.getTime(),
       };
