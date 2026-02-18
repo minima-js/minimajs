@@ -1,6 +1,5 @@
 import {
   S3Client,
-  PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
   HeadObjectCommand,
@@ -11,6 +10,7 @@ import {
   type StorageClass,
   type ServerSideEncryption,
 } from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
 import type { DiskDriver, FileMetadata, PutOptions, ListOptions } from "@minimajs/disk";
 import { Readable } from "node:stream";
 
@@ -162,30 +162,29 @@ export class S3Driver implements DiskDriver {
   async put(href: string, stream: ReadableStream<Uint8Array>, putOptions: PutOptions): Promise<FileMetadata> {
     const { bucket, key } = this.hrefToKey(href);
     const fullKey = this.buildKey(key);
-
     // Convert ReadableStream to Node.js Readable
     const nodeStream = Readable.fromWeb(stream);
 
     // Prepare metadata
     const metadata: Record<string, string> = {};
-    if (putOptions?.metadata) {
+    if (putOptions.metadata) {
       Object.assign(metadata, putOptions.metadata);
     }
 
-    // Upload using PutObjectCommand
-    const command = new PutObjectCommand({
-      Bucket: bucket,
-      Key: fullKey,
-      Body: nodeStream,
-      ContentType: putOptions.type,
-      Metadata: metadata,
-      ACL: this.acl,
-      StorageClass: this.storageClass,
-      ServerSideEncryption: this.serverSideEncryption,
-      CacheControl: putOptions?.cacheControl,
-    });
-
-    await this.client.send(command);
+    await new Upload({
+      client: this.client,
+      params: {
+        Bucket: bucket,
+        Key: fullKey,
+        Body: nodeStream,
+        ContentType: putOptions.type,
+        Metadata: metadata,
+        ACL: this.acl,
+        StorageClass: this.storageClass,
+        ServerSideEncryption: this.serverSideEncryption,
+        CacheControl: putOptions?.cacheControl,
+      },
+    }).done();
 
     // Get metadata of uploaded file
     const headCommand = new HeadObjectCommand({
