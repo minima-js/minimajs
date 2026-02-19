@@ -268,6 +268,7 @@ Learn more: [Error Handling Guide](/guides/error-handling)
 
 You now have a working Minima.js application! Here's what to explore next:
 
+- **[Task Board Tutorial](/tutorial/)** - Build a complete REST API from scratch
 - **[Module Tutorial](/core-concepts/modules)** - Step-by-step guide to structuring your app
 - **[JWT Authentication Recipe](/cookbook/jwt-authentication)** - Add auth in 5 minutes
 - **[Hooks Guide](/guides/hooks)** - Master the lifecycle system

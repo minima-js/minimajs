@@ -121,6 +121,19 @@ const config = defineConfig({
         ],
       },
       {
+        text: "Tutorial",
+        items: [
+          { text: "Task Board API", link: "/tutorial/" },
+          { text: "1. Project Setup", link: "/tutorial/01-setup" },
+          { text: "2. Database & Root Module", link: "/tutorial/02-database" },
+          { text: "3. Authentication", link: "/tutorial/03-auth" },
+          { text: "4. Workspaces", link: "/tutorial/04-workspaces" },
+          { text: "5. Boards & Tasks", link: "/tutorial/05-boards-tasks" },
+          { text: "6. Members & Roles", link: "/tutorial/06-members" },
+          { text: "7. Error Handling & Polish", link: "/tutorial/07-errors-polish" },
+        ],
+      },
+      {
         text: "Core Concepts",
         items: [
           { text: "Architecture", link: "/core-concepts/architecture" },
