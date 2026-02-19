@@ -5,7 +5,6 @@ import {
   HeadObjectCommand,
   CopyObjectCommand,
   ListObjectsV2Command,
-  type S3ClientConfig,
   type ObjectCannedACL,
   type StorageClass,
   type ServerSideEncryption,
@@ -14,11 +13,9 @@ import { Upload } from "@aws-sdk/lib-storage";
 import type { DiskDriver, FileMetadata, PutOptions, ListOptions } from "@minimajs/disk";
 import { Readable } from "node:stream";
 
-export interface S3DriverOptions extends S3ClientConfig {
+export interface S3BaseDriverOptions {
   /** S3 bucket name (optional if bucket is in the href path) */
   bucket?: string;
-  /** AWS region (e.g., 'us-east-1') */
-  region: string;
   /** Base prefix/path within the bucket */
   prefix?: string;
   /** Default ACL for uploaded objects */
@@ -67,28 +64,25 @@ export interface S3DriverOptions extends S3ClientConfig {
 export class S3Driver implements DiskDriver {
   readonly name = "s3";
 
-  private readonly client: S3Client;
   private readonly bucket?: string;
-  private readonly region: string;
   private readonly prefix: string;
   private readonly acl?: ObjectCannedACL;
   private readonly storageClass?: StorageClass;
   private readonly serverSideEncryption?: ServerSideEncryption;
   private readonly publicUrl?: string;
-  private readonly s3Config: S3ClientConfig;
 
-  constructor(options: S3DriverOptions) {
-    const { bucket, region, prefix = "", acl, storageClass, serverSideEncryption, publicUrl, ...s3Config } = options;
+  constructor(
+    public readonly client: S3Client,
+    options: S3BaseDriverOptions
+  ) {
+    const { bucket, prefix = "", acl, storageClass, serverSideEncryption, publicUrl } = options;
 
     this.bucket = bucket;
-    this.region = region;
     this.prefix = prefix;
     this.acl = acl;
     this.storageClass = storageClass;
     this.serverSideEncryption = serverSideEncryption;
     this.publicUrl = publicUrl;
-    this.s3Config = s3Config;
-    this.client = new S3Client({ region, ...s3Config });
   }
 
   /**
@@ -157,6 +151,22 @@ export class S3Driver implements DiskDriver {
    */
   private keyToHref(bucket: string, key: string): string {
     return `s3://${bucket}/${key}`;
+  }
+
+  /**
+   * Get AWS partition suffix based on region
+   */
+  private getPartitionSuffix(region: string): string {
+    if (region.startsWith("cn-")) {
+      return "amazonaws.com.cn";
+    }
+    if (region.startsWith("us-iso-")) {
+      return "c2s.ic.gov";
+    }
+    if (region.startsWith("us-isob-")) {
+      return "sc2s.sgov.gov";
+    }
+    return "amazonaws.com";
   }
 
   async put(href: string, stream: ReadableStream<Uint8Array>, putOptions: PutOptions): Promise<FileMetadata> {
@@ -280,40 +290,32 @@ export class S3Driver implements DiskDriver {
       return `${this.publicUrl}/${fullKey}`;
     }
 
-    // If custom endpoint is configured
-    if (this.s3Config.endpoint) {
-      // Extract endpoint URL string
-      let endpointUrl: string;
-      if (typeof this.s3Config.endpoint === "string") {
-        endpointUrl = this.s3Config.endpoint;
-      } else if (typeof this.s3Config.endpoint === "object" && "url" in this.s3Config.endpoint) {
-        endpointUrl = this.s3Config.endpoint.url.toString();
-      } else {
-        // Fallback to default AWS S3
-        endpointUrl = `https://s3.${this.region}.amazonaws.com`;
-      }
+    // Get region from client config
+    const region = await this.client.config.region();
 
-      // Ensure protocol
-      if (!endpointUrl.startsWith("http")) {
-        endpointUrl = `https://${endpointUrl}`;
-      }
+    // If custom endpoint is configured, use it
+    if (this.client.config.endpoint) {
+      const epConfig = await this.client.config.endpoint();
+      const endpointUrl = `${epConfig.protocol}//${epConfig.hostname}${epConfig.port ? `:${epConfig.port}` : ""}`;
 
-      if (this.s3Config.forcePathStyle) {
+      if (this.client.config.forcePathStyle) {
         // Path-style: https://endpoint/bucket/key
         return `${endpointUrl}/${bucket}/${fullKey}`;
       }
 
       // Virtual-hosted style: https://bucket.endpoint/key
-      const [protocol, rest] = endpointUrl.split("://");
-      return `${protocol}://${bucket}.${rest}/${fullKey}`;
+      return `${epConfig.protocol}//${bucket}.${epConfig.hostname}${epConfig.port ? `:${epConfig.port}` : ""}/${fullKey}`;
     }
 
-    // Default AWS S3 URL
-    if (this.s3Config.forcePathStyle) {
-      return `https://s3.${this.region}.amazonaws.com/${bucket}/${fullKey}`;
+    // Determine the AWS partition suffix based on region
+    const partitionSuffix = this.getPartitionSuffix(region);
+
+    // Default AWS S3 URL with correct partition
+    if (this.client.config.forcePathStyle) {
+      return `https://s3.${region}.${partitionSuffix}/${bucket}/${fullKey}`;
     }
 
-    return `https://${bucket}.s3.${this.region}.amazonaws.com/${fullKey}`;
+    return `https://${bucket}.s3.${region}.${partitionSuffix}/${fullKey}`;
   }
 
   async copy(from: string, to: string): Promise<void> {

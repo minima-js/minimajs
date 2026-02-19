@@ -57,11 +57,27 @@ export class DiskFile extends File {
   async bytes(): Promise<Uint8Array<ArrayBuffer>> {
     if (!this.#buffer) {
       this.#buffer = await stream2uint8array(this.stream());
+      if (this.#size === 0) {
+        this.#size = this.#buffer.byteLength;
+      }
     }
     return this.#buffer;
   }
 
+  // Custom inspect for console.log() in Node.js/Bun - match native File format
+  [Symbol.for("nodejs.util.inspect.custom")]() {
+    const sizeKB = (this.size / 1024).toFixed(2);
+    return {
+      name: this.name,
+      type: this.type,
+      href: this.href,
+      lastModified: this.lastModified,
+      [Symbol.toStringTag]: `DiskFile (${sizeKB} KB)`,
+    };
+  }
+
   get [Symbol.toStringTag]() {
-    return "DiskFile";
+    const sizeKB = (this.size / 1024).toFixed(2);
+    return `DiskFile (${sizeKB} KB)`;
   }
 }

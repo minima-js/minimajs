@@ -2,10 +2,7 @@ import { BlobServiceClient } from "@azure/storage-blob";
 import { Readable } from "node:stream";
 import type { DiskDriver, PutOptions, ListOptions, FileMetadata } from "@minimajs/disk";
 
-export interface AzureBlobDriverOptions {
-  /** Azure Storage connection string */
-  connectionString: string;
-  /** Container name (optional if using azure:// URLs) */
+export interface AzureBlobBaseDriverOptions {
   container?: string;
   /** Public URL for serving files (e.g., CDN URL) */
   publicUrl?: string;
@@ -41,30 +38,31 @@ export interface AzureBlobDriverOptions {
  */
 export class AzureBlobDriver implements DiskDriver {
   readonly name = "azure-blob";
-  private readonly client: BlobServiceClient;
-  private readonly accountName: string;
-  private readonly options: AzureBlobDriverOptions;
+  private readonly options: AzureBlobBaseDriverOptions;
+  private readonly endpoint: string;
 
-  constructor(options: AzureBlobDriverOptions) {
+  constructor(
+    public readonly client: BlobServiceClient,
+    options: AzureBlobBaseDriverOptions
+  ) {
     this.options = options;
-    this.client = BlobServiceClient.fromConnectionString(options.connectionString);
-    this.accountName = this.client.accountName;
-  } /**
+    this.endpoint = client.url;
+  }
+  /**
    * Parse href to get container and blob name
    * Supports:
    * - https://<account>.blob.core.windows.net/<container>/<blob> (Azure standard URL)
+   * - https://<custom-endpoint>/<container>/<blob> (custom endpoint)
    * - https://<cdn>.azureedge.net/<blob> (when CDN URL is configured)
    * - blob (when container is in config)
    */
   private hrefToBlob(href: string): { container: string; blob: string } {
-    // Handle Azure Blob Storage URL
-    if (href.startsWith("https://") && href.includes(".blob.core.windows.net/")) {
+    if (href.startsWith(this.endpoint)) {
       try {
         const url = new URL(href);
         const pathParts = url.pathname.slice(1).split("/");
         const container = pathParts[0];
         const blob = pathParts.slice(1).join("/");
-
         if (!container || !blob) {
           throw new Error("Container and blob name cannot be empty");
         }
@@ -107,7 +105,7 @@ export class AzureBlobDriver implements DiskDriver {
   }
 
   private blobToHref(container: string, blob: string): string {
-    return `https://${this.accountName}.blob.core.windows.net/${container}/${blob}`;
+    return `${this.endpoint}${container}/${blob}`;
   }
 
   async put(href: string, stream: ReadableStream<Uint8Array>, putOptions: PutOptions): Promise<FileMetadata> {
@@ -115,10 +113,7 @@ export class AzureBlobDriver implements DiskDriver {
     const containerClient = this.client.getContainerClient(container);
     const blobClient = containerClient.getBlockBlobClient(blob);
 
-    // Convert ReadableStream to Node.js Readable
-    const nodeStream = Readable.fromWeb(stream);
-
-    await blobClient.uploadStream(nodeStream, undefined, undefined, {
+    await blobClient.uploadStream(Readable.fromWeb(stream), undefined, undefined, {
       blobHTTPHeaders: {
         blobContentType: putOptions.type,
         blobCacheControl: putOptions?.cacheControl,
@@ -263,7 +258,7 @@ export class AzureBlobDriver implements DiskDriver {
       return {
         href: this.blobToHref(container, blob),
         size: properties.contentLength ?? 0,
-        type: properties.contentType || "application/octet-stream",
+        type: properties.contentType,
         lastModified: properties.lastModified?.getTime() || Date.now(),
         metadata: properties.metadata,
       };

@@ -1,7 +1,11 @@
 import type { DiskDriver } from "@minimajs/disk";
-import { type AzureBlobDriverOptions, AzureBlobDriver } from "./blob-driver.js";
+import { BlobServiceClient } from "@azure/storage-blob";
+import { type AzureBlobBaseDriverOptions, AzureBlobDriver } from "./blob-driver.js";
 
 export * from "./blob-driver.js";
+export interface AzureBlobDriverOptions extends AzureBlobBaseDriverOptions {
+  connectionString: string;
+}
 
 /**
  * Create an Azure Blob Storage driver for @minimajs/disk
@@ -27,6 +31,16 @@ export * from "./blob-driver.js";
  * const text = await file.text(); // Standard File API
  * ```
  */
-export function createAzureBlobDriver(options: AzureBlobDriverOptions): DiskDriver {
-  return new AzureBlobDriver(options);
+
+export function createAzureBlobDriver(options: AzureBlobDriverOptions): DiskDriver;
+export function createAzureBlobDriver(client: BlobServiceClient, options: AzureBlobBaseDriverOptions): DiskDriver;
+export function createAzureBlobDriver(
+  clientOrOptions: BlobServiceClient | AzureBlobDriverOptions,
+  options?: AzureBlobBaseDriverOptions
+): DiskDriver {
+  if (clientOrOptions instanceof BlobServiceClient) {
+    return new AzureBlobDriver(clientOrOptions, options!);
+  }
+  const client = BlobServiceClient.fromConnectionString(clientOrOptions.connectionString);
+  return new AzureBlobDriver(client, clientOrOptions);
 }

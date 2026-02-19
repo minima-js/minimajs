@@ -1,7 +1,10 @@
 import type { DiskDriver } from "@minimajs/disk";
-import { type S3DriverOptions, S3Driver } from "./s3-driver.js";
+import { type S3BaseDriverOptions, S3Driver } from "./s3-driver.js";
+import { S3Client, type S3ClientConfig } from "@aws-sdk/client-s3";
 
 export * from "./s3-driver.js";
+
+export interface S3DriverOptions extends S3BaseDriverOptions, S3ClientConfig {}
 
 /**
  * Create an S3 storage driver for @minimajs/disk
@@ -31,6 +34,12 @@ export * from "./s3-driver.js";
  * const blob = await file.blob(); // Standard File API
  * ```
  */
-export function createS3Driver(options: S3DriverOptions): DiskDriver {
-  return new S3Driver(options);
+export function createS3Driver(options: S3DriverOptions): DiskDriver;
+export function createS3Driver(client: S3Client, options: S3BaseDriverOptions): DiskDriver;
+export function createS3Driver(clientOrOptions: S3Client | S3DriverOptions, options?: S3BaseDriverOptions): DiskDriver {
+  if (clientOrOptions instanceof S3Client) {
+    return new S3Driver(clientOrOptions, options!);
+  }
+  const client = new S3Client(clientOrOptions);
+  return new S3Driver(client, clientOrOptions);
 }
