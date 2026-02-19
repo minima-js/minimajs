@@ -9,22 +9,20 @@ import type { ImportedModule } from "./types.js";
 export async function importModule(modulePath: string, isRoot = false): Promise<ImportedModule> {
   const dir = path.dirname(modulePath);
   const url = pathToFileURL(modulePath);
-  const { default: module, meta = {}, routes }: ImportedModule = await import(url.href);
+  const module: ImportedModule = { meta: {}, ...(await import(url.href)), dir };
 
-  if (isRoot) {
-    meta.name ??= "root";
-  } else {
-    const moduleName = path.basename(dir);
-    meta.name ??= moduleName;
-    meta.prefix ??= `/${moduleName}`;
+  if (typeof module.default !== "function") {
+    module.default = undefined;
   }
 
-  return {
-    default: typeof module === "function" ? module : undefined,
-    routes,
-    dir,
-    meta,
-  };
+  if (isRoot) {
+    module.meta.name ??= "root";
+  } else {
+    const moduleName = path.basename(dir);
+    module.meta.name ??= moduleName;
+    module.meta.prefix ??= `/${moduleName}`;
+  }
+  return module;
 }
 
 export async function importRootModule(results: AsyncIterable<string>) {
