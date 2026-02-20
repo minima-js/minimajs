@@ -13,7 +13,7 @@ import {
   randomName,
   save,
   drain,
-  stream2uint8array,
+  stream2bytes,
 } from "./helpers.js";
 import { mkdir, rm, readFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
@@ -423,12 +423,12 @@ describe("helpers", () => {
     });
   });
 
-  describe("stream2uint8array", () => {
+  describe("stream2bytes", () => {
     test("should convert stream to Uint8Array", async () => {
       const content = "Hello, World!";
       const stream = Readable.from([Buffer.from(content)]);
 
-      const result = await stream2uint8array(stream, {});
+      const result = await stream2bytes(stream, {});
 
       expect(result).toBeInstanceOf(Uint8Array);
       expect(Buffer.from(result).toString()).toBe(content);
@@ -438,7 +438,7 @@ describe("helpers", () => {
       const chunks = ["Hello, ", "World!"];
       const stream = Readable.from(chunks.map((c) => Buffer.from(c)));
 
-      const result = await stream2uint8array(stream, {});
+      const result = await stream2bytes(stream, {});
 
       expect(Buffer.from(result).toString()).toBe("Hello, World!");
     });
@@ -447,7 +447,7 @@ describe("helpers", () => {
       const content = "Hello, World!";
       const stream = Readable.from([Buffer.from(content)]);
 
-      await expect(stream2uint8array(stream, { fileSize: 5 })).rejects.toThrow("Body exceeds maxSize");
+      await expect(stream2bytes(stream, { fileSize: 5 })).rejects.toThrow("Body exceeds maxSize");
     });
 
     test("should grow buffer for large streams", async () => {
@@ -455,7 +455,7 @@ describe("helpers", () => {
       const largeContent = "x".repeat(128 * 1024);
       const stream = Readable.from([Buffer.from(largeContent)]);
 
-      const result = await stream2uint8array(stream, {});
+      const result = await stream2bytes(stream, {});
 
       expect(result.byteLength).toBe(largeContent.length);
     });
@@ -464,7 +464,7 @@ describe("helpers", () => {
       const chunk = new Uint8Array([72, 101, 108, 108, 111]); // "Hello"
       const stream = Readable.from([chunk]);
 
-      const result = await stream2uint8array(stream, {});
+      const result = await stream2bytes(stream, {});
 
       expect(Buffer.from(result).toString()).toBe("Hello");
     });

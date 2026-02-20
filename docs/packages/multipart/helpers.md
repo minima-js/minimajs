@@ -106,7 +106,7 @@ Consumes and discards a raw multipart file stream. Use this to skip unwanted fil
 import { raw, helpers } from "@minimajs/multipart";
 
 for await (const file of raw.files()) {
-  if (file.mimeType.startsWith("image/")) {
+  if (file.type.startsWith("image/")) {
     await helpers.save(file, "./uploads");
   } else {
     // Skip non-image files
@@ -190,7 +190,7 @@ for await (const item of raw.body()) {
 
 ## Stream Utilities
 
-### `stream2uint8array(stream, options?)`
+### `stream2bytes(stream, options?)`
 
 Reads a Node.js Readable stream into a `Uint8Array` with optional size limit.
 
@@ -208,11 +208,11 @@ import { Readable } from "node:stream";
 import { helpers } from "@minimajs/multipart";
 
 const stream = Readable.from(["Hello", " ", "World"]);
-const bytes = await helpers.stream2uint8array(stream);
+const bytes = await helpers.stream2bytes(stream);
 console.log(new TextDecoder().decode(bytes)); // "Hello World"
 
 // With size limit
-const limited = await helpers.stream2uint8array(stream, {
+const limited = await helpers.stream2bytes(stream, {
   fileSize: 1024 * 1024, // 1MB max
 });
 ```
