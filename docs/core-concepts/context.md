@@ -17,7 +17,7 @@ Minima.js solves this with a powerful **Context** system, powered by Node.js's n
 Use `context()` when you need the complete request scope in one object. It exposes the request, response state, route info, and per-request locals.
 
 ```typescript
-import { context } from "@minimajs/server";
+import { context, type Routes } from "@minimajs/server";
 
 function auditRequest() {
   const ctx = context();
@@ -28,12 +28,12 @@ function auditRequest() {
   console.log(`[AUDIT] ${method} ${path} (${routeName})`);
 }
 
-export default async function (app) {
-  app.get("/users/:id", () => {
+export const routes: Routes = {
+  "GET /users/:id": () => {
     auditRequest();
     return { id: "123" };
-  });
-}
+  },
+};
 ```
 
 **Common fields on `context()`:**

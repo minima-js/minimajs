@@ -120,6 +120,7 @@ app.get("/openapi.json", internal(), () => spec); // Auto-excluded
 Apply descriptors to all routes in a module:
 
 ```typescript
+import { type Routes } from "@minimajs/server";
 import { descriptor } from "@minimajs/server/plugins";
 import { describe } from "@minimajs/openapi";
 
@@ -128,11 +129,11 @@ export const meta = {
   plugins: [descriptor(describe({ tags: ["Users"] }))],
 };
 
-export default async function (app) {
-  app.get("/", () => getUsers()); // Tagged: Users
-  app.post("/", () => createUser()); // Tagged: Users
-  app.get("/:id", () => getUser()); // Tagged: Users
-}
+export const routes: Routes = {
+  "GET /": () => getUsers(), // Tagged: Users
+  "POST /": () => createUser(), // Tagged: Users
+  "GET /:id": () => getUser(), // Tagged: Users
+};
 ```
 
 Combine multiple descriptors:
