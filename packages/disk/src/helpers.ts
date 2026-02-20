@@ -1,4 +1,4 @@
-import { basename } from "node:path";
+import { extname } from "node:path";
 import { randomUUID } from "node:crypto";
 import type { DiskData, FileSource, PutOptions } from "./types.js";
 import { DiskFile } from "./file.js";
@@ -98,12 +98,8 @@ export function sanitizeKey(key: string): string {
   return segments.join("/");
 }
 
-export function sanitizeFilename(name: string): string {
-  return basename(name).replace(/\s+/g, "-");
-}
-
 export function randomName(base: string): string {
-  return `${randomUUID()}-${sanitizeFilename(base)}`;
+  return `${randomUUID()}-${extname(base)}`;
 }
 
 /**
@@ -114,7 +110,7 @@ export function getMimeType(pathOrKey: string): string | undefined {
   return result || undefined;
 }
 
-export async function stream2uint8array(stream: ReadableStream<Uint8Array>): Promise<Uint8Array<ArrayBuffer>> {
+export async function stream2bytes(stream: ReadableStream<Uint8Array>): Promise<Uint8Array<ArrayBuffer>> {
   const reader = stream.getReader();
   let buffer = new Uint8Array(64 * 1024); // 64KB initial size
   let length = 0;

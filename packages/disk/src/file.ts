@@ -1,5 +1,5 @@
 import { inspect } from "node:util";
-import { stream2uint8array, async2stream } from "./helpers.js";
+import { stream2bytes, async2stream } from "./helpers.js";
 
 /**
  * Symbol to identify disk-managed files
@@ -54,7 +54,7 @@ export class DiskFile extends File {
 
   async bytes(): Promise<Uint8Array<ArrayBuffer>> {
     if (!this.#buffer) {
-      this.#buffer = await stream2uint8array(this.stream());
+      this.#buffer = await stream2bytes(this.stream());
       if (this.#size === 0) {
         this.#size = this.#buffer.byteLength;
       }
