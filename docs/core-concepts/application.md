@@ -41,7 +41,7 @@ The `app` object provides a small but powerful set of methods for managing your 
 The `listen` method starts the web server, making it ready to accept incoming requests on a specified port and host. It returns an object containing the server's address.
 
 ```typescript
-const { address } = await app.listen({ port: 3000 });
+const address = await app.listen({ port: 3000 });
 console.log(`Server running at ${address}`);
 ```
 

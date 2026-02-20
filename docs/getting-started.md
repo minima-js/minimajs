@@ -11,17 +11,26 @@ tags:
 
 This guide introduces the core concepts of Minima.js to get you up and running quickly. We'll start with a minimal application and then explore the key features that make the framework powerful and elegant.
 
+> **New to Minima.js?** Check out the [Introduction](/intro) for a conceptual overview before diving into this tutorial.
+
 ## Setup
 
 First, choose your runtime and create a new project directory.
 
-**Option 1: Bun (Recommended)**
+**Option 1: Bun**
 
 ```bash
 mkdir minimajs-app
 cd minimajs-app
 bun init -y
 bun add @minimajs/server
+```
+
+Then start your server:
+
+```bash
+bun --watch src/index.ts  # development with auto-reload
+bun src/index.ts          # production
 ```
 
 **Option 2: Node.js**
@@ -34,7 +43,7 @@ npm install @minimajs/server
 npm install -D typescript tsx @types/node
 ```
 
-Update your `package.json` to enable ES modules and add a start script:
+Update your `package.json` to enable ES modules and add start scripts:
 
 ```json
 {
@@ -46,59 +55,27 @@ Update your `package.json` to enable ES modules and add a start script:
 }
 ```
 
-## A Minimal Application
+Create a `tsconfig.json` for TypeScript support:
 
-Create a `src/index.ts` file. Here is a very basic Minima.js application:
-
-::: code-group
-
-```typescript [Bun]
-import { createApp } from "@minimajs/server/bun";
-import { params, body } from "@minimajs/server";
-
-const app = createApp();
-
-// Simple functional route
-app.get("/", () => ({ message: "Hello, World!" }));
-
-// Demonstrates context-aware access to route parameters
-app.get("/hello/:name", () => {
-  const name = params.get("name");
-  return { message: `Hello, ${name}!` };
-});
-
-const { address } = await app.listen({ port: 3000 });
-console.log(`Server listening on ${address}`);
+```json
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true
+  }
+}
 ```
 
-```typescript [Node.js]
-import { createApp } from "@minimajs/server/node";
-import { params, body } from "@minimajs/server";
+Then start your server:
 
-const app = createApp();
-
-// Simple functional route
-app.get("/", () => ({ message: "Hello, World!" }));
-
-// Demonstrates context-aware access to route parameters
-app.get("/hello/:name", () => {
-  const name = params.get("name");
-  return { message: `Hello, ${name}!` };
-});
-
-const { address } = await app.listen({ port: 3000 });
-console.log(`Server listening on ${address}`);
+```bash
+npm run dev    # development with auto-reload
+npm run start  # production
 ```
-
-:::
-
-This short example already showcases several core concepts. Let's build on this foundation.
-
-> **New to Minima.js?** Check out the [Introduction](/intro) for a conceptual overview before diving into this tutorial.
 
 ## Choose Your Runtime
-
-### Bun/Node Compatibility
 
 Minima.js is optimized for both runtimes. You select your target by changing the import path:
 
@@ -107,6 +84,54 @@ Minima.js is optimized for both runtimes. You select your target by changing the
 - `@minimajs/server`: Defaults to the Node.js runtime.
 
 This provides native performance with zero abstraction overhead.
+
+## A Minimal Application
+
+Create a `src/index.ts` file. Here is a very basic Minima.js application:
+
+::: code-group
+
+```typescript [Bun]
+import { createApp } from "@minimajs/server/bun";
+import { params } from "@minimajs/server";
+
+const app = createApp();
+
+// Simple functional route
+app.get("/", () => ({ message: "Hello, World!" }));
+
+// Demonstrates context-aware access to route parameters
+app.get("/hello/:name", () => {
+  const name = params.get("name");
+  return { message: `Hello, ${name}!` };
+});
+
+const address = await app.listen({ port: 3000 });
+console.log(`Server listening on ${address}`);
+```
+
+```typescript [Node.js]
+import { createApp } from "@minimajs/server/node";
+import { params } from "@minimajs/server";
+
+const app = createApp();
+
+// Simple functional route
+app.get("/", () => ({ message: "Hello, World!" }));
+
+// Demonstrates context-aware access to route parameters
+app.get("/hello/:name", () => {
+  const name = params.get("name");
+  return { message: `Hello, ${name}!` };
+});
+
+const address = await app.listen({ port: 3000 });
+console.log(`Server listening on ${address}`);
+```
+
+:::
+
+This short example already showcases several core concepts. Let's build on this foundation.
 
 ## Access Request Data Anywhere
 
@@ -141,7 +166,7 @@ src/
 ::: code-group
 
 ```typescript [src/index.ts]
-import { createApp } from "@minimajs/server/bun";
+import { createApp } from "@minimajs/server";
 
 const app = createApp(); // Auto-discovers modules!
 
@@ -202,7 +227,10 @@ Learn more: [Module Tutorial](/core-concepts/modules)
 Use hooks to tap into request/app lifecycle events. Perfect for logging, auth, error handling:
 
 ```ts
+import { createApp } from "@minimajs/server";
 import { hook } from "@minimajs/server";
+
+const app = createApp();
 
 // Log every request
 app.register(
@@ -221,7 +249,10 @@ Learn more: [Hooks Guide](/guides/hooks)
 Use an `error` hook to catch all errors in one place:
 
 ```ts
+import { createApp } from "@minimajs/server";
 import { hook, abort } from "@minimajs/server";
+
+const app = createApp();
 
 app.register(
   hook("error", (error) => {

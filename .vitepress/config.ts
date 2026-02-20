@@ -1,6 +1,7 @@
 import { defineConfig } from "vitepress";
 import { withMermaid } from "vitepress-plugin-mermaid";
 import { withPwa } from "@vite-pwa/vitepress";
+import llmstxt from "vitepress-plugin-llms";
 
 const tagId = 'GTM-P9NLW275';
 
@@ -54,6 +55,7 @@ const config = defineConfig({
 
   // Vite configuration for Mermaid compatibility
   vite: {
+    plugins: [llmstxt()],
     optimizeDeps: {
       include: ["mermaid", "dayjs", "@braintree/sanitize-url"],
     },
