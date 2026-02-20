@@ -7,11 +7,6 @@ import { kDataType, kSchema, kSchemaName, kStatusCode } from "./symbols.js";
  *
  * Unlike request validators, this doesn't perform runtime validation -
  * it only attaches the schema to route metadata for documentation generation.
- *
- * @param statusCodeOrSchema - Either a status code (number) or a Zod schema
- * @param schema - A Zod schema (only when first param is status code)
- * @returns A SchemaType that can be passed to the `schema()` function
- *
  * @example
  * ```typescript
  * import { schema, createBody, createResponse } from "@minimajs/schema";
@@ -66,10 +61,6 @@ export function createResponse<T extends ZodType>(
  *
  * This allows you to document response headers independently from the response body,
  * enabling different status codes for headers and body schemas.
- *
- * @param statusCodeOrObj - Either a status code (number) or an object with Zod schemas
- * @param obj - An object with Zod schemas (only when first param is status code)
- * @returns A SchemaType that can be passed to the `schema()` function
  *
  * @example
  * ```typescript
