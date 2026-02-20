@@ -1,3 +1,4 @@
+import type { DiskHooks } from "./hooks.js";
 import type { DiskFile } from "./file.js";
 
 /**
@@ -158,6 +159,11 @@ export interface Disk<TDriver extends DiskDriver = DiskDriver> extends AsyncIter
   move(from: FileSource, to: string): Promise<DiskFile>;
   list(prefix?: string, options?: ListOptions): AsyncIterable<DiskFile>;
   getMetadata(key: string): Promise<FileMetadata | null>;
+
+  /**
+   * Register a hook (for use by plugins)
+   */
+  hook<K extends keyof DiskHooks>(event: K, handler: NonNullable<DiskHooks[K]>): void;
 }
 
 /**
@@ -177,4 +183,6 @@ export interface ProtoDiskOptions {
   defaultProtocol?: string;
   /** Base path for resolving relative paths */
   basePath?: string;
+  /** Initial hooks to register */
+  hooks?: Partial<DiskHooks>;
 }

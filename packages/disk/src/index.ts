@@ -1,17 +1,24 @@
 import { FsDriver, createFsDriver } from "./adapters/fs.js";
-import { type CreateDiskOptions, StandardDisk } from "./disk.js";
+import { StandardDisk } from "./standard-disk.js";
 import { ProtoDisk } from "./proto-disk.js";
 import type { DiskDriver, Disk, ProtoDiskOptions } from "./types.js";
+import type { DiskHooks } from "./hooks.js";
 
 // Core types and utilities
 export * from "./types.js";
 export * from "./file.js";
 export * from "./helpers.js";
 export * from "./errors.js";
+export * from "./hooks.js";
 
 // Disk implementations
-export * from "./disk.js";
+export * from "./standard-disk.js";
 export * from "./proto-disk.js";
+
+export interface CreateDiskOptions<TDriver extends DiskDriver = DiskDriver> {
+  driver?: TDriver;
+  hooks?: Partial<DiskHooks>;
+}
 
 /**
  * Create a Disk instance with web-native File APIs for any storage provider
@@ -41,6 +48,21 @@ export * from "./proto-disk.js";
  * // Default filesystem driver (uses current working directory)
  * const disk = createDisk();
  *
+ * // With plugins
+ * const disk = createDisk(
+ *   { driver: createFsDriver({ root: './uploads' }) },
+ *   (disk) => {
+ *     disk.hook('put', (path, content, options, context) => {
+ *       console.log('Uploading:', path);
+ *     });
+ *   },
+ *   (disk) => {
+ *     disk.hook('stored', (file, context) => {
+ *       console.log('Uploaded:', file.name);
+ *     });
+ *   }
+ * );
+ *
  * // Web-native File API - works everywhere
  * await disk.put('avatar.jpg', imageBuffer);
  * const file = await disk.get('avatar.jpg');
@@ -54,7 +76,8 @@ export * from "./proto-disk.js";
  */
 export function createDisk<TDriver extends DiskDriver = FsDriver>(options: CreateDiskOptions<TDriver> = {}): Disk<TDriver> {
   const driver = (options.driver ?? createFsDriver({ root: process.cwd() })) as TDriver;
-  return new StandardDisk(driver);
+  const disk = new StandardDisk(driver, { hooks: options.hooks });
+  return disk;
 }
 
 /**
