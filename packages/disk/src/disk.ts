@@ -4,6 +4,7 @@ import { toReadableStream, getMimeType } from "./helpers.js";
 import { DiskReadError, DiskMetadataError } from "./errors.js";
 import { randomUUID } from "node:crypto";
 import { extname, basename } from "node:path";
+import { inspect } from "node:util";
 
 export interface CreateDiskOptions<TDriver extends DiskDriver = DiskDriver> {
   driver?: TDriver;
@@ -185,5 +186,21 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
 
   async getMetadata(path: string): Promise<import("./types.js").FileMetadata | null> {
     return this.driver.getMetadata(path);
+  }
+
+  [inspect.custom]() {
+    return {
+      driver: this.driver,
+      [Symbol.toStringTag]: `StandardDisk`,
+    };
+  }
+
+  get [Symbol.toStringTag]() {
+    const tag = (this.driver as any)[Symbol.toStringTag];
+    const name = `StandardDisk`;
+    if (tag) {
+      return `${name} (${tag})`;
+    }
+    return name;
   }
 }

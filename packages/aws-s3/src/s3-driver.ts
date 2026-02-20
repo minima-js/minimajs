@@ -12,6 +12,7 @@ import {
 import { Upload } from "@aws-sdk/lib-storage";
 import type { DiskDriver, FileMetadata, PutOptions, ListOptions } from "@minimajs/disk";
 import { Readable } from "node:stream";
+import { inspect } from "node:util";
 
 export interface S3BaseDriverOptions {
   /** S3 bucket name (optional if bucket is in the href path) */
@@ -342,7 +343,7 @@ export class S3Driver implements DiskDriver {
     await this.delete(from);
   }
 
-  async *list(prefixHref?: string, listOptions?: ListOptions): AsyncIterable<FileMetadata> {
+  async *list(prefixHref: string, listOptions: ListOptions): AsyncIterable<FileMetadata> {
     let bucket: string | undefined;
     let keyPrefix = this.prefix;
 
@@ -368,7 +369,7 @@ export class S3Driver implements DiskDriver {
         Prefix: keyPrefix,
         ContinuationToken: continuationToken,
         MaxKeys: limit ? Math.min(1000, limit - itemsYielded) : 1000,
-        Delimiter: listOptions?.recursive ? undefined : "/",
+        Delimiter: listOptions.recursive ? undefined : "/",
       });
 
       const response = await this.client.send(command);
@@ -377,7 +378,6 @@ export class S3Driver implements DiskDriver {
         for (const item of response.Contents) {
           if (!item.Key) continue;
 
-          // Note: ListObjectsV2 doesn't return ContentType
           // We'd need HeadObject for accurate type, but that's expensive
           // For now, return undefined and let consumer fetch metadata if needed
           yield {
@@ -400,15 +400,12 @@ export class S3Driver implements DiskDriver {
   async getMetadata(href: string): Promise<FileMetadata | null> {
     const { bucket, key } = this.hrefToKey(href);
     const fullKey = this.buildKey(key);
-
     try {
       const command = new HeadObjectCommand({
         Bucket: bucket,
         Key: fullKey,
       });
-
       const response = await this.client.send(command);
-
       return {
         href: this.keyToHref(bucket, fullKey),
         size: response.ContentLength || 0,
@@ -422,5 +419,16 @@ export class S3Driver implements DiskDriver {
       }
       throw error;
     }
+  }
+
+  [inspect.custom]() {
+    return {
+      bucket: this.bucket,
+      [Symbol.toStringTag]: `AwsS3Driver`,
+    };
+  }
+
+  get [Symbol.toStringTag]() {
+    return `AwsS3Driver`;
   }
 }

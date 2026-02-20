@@ -1,7 +1,7 @@
 import { BlobServiceClient } from "@azure/storage-blob";
 import { Readable } from "node:stream";
 import type { DiskDriver, PutOptions, ListOptions, FileMetadata } from "@minimajs/disk";
-
+import utils from "node:util";
 export interface AzureBlobBaseDriverOptions {
   container?: string;
   /** Public URL for serving files (e.g., CDN URL) */
@@ -269,4 +269,22 @@ export class AzureBlobDriver implements DiskDriver {
       throw error;
     }
   }
+
+  [utils.inspect.custom]() {
+    const options = {
+      container: this.options.container,
+      account: this.client.accountName,
+      publicUrl: this.options.publicUrl,
+      [Symbol.toStringTag]: `AzureBlobDriver`,
+    };
+
+    for (const [key, val] of Object.entries(options)) {
+      if (val === undefined) {
+        delete (options as any)[key];
+      }
+    }
+    return options;
+  }
+
+  [Symbol.toStringTag] = "AzureBlobDriver";
 }

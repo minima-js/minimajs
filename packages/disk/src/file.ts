@@ -1,10 +1,10 @@
+import { inspect } from "node:util";
 import { stream2uint8array, async2stream } from "./helpers.js";
 
 /**
  * Symbol to identify disk-managed files
  * Custom drivers can use this to mark their File instances
  */
-export const kDiskFile = Symbol.for("minimajs.disk.file");
 
 export interface DiskFileInit extends FilePropertyBag {
   /** Absolute URL/URI with protocol (e.g., file:///path, s3://bucket/key) */
@@ -15,8 +15,6 @@ export interface DiskFileInit extends FilePropertyBag {
 }
 
 export class DiskFile extends File {
-  static readonly [kDiskFile] = true;
-
   #buffer: Uint8Array<ArrayBuffer> | null = null;
   #size: number;
   /** Absolute URL/URI with protocol identifying this file */
@@ -65,7 +63,7 @@ export class DiskFile extends File {
   }
 
   // Custom inspect for console.log() in Node.js/Bun - match native File format
-  [Symbol.for("nodejs.util.inspect.custom")]() {
+  [inspect.custom]() {
     const sizeKB = (this.size / 1024).toFixed(2);
     return {
       name: this.name,
