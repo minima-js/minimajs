@@ -53,10 +53,6 @@ export class TempFile extends File {
     throw new Error("TempFile.slice() is not supported. Files are disk-backed and stream-only.");
   }
 
-  get [Symbol.toStringTag]() {
-    return "TempFile";
-  }
-
   /**
    * Creates a Node.js Readable stream from the temporary file.
    * Multiple streams can be created; all are tracked for cleanup.
@@ -106,6 +102,10 @@ export class TempFile extends File {
       return false;
     }
     return true;
+  }
+
+  get [Symbol.toStringTag]() {
+    return "TempFile";
   }
 }
 
