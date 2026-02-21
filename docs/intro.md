@@ -10,12 +10,13 @@ Minima.js is a **TypeScript-first, high-performance web framework** built from s
 
 ## Core Concepts
 
-Minima.js is built around four key ideas:
+Minima.js is built around five key ideas:
 
 1. **Runtime-Native Support** - Built from scratch for Bun and Node.js with zero abstractions
-2. **File-Based Modules** - Your folder structure defines your API structure
-3. **Context Functions** - Access request data anywhere without prop drilling
-4. **Everything is a Plugin** - Hooks, middleware, auth—all follow the same pattern
+2. **Web Standard First** - Uses native `Request`, `Response`, `File`, `Blob`, and `Uint8Array` throughout — no Node.js-specific buffers or proprietary abstractions
+3. **File-Based Modules** - Your folder structure defines your API structure
+4. **Context Functions** - Access request data anywhere without prop drilling
+5. **Everything is a Plugin** - Hooks, middleware, auth—all follow the same pattern
 
 Let's explore each one.
 
