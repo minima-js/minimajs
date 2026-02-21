@@ -9,25 +9,29 @@ import { stream2bytes, async2stream } from "./helpers.js";
 export interface DiskFileInit extends FilePropertyBag {
   /** Absolute URL/URI with protocol (e.g., file:///path, s3://bucket/key) */
   href: string;
-  size?: number;
-  metadata?: Record<string, string>;
+  size: number;
+  metadata?: Record<string | symbol, unknown>;
   stream: () => ReadableStream | Promise<ReadableStream>;
 }
 
 export class DiskFile extends File {
-  #buffer: Uint8Array<ArrayBuffer> | null = null;
+  #bytes: Uint8Array<ArrayBuffer> | null = null;
   #size: number;
   /** Absolute URL/URI with protocol identifying this file */
   readonly href: string;
-  readonly metadata?: Record<string, string>;
+  readonly metadata: NonNullable<DiskFileInit["metadata"]> = {};
   #streamFactory: () => ReadableStream | Promise<ReadableStream>;
 
   constructor(filename: string, { href, size, metadata, stream, ...propertyBag }: DiskFileInit) {
     super([], filename, propertyBag);
     this.href = href;
-    this.metadata = metadata;
-    this.#size = size ?? 0;
+
+    // metadata from DiskFileInit is string-based and stored in driver
+    this.#size = size;
     this.#streamFactory = stream;
+    if (metadata) {
+      this.metadata = metadata;
+    }
   }
 
   get size() {
@@ -53,13 +57,10 @@ export class DiskFile extends File {
   }
 
   async bytes(): Promise<Uint8Array<ArrayBuffer>> {
-    if (!this.#buffer) {
-      this.#buffer = await stream2bytes(this.stream());
-      if (this.#size === 0) {
-        this.#size = this.#buffer.byteLength;
-      }
+    if (!this.#bytes) {
+      this.#bytes = await stream2bytes(this.stream());
     }
-    return this.#buffer;
+    return this.#bytes;
   }
 
   // Custom inspect for console.log() in Node.js/Bun - match native File format

@@ -2,14 +2,14 @@ import { FsDriver, createFsDriver } from "./adapters/fs.js";
 import { StandardDisk } from "./standard-disk.js";
 import { ProtoDisk } from "./proto-disk.js";
 import type { DiskDriver, Disk, ProtoDiskOptions } from "./types.js";
-import type { DiskHooks } from "./hooks.js";
+import type { DiskHooks } from "./hooks/types.js";
 
 // Core types and utilities
 export * from "./types.js";
 export * from "./file.js";
 export * from "./helpers.js";
 export * from "./errors.js";
-export * from "./hooks.js";
+export * from "./hooks/manager.js";
 
 // Disk implementations
 export * from "./standard-disk.js";

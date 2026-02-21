@@ -1,6 +1,6 @@
 import { extname } from "node:path";
 import { randomUUID } from "node:crypto";
-import type { DiskData, FileSource, PutOptions } from "./types.js";
+import type { DiskData, FileMetadata, FileSource, PutOptions } from "./types.js";
 import { DiskFile } from "./file.js";
 import { lookup as lookupMimeType } from "mime-types";
 
@@ -86,18 +86,6 @@ export function resolveSize(data: DiskData): number | undefined {
   return undefined;
 }
 
-/**
- * Sanitize path segments to prevent directory traversal
- */
-export function sanitizeKey(key: string): string {
-  const segments = key
-    .replace(/\\/g, "/")
-    .split("/")
-    .map((segment) => segment.trim())
-    .filter((segment) => segment && segment !== "." && segment !== "..");
-  return segments.join("/");
-}
-
 export function randomName(base: string): string {
   return `${randomUUID()}-${extname(base)}`;
 }
@@ -160,4 +148,22 @@ export function async2stream(streamPromise: Promise<ReadableStream>): ReadableSt
       }
     },
   });
+}
+
+export function createDiskFile(
+  filename: string,
+  metadata: FileMetadata,
+  factory: (file: DiskFile) => Promise<ReadableStream<Uint8Array>>
+) {
+  let file: DiskFile;
+  // eslint-disable-next-line prefer-const
+  file = new DiskFile(filename, {
+    href: metadata.href,
+    size: metadata.size,
+    type: metadata.type || getMimeType(metadata.href),
+    lastModified: metadata.lastModified,
+    metadata: metadata.metadata,
+    stream: () => factory(file),
+  });
+  return file;
 }

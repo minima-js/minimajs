@@ -16,18 +16,13 @@ import { pathToFileURL } from "node:url";
 import { randomUUID } from "node:crypto";
 import { extname, basename } from "node:path";
 import { inspect } from "node:util";
-import {
-  HookManager,
-  type DiskHooks,
-  type PutHookContext,
-  type GetHookContext,
-  type DeleteHookContext,
-  type ExistsHookContext,
-  type UrlHookContext,
-  type CopyHookContext,
-  type MoveHookContext,
-  type ListHookContext,
-} from "./hooks.js";
+import { HookManager } from "./hooks/manager.js";
+import { type DiskHooks, type UrlHookContext, type MoveHookContext, type ListHookContext } from "./hooks/types.js";
+import { type CopyHookContext } from "./hooks/types.js";
+import { type ExistsHookContext } from "./hooks/types.js";
+import { type DeleteHookContext } from "./hooks/types.js";
+import { type GetHookContext } from "./hooks/types.js";
+import { type PutHookContext } from "./hooks/types.js";
 
 /**
  * Proto disk implementation that routes operations to different drivers
