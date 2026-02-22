@@ -92,6 +92,7 @@ export class TempFile extends File {
       if (isActive) {
         pending.push(finished(stream));
       } else {
+        stream.on("error", () => {});
         stream.destroy();
       }
     }
