@@ -55,7 +55,33 @@ interface RouteConfig<S> {
 
 ## Using Descriptors on Routes
 
-Descriptors are passed between the path and handler in route definitions:
+### With `export const routes` (Recommended)
+
+When using the file-based module system, use the `handler()` helper to attach descriptors to your route handlers.
+
+```typescript
+import { handler, type Routes } from "@minimajs/server";
+
+function getUsers() {
+  /* ... */
+}
+
+function createUser() {
+  /* ... */
+}
+
+export const routes: Routes = {
+  // Single descriptor
+  "GET /users": handler(myDescriptor, getUsers),
+
+  // Multiple descriptors - applied in order
+  "POST /users": handler(descriptor1, descriptor2, descriptor3, createUser),
+};
+```
+
+### Programmatic Usage
+
+Descriptors are passed between the path and handler in programmatic route definitions:
 
 ```typescript
 import { createApp } from "@minimajs/server/bun";
@@ -67,7 +93,7 @@ app.get("/users", myDescriptor, () => {
   return getUsers();
 });
 
-// Multiple descriptors - applied in order
+// Multiple descriptors
 app.post("/users", descriptor1, descriptor2, descriptor3, () => {
   return createUser();
 });
@@ -103,21 +129,27 @@ export function rateLimit(config: { max: number; window: string }): RouteMetaDes
 }
 ```
 
-Usage:
+Usage in a module:
 
 ```typescript
+import { handler, type Routes } from "@minimajs/server";
 import { requireAuth, requireRoles, rateLimit } from "./descriptors/auth.js";
 
-// Single descriptor
-app.get("/profile", requireAuth(), () => getProfile());
+function getProfile() { /* ... */ }
+function deleteUser() { /* ... */ }
 
-// Multiple descriptors
-app.delete("/users/:id",
-  requireAuth(),
-  requireRoles("admin"),
-  rateLimit({ max: 10, window: "1m" }),
-  () => deleteUser()
-);
+export const routes: Routes = {
+  // Single descriptor
+  "GET /profile": handler(requireAuth(), getProfile),
+
+  // Multiple descriptors
+  "DELETE /users/:id": handler(
+    requireAuth(),
+    requireRoles("admin"),
+    rateLimit({ max: 10, window: "1m" }),
+    deleteUser
+  ),
+};
 ```
 
 ### Dynamic Function Descriptors
@@ -277,8 +309,9 @@ Use the `descriptor()` plugin to apply metadata to all routes in a module:
 
 ```typescript
 import { descriptor } from "@minimajs/server/plugins";
+import type { Meta, Routes } from "@minimajs/server";
 
-export const meta = {
+export const meta: Meta = {
   plugins: [
     descriptor(
       requireAuth(),
@@ -287,11 +320,14 @@ export const meta = {
   ],
 };
 
-export default async function (app) {
+function getData() { /* ... */ }
+function createData() { /* ... */ }
+
+export const routes: Routes = {
   // All routes inherit the descriptors
-  app.get("/data", () => getData());
-  app.post("/data", () => createData());
-}
+  "GET /data": getData,
+  "POST /data": createData,
+};
 ```
 
 > For detailed documentation on the `descriptor()` plugin, see [Plugins - Descriptor](/core-concepts/plugins#route-metadata-with-descriptor).
@@ -304,25 +340,36 @@ The `@minimajs/openapi` package provides built-in descriptors:
 
 ```typescript
 import { describe } from "@minimajs/openapi";
+import { handler, type Routes } from "@minimajs/server";
 
-app.get("/users", describe({
-  summary: "List all users",
-  description: "Returns a paginated list of all users.",
-  tags: ["Users"],
-  operationId: "listUsers",
-  deprecated: false,
-  security: [{ bearerAuth: [] }],
-}), () => getUsers());
+function getUsers() { /* ... */ }
+
+export const routes: Routes = {
+  "GET /users": handler(describe({
+    summary: "List all users",
+    description: "Returns a paginated list of all users.",
+    tags: ["Users"],
+    operationId: "listUsers",
+    deprecated: false,
+    security: [{ bearerAuth: [] }],
+  }), getUsers),
+};
 ```
 
 ### `internal()` - Exclude from OpenAPI
 
 ```typescript
 import { internal } from "@minimajs/openapi";
+import { handler, type Routes } from "@minimajs/server";
 
-// Won't appear in OpenAPI documentation
-app.get("/health", internal(), () => "ok");
-app.get("/metrics", internal(), () => getMetrics());
+function getHealth() { return "ok"; }
+function getMetrics() { /* ... */ }
+
+export const routes: Routes = {
+  // Won't appear in OpenAPI documentation
+  "GET /health": handler(internal(), getHealth),
+  "GET /metrics": handler(internal(), getMetrics),
+};
 ```
 
 ### Combining with Schema
@@ -330,6 +377,7 @@ app.get("/metrics", internal(), () => getMetrics());
 ```typescript
 import { schema, createBody, createResponse } from "@minimajs/schema";
 import { describe } from "@minimajs/openapi";
+import { handler, type Routes } from "@minimajs/server";
 import { z } from "zod";
 
 const CreateUser = createBody(
@@ -345,15 +393,18 @@ const UserResponse = createResponse(201, z.object({
   email: z.string(),
 }));
 
-app.post(
-  "/users",
-  describe({ summary: "Create user", tags: ["Users"] }),
-  schema(CreateUser, UserResponse),
-  () => {
-    const body = CreateUser();
-    return UserResponse({ id: "123", ...body });
-  }
-);
+function createUser() {
+  const body = CreateUser();
+  return UserResponse({ id: "123", ...body });
+}
+
+export const routes: Routes = {
+  "POST /users": handler(
+    describe({ summary: "Create user", tags: ["Users"] }),
+    schema(CreateUser, UserResponse),
+    createUser
+  ),
+};
 ```
 
 ## Best Practices
@@ -370,10 +421,9 @@ app.post(
 2. **Create helper functions** - More readable than raw tuples
    ```typescript
    // Good
-   app.get("/admin", requireAuth(), requireRoles("admin"), handler);
-
-   // Less readable
-   app.get("/admin", [kAuth, true], [kRoles, ["admin"]], handler);
+   export const routes: Routes = {
+     "GET /admin": handler(requireAuth(), requireRoles("admin"), getAdmin),
+   };
    ```
 
 3. **Export symbols for consumers** - Allow other code to read your metadata
@@ -396,14 +446,16 @@ app.post(
 
 5. **Use module-level for common metadata** - Route-level for exceptions
    ```typescript
-   export const meta = {
+   const kPublic = Symbol("public");
+
+   export const meta: Meta = {
      plugins: [descriptor(requireAuth())], // Default: auth required
    };
 
-   export default async function (app) {
-     app.get("/public", [kPublic, true], handler); // Exception: public
-     app.get("/private", handler); // Uses module default
-   }
+   export const routes: Routes = {
+     "GET /public": handler([kPublic, true], getPublic), // Exception: public
+     "GET /private": getPrivate, // Uses module default
+   };
    ```
 
 ## See Also

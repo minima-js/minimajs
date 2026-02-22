@@ -33,9 +33,10 @@ By default, uncaught exceptions result in a generic `500 Internal Server Error` 
 The `abort` helper throws HTTP-specific errors with status codes and custom payloads.
 
 ```typescript
-import { abort } from "@minimajs/server";
+import { abort, params } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
 
-app.get("/users/:id", () => {
+function getUser() {
   const user = findUserById(params.get("id"));
 
   if (!user) {
@@ -43,7 +44,11 @@ app.get("/users/:id", () => {
   }
 
   return user;
-});
+}
+
+export const routes: Routes = {
+  "GET /users/:id": getUser,
+};
 ```
 
 **Common shortcuts:**
@@ -69,14 +74,20 @@ Redirect users to different URLs with `redirect`.
 
 ```typescript
 import { redirect } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
 
-app.get("/old-path", () => {
+function oldPath() {
   redirect("/new-path"); // 302 temporary redirect
-});
+}
 
-app.get("/moved", () => {
+function movedPath() {
   redirect("/permanent", true); // 301 permanent redirect
-});
+}
+
+export const routes: Routes = {
+  "GET /old-path": oldPath,
+  "GET /moved": movedPath,
+};
 ```
 
 ## Error Handling Flow
@@ -128,7 +139,32 @@ Handle errors for specific modules with scoped error hooks:
 
 <!--@include: ./diagrams/error-scope-hierarchy.md-->
 
-```typescript
+::: code-group
+
+```typescript [src/admin/module.ts]
+import { hook, abort, type Meta, type Routes } from "@minimajs/server";
+
+// Scoped error handling via meta.plugins
+export const meta: Meta = {
+  plugins: [
+    hook("error", (error) => {
+      console.error("Admin error:", error);
+      const statusCode = abort.is(error) ? error.statusCode : 500;
+      abort({ adminError: error.message }, statusCode);
+    }),
+  ],
+};
+
+function getDashboard() {
+  throw new Error("Dashboard failed");
+}
+
+export const routes: Routes = {
+  "GET /dashboard": getDashboard,
+};
+```
+
+```typescript [Manual Registration]
 async function adminModule(app: App) {
   app.register(
     hook("error", (error) => {
@@ -145,6 +181,8 @@ async function adminModule(app: App) {
 
 app.register(adminModule, { prefix: "/admin" });
 ```
+
+:::
 
 > **Note:** Error hooks execute in LIFO order, with child scopes running before parent scopes. See the diagram above for the hierarchy.
 

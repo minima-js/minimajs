@@ -1,3 +1,5 @@
+import type { Handler } from "../../interfaces/index.js";
+import type { HTTPMethod } from "find-my-way";
 import type { Plugin, PluginSync } from "../../plugin.js";
 import type { Module } from "../../plugin.js";
 
@@ -10,7 +12,8 @@ export interface Meta<S = any> {
 export interface ImportedModule {
   dir: string;
   meta: Meta;
-  module?: Module;
+  routes?: Routes;
+  default?: Module;
 }
 
 export interface ModuleDiscoveryOptions {
@@ -19,4 +22,6 @@ export interface ModuleDiscoveryOptions {
   scanner?: ModuleScanner;
 }
 
-export type ModuleScanner = (dir: string, index: string) => AsyncGenerator<string>;
+export type ModuleScanner = (pattern: string) => AsyncGenerator<string>;
+
+export type Routes<S = any> = Record<`${HTTPMethod} ${string}`, Handler<S>>;

@@ -1,9 +1,27 @@
 import { defineConfig } from "vitepress";
 import { withMermaid } from "vitepress-plugin-mermaid";
 import { withPwa } from "@vite-pwa/vitepress";
+import llmstxt from "vitepress-plugin-llms";
 
 const tagId = 'GTM-P9NLW275';
 const hostname = 'https://minima-js.github.io';
+
+const keywords = [
+  // Brand
+  'minimajs', 'minima.js',
+  // Runtime
+  'nodejs framework', 'bun framework', 'typescript framework',
+  // Core features
+  'file-based routing', 'module discovery', 'scope isolation',
+  'async local storage', 'context-aware', 'request context',
+  'hook system', 'plugin system', 'lifecycle hooks',
+  // API style
+  'rest api framework', 'web api native', 'esm', 'bun server', 'node http server',
+  // Comparisons
+  'lightweight framework', 'fastify alternative', 'hono alternative', 'express alternative',
+  // Ecosystem
+  'zod validation', 'jwt auth', 'multipart upload', 'openapi', 'graceful shutdown',
+];
 
 
 const config = defineConfig({
@@ -22,9 +40,13 @@ const config = defineConfig({
     ['link', { rel: 'icon', type: 'image/png', href: '/logo.png' }],
     ['link', { rel: 'apple-touch-icon', href: '/logo.png' }],
 
+    // LLM discovery
+    ['link', { rel: 'llms', href: `${hostname}/llms.txt` }],
+    ['link', { rel: 'llms-full', href: `${hostname}/llms-full.txt` }],
+
     // Meta
     ['meta', { name: 'theme-color', content: '#eb4432' }],
-    ['meta', { name: 'keywords', content: 'nodejs, typescript, web framework, bun, esm, rest api, backend, server, minimajs' }],
+    ['meta', { name: 'keywords', content: keywords.join(', ') }],
     ['meta', { name: 'author', content: 'Minima.js Team' }],
 
     // Open Graph
@@ -58,6 +80,7 @@ const config = defineConfig({
 
   // Vite configuration for Mermaid compatibility
   vite: {
+    plugins: [llmstxt()],
     optimizeDeps: {
       include: ["mermaid", "dayjs", "@braintree/sanitize-url"],
     },

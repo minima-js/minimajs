@@ -37,9 +37,9 @@ export const meta = {
   plugins: [hook("request", () => console.log("First registered")), hook("request", () => console.log("Second registered"))],
 };
 
-export default async function (app) {
-  // Routes here
-}
+export const routes: Routes = {
+  // routes here
+};
 ```
 
 :::
@@ -67,9 +67,9 @@ export const meta = {
   plugins: [hook("request", () => console.log("Root hook"))],
 };
 
-export default async function (app) {
-  app.get("/health", () => "ok");
-}
+export const routes: Routes = {
+  "GET /health": () => "ok",
+};
 ```
 
 ```typescript [src/users/module.ts]
@@ -80,10 +80,10 @@ export const meta = {
   plugins: [hook("request", () => console.log("Users hook"))],
 };
 
-export default async function (app) {
-  app.get("/list", () => "users");
+export const routes: Routes = {
+  "GET /list": () => "users",
   // Request to /users/list executes: Root hook → Users hook
-}
+};
 ```
 
 ```typescript [src/admin/module.ts]
@@ -94,10 +94,10 @@ export const meta = {
   plugins: [hook("request", () => console.log("Admin hook"))],
 };
 
-export default async function (app) {
-  app.get("/dashboard", () => "admin");
+export const routes: Routes = {
+  "GET /dashboard": () => "admin",
   // Request to /admin/dashboard executes: Root hook → Admin hook
-}
+};
 ```
 
 :::
@@ -155,7 +155,7 @@ For more details, see the [Error Handling Guide](/guides/error-handling).
 ::: code-group
 
 ```typescript [src/api/module.ts]
-import { hook } from "@minimajs/server";
+import { hook, type Routes } from "@minimajs/server";
 
 export const meta = {
   plugins: [
@@ -169,13 +169,13 @@ export const meta = {
   ],
 };
 
-export default async function (app) {
+export const routes: Routes = {
   // Fast static response (Path 2)
-  app.get("/ping", ({ responseState }) => new Response("pong", responseState));
+  "GET /ping": ({ responseState }) => new Response("pong", responseState),
 
   // Full pipeline (Path 1)
-  app.get("/data", () => ({ data: "value" }));
-}
+  "GET /data": () => ({ data: "value" }),
+};
 ```
 
 :::

@@ -4,35 +4,46 @@ The Descriptor plugin applies route metadata to all routes within its scope. Use
 
 ## Usage
 
-```typescript
+::: code-group
+
+```typescript [src/users/module.ts]
 import { descriptor } from "@minimajs/server/plugins";
+import type { Meta, Routes } from "@minimajs/server";
 
 const kAuth = Symbol("auth");
 
-export const meta = {
+export const meta: Meta = {
   plugins: [
     descriptor([kAuth, "required"]),
   ],
 };
 
-export default async function (app) {
-  app.get("/users", () => getUsers());   // Has kAuth metadata
-  app.post("/users", () => createUser()); // Has kAuth metadata
-}
+function getUsers() { /* ... */ }
+function createUser() { /* ... */ }
+
+export const routes: Routes = {
+  "GET /": getUsers,   // Has kAuth metadata
+  "POST /": createUser, // Has kAuth metadata
+};
 ```
+
+:::
 
 ## Multiple Descriptors
 
-Pass multiple descriptors at once:
+Pass multiple descriptors at once to your module's `meta.plugins`:
 
-```typescript
+::: code-group
+
+```typescript [src/api/module.ts]
 import { descriptor } from "@minimajs/server/plugins";
 import { describe } from "@minimajs/openapi";
+import type { Meta } from "@minimajs/server";
 
 const kAuth = Symbol("auth");
 const kRateLimit = Symbol("rateLimit");
 
-export const meta = {
+export const meta: Meta = {
   plugins: [
     descriptor(
       [kAuth, "required"],
@@ -43,31 +54,54 @@ export const meta = {
 };
 ```
 
+:::
+
 ## Scoping
 
-Like all plugins, `descriptor()` respects module boundaries:
+Like all plugins, `descriptor()` respects module boundaries and prefix inheritance:
 
-```typescript
-// src/module.ts - Root module
-export const meta = {
+::: code-group
+
+```typescript [src/module.ts]
+import { descriptor } from "@minimajs/server/plugins";
+import type { Meta } from "@minimajs/server";
+
+const kPublicApi = Symbol("publicApi");
+
+// Root module
+export const meta: Meta = {
   plugins: [descriptor([kPublicApi, true])],
 };
+```
 
-// src/admin/module.ts - Child module
-export const meta = {
+```typescript [src/admin/module.ts]
+import { descriptor } from "@minimajs/server/plugins";
+import type { Meta } from "@minimajs/server";
+
+const kAdminOnly = Symbol("adminOnly");
+
+// Child module
+export const meta: Meta = {
   plugins: [descriptor([kAdminOnly, true])],
 };
 // Routes here inherit BOTH kPublicApi and kAdminOnly
 ```
 
+:::
+
 ## Dynamic Descriptors
 
 Use a function for metadata based on route properties:
 
-```typescript
+::: code-group
+
+```typescript [src/module.ts]
+import { descriptor } from "@minimajs/server/plugins";
+import type { Meta } from "@minimajs/server";
+
 const kOperationId = Symbol("operationId");
 
-export const meta = {
+export const meta: Meta = {
   plugins: [
     descriptor((route) => {
       const method = route.methods[0].toLowerCase();
@@ -77,6 +111,8 @@ export const meta = {
   ],
 };
 ```
+
+:::
 
 ## See Also
 

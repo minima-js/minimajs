@@ -125,23 +125,25 @@ export const meta: Meta = {
   plugins: [authPlugin],
 };
 
-export default async function (app) {
-  app.post("/login", () => {
-    const { username, password } = body<{ username?: string; password?: string }>();
+function login() {
+  const { username, password } = body<{ username?: string; password?: string }>();
 
-    const user = users.find((u) => u.username === username && u.password === password);
+  const user = users.find((u) => u.username === username && u.password === password);
 
-    if (!user) {
-      throw new UnauthorizedError("Invalid credentials");
-    }
+  if (!user) {
+    throw new UnauthorizedError("Invalid credentials");
+  }
 
-    const token = jwt.sign({ userId: user.id, username: user.username }, JWT_SECRET, {
-      expiresIn: "1h",
-    });
-
-    return { token };
+  const token = jwt.sign({ userId: user.id, username: user.username }, JWT_SECRET, {
+    expiresIn: "1h",
   });
+
+  return { token };
 }
+
+export const routes: Routes = {
+  "POST /login": login,
+};
 // ✅ Auto-loaded as /auth/login
 ```
 
@@ -154,7 +156,7 @@ Create a protected module by adding both `authPlugin` and `guardPlugin` to `meta
 ::: code-group
 
 ```typescript [src/profile/module.ts]
-import { type Meta } from "@minimajs/server";
+import type { Meta, Routes } from "@minimajs/server";
 import { authPlugin, getUser } from "../auth/tools.js";
 import { guardPlugin } from "../auth/guard.js";
 
@@ -166,21 +168,24 @@ export const meta: Meta = {
   ],
 };
 
-export default async function (app) {
-  app.get("/me", () => {
-    // Because guard is applied, getUser() will always return a user here
-    const user = getUser();
-    return { user };
-  });
-
-  app.get("/settings", () => {
-    const user = getUser();
-    return {
-      user,
-      message: "User settings",
-    };
-  });
+function getMe() {
+  // Because guard is applied, getUser() will always return a user here
+  const user = getUser();
+  return { user };
 }
+
+function getSettings() {
+  const user = getUser();
+  return {
+    user,
+    message: "User settings",
+  };
+}
+
+export const routes: Routes = {
+  "GET /me": getMe,
+  "GET /settings": getSettings,
+};
 // ✅ Auto-loaded as /profile/*
 // ✅ All routes are protected by guardPlugin
 ```
@@ -210,7 +215,7 @@ If you want `getUser()` available in **all modules** without repeating `authPlug
 ::: code-group
 
 ```typescript [src/module.ts]
-import { type Meta } from "@minimajs/server";
+import type { Meta, Routes } from "@minimajs/server";
 import { authPlugin } from "./auth/tools.js";
 
 // Root module - all child modules inherit these plugins
@@ -220,24 +225,30 @@ export const meta: Meta = {
   ],
 };
 
-export default async function (app) {
-  app.get("/health", () => "ok");
+function getHealth() {
+  return "ok";
 }
+
+export const routes: Routes = {
+  "GET /health": getHealth,
+};
 ```
 
 ```typescript [src/auth/module.ts]
-import { body, type Meta } from "@minimajs/server";
+import { body, type Routes } from "@minimajs/server";
 import { getUser } from "./tools.js"; // ✅ authPlugin inherited from root
 
-export default async function (app) {
-  app.post("/login", () => {
-    // ... login logic
-  });
+function login() {
+  // ... login logic
 }
+
+export const routes: Routes = {
+  "POST /login": login,
+};
 ```
 
 ```typescript [src/profile/module.ts]
-import { type Meta } from "@minimajs/server";
+import type { Meta, Routes } from "@minimajs/server";
 import { getUser } from "../auth/tools.js"; // ✅ authPlugin inherited from root
 import { guardPlugin } from "../auth/guard.js";
 
@@ -246,12 +257,14 @@ export const meta: Meta = {
   plugins: [guardPlugin],
 };
 
-export default async function (app) {
-  app.get("/me", () => {
-    const user = getUser();
-    return { user };
-  });
+function getMe() {
+  const user = getUser();
+  return { user };
 }
+
+export const routes: Routes = {
+  "GET /me": getMe,
+};
 ```
 
 :::

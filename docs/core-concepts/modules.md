@@ -43,19 +43,27 @@ src/
 ::: code-group
 
 ```typescript [src/users/module.ts]
-import type { App } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
+import { params } from "@minimajs/server";
 
 const users = [
   { id: 1, name: "Alice" },
   { id: 2, name: "Bob" },
 ];
 
-export default async function (app: App) {
-  app.get("/list", () => users);
-  app.get("/:id", ({ params }) => {
-    return users.find((u) => u.id === Number(params.id));
-  });
+function listUsers() {
+  return users;
 }
+
+function getUser() {
+  const id = params.get("id");
+  return users.find((u) => u.id === Number(id));
+}
+
+export const routes: Routes = {
+  "GET /list": listUsers,
+  "GET /:id": getUser,
+};
 ```
 
 ```typescript [src/index.ts]
@@ -95,8 +103,8 @@ Now let's add some plugins to our users module - like request logging and CORS.
 ::: code-group
 
 ```typescript [src/users/module.ts]
-import type { App, Meta } from "@minimajs/server";
-import { hook } from "@minimajs/server";
+import type { Meta, Routes } from "@minimajs/server";
+import { hook, params } from "@minimajs/server";
 import { cors } from "@minimajs/server/plugins";
 
 const users = [
@@ -114,12 +122,19 @@ export const meta: Meta = {
   ],
 };
 
-export default async function (app: App) {
-  app.get("/list", () => users);
-  app.get("/:id", ({ params }) => {
-    return users.find((u) => u.id === Number(params.id));
-  });
+function listUsers() {
+  return users;
 }
+
+function getUser() {
+  const id = params.get("id");
+  return users.find((u) => u.id === Number(id));
+}
+
+export const routes: Routes = {
+  "GET /list": listUsers,
+  "GET /:id": getUser,
+};
 ```
 
 :::
@@ -157,18 +172,21 @@ src/
 ::: code-group
 
 ```typescript [src/users/profile/module.ts]
-import type { App } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
+import { params } from "@minimajs/server";
 
-export default async function (app: App) {
-  app.get("/:userId", ({ params }) => {
-    const userId = params.userId;
-    return {
-      userId,
-      bio: "User profile for " + userId,
-      settings: { theme: "dark" },
-    };
-  });
+function getProfile() {
+  const userId = params.get("userId");
+  return {
+    userId,
+    bio: "User profile for " + userId,
+    settings: { theme: "dark" },
+  };
 }
+
+export const routes: Routes = {
+  "GET /:userId": getProfile,
+};
 ```
 
 :::
@@ -211,7 +229,7 @@ src/
 ::: code-group
 
 ```typescript [src/api/module.ts]
-import type { App, Meta } from "@minimajs/server";
+import type { Meta, Routes } from "@minimajs/server";
 import { cors } from "@minimajs/server/plugins";
 
 // These plugins apply to ALL child modules
@@ -220,27 +238,39 @@ export const meta: Meta = {
   plugins: [cors({ origin: "*" })],
 };
 
-export default async function (app: App) {
-  app.get("/health", () => ({ status: "ok" }));
+function getHealth() {
+  return { status: "ok" };
 }
+
+export const routes: Routes = {
+  "GET /health": getHealth,
+};
 ```
 
 ```typescript [src/api/users/module.ts]
-import type { App } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
+
+function listUsers() {
+  return { users: [] };
+}
 
 // No need to register cors - inherited from parent!
-export default async function (app: App) {
-  app.get("/list", () => ({ users: [] }));
-}
+export const routes: Routes = {
+  "GET /list": listUsers,
+};
 ```
 
 ```typescript [src/api/posts/module.ts]
-import type { App } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
+
+function listPosts() {
+  return { posts: [] };
+}
 
 // Also inherits CORS from parent
-export default async function (app: App) {
-  app.get("/list", () => ({ posts: [] }));
-}
+export const routes: Routes = {
+  "GET /list": listPosts,
+};
 ```
 
 :::
@@ -276,7 +306,7 @@ src/
 ::: code-group
 
 ```typescript [src/module.ts]
-import type { App, Meta } from "@minimajs/server";
+import type { Meta, Routes } from "@minimajs/server";
 import { cors } from "@minimajs/server/plugins";
 import { hook } from "@minimajs/server";
 
@@ -291,9 +321,13 @@ export const meta: Meta = {
   ],
 };
 
-export default async function (app: App) {
-  app.get("/health", () => ({ status: "ok" }));
+function getHealth() {
+  return { status: "ok" };
 }
+
+export const routes: Routes = {
+  "GET /health": getHealth,
+};
 ```
 
 :::
@@ -303,12 +337,16 @@ export default async function (app: App) {
 ::: code-group
 
 ```typescript [src/users/module.ts]
-import type { App } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
+
+function listUsers() {
+  return { users: [] };
+}
 
 // No CORS here - inherited from root!
-export default async function (app: App) {
-  app.get("/list", () => ({ users: [] }));
-}
+export const routes: Routes = {
+  "GET /list": listUsers,
+};
 ```
 
 :::
@@ -354,15 +392,20 @@ export const meta: Meta = {
 ```
 
 ```typescript [src/public/module.ts]
-// No guard - anyone can access
-export default async function (app: App) {
-  app.post("/login", () => {
-    /* ... */
-  });
+import type { Routes } from "@minimajs/server";
+
+function login() {
+  /* ... */
 }
+
+// No guard - anyone can access
+export const routes: Routes = {
+  "POST /login": login,
+};
 ```
 
 ```typescript [src/protected/module.ts]
+import type { Meta, Routes } from "@minimajs/server";
 import { guardPlugin } from "../plugins/guard.js";
 
 // Add guard to require authentication
@@ -370,11 +413,13 @@ export const meta: Meta = {
   plugins: [guardPlugin],
 };
 
-export default async function (app: App) {
-  app.get("/profile", () => {
-    /* ... */
-  });
+function getProfile() {
+  /* ... */
 }
+
+export const routes: Routes = {
+  "GET /profile": getProfile,
+};
 ```
 
 :::
@@ -405,7 +450,7 @@ src/
 
 **Check:**
 
-1. ✅ Is the file named `module.{ts,js,mjs}`?
+1. ✅ Is the file named `module.{ts,js}`?
 2. ✅ Is it in a subdirectory of your entry point?
 3. ✅ Is `moduleDiscovery` enabled? (It's on by default)
 
@@ -458,13 +503,13 @@ Now that you understand modules, explore:
 
 ### File Naming
 
-- Default: `module.{ts,js,mjs}`
+- Default: `module.{ts,js}`
 - Advanced configuration: [Module Discovery](/advanced/module-discovery)
 
 ### Module Structure
 
 ```typescript
-import type { App, Meta } from "@minimajs/server";
+import type { Meta, Routes } from "@minimajs/server";
 
 export const meta: Meta = {
   prefix: "/custom", // Optional: override directory name
@@ -473,9 +518,9 @@ export const meta: Meta = {
   ], // Optional: module-scoped plugins
 };
 
-export default async function (app: App) {
+export const routes: Routes = {
   // Your routes here
-}
+};
 ```
 
 ### Module Types

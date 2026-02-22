@@ -30,15 +30,11 @@ export const meta = {
     }),
   ],
 };
-
-export default async function (app) {
-  // Your routes here
-}
 ```
 
 :::
 
-> **Important:** The `meta.plugins` property **only works in module files** (files named `module.ts` by default, or whatever you configure with `moduleDiscovery.index`). It will **not** work in random files - only in files that are auto-discovered as modules. For other files or manual registration, use `app.register(hook(...))` instead.
+> **Important:** The `meta.plugins` property **only works in module files** (files named `module.{ts,js}` by default, or whatever you configure with `moduleDiscovery.index`). It will **not** work in random files - only in files that are auto-discovered as modules. For other files or manual registration, use `app.register(hook(...))` instead.
 
 ## Quick Reference
 
@@ -108,10 +104,6 @@ export const meta = {
     }),
   ],
 };
-
-export default async function (app) {
-  // Your routes here
-}
 ```
 
 ```typescript [src/index.ts]
@@ -250,10 +242,6 @@ export const meta = {
     }),
   ],
 };
-
-export default async function (app) {
-  // Your routes here
-}
 ```
 
 :::
@@ -310,10 +298,6 @@ export const meta = {
     }),
   ],
 };
-
-export default async function (app) {
-  // Your routes here
-}
 ```
 
 :::
@@ -332,6 +316,7 @@ The `transform` hook modifies response data returned by a handler before it is s
 
 ```typescript [src/users/module.ts]
 import { hook } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
 
 export const meta = {
   plugins: [
@@ -344,12 +329,14 @@ export const meta = {
   ],
 };
 
-export default async function (app) {
-  app.get("/list", () => {
-    return { users: ["Alice", "Bob"] };
-  });
-  // Response: { "users": ["ALICE", "BOB"] }
+function listUsers() {
+  return { users: ["Alice", "Bob"] };
 }
+
+export const routes: Routes = {
+  "GET /list": listUsers,
+  // Response: { "users": ["ALICE", "BOB"] }
+};
 ```
 
 :::
@@ -388,10 +375,6 @@ export const meta = {
     }),
   ],
 };
-
-export default async function (app) {
-  // Your routes here
-}
 ```
 
 :::
@@ -416,16 +399,19 @@ The `defer` helper registers a callback to be executed **after the response has 
 
 ```typescript [src/api/module.ts]
 import { defer } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
 
-export default async function (app) {
-  app.get("/", () => {
-    defer(() => {
-      console.log("Response sent, running deferred task...");
-    });
-
-    return { message: "Hello World!" };
+function getHome() {
+  defer(() => {
+    console.log("Response sent, running deferred task...");
   });
+
+  return { message: "Hello World!" };
 }
+
+export const routes: Routes = {
+  "GET /": getHome,
+};
 ```
 
 :::
@@ -459,14 +445,19 @@ export const meta = {
 
 ```typescript [src/users/module.ts]
 import { hook } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
 
 export const meta = {
   plugins: [hook("request", () => console.log("Child: Logging"))],
 };
 
-export default async function (app) {
-  app.get("/list", () => "users");
+function listUsers() {
+  return "users";
 }
+
+export const routes: Routes = {
+  "GET /list": listUsers,
+};
 ```
 
 :::
@@ -498,16 +489,19 @@ export const meta = {
 
 ```typescript [src/users/module.ts]
 import { hook } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
 
 export const meta = {
   plugins: [hook("error", () => ({ error: "Module-specific error" }))],
 };
 
-export default async function (app) {
-  app.get("/list", () => {
-    throw new Error("Failed");
-  });
+function listUsers() {
+  throw new Error("Failed");
 }
+
+export const routes: Routes = {
+  "GET /list": listUsers,
+};
 ```
 
 :::

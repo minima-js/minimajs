@@ -12,22 +12,26 @@ import { express } from "@minimajs/server/plugins/express";
 
 ## Usage
 
-Register Express-style middleware with your application instance. The middleware function receives the Node.js `req` and `res` objects, along with a `next` callback.
+Register Express-style middleware within your module's `meta.plugins`. The middleware function receives the Node.js `req` and `res` objects, along with a `next` callback.
 
-```typescript
-import { createApp } from "@minimajs/server";
+::: code-group
+
+```typescript [src/module.ts]
 import { express } from "@minimajs/server/plugins/express";
+import { type Meta } from "@minimajs/server";
 
-const app = createApp();
-
-// Use Express middleware
-app.register(
-  express((req, res, next) => {
-    console.log("Request URL:", req.url);
-    next();
-  })
-);
+// Use Express middleware globally
+export const meta: Meta = {
+  plugins: [
+    express((req, res, next) => {
+      console.log("Request URL:", req.url);
+      next();
+    }),
+  ],
+};
 ```
+
+:::
 
 ## Important Notes
 
@@ -41,48 +45,73 @@ This plugin **only works with Node.js servers**. It requires access to the under
 
 You can use existing Express middleware packages:
 
-```typescript
+::: code-group
+
+```typescript [src/module.ts]
 import helmet from "helmet";
 import compression from "compression";
+import { express } from "@minimajs/server/plugins/express";
+import { type Meta } from "@minimajs/server";
 
-// Security headers
-app.register(express(helmet()));
-
-// Response compression
-app.register(express(compression()));
+export const meta: Meta = {
+  plugins: [
+    express(helmet()),      // Security headers
+    express(compression()), // Response compression
+  ],
+};
 ```
+
+:::
 
 ### Custom Middleware
 
 Create custom Express-style middleware for specific needs:
 
-```typescript
-app.register(
-  express((req, res, next) => {
-    // Add custom headers
-    res.setHeader("X-Custom-Header", "MyValue");
-    next();
-  })
-);
+::: code-group
+
+```typescript [src/module.ts]
+import { express } from "@minimajs/server/plugins/express";
+import { type Meta } from "@minimajs/server";
+
+export const meta: Meta = {
+  plugins: [
+    express((req, res, next) => {
+      // Add custom headers
+      res.setHeader("X-Custom-Header", "MyValue");
+      next();
+    }),
+  ],
+};
 ```
+
+:::
 
 ### Error Handling
 
 Pass errors to the Minima.js error handling system using the `next` callback:
 
-```typescript
-app.register(
-  express((req, res, next) => {
-    try {
-      // Some operation that might fail
-      validateRequest(req);
-      next();
-    } catch (error) {
-      next(error);
-    }
-  })
-);
+::: code-group
+
+```typescript [src/module.ts]
+import { express } from "@minimajs/server/plugins/express";
+import { type Meta } from "@minimajs/server";
+
+export const meta: Meta = {
+  plugins: [
+    express((req, res, next) => {
+      try {
+        // Some operation that might fail
+        validateRequest(req);
+        next();
+      } catch (error) {
+        next(error);
+      }
+    }),
+  ],
+};
 ```
+
+:::
 
 ## Type Definitions
 

@@ -14,15 +14,27 @@ import { shutdown } from "@minimajs/server/plugins";
 
 ## Usage
 
-Simply register the plugin with your application instance. It requires no default configuration.
+Register the plugin within your root module's `meta.plugins`. It requires no default configuration.
 
-```typescript
-app.register(shutdown());
+::: code-group
+
+```typescript [src/module.ts]
+import { shutdown } from "@minimajs/server/plugins";
+import { type Meta } from "@minimajs/server";
+
+// Enable graceful shutdown globally
+export const meta: Meta = {
+  plugins: [shutdown()],
+};
 ```
+
+:::
 
 With the plugin registered, pressing `Ctrl+C` in your terminal will now trigger the graceful shutdown process instead of immediately terminating the application.
 
 ## Configuration
+
+You can customize the shutdown behavior in your root module:
 
 ### `signals`
 
@@ -40,11 +52,20 @@ The maximum time in milliseconds to wait for the graceful shutdown to complete b
 
 **Example with custom options:**
 
-```typescript
-app.register(
-  shutdown({
-    signals: ["SIGINT"], // Only listen for SIGINT
-    timeout: 10000, // Wait a maximum of 10 seconds
-  })
-);
+::: code-group
+
+```typescript [src/module.ts]
+import { shutdown } from "@minimajs/server/plugins";
+import { type Meta } from "@minimajs/server";
+
+export const meta: Meta = {
+  plugins: [
+    shutdown({
+      signals: ["SIGINT"], // Only listen for SIGINT
+      timeout: 10000, // Wait a maximum of 10 seconds
+    }),
+  ],
+};
 ```
+
+:::

@@ -11,17 +11,26 @@ tags:
 
 This guide introduces the core concepts of Minima.js to get you up and running quickly. We'll start with a minimal application and then explore the key features that make the framework powerful and elegant.
 
+> **New to Minima.js?** Check out the [Introduction](/intro) for a conceptual overview before diving into this tutorial.
+
 ## Setup
 
 First, choose your runtime and create a new project directory.
 
-**Option 1: Bun (Recommended)**
+**Option 1: Bun**
 
 ```bash
 mkdir minimajs-app
 cd minimajs-app
 bun init -y
 bun add @minimajs/server
+```
+
+Then start your server:
+
+```bash
+bun --watch src/index.ts  # development with auto-reload
+bun src/index.ts          # production
 ```
 
 **Option 2: Node.js**
@@ -31,9 +40,50 @@ mkdir minimajs-app
 cd minimajs-app
 npm init -y
 npm install @minimajs/server
+npm install -D typescript tsx @types/node
 ```
 
-If using Node.js, add `"type": "module"` to your `package.json`.
+Update your `package.json` to enable ES modules and add start scripts:
+
+```json
+{
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts"
+  }
+}
+```
+
+Create a `tsconfig.json` for TypeScript support:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true
+  }
+}
+```
+
+Then start your server:
+
+```bash
+npm run dev    # development with auto-reload
+npm run start  # production
+```
+
+## Choose Your Runtime
+
+Minima.js is optimized for both runtimes. You select your target by changing the import path:
+
+- `@minimajs/server/bun`: Uses Bun's native, high-performance `Bun.serve()`.
+- `@minimajs/server/node`: Uses Node.js's standard `http.createServer()`.
+- `@minimajs/server`: Defaults to the Node.js runtime.
+
+This provides native performance with zero abstraction overhead.
 
 ## A Minimal Application
 
@@ -43,7 +93,7 @@ Create a `src/index.ts` file. Here is a very basic Minima.js application:
 
 ```typescript [Bun]
 import { createApp } from "@minimajs/server/bun";
-import { params, body } from "@minimajs/server";
+import { params } from "@minimajs/server";
 
 const app = createApp();
 
@@ -56,13 +106,13 @@ app.get("/hello/:name", () => {
   return { message: `Hello, ${name}!` };
 });
 
-const { address } = await app.listen({ port: 3000 });
+const address = await app.listen({ port: 3000 });
 console.log(`Server listening on ${address}`);
 ```
 
 ```typescript [Node.js]
 import { createApp } from "@minimajs/server/node";
-import { params, body } from "@minimajs/server";
+import { params } from "@minimajs/server";
 
 const app = createApp();
 
@@ -75,27 +125,13 @@ app.get("/hello/:name", () => {
   return { message: `Hello, ${name}!` };
 });
 
-const { address } = await app.listen({ port: 3000 });
+const address = await app.listen({ port: 3000 });
 console.log(`Server listening on ${address}`);
 ```
 
 :::
 
 This short example already showcases several core concepts. Let's build on this foundation.
-
-> **New to Minima.js?** Check out the [Introduction](/intro) for a conceptual overview before diving into this tutorial.
-
-## Choose Your Runtime
-
-### Bun/Node Compatibility
-
-Minima.js is optimized for both runtimes. You select your target by changing the import path:
-
-- `@minimajs/server/bun`: Uses Bun's native, high-performance `Bun.serve()`.
-- `@minimajs/server/node`: Uses Node.js's standard `http.createServer()`.
-- `@minimajs/server`: Defaults to the Node.js runtime.
-
-This provides native performance with zero abstraction overhead.
 
 ## Access Request Data Anywhere
 
@@ -130,7 +166,7 @@ src/
 ::: code-group
 
 ```typescript [src/index.ts]
-import { createApp } from "@minimajs/server/bun";
+import { createApp } from "@minimajs/server";
 
 const app = createApp(); // Auto-discovers modules!
 
@@ -139,14 +175,21 @@ await app.listen({ port: 3000 });
 
 ```typescript [src/users/module.ts]
 import { params } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
 
-export default async function (app) {
-  app.get("/list", () => [{ id: 1, name: "John" }]);
-  app.get("/:id", () => {
-    const id = params.get("id");
-    return { id, name: "John" };
-  });
+function listUsers() {
+  return [{ id: 1, name: "John" }];
 }
+
+function getUser() {
+  const id = params.get("id");
+  return { id, name: "John" };
+}
+
+export const routes: Routes = {
+  "GET /list": listUsers,
+  "GET /:id": getUser,
+};
 ```
 
 :::
@@ -160,17 +203,21 @@ export default async function (app) {
 **Want to add plugins to a module?** Use `meta.plugins`:
 
 ```typescript
-import { type Meta, hook } from "@minimajs/server";
+import { type Meta, type Routes, hook } from "@minimajs/server";
 
 export const meta: Meta = {
   plugins: [hook("request", () => console.log("User route accessed"))],
 };
 
-export default async function (app) {
-  app.get("/list", () => [
+function listUsers() {
+  return [
     /* users */
-  ]);
+  ];
 }
+
+export const routes: Routes = {
+  "GET /list": listUsers,
+};
 ```
 
 Learn more: [Module Tutorial](/core-concepts/modules)
@@ -180,7 +227,10 @@ Learn more: [Module Tutorial](/core-concepts/modules)
 Use hooks to tap into request/app lifecycle events. Perfect for logging, auth, error handling:
 
 ```ts
+import { createApp } from "@minimajs/server";
 import { hook } from "@minimajs/server";
+
+const app = createApp();
 
 // Log every request
 app.register(
@@ -199,7 +249,10 @@ Learn more: [Hooks Guide](/guides/hooks)
 Use an `error` hook to catch all errors in one place:
 
 ```ts
+import { createApp } from "@minimajs/server";
 import { hook, abort } from "@minimajs/server";
+
+const app = createApp();
 
 app.register(
   hook("error", (error) => {

@@ -31,6 +31,7 @@ Only use middleware when you **must wrap the request** with before/after logic t
 
 ```typescript [src/module.ts]
 import { middleware } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
 
 export const meta = {
   plugins: [
@@ -43,14 +44,14 @@ export const meta = {
   ],
 };
 
-export default async function (app) {
+export const routes: Routes = {
   // Your routes here
-}
+};
 ```
 
 :::
 
-> **Important:** The `meta.plugins` property **only works in module files** (files named `module.ts` by default). For other files or manual registration, use `app.register(middleware(...))` instead.
+> **Important:** The `meta.plugins` property **only works in module files** (files named `module.{ts,js}` by default). For other files or manual registration, use `app.register(middleware(...))` instead.
 
 ## Quick Reference
 

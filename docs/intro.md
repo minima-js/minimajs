@@ -10,12 +10,13 @@ Minima.js is a **TypeScript-first, high-performance web framework** built from s
 
 ## Core Concepts
 
-Minima.js is built around four key ideas:
+Minima.js is built around five key ideas:
 
 1. **Runtime-Native Support** - Built from scratch for Bun and Node.js with zero abstractions
-2. **File-Based Modules** - Your folder structure defines your API structure
-3. **Context Functions** - Access request data anywhere without prop drilling
-4. **Everything is a Plugin** - Hooks, middleware, auth—all follow the same pattern
+2. **Web Standard First** - Uses native `Request`, `Response`, `File`, `Blob`, and `Uint8Array` throughout — no Node.js-specific buffers or proprietary abstractions
+3. **File-Based Modules** - Your folder structure defines your API structure
+4. **Context Functions** - Access request data anywhere without prop drilling
+5. **Everything is a Plugin** - Hooks, middleware, auth—all follow the same pattern
 
 Let's explore each one.
 
@@ -94,19 +95,31 @@ await app.listen({ port: 3000 });
 ```
 
 ```typescript [src/users/module.ts]
-export default async function (app) {
-  app.get("/list", () => [
+import type { Routes } from "@minimajs/server";
+
+function getUsers() {
+  return [
     { id: 1, name: "Alice" },
     { id: 2, name: "Bob" },
-  ]);
+  ];
 }
+
+export const routes: Routes = {
+  "GET /list": getUsers,
+};
 // ✅ Auto-loaded as /users/*
 ```
 
 ```typescript [src/posts/module.ts]
-export default async function (app) {
-  app.get("/latest", () => ({ posts: [] }));
+import type { Routes } from "@minimajs/server";
+
+function getLatestPosts() {
+  return { posts: [] };
 }
+
+export const routes: Routes = {
+  "GET /latest": getLatestPosts,
+};
 // ✅ Auto-loaded as /posts/*
 ```
 
@@ -127,7 +140,7 @@ Each module can declare its own plugins—hooks, middleware, auth—all in one p
 ::: code-group
 
 ```typescript [src/users/module.ts]
-import { type Meta } from "@minimajs/server";
+import type { Meta, Routes } from "@minimajs/server";
 import { hook } from "@minimajs/server";
 import { cors } from "@minimajs/server/plugins";
 
@@ -135,11 +148,15 @@ export const meta: Meta = {
   plugins: [cors({ origin: "https://example.com" }), hook("request", () => console.log("User route accessed"))],
 };
 
-export default async function (app) {
-  app.get("/list", () => [
+function getUsers() {
+  return [
     /* users */
-  ]);
+  ];
 }
+
+export const routes: Routes = {
+  "GET /list": getUsers,
+};
 ```
 
 :::
@@ -158,7 +175,8 @@ Create `src/module.ts` to configure ALL modules:
 ::: code-group
 
 ```typescript [src/module.ts]
-import { type Meta } from "@minimajs/server";
+import { handler, type Meta, type Routes } from "@minimajs/server";
+import { internal } from "@minimajs/openapi";
 import { cors } from "@minimajs/server/plugins";
 import { authPlugin } from "./plugins/auth.js";
 
@@ -171,18 +189,30 @@ export const meta: Meta = {
   ],
 };
 
-export default async function (app) {
-  app.get("/health", () => ({ status: "ok" }));
-}
+// to attach route meta descriptors, use handler function
+// handler(...descriptors, handle)
+const health = handler(internal(), () => {
+  return { status: "ok" };
+});
+
+export const routes: Routes = {
+  "GET /health": health,
+};
 ```
 
 ```typescript [src/users/module.ts]
-// Automatically inherits authPlugin and CORS from root
-export default async function (app) {
-  app.get("/list", () => [
+import type { Routes } from "@minimajs/server";
+
+function getUsers() {
+  return [
     /* users */
-  ]);
+  ];
 }
+
+// Automatically inherits authPlugin and CORS from root
+export const routes: Routes = {
+  "GET /list": getUsers,
+};
 // ✅ /api/users/list (has auth + CORS from root)
 ```
 
@@ -204,37 +234,44 @@ export default async function (app) {
 
 Access request data anywhere without passing context—powered by `AsyncLocalStorage`. This allows your functions to be pure and easily testable, pulling request-specific information only when needed.
 
-```typescript
-import { createApp } from "@minimajs/server/node";
-import { params, searchParams, headers, request, abort } from "@minimajs/server";
+```typescript [src/api/module.ts]
+import { params, searchParams, request, abort } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
 
-const app = createApp();
-
-// Route params - accessible from anywhere within the request context
-app.get("/users/:id", () => {
+function getUserById() {
   const userId = params.get("id");
   return { userId };
-});
+}
 
-// Query params with type coercion
-app.get("/search", () => {
+function search() {
   const query = searchParams.get("q");
   const page = searchParams.get("page", Number) ?? 1; // page type will be inferred as number
   return { query, page };
-});
+}
 
-// Native Web API Request object - for full control
-app.post("/upload", async () => {
+async function uploadFile() {
   const req = request();
   const formData = await req.formData();
   return { uploaded: true };
-});
+}
+
+export const routes: Routes = {
+  // Route params - accessible from anywhere within the request context
+  "GET /users/:id": getUserById,
+
+  // Query params with type coercion
+  "GET /search": search,
+
+  // Native Web API Request object - for full control
+  "POST /upload": uploadFile,
+};
 ```
 
 **Extract logic to pure functions:**
 
-```typescript
+```typescript [src/api/module.ts]
 import { params, headers, abort } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
 
 // Pure functions that leverage Minima.js's context
 function getUser() {
@@ -246,14 +283,18 @@ function isAuthenticated() {
   return headers.get("authorization")?.startsWith("Bearer ");
 }
 
-// Compose them anywhere for clean, readable logic
-app.get("/users/:id/posts", async () => {
+async function getUserPosts() {
   if (!isAuthenticated()) {
     abort(401, "Unauthorized"); // Use abort for early exit with an error response
   }
   const user = await getUser();
   return { user, posts: [] };
-});
+}
+
+export const routes: Routes = {
+  // Compose them anywhere for clean, readable logic
+  "GET /users/:id/posts": getUserPosts,
+};
 ```
 
 ## Hooks & Plugins
@@ -265,7 +306,7 @@ app.get("/users/:id/posts", async () => {
 ::: code-group
 
 ```typescript [src/api/module.ts]
-import { type Meta } from "@minimajs/server";
+import type { Meta, Routes } from "@minimajs/server";
 import { hook } from "@minimajs/server";
 
 export const meta: Meta = {
@@ -285,10 +326,14 @@ export const meta: Meta = {
   ],
 };
 
-export default async function (app) {
-  app.get("/data", () => ({ value: "test" }));
-  // Response: { "value": "test", "timestamp": 1234567890 }
+function getData() {
+  return { value: "test" };
 }
+
+export const routes: Routes = {
+  "GET /data": getData,
+  // Response: { "value": "test", "timestamp": 1234567890 }
+};
 ```
 
 :::

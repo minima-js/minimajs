@@ -14,41 +14,57 @@ import { proxy } from "@minimajs/server/plugins";
 
 ### Basic Usage
 
-By default, calling `proxy()` with no arguments **trusts all proxies** and extracts IP, host, and protocol information from proxy headers:
+By default, calling `proxy()` with no arguments **trusts all proxies** and extracts IP, host, and protocol information from proxy headers. It is recommended to register it in your root module.
 
-```typescript
-import { request } from "@minimajs/server";
+::: code-group
+
+```typescript [src/module.ts]
+import { proxy } from "@minimajs/server/plugins";
+import { request, type Routes, type Meta } from "@minimajs/server";
 
 // Trust all proxies - extracts IP, host, and proto
-app.register(proxy());
+export const meta: Meta = {
+  plugins: [proxy()],
+};
 
-app.get("/client-info", () => {
+function getClientInfo() {
   const clientIp = request.ip();
-  const { host, proto } = request.url();
-  return { ip: clientIp, host, proto };
-});
+  const info = request.url();
+  return {
+    ip: clientIp,
+    host: info.host,
+    proto: info.protocol
+  };
+}
+
+export const routes: Routes = {
+  "GET /client-info": getClientInfo,
+};
 ```
+
+:::
 
 ### Disabling Features
 
-Set any feature to `false` to disable it:
+Set any feature to `false` to disable it within your module configuration:
 
-```typescript
-// Only extract IP, disable host and proto
-app.register(
-  proxy({
-    host: false,
-    proto: false,
-  })
-);
+::: code-group
 
-// Only extract host and proto, disable IP
-app.register(
-  proxy({
-    ip: false,
-  })
-);
+```typescript [src/module.ts]
+import { proxy } from "@minimajs/server/plugins";
+import { type Meta } from "@minimajs/server";
+
+export const meta: Meta = {
+  plugins: [
+    proxy({
+      host: false, // Only extract IP, disable host and proto
+      proto: false,
+    }),
+  ],
+};
 ```
+
+:::
 
 ## Configuration
 
@@ -59,32 +75,34 @@ Determines whether to trust proxy headers from the incoming request. When omitte
 - **Type**: `boolean | string[] | ((ctx: Context) => boolean) | undefined`
 - **Default**: `undefined` (trusts all proxies)
 
-```typescript
-// Default - trust all proxies
-app.register(proxy());
+::: code-group
 
-// Don't trust any proxies - extraction is disabled
-app.register(proxy({ trustProxies: [] }));
+```typescript [src/module.ts]
+import { proxy } from "@minimajs/server/plugins";
+import { request, type Meta } from "@minimajs/server";
 
-// Trust specific proxy IP addresses (Node.js HTTP server only)
-app.register(
-  proxy({
-    trustProxies: ["127.0.0.1", "10.0.0.0/8"],
-  })
-);
+export const meta: Meta = {
+  plugins: [
+    // Don't trust any proxies - extraction is disabled
+    proxy({ trustProxies: [] }),
 
-// Custom trust validator
-import { request } from "@minimajs/server";
+    // Trust specific proxy IP addresses (Node.js runtime only)
+    proxy({
+      trustProxies: ["127.0.0.1", "10.0.0.0/8"],
+    }),
 
-app.register(
-  proxy({
-    trustProxies: (ctx) => {
-      const ip = request.remoteAddr();
-      return ip?.startsWith("10.") || ip === "127.0.0.1";
-    },
-  })
-);
+    // Custom trust validator
+    proxy({
+      trustProxies: (ctx) => {
+        const ip = request.remoteAddr();
+        return ip?.startsWith("10.") || ip === "127.0.0.1";
+      },
+    }),
+  ],
+};
 ```
+
+:::
 
 ### `ip`
 
@@ -106,11 +124,11 @@ interface IpSettings {
 #### Disabling IP Extraction
 
 ```typescript
-app.register(
-  proxy({
-    ip: false, // Disable IP extraction completely
-  })
-);
+export const meta: Meta = {
+  plugins: [
+    proxy({ ip: false })
+  ]
+};
 ```
 
 #### Using Depth (Recommended for Multi-Proxy)
@@ -126,75 +144,13 @@ For an `X-Forwarded-For` header of `"client, proxy1, proxy2"`:
 ```typescript
 // Extract the client IP, assuming 2 trusted proxies
 // x-forwarded-for: "client, proxy1, proxy2"
-app.register(
-  proxy({
-    ip: { depth: 3 },
-  })
-);
-```
-
-#### Using Strategy
-
-```typescript
-// Get first IP (default)
-app.register(
-  proxy({
-    ip: { strategy: "first" },
-  })
-);
-
-// Get last IP
-app.register(
-  proxy({
-    ip: { strategy: "last" },
-  })
-);
-```
-
-> **Note**: When `depth` is specified, it takes priority over `strategy` for extracting IPs from `X-Forwarded-For`.
-
-#### Custom Headers
-
-```typescript
-// Check custom header(s) before standard headers
-app.register(
-  proxy({
-    ip: {
-      header: "cf-connecting-ip", // Cloudflare
-    },
-  })
-);
-
-// Try multiple headers in order
-app.register(
-  proxy({
-    ip: {
-      header: ["cf-connecting-ip", "x-real-ip", "x-forwarded-for"],
-    },
-  })
-);
-```
-
-#### IP Extraction Priority
-
-The plugin checks headers in this order:
-
-1. **Custom headers** (if specified via `header` option)
-2. **X-Forwarded-For** (with depth/strategy applied)
-3. **X-Real-IP**
-4. **Socket IP** (fallback)
-
-#### Using Custom Callback
-
-```typescript
-app.register(
-  proxy({
-    ip: (ctx) => {
-      // Custom logic
-      return ctx.request.headers.get("cf-connecting-ip") || null;
-    },
-  })
-);
+export const meta: Meta = {
+  plugins: [
+    proxy({
+      ip: { depth: 3 },
+    }),
+  ],
+};
 ```
 
 ### `host`
@@ -215,58 +171,26 @@ interface HostSettings {
 #### Disabling Host Extraction
 
 ```typescript
-app.register(
-  proxy({
-    host: false, // Disable host extraction
-  })
-);
+export const meta: Meta = {
+  plugins: [
+    proxy({ host: false })
+  ]
+};
 ```
 
 #### Using Settings Object
 
 ```typescript
-// Default header
-app.register(
-  proxy({
-    host: {}, // Uses "x-forwarded-host"
-  })
-);
-
-// Custom header
-app.register(
-  proxy({
-    host: {
-      header: "x-original-host",
-    },
-  })
-);
-
 // Multiple header fallback
-app.register(
-  proxy({
-    host: {
-      header: ["x-forwarded-host", "x-original-host"],
-    },
-  })
-);
-```
-
-#### Host Extraction Priority
-
-1. **Custom headers** (if specified via `header` option)
-2. **Host header** (fallback)
-
-#### Using Custom Callback
-
-```typescript
-app.register(
-  proxy({
-    host: (ctx) => {
-      const host = ctx.request.headers.get("x-forwarded-host");
-      return host?.split(":")[0] ?? "example.com"; // Strip port
-    },
-  })
-);
+export const meta: Meta = {
+  plugins: [
+    proxy({
+      host: {
+        header: ["x-forwarded-host", "x-original-host"],
+      },
+    }),
+  ],
+};
 ```
 
 ### `proto`
@@ -281,236 +205,190 @@ Configures protocol extraction from proxy headers. Enabled by default, set to `f
 #### Disabling Proto Extraction
 
 ```typescript
-app.register(
-  proxy({
-    trustProxies: true,
-    proto: false, // Must also set host: false to disable both
-    host: false,
-  })
-);
-```
-
-#### Using Settings Object
-
-```typescript
-app.register(
-  proxy({
-    trustProxies: true,
-    proto: {
-      header: "x-forwarded-proto", // Header name (default)
-    },
-  })
-);
-```
-
-**Options:**
-
-- `header` (string | string[]): Header name(s) to check. Default: `"x-forwarded-proto"`
-
-```typescript
-// Multiple header fallback for different cloud providers
-app.register(
-  proxy({
-    trustProxies: true,
-    proto: {
-      header: ["x-forwarded-proto", "cloudfront-forwarded-proto", "x-arr-ssl"],
-    },
-  })
-);
-```
-
-#### Using Custom Callback
-
-```typescript
-app.register(
-  proxy({
-    trustProxies: true,
-    proto: (ctx) => {
-      // Custom protocol detection logic
-      const proto = ctx.request.headers.get("x-forwarded-proto");
-      return proto === "on" ? "https" : "http";
-    },
-  })
-);
+export const meta: Meta = {
+  plugins: [
+    proxy({
+      trustProxies: true,
+      proto: false, // Must also set host: false to disable both
+      host: false,
+    }),
+  ],
+};
 ```
 
 ## Complete Examples
 
 ### Default (Development)
 
-```typescript
+::: code-group
+
+```typescript [src/module.ts]
+import { proxy } from "@minimajs/server/plugins";
+import { type Meta } from "@minimajs/server";
+
 // Trust all proxies, extract all information
-app.register(proxy());
+export const meta: Meta = {
+  plugins: [proxy()],
+};
 ```
+
+:::
 
 ### Behind NGINX
 
-```typescript
-app.register(
-  proxy({
-    trustProxies: ["127.0.0.1"], // Trust localhost NGINX
-    ip: { depth: 2 }, // If NGINX is the only proxy, client IP is at depth 2
-  })
-);
+::: code-group
+
+```typescript [src/module.ts]
+import { proxy } from "@minimajs/server/plugins";
+import { type Meta } from "@minimajs/server";
+
+export const meta: Meta = {
+  plugins: [
+    proxy({
+      trustProxies: ["127.0.0.1"], // Trust localhost NGINX
+      ip: { depth: 2 }, // If NGINX is the only proxy, client IP is at depth 2
+    }),
+  ],
+};
 ```
 
-### Behind AWS ALB/CloudFront
-
-```typescript
-app.register(
-  proxy({
-    trustProxies: true,
-    proto: {
-      header: ["x-forwarded-proto", "cloudfront-forwarded-proto"],
-    },
-  })
-);
-```
+:::
 
 ### Behind Multiple Proxies
 
-```typescript
-app.register(
-  proxy({
-    trustProxies: ["10.0.0.1", "10.0.0.2"], // Trust specific proxies
-    ip: { depth: 3 }, // If there are 2 proxies, client IP is at depth 3
-    host: {
-      header: ["x-forwarded-host", "x-original-host"],
-    },
-  })
-);
+::: code-group
+
+```typescript [src/module.ts]
+import { proxy } from "@minimajs/server/plugins";
+import { type Meta } from "@minimajs/server";
+
+export const meta: Meta = {
+  plugins: [
+    proxy({
+      trustProxies: ["10.0.0.1", "10.0.0.2"], // Trust specific proxies
+      ip: { depth: 3 }, // If there are 2 proxies, client IP is at depth 3
+      host: {
+        header: ["x-forwarded-host", "x-original-host"],
+      },
+    }),
+  ],
+};
 ```
 
-### Cloudflare Setup
-
-```typescript
-app.register(
-  proxy({
-    trustProxies: true,
-    ip: {
-      header: "cf-connecting-ip", // Prioritize Cloudflare header
-    },
-  })
-);
-```
+:::
 
 ### Custom Logic for All Options
 
-```typescript
-app.register(
-  proxy({
-    trustProxies: (ctx) => {
-      const ip = ctx.incomingMessage?.socket?.remoteAddress;
-      return ip === "127.0.0.1" || ip?.startsWith("10.");
-    },
-    ip: (ctx) => {
-      // Prefer Cloudflare header, fallback to X-Forwarded-For
-      return (
-        ctx.request.headers.get("cf-connecting-ip") ||
-        ctx.request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-        null
-      );
-    },
-    host: (ctx) => {
-      const host = ctx.request.headers.get("x-forwarded-host") || ctx.request.url.hostname;
-      return host.split(":")[0]; // Strip port
-    },
-    proto: (ctx) => {
-      const proto = ctx.request.headers.get("x-forwarded-proto");
-      const ssl = ctx.request.headers.get("x-arr-ssl");
-      return proto === "https" || ssl === "on" ? "https" : "http";
-    },
-  })
-);
+::: code-group
+
+```typescript [src/module.ts]
+import { proxy } from "@minimajs/server/plugins";
+import { type Meta } from "@minimajs/server";
+
+export const meta: Meta = {
+  plugins: [
+    proxy({
+      trustProxies: (ctx) => {
+        const ip = ctx.incomingMessage?.socket?.remoteAddress;
+        return ip === "127.0.0.1" || ip?.startsWith("10.");
+      },
+      ip: (ctx) => {
+        // Prefer Cloudflare header, fallback to X-Forwarded-For
+        return (
+          ctx.request.headers.get("cf-connecting-ip") ||
+          ctx.request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          null
+        );
+      },
+      host: (ctx) => {
+        const host = ctx.request.headers.get("x-forwarded-host") || ctx.request.url.hostname;
+        return host.split(":")[0]; // Strip port
+      },
+      proto: (ctx) => {
+        const proto = ctx.request.headers.get("x-forwarded-proto");
+        const ssl = ctx.request.headers.get("x-arr-ssl");
+        return proto === "https" || ssl === "on" ? "https" : "http";
+      },
+    }),
+  ],
+};
 ```
+
+:::
 
 ## Accessing Extracted Values
 
 ### IP Address
 
-```typescript
-import { request } from "@minimajs/server";
+::: code-group
 
-app.get("/client-ip", (ctx) => {
+```typescript [src/users/module.ts]
+import { request, type Routes } from "@minimajs/server";
+
+function getClientIp() {
   const clientIp = request.ip();
   return { ip: clientIp };
-});
+}
+
+export const routes: Routes = {
+  "GET /client-ip": getClientIp,
+};
 ```
+
+:::
 
 ### Host and Protocol
 
-The extracted host and protocol are stored in `ctx.$metadata`:
+The extracted host and protocol are used to reconstruct the `request.url()` object:
 
-```typescript
-import { request } from "@minimajs/server";
-app.get("/request-info", () => {
+::: code-group
+
+```typescript [src/system/module.ts]
+import { request, type Routes } from "@minimajs/server";
+
+function getRequestInfo() {
   const info = request.url(); // type URL
   return {
     host: info.host,
     proto: info.protocol,
     url: info.href,
   };
-});
+}
+
+export const routes: Routes = {
+  "GET /request-info": getRequestInfo,
+};
 ```
+
+:::
 
 ## Security Considerations
 
 ### Trust Only Known Proxies in Production
 
-By default, `proxy()` trusts all proxies. In production, always specify which proxies to trust:
+By default, `proxy()` trusts all proxies. In production, always specify which proxies to trust via `meta.plugins` in your root module.
 
-```typescript
-// ✅ Production - trust specific proxies
-app.register(
-  proxy({
-    trustProxies: ["10.0.1.1", "10.0.1.2", "10.0.0.0/16"],
-  })
-);
+::: code-group
 
-// ✅ Or use custom validation
-app.register(
-  proxy({
-    trustProxies: (ctx) => {
-      const ip = ctx.incomingMessage?.socket?.remoteAddress; // in Node.js server
-      return ip === "10.0.1.1";
-    },
-  })
-);
+```typescript [src/module.ts]
+import { proxy } from "@minimajs/server/plugins";
+import { type Meta } from "@minimajs/server";
+
+export const meta: Meta = {
+  plugins: [
+    // ✅ Production - trust specific proxies
+    proxy({
+      trustProxies: ["10.0.1.1", "10.0.1.2", "10.0.0.0/16"],
+    }),
+  ],
+};
 ```
 
-### Validate Proxy Depth
-
-Set `depth` based on your infrastructure to get the correct client IP. If you have `N` trusted proxies, the client IP is at `depth: N + 1`.
-
-```typescript
-// If you have 2 trusted proxies, the client IP is at depth 3.
-// x-forwarded-for: "client, proxy1, proxy2"
-app.register(
-  proxy({
-    trustProxies: ["10.0.1.1", "10.0.1.2"],
-    ip: { depth: 3 }, // Gets the client IP
-  })
-);
-```
+:::
 
 ### Header Spoofing
 
-Without proper trust validation, clients can spoof headers:
-
-```typescript
-// ❌ Vulnerable - trusts all proxies
-app.register(proxy());
-
-// ✅ Protected - validates proxy source
-app.register(
-  proxy({
-    trustProxies: (ctx) => {
-      const ip = ctx.incomingMessage?.socket?.remoteAddress;
-      return ip === "10.0.1.1"; // Only trust your actual proxy
-    },
-  })
-);
-```
+Without proper trust validation, clients can spoof headers. Always ensure `trustProxies` is correctly configured to only validate headers from your actual infrastructure.
 
 ## Common Proxy Headers
 
@@ -530,8 +408,8 @@ import type { ProxyOptions, IpSettings, HostSettings, ProtoSettings } from "@min
 
 const options: ProxyOptions = {
   trustProxies: true,
-  ip: { proxyDepth: 1 },
-  host: { stripPort: true },
+  ip: { depth: 1 },
+  host: { header: "x-forwarded-host" },
   proto: {},
 };
 ```

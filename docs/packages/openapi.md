@@ -60,39 +60,47 @@ Add OpenAPI operation metadata to routes:
 ```typescript
 import { describe } from "@minimajs/openapi";
 
-app.get("/users", describe({
-  summary: "List all users",
-  description: "Returns a paginated list of users.",
-  tags: ["Users"],
-  operationId: "listUsers",
-}), () => {
-  return getUsers();
-});
+app.get(
+  "/users",
+  describe({
+    summary: "List all users",
+    description: "Returns a paginated list of users.",
+    tags: ["Users"],
+    operationId: "listUsers",
+  }),
+  () => {
+    return getUsers();
+  }
+);
 
-app.post("/users", describe({
-  summary: "Create a user",
-  tags: ["Users"],
-  operationId: "createUser",
-}), () => {
-  return createUser();
-});
+app.post(
+  "/users",
+  describe({
+    summary: "Create a user",
+    tags: ["Users"],
+    operationId: "createUser",
+  }),
+  () => {
+    return createUser();
+  }
+);
 ```
 
 #### Available Options
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `summary` | `string` | Short operation summary |
-| `description` | `string` | Detailed description (Markdown supported) |
-| `tags` | `string[]` | Tags for grouping operations |
-| `operationId` | `string` | Unique operation identifier |
-| `deprecated` | `boolean` | Mark as deprecated |
-| `security` | `array` | Operation-level security requirements |
-| `externalDocs` | `object` | Link to external documentation |
-| `servers` | `array` | Operation-specific servers |
-| `parameters` | `array` | Additional parameters |
-| `requestBody` | `object` | Request body (if not using schema) |
-| `responses` | `object` | Responses (if not using schema) |
+| Option         | Type       | Description                               |
+| -------------- | ---------- | ----------------------------------------- |
+| `summary`      | `string`   | Short operation summary                   |
+| `description`  | `string`   | Detailed description (Markdown supported) |
+| `tags`         | `string[]` | Tags for grouping operations              |
+| `operationId`  | `string`   | Unique operation identifier               |
+| `deprecated`   | `boolean`  | Mark as deprecated                        |
+| `security`     | `array`    | Operation-level security requirements     |
+| `externalDocs` | `object`   | Link to external documentation            |
+| `servers`      | `array`    | Operation-specific servers                |
+| `parameters`   | `array`    | Additional parameters                     |
+| `requestBody`  | `object`   | Request body (if not using schema)        |
+| `responses`    | `object`   | Responses (if not using schema)           |
 
 ### `internal()` - Exclude from OpenAPI
 
@@ -112,33 +120,27 @@ app.get("/openapi.json", internal(), () => spec); // Auto-excluded
 Apply descriptors to all routes in a module:
 
 ```typescript
+import { type Routes } from "@minimajs/server";
 import { descriptor } from "@minimajs/server/plugins";
 import { describe } from "@minimajs/openapi";
 
 // src/users/module.ts
 export const meta = {
-  plugins: [
-    descriptor(describe({ tags: ["Users"] })),
-  ],
+  plugins: [descriptor(describe({ tags: ["Users"] }))],
 };
 
-export default async function (app) {
-  app.get("/", () => getUsers());       // Tagged: Users
-  app.post("/", () => createUser());    // Tagged: Users
-  app.get("/:id", () => getUser());     // Tagged: Users
-}
+export const routes: Routes = {
+  "GET /": () => getUsers(), // Tagged: Users
+  "POST /": () => createUser(), // Tagged: Users
+  "GET /:id": () => getUser(), // Tagged: Users
+};
 ```
 
 Combine multiple descriptors:
 
 ```typescript
 export const meta = {
-  plugins: [
-    descriptor(
-      describe({ tags: ["Admin"], security: [{ bearerAuth: [] }] }),
-      [kAdminOnly, true]
-    ),
-  ],
+  plugins: [descriptor(describe({ tags: ["Admin"], security: [{ bearerAuth: [] }] }), [kAdminOnly, true])],
 };
 ```
 
@@ -161,27 +163,25 @@ const CreateUser = createBody(
   })
 );
 
-const UserResponse = createResponse(201, z.object({
-  id: z.string().uuid(),
-  name: z.string(),
-  email: z.string(),
-  role: z.string(),
-  createdAt: z.string().datetime(),
-}));
-
-app.post(
-  "/users",
-  describe({ summary: "Create user", tags: ["Users"] }),
-  schema(CreateUser, UserResponse),
-  () => {
-    const body = CreateUser();
-    return UserResponse({
-      id: crypto.randomUUID(),
-      ...body,
-      createdAt: new Date().toISOString(),
-    });
-  }
+const UserResponse = createResponse(
+  201,
+  z.object({
+    id: z.string().uuid(),
+    name: z.string(),
+    email: z.string(),
+    role: z.string(),
+    createdAt: z.string().datetime(),
+  })
 );
+
+app.post("/users", describe({ summary: "Create user", tags: ["Users"] }), schema(CreateUser, UserResponse), () => {
+  const body = CreateUser();
+  return UserResponse({
+    id: crypto.randomUUID(),
+    ...body,
+    createdAt: new Date().toISOString(),
+  });
+});
 ```
 
 ### Query Parameters
@@ -196,15 +196,10 @@ const ListParams = createSearchParams({
   sort: z.enum(["name", "createdAt", "-name", "-createdAt"]).optional(),
 });
 
-app.get(
-  "/users",
-  describe({ summary: "List users", tags: ["Users"] }),
-  schema(ListParams),
-  () => {
-    const { page, limit, search, sort } = ListParams();
-    return getUsers({ page, limit, search, sort });
-  }
-);
+app.get("/users", describe({ summary: "List users", tags: ["Users"] }), schema(ListParams), () => {
+  const { page, limit, search, sort } = ListParams();
+  return getUsers({ page, limit, search, sort });
+});
 ```
 
 ### Path Parameters
@@ -216,15 +211,10 @@ const UserParams = createParams({
   id: z.string().uuid().describe("User ID"),
 });
 
-app.get(
-  "/users/:id",
-  describe({ summary: "Get user by ID", tags: ["Users"] }),
-  schema(UserParams),
-  () => {
-    const { id } = UserParams();
-    return getUser(id);
-  }
-);
+app.get("/users/:id", describe({ summary: "Get user by ID", tags: ["Users"] }), schema(UserParams), () => {
+  const { id } = UserParams();
+  return getUser(id);
+});
 ```
 
 ### Headers
@@ -237,15 +227,10 @@ const AuthHeaders = createHeaders({
   "x-request-id": z.string().uuid().optional(),
 });
 
-app.get(
-  "/protected",
-  describe({ summary: "Protected endpoint" }),
-  schema(AuthHeaders),
-  () => {
-    const { authorization } = AuthHeaders();
-    return { authenticated: true };
-  }
-);
+app.get("/protected", describe({ summary: "Protected endpoint" }), schema(AuthHeaders), () => {
+  const { authorization } = AuthHeaders();
+  return { authenticated: true };
+});
 ```
 
 ### Multiple Response Status Codes
@@ -253,27 +238,31 @@ app.get(
 ```typescript
 const SuccessResponse = createResponse(200, z.object({ data: z.any() }));
 
-const NotFoundResponse = createResponse(404, z.object({
-  error: z.string(),
-  code: z.literal("NOT_FOUND"),
-}));
-
-const ValidationError = createResponse(400, z.object({
-  error: z.string(),
-  code: z.literal("VALIDATION_ERROR"),
-  details: z.array(z.object({
-    field: z.string(),
-    message: z.string(),
-  })),
-}));
-
-app.get(
-  "/users/:id",
-  schema(SuccessResponse, NotFoundResponse, ValidationError),
-  () => {
-    // Handler logic
-  }
+const NotFoundResponse = createResponse(
+  404,
+  z.object({
+    error: z.string(),
+    code: z.literal("NOT_FOUND"),
+  })
 );
+
+const ValidationError = createResponse(
+  400,
+  z.object({
+    error: z.string(),
+    code: z.literal("VALIDATION_ERROR"),
+    details: z.array(
+      z.object({
+        field: z.string(),
+        message: z.string(),
+      })
+    ),
+  })
+);
+
+app.get("/users/:id", schema(SuccessResponse, NotFoundResponse, ValidationError), () => {
+  // Handler logic
+});
 ```
 
 ### Response Headers
@@ -288,13 +277,9 @@ const DownloadHeaders = createResponseHeaders({
   "content-length": z.string(),
 });
 
-app.get(
-  "/files/:id/download",
-  schema(DownloadResponse, DownloadHeaders),
-  () => {
-    // Return file blob
-  }
-);
+app.get("/files/:id/download", schema(DownloadResponse, DownloadHeaders), () => {
+  // Return file blob
+});
 ```
 
 ## Plugin Configuration
@@ -477,21 +462,22 @@ expect(spec.paths["/users"].get.summary).toBe("List users");
 
 Creates an OpenAPI plugin that serves the specification.
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `path` | `string` | `/openapi.json` | Endpoint path for the spec |
-| `info` | `InfoObject` | **required** | API metadata |
-| `servers` | `ServerObject[]` | `[]` | Server configurations |
-| `tags` | `TagObject[]` | `[]` | Tag definitions |
-| `security` | `SecurityRequirementObject[]` | - | Global security |
-| `components` | `ComponentsObject` | - | Reusable components |
-| `externalDocs` | `ExternalDocumentationObject` | - | External docs link |
+| Option         | Type                          | Default         | Description                |
+| -------------- | ----------------------------- | --------------- | -------------------------- |
+| `path`         | `string`                      | `/openapi.json` | Endpoint path for the spec |
+| `info`         | `InfoObject`                  | **required**    | API metadata               |
+| `servers`      | `ServerObject[]`              | `[]`            | Server configurations      |
+| `tags`         | `TagObject[]`                 | `[]`            | Tag definitions            |
+| `security`     | `SecurityRequirementObject[]` | -               | Global security            |
+| `components`   | `ComponentsObject`            | -               | Reusable components        |
+| `externalDocs` | `ExternalDocumentationObject` | -               | External docs link         |
 
 ### `generateOpenAPIDocument(app, options)`
 
 Generates the OpenAPI document programmatically.
 
 **Parameters:**
+
 - `app` - MinimaJS application instance
 - `options` - Same as `openapi()` options except `path`
 
@@ -526,7 +512,7 @@ app.register(
 
 // Serve Swagger UI
 app.get("/docs", () => {
-  return new Response(`
+  const html = /* html */ `
     <!DOCTYPE html>
     <html>
       <head>
@@ -544,7 +530,8 @@ app.get("/docs", () => {
         </script>
       </body>
     </html>
-  `, {
+  `;
+  return new Response(html, {
     headers: { "content-type": "text/html" },
   });
 });
