@@ -240,7 +240,7 @@ describe("disk fs driver", () => {
     });
 
     await disk.put("meta.txt", "some content");
-    const metadata = await disk.getMetadata("meta.txt");
+    const metadata = await disk.metadata("meta.txt");
 
     assert.ok(metadata);
     assert.ok(metadata.href.endsWith("meta.txt"));
@@ -253,7 +253,7 @@ describe("disk fs driver", () => {
       driver: createFsDriver({ root: rootDir }),
     });
 
-    const metadata = await disk.getMetadata("nonexistent.txt");
+    const metadata = await disk.metadata("nonexistent.txt");
     assert.equal(metadata, null);
   });
 });
@@ -312,7 +312,7 @@ describe("disk memory driver", () => {
     const disk = createDisk({ driver });
 
     await disk.put("file.json", '{"key": "value"}', { type: "application/json" });
-    const metadata = await disk.getMetadata("file.json");
+    const metadata = await disk.metadata("file.json");
 
     assert.ok(metadata);
     assert.equal(metadata.type, "application/json");

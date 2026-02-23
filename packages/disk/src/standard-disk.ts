@@ -10,7 +10,7 @@ import type {
   WatchOptions,
 } from "./types.js";
 import { DiskFile } from "./file.js";
-import { toReadableStream, getMimeType, createDiskFile } from "./helpers.js";
+import { createDiskFile } from "./helpers.js";
 import { DiskReadError, DiskMetadataError } from "./errors.js";
 import { randomUUID } from "node:crypto";
 import { extname, basename } from "node:path";
@@ -54,22 +54,9 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
       mergedOptions.type ??= pathOrData.type;
       return this.put(generatedPath, pathOrData, mergedOptions);
     }
-
-    const [path, data, options] = await this.$hookManager.trigger.put(
-      pathOrData,
-      dataOrOptions as DiskData,
-      putOptions ?? {}
-    );
-
-    const stream = toReadableStream(data);
-
-    if (!options.type) {
-      if (data instanceof Blob) {
-        options.type = data.type;
-      } else {
-        options.type = getMimeType(path);
-      }
-    }
+    const [path, stream, options] = await this.$hookManager.trigger.put(pathOrData, dataOrOptions as DiskData, {
+      ...putOptions,
+    });
 
     const metadata = await this.driver.put(path, stream, options);
     const filename = basename(path);
@@ -106,17 +93,16 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
     return this.$hookManager.trigger.retrieved(diskFile);
   }
 
-  async delete(path: string): Promise<void> {
-    await this.$hookManager.trigger.delete(path);
-    await this.driver.delete(path);
-    await this.$hookManager.trigger.deleted(path);
+  async delete(path: string): Promise<string> {
+    const href = await this.$hookManager.trigger.delete(path);
+    await this.driver.delete(href);
+    return this.$hookManager.trigger.deleted(href);
   }
 
   async exists(path: string): Promise<boolean> {
-    await this.$hookManager.trigger.exists(path);
+    path = await this.$hookManager.trigger.exists(path);
     const exists = await this.driver.exists(path);
-    await this.$hookManager.trigger.checked(path, exists);
-    return exists;
+    return this.$hookManager.trigger.checked(exists, path);
   }
 
   async url(path: string, urlOptions?: UrlOptions): Promise<string> {
@@ -129,9 +115,8 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
     const [$from, $to] = await this.$hookManager.trigger.copy(fromHref, to);
 
     await this.driver.copy($from, $to);
-    const metadata = await this.driver.getMetadata($to);
+    const metadata = await this.driver.metadata($to);
     if (!metadata) throw new DiskMetadataError($to, "Failed to get metadata for copied file");
-
     const diskFile = createDiskFile(basename($to), metadata, async (file) => {
       const result = await this.driver.get(metadata.href);
       if (!result) throw new DiskReadError(metadata.href);
@@ -146,7 +131,7 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
     const [$from, $to] = await this.$hookManager.trigger.move(fromHref, to);
 
     await this.driver.move($from, $to);
-    const metadata = await this.driver.getMetadata($to);
+    const metadata = await this.driver.metadata($to);
     if (!metadata) throw new DiskMetadataError($to, "Failed to get metadata for moved file");
 
     const diskFile = createDiskFile(basename($to), metadata, async (file) => {
@@ -176,8 +161,8 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
     yield* this.list();
   }
 
-  async getMetadata(path: string): Promise<FileMetadata | null> {
-    return this.driver.getMetadata(path);
+  async metadata(path: string): Promise<FileMetadata | null> {
+    return this.driver.metadata(path);
   }
 
   watch(pattern: string, options?: WatchOptions): FSWatcher | Promise<FSWatcher> {

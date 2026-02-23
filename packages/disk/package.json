@@ -7,7 +7,8 @@
   "main": "./lib/index.js",
   "exports": {
     ".": "./lib/index.js",
-    "./adapters": "./lib/adapters/index.js"
+    "./adapters": "./lib/adapters/index.js",
+    "./snapshot": "./lib/snapshot.js"
   },
   "scripts": {
     "dev": "tsc -w --preserveWatchOutput",

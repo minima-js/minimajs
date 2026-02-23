@@ -149,7 +149,7 @@ class MemoryDriver implements DiskDriver {
     }
   }
 
-  async getMetadata(href: string): Promise<FileMetadata | null> {
+  async metadata(href: string): Promise<FileMetadata | null> {
     const stored = this.storage.get(href);
     if (!stored) return null;
 

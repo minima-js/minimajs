@@ -8,6 +8,23 @@ import { inspect } from "node:util";
 import type { DiskDriver, PutOptions, UrlOptions, ListOptions, FileMetadata, WatchOptions } from "../types.js";
 import type { FSWatcher } from "chokidar";
 
+export interface MetadataSerializer {
+  serialize(data: Record<string, unknown>): string;
+  deserialize(raw: string): Record<string, unknown>;
+}
+
+export interface SidecarMetadataOptions {
+  /**
+   * File extension appended to the original filename for the sidecar
+   * @default '.metadata.json'
+   */
+  extension?: string;
+  /**
+   * Custom serializer — defaults to pretty-printed JSON
+   */
+  serializer?: MetadataSerializer;
+}
+
 export interface FsDriverOptions {
   /** Root directory for file storage */
   root: string;
@@ -19,8 +36,13 @@ export interface FsDriverOptions {
   dirMode?: number;
   /** Follow symbolic links (default: false) */
   followSymlinks?: boolean;
-  /** Store custom metadata in sidecar files (default: false) */
-  sidecarMetadata?: boolean;
+  /**
+   * Store custom metadata in sidecar files.
+   * Pass `true` to enable with defaults, or an options object to customize
+   * the file extension and serialization format.
+   * @default false
+   */
+  sidecarMetadata?: boolean | SidecarMetadataOptions;
 }
 
 export interface StorageInfo {
@@ -41,6 +63,8 @@ export class FsDriver implements DiskDriver {
   private readonly dirMode: number;
   private readonly followSymlinks: boolean;
   private readonly sidecarMetadata: boolean;
+  private readonly metadataExtension: string;
+  private readonly metadataSerializer: MetadataSerializer;
 
   constructor(options: FsDriverOptions) {
     this.root = resolve(options.root);
@@ -48,7 +72,14 @@ export class FsDriver implements DiskDriver {
     this.fileMode = options.fileMode ?? 0o644;
     this.dirMode = options.dirMode ?? 0o755;
     this.followSymlinks = options.followSymlinks ?? false;
-    this.sidecarMetadata = options.sidecarMetadata ?? false;
+    const sidecar = options.sidecarMetadata;
+    this.sidecarMetadata = !!sidecar;
+    const sidecarOpts = typeof sidecar === "object" ? sidecar : {};
+    this.metadataExtension = sidecarOpts.extension ?? ".metadata.json";
+    this.metadataSerializer = sidecarOpts.serializer ?? {
+      serialize: (data) => JSON.stringify(data, null, 2),
+      deserialize: (raw) => JSON.parse(raw),
+    };
   }
 
   /**
@@ -71,7 +102,7 @@ export class FsDriver implements DiskDriver {
    * Get path to metadata sidecar file
    */
   private metadataPath(filepath: string): string {
-    return `${filepath}.metadata.json`;
+    return `${filepath}${this.metadataExtension}`;
   }
 
   /**
@@ -79,7 +110,7 @@ export class FsDriver implements DiskDriver {
    */
   private async saveMetadata(filepath: string, metadata: Record<string, any>): Promise<void> {
     const metaPath = this.metadataPath(filepath);
-    await writeFile(metaPath, JSON.stringify(metadata, null, 2), "utf-8");
+    await writeFile(metaPath, this.metadataSerializer.serialize(metadata), "utf-8");
   }
 
   /**
@@ -89,7 +120,7 @@ export class FsDriver implements DiskDriver {
     const metaPath = this.metadataPath(filepath);
     try {
       const content = await readFile(metaPath, "utf-8");
-      return JSON.parse(content);
+      return this.metadataSerializer.deserialize(content);
     } catch {
       return undefined;
     }
@@ -98,7 +129,7 @@ export class FsDriver implements DiskDriver {
   /**
    * Get storage information
    */
-  async getStorageInfo(): Promise<StorageInfo> {
+  async storageInfo(): Promise<StorageInfo> {
     const stats = await statfs(this.root);
     const blockSize = stats.bsize;
     const total = stats.blocks * blockSize;
@@ -312,7 +343,7 @@ export class FsDriver implements DiskDriver {
     yield* walkDir(searchPath);
   }
 
-  async getMetadata(href: string): Promise<FileMetadata | null> {
+  async metadata(href: string): Promise<FileMetadata | null> {
     const destination = this.hrefToPath(href);
 
     try {
@@ -363,8 +394,7 @@ export class FsDriver implements DiskDriver {
       name: this.name,
       root: this.root,
       publicUrl: this.publicUrl,
-      checksums: this.checksums,
-      sidecarMetadata: this.sidecarMetadata,
+      sidecarMetadata: Boolean(this.sidecarMetadata),
       [Symbol.toStringTag]: "FsDriver",
     };
   }

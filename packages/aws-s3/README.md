@@ -214,7 +214,7 @@ await disk.put("document.pdf", pdfData, {
   cacheControl: "max-age=31536000",
 });
 
-const file = await disk.getMetadata("document.pdf");
+const file = await disk.metadata("document.pdf");
 console.log(file?.metadata); // { userId: '12345', ... }
 ```
 

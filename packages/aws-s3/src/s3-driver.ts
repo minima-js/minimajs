@@ -397,7 +397,7 @@ export class S3Driver implements DiskDriver {
     } while (continuationToken);
   }
 
-  async getMetadata(href: string): Promise<FileMetadata | null> {
+  async metadata(href: string): Promise<FileMetadata | null> {
     const { bucket, key } = this.hrefToKey(href);
     const fullKey = this.buildKey(key);
     try {

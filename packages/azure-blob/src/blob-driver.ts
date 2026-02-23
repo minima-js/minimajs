@@ -118,7 +118,7 @@ export class AzureBlobDriver implements DiskDriver {
         blobContentType: putOptions.type,
         blobCacheControl: putOptions?.cacheControl,
       },
-      metadata: putOptions?.metadata,
+      metadata: putOptions?.metadata as Record<string, string>,
     });
 
     const properties = await blobClient.getProperties();
@@ -248,7 +248,7 @@ export class AzureBlobDriver implements DiskDriver {
     }
   }
 
-  async getMetadata(href: string): Promise<FileMetadata | null> {
+  async metadata(href: string): Promise<FileMetadata | null> {
     const { container, blob } = this.hrefToBlob(href);
     const containerClient = this.client.getContainerClient(container);
     const blobClient = containerClient.getBlockBlobClient(blob);

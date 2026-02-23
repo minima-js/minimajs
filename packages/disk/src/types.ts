@@ -12,6 +12,7 @@ export type DiskData = ReadableStream | Blob | ArrayBufferView | ArrayBuffer | F
  */
 export type FileSource = string | DiskFile;
 
+export type Metadata = Record<symbol, unknown> | Record<string, string>;
 /**
  * Options for putting/storing a file
  * Extends FilePropertyBag to stay web-native
@@ -23,7 +24,7 @@ export interface PutOptions extends FilePropertyBag {
    * Symbol-keyed entries are in-memory only — plugins use them to pass
    * private state through the hook pipeline without hitting the driver.
    */
-  metadata?: Record<string | symbol, unknown>;
+  metadata?: Metadata;
   /** Cache-Control header value */
   cacheControl?: string;
 }
@@ -134,7 +135,7 @@ export interface DiskDriver {
    * Get file metadata without content
    * @param href - Absolute URL/URI with protocol
    */
-  getMetadata(href: string): Promise<FileMetadata | null>;
+  metadata(href: string): Promise<FileMetadata | null>;
 
   /**
    * Watch files for changes (optional - driver-specific)
@@ -166,13 +167,13 @@ export interface Disk<TDriver extends DiskDriver = DiskDriver> extends AsyncIter
    */
   get(key: string): Promise<DiskFile | null>;
 
-  delete(key: string): Promise<void>;
+  delete(key: string): Promise<string>;
   exists(key: string): Promise<boolean>;
   url(key: string, options?: UrlOptions): Promise<string>;
   copy(from: FileSource, to: string): Promise<DiskFile>;
   move(from: FileSource, to: string): Promise<DiskFile>;
   list(prefix?: string, options?: ListOptions): AsyncIterable<DiskFile>;
-  getMetadata(key: string): Promise<FileMetadata | null>;
+  metadata(key: string): Promise<FileMetadata | null>;
 
   /**
    * Register a hook (for use by plugins)

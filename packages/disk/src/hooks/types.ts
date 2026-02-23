@@ -1,5 +1,5 @@
 import type { DiskFile } from "../file.js";
-import type { PutOptions, ListOptions, UrlOptions, DiskData } from "../types.js";
+import type { PutOptions, ListOptions, UrlOptions, DiskData, FileSource } from "../types.js";
 
 /**
  * Hook return types for stream/file transformations
@@ -21,9 +21,9 @@ export interface DiskHooks {
   retrieved(file: DiskFile): HookReturn<DiskFile>;
 
   /** Called before delete */
-  delete(path: string): HookReturn<void>;
+  delete(path: string): HookReturn<string>;
   /** Called after delete */
-  deleted(path: string): HookReturn<void>;
+  deleted(href: string): HookReturn<string>;
 
   /** Called before exists */
   exists(path: string): HookReturn<void>;
@@ -36,7 +36,7 @@ export interface DiskHooks {
   copied(from: string, to: string, file: DiskFile): HookReturn<DiskFile>;
 
   /** Called before move - can return transformed [from, to] */
-  move(from: string, to: string): HookReturn<[from: string, to: string]>;
+  move(from: FileSource, to: string): HookReturn<[from: FileSource, to: string]>;
   /** Called after move - can return modified DiskFile */
   moved(from: string, to: string, file: DiskFile): HookReturn<DiskFile>;
 
