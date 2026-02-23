@@ -4,7 +4,7 @@ import { withPwa } from "@vite-pwa/vitepress";
 import llmstxt from "vitepress-plugin-llms";
 
 const tagId = 'GTM-P9NLW275';
-const hostname = 'https://minima-js.github.io';
+const hostname = 'https://minimajs.com';
 
 const keywords = [
   // Brand
