@@ -39,8 +39,9 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
   /**
    * Hook registration method (for use by plugins)
    */
-  hook<K extends keyof DiskHooks>(event: K, handler: NonNullable<DiskHooks[K]>): void {
+  hook<K extends keyof DiskHooks>(event: K, handler: NonNullable<DiskHooks[K]>): () => void {
     this.$hookManager.add(event, handler);
+    return () => this.$hookManager.remove(event, handler);
   }
 
   // Overload: put with File auto-generates path

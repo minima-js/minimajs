@@ -178,7 +178,7 @@ export interface Disk<TDriver extends DiskDriver = DiskDriver> extends AsyncIter
   /**
    * Register a hook (for use by plugins)
    */
-  hook<K extends keyof DiskHooks>(event: K, handler: NonNullable<DiskHooks[K]>): void;
+  hook<K extends keyof DiskHooks>(event: K, handler: DiskHooks[K]): () => void;
 
   /**
    * Watch files matching a pattern for changes
