@@ -4,7 +4,6 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { createReadStream, createWriteStream } from "node:fs";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
-import { createHash } from "node:crypto";
 import { inspect } from "node:util";
 import type { DiskDriver, PutOptions, UrlOptions, ListOptions, FileMetadata, WatchOptions } from "../types.js";
 import type { FSWatcher } from "chokidar";
@@ -20,10 +19,6 @@ export interface FsDriverOptions {
   dirMode?: number;
   /** Follow symbolic links (default: false) */
   followSymlinks?: boolean;
-  /** Calculate checksums on put (default: false) */
-  checksums?: boolean;
-  /** Checksum algorithm (default: 'md5') */
-  checksumAlgorithm?: "md5" | "sha256";
   /** Store custom metadata in sidecar files (default: false) */
   sidecarMetadata?: boolean;
 }
@@ -45,8 +40,6 @@ export class FsDriver implements DiskDriver {
   private readonly fileMode: number;
   private readonly dirMode: number;
   private readonly followSymlinks: boolean;
-  private readonly checksums: boolean;
-  private readonly checksumAlgorithm: "md5" | "sha256";
   private readonly sidecarMetadata: boolean;
 
   constructor(options: FsDriverOptions) {
@@ -55,8 +48,6 @@ export class FsDriver implements DiskDriver {
     this.fileMode = options.fileMode ?? 0o644;
     this.dirMode = options.dirMode ?? 0o755;
     this.followSymlinks = options.followSymlinks ?? false;
-    this.checksums = options.checksums ?? false;
-    this.checksumAlgorithm = options.checksumAlgorithm ?? "md5";
     this.sidecarMetadata = options.sidecarMetadata ?? false;
   }
 
@@ -81,41 +72,6 @@ export class FsDriver implements DiskDriver {
    */
   private metadataPath(filepath: string): string {
     return `${filepath}.metadata.json`;
-  }
-
-  /**
-   * Calculate checksum for a stream
-   */
-  private async calculateChecksum(
-    stream: ReadableStream<Uint8Array>
-  ): Promise<{ checksum: string; stream: ReadableStream<Uint8Array> }> {
-    const hash = createHash(this.checksumAlgorithm);
-    const chunks: Uint8Array[] = [];
-
-    const reader = stream.getReader();
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (value) {
-        hash.update(value);
-        chunks.push(value);
-      }
-    }
-
-    const checksum = hash.digest("hex");
-
-    // Recreate stream from stored chunks
-    const newStream = new ReadableStream({
-      start(controller) {
-        for (const chunk of chunks) {
-          controller.enqueue(chunk);
-        }
-        controller.close();
-      },
-    });
-
-    return { checksum, stream: newStream };
   }
 
   /**
@@ -158,18 +114,8 @@ export class FsDriver implements DiskDriver {
 
     await mkdir(dirname(destination), { recursive: true, mode: this.dirMode });
 
-    let finalStream = stream;
-    let checksum: string | undefined;
-
-    // Calculate checksum if enabled
-    if (this.checksums) {
-      const result = await this.calculateChecksum(finalStream);
-      checksum = result.checksum;
-      finalStream = result.stream;
-    }
-
     // Create write pipeline
-    const nodeReadable = Readable.fromWeb(finalStream as any);
+    const nodeReadable = Readable.fromWeb(stream as any);
     const writeStream = createWriteStream(destination, { mode: this.fileMode });
 
     await pipeline(nodeReadable, writeStream);
@@ -180,11 +126,6 @@ export class FsDriver implements DiskDriver {
     const metadata: Record<string, any> = {
       ...putOptions.metadata,
     };
-
-    if (checksum) {
-      metadata.checksum = checksum;
-      metadata.checksumAlgorithm = this.checksumAlgorithm;
-    }
 
     // Save sidecar metadata if enabled
     if (this.sidecarMetadata && putOptions.metadata) {

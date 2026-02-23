@@ -6,6 +6,7 @@ import type { DiskHooks } from "./hooks/types.js";
 
 // Core types and utilities
 export * from "./types.js";
+export * from "./snapshot.js";
 export * from "./file.js";
 export * from "./helpers.js";
 export * from "./errors.js";
@@ -15,10 +16,18 @@ export * from "./hooks/manager.js";
 export * from "./standard-disk.js";
 export * from "./proto-disk.js";
 
+// Plugins
+export * from "./plugins/atomic-write/index.js";
+export * from "./plugins/partition/index.js";
+export * from "./plugins/checksum/index.js";
+
 export interface CreateDiskOptions<TDriver extends DiskDriver = DiskDriver> {
   driver?: TDriver;
   hooks?: Partial<DiskHooks>;
 }
+
+/** A plugin is a function that receives a Disk and registers hooks on it */
+export type DiskPlugin = (disk: Disk) => void;
 
 /**
  * Create a Disk instance with web-native File APIs for any storage provider
@@ -48,19 +57,12 @@ export interface CreateDiskOptions<TDriver extends DiskDriver = DiskDriver> {
  * // Default filesystem driver (uses current working directory)
  * const disk = createDisk();
  *
- * // With plugins
+ * // With plugins — passed as rest arguments, applied in order
  * const disk = createDisk(
  *   { driver: createFsDriver({ root: './uploads' }) },
- *   (disk) => {
- *     disk.hook('put', (path, content, options, context) => {
- *       console.log('Uploading:', path);
- *     });
- *   },
- *   (disk) => {
- *     disk.hook('stored', (file, context) => {
- *       console.log('Uploaded:', file.name);
- *     });
- *   }
+ *   compression(),
+ *   atomicWrite(),
+ *   encrypt({ password: process.env.SECRET })
  * );
  *
  * // Web-native File API - works everywhere
@@ -74,9 +76,13 @@ export interface CreateDiskOptions<TDriver extends DiskDriver = DiskDriver> {
  * await disk.put(uploadedFile); // Auto-generates unique filename
  * ```
  */
-export function createDisk<TDriver extends DiskDriver = FsDriver>(options: CreateDiskOptions<TDriver> = {}): Disk<TDriver> {
+export function createDisk<TDriver extends DiskDriver = FsDriver>(
+  options: CreateDiskOptions<TDriver> = {},
+  ...plugins: DiskPlugin[]
+): Disk<TDriver> {
   const driver = (options.driver ?? createFsDriver({ root: process.cwd() })) as TDriver;
   const disk = new StandardDisk(driver, { hooks: options.hooks });
+  for (const plugin of plugins) plugin(disk);
   return disk;
 }
 

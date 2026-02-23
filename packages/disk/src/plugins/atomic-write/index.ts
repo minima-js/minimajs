@@ -1,29 +1,37 @@
-import type { AtomicWritesOptions } from "../../pipelines.js";
 import type { Disk } from "../../types.js";
 
-/**
- * Atomic writes pipeline - uses temp file + move for atomicity
- */
+/** Symbol key used to store the original path in put options metadata */
+const ORIGINAL_PATH = Symbol("minimajs.disk.atomicWrite.path");
 
-export function atomicWrites(options: AtomicWritesOptions = {}) {
-  const { tempPrefix = ".tmp-" } = options;
+export interface AtomicWriteOptions {
+  /** Directory prefix for temporary files (default: '.tmp/') */
+  tempPrefix?: string;
+}
+
+/**
+ * Atomic write plugin — writes to a temp file first, then renames to the final path.
+ * Prevents partial or corrupted files from ever being visible to readers.
+ *
+ * The original path is tracked via a Symbol key in the put options metadata —
+ * no in-memory Map is needed, so there is no risk of a memory leak.
+ *
+ * @example
+ * const disk = createDisk(fsDriver, atomicWrite())
+ * await disk.put('important.json', data) // written atomically
+ */
+export function atomicWrite(options: AtomicWriteOptions = {}) {
+  const { tempPrefix = ".tmp/" } = options;
 
   return (disk: Disk) => {
-    disk.hook("put", async (ctx) => {
-      // Store original path
-      const originalPath = ctx.path;
+    disk.hook("put", (path, data, opts) => {
       const tempPath = `${tempPrefix}${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      return [tempPath, data, { ...opts, metadata: { ...opts.metadata, [ORIGINAL_PATH]: path } }];
+    });
 
-      // Modify path to temp location
-      ctx.path = tempPath;
-
-      // After stored, move to final location
-      disk.hook("stored", async (file) => {
-        if (file.href.includes(tempPath)) {
-          // Move from temp to final location
-          await disk.move(tempPath, originalPath);
-        }
-      });
+    disk.hook("stored", (file) => {
+      const originalPath = file.metadata[ORIGINAL_PATH] as string | undefined;
+      if (!originalPath) return;
+      return disk.move(file, originalPath);
     });
   };
 }

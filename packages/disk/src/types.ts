@@ -17,8 +17,13 @@ export type FileSource = string | DiskFile;
  * Extends FilePropertyBag to stay web-native
  */
 export interface PutOptions extends FilePropertyBag {
-  /** Custom metadata to store with the file */
-  metadata?: Record<string, string>;
+  /**
+   * Metadata to store with the file.
+   * String-keyed entries are persisted by the driver.
+   * Symbol-keyed entries are in-memory only — plugins use them to pass
+   * private state through the hook pipeline without hitting the driver.
+   */
+  metadata?: Record<string | symbol, unknown>;
   /** Cache-Control header value */
   cacheControl?: string;
 }
@@ -175,74 +180,10 @@ export interface Disk<TDriver extends DiskDriver = DiskDriver> extends AsyncIter
   hook<K extends keyof DiskHooks>(event: K, handler: NonNullable<DiskHooks[K]>): void;
 
   /**
-   * Acquire a lock for a file key
-   */
-  lock(key: string, options?: LockOptions): Promise<void>;
-
-  /**
-   * Release a lock for a file key
-   */
-  unlock(key: string): void;
-
-  /**
-   * Execute a function with a lock
-   */
-  withLock<T>(key: string, fn: () => Promise<T>, options?: LockOptions): Promise<T>;
-
-  /**
    * Watch files matching a pattern for changes
    * @throws Error if driver does not support watching
    */
   watch(pattern: string, options?: WatchOptions): FSWatcher | Promise<FSWatcher>;
-
-  /**
-   * Create a snapshot of a file or directory
-   * @param path - Path to snapshot
-   * @param destination - Optional disk to store snapshot (defaults to same disk)
-   * @param options - Snapshot options
-   * @returns Path to the snapshot
-   */
-  snapshot(path: string, destination?: Disk, options?: SnapshotOptions): Promise<string>;
-
-  /**
-   * Restore from a snapshot
-   * @param snapshotPath - Path to the snapshot
-   * @param destination - Optional disk to restore to (defaults to same disk)
-   * @param options - Restore options
-   */
-  restore(snapshotPath: string, destination?: Disk, options?: RestoreOptions): Promise<void>;
-}
-
-/**
- * Snapshot options
- */
-export interface SnapshotOptions {
-  /** Prefix for snapshot files (default: 'snapshots/') */
-  prefix?: string;
-  /** Include metadata in snapshot (default: true) */
-  includeMetadata?: boolean;
-  /** Compression format (default: 'gzip') */
-  compression?: "gzip" | "none";
-}
-
-/**
- * Restore options
- */
-export interface RestoreOptions {
-  /** Target path to restore to (if different from original) */
-  targetPath?: string;
-  /** Overwrite existing files (default: false) */
-  overwrite?: boolean;
-}
-
-/**
- * Lock options
- */
-export interface LockOptions {
-  /** Lock timeout in milliseconds (default: 30000) */
-  timeout?: number;
-  /** Retry interval in milliseconds (default: 100) */
-  retryInterval?: number;
 }
 
 /**
