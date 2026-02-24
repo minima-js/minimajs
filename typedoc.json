@@ -19,6 +19,7 @@
   "hideGenerator": true,
   "githubPages": false,
   "cleanOutputDir": true,
+  "disableSources": true,
   "expandObjects": true,
   "useCodeBlocks": true,
   "indexFormat": "table",
