@@ -1,6 +1,7 @@
 import { inspect } from "node:util";
 import { stream2bytes, async2stream } from "./helpers.js";
 
+export type StreamFactory = (file: DiskFile) => ReadableStream<Uint8Array> | Promise<ReadableStream<Uint8Array>>;
 /**
  * Symbol to identify disk-managed files
  * Custom drivers can use this to mark their File instances
@@ -10,8 +11,8 @@ export interface DiskFileInit extends FilePropertyBag {
   /** Absolute URL/URI with protocol (e.g., file:///path, s3://bucket/key) */
   href: string;
   size: number;
-  metadata?: Record<string | symbol, unknown>;
-  stream: () => ReadableStream | Promise<ReadableStream>;
+  metadata?: DiskFile["metadata"];
+  stream: StreamFactory;
 }
 
 export class DiskFile extends File {
@@ -19,8 +20,8 @@ export class DiskFile extends File {
   #size: number;
   /** Absolute URL/URI with protocol identifying this file */
   readonly href: string;
-  readonly metadata: NonNullable<DiskFileInit["metadata"]> = {};
-  #streamFactory: () => ReadableStream | Promise<ReadableStream>;
+  readonly metadata: Record<string, string> & Record<symbol, unknown> = {};
+  #streamFactory: StreamFactory;
 
   constructor(filename: string, { href, size, metadata, stream, ...propertyBag }: DiskFileInit) {
     super([], filename, propertyBag);
@@ -39,7 +40,7 @@ export class DiskFile extends File {
   }
 
   stream(): ReadableStream {
-    const result = this.#streamFactory();
+    const result = this.#streamFactory(this);
     // If async, wrap it in a ReadableStream
     if (result instanceof Promise) {
       return async2stream(result);

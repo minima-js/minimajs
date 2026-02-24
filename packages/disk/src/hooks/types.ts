@@ -1,5 +1,5 @@
-import type { DiskFile } from "../file.js";
-import type { PutOptions, ListOptions, UrlOptions, DiskData, FileSource } from "../types.js";
+import type { DiskFile, StreamFactory } from "../file.js";
+import type { PutOptions, ListOptions, UrlOptions, DiskData, FileSource, FileMetadata } from "../types.js";
 
 /**
  * Hook return types for stream/file transformations
@@ -48,6 +48,11 @@ export interface DiskHooks {
 
   /** Called when a file stream is accessed - can return transformed stream */
   streaming(stream: ReadableStream<Uint8Array>, file: DiskFile): HookReturn<ReadableStream<Uint8Array>>;
+
+  /** Called when a file stream is accessed - can return transformed stream */
+  storing(stream: ReadableStream<Uint8Array>, options: PutOptions): HookReturn<ReadableStream<Uint8Array>>;
+
+  file(filename: string, metadata: FileMetadata, factory: StreamFactory): HookReturn<File>;
 }
 
 /** Derives the trigger's return type from the hook's declared return type */

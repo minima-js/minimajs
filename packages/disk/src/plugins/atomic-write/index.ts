@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { Disk } from "../../types.js";
 
 /** Symbol key used to store the original path in put options metadata */
@@ -24,7 +25,7 @@ export function atomicWrite(options: AtomicWriteOptions = {}) {
 
   return (disk: Disk) => {
     disk.hook("put", (path, data, opts) => {
-      const tempPath = `${tempPrefix}${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const tempPath = `${tempPrefix}${randomUUID()}`;
       return [tempPath, data, { ...opts, metadata: { ...opts.metadata, [ORIGINAL_PATH]: path } }];
     });
 

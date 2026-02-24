@@ -1,6 +1,6 @@
-import { DiskFile } from "../file.js";
+import { DiskFile, type StreamFactory } from "../file.js";
 import { getMimeType, toReadableStream } from "../helpers.js";
-import type { DiskData, FileSource, ListOptions, PutOptions, UrlOptions } from "../types.js";
+import type { DiskData, FileMetadata, FileSource, ListOptions, PutOptions, UrlOptions } from "../types.js";
 import type { DiskHooks } from "./types.js";
 
 type DiskHookStore = {
@@ -30,7 +30,21 @@ export class HookTrigger {
         options.type = getMimeType(path);
       }
     }
-    return [$path, toReadableStream($data), $options];
+
+    const { signal } = options;
+
+    const stream = toReadableStream($data);
+    if (signal) {
+      if (signal.aborted) {
+        stream.cancel(signal.reason);
+      } else {
+        signal.addEventListener("abort", () => {
+          stream.cancel(signal.reason);
+        });
+      }
+    }
+
+    return [$path, stream, $options];
   }
 
   async stored(file: DiskFile) {
@@ -157,5 +171,30 @@ export class HookTrigger {
       if (result) stream = result;
     }
     return stream;
+  }
+  async storing(stream: ReadableStream, options: PutOptions) {
+    const hooks = this.hooks["storing"] ?? [];
+    for (const handler of hooks) {
+      const result = await handler(stream, options);
+      if (result) stream = result;
+    }
+    return stream;
+  }
+
+  async file(filename: string, metadata: FileMetadata, factory: StreamFactory) {
+    const hooks = this.hooks["file"];
+    if (hooks) {
+      for (const handler of hooks) {
+        return handler(filename, metadata, factory);
+      }
+    }
+    return new DiskFile(filename, {
+      href: metadata.href,
+      size: metadata.size,
+      type: metadata.type,
+      lastModified: metadata.lastModified,
+      metadata: metadata.metadata,
+      stream: factory,
+    });
   }
 }

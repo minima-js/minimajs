@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
 import type { Disk } from "../../types.js";
 import { DiskFile } from "../../file.js";
+import { DiskError } from "../../errors.js";
 
-export class ChecksumMismatchError extends Error {
+export class ChecksumMismatchError extends DiskError {
   readonly name = "ChecksumMismatchError";
   constructor(
     public readonly path: string,
@@ -126,9 +127,7 @@ export function checksum(options: ChecksumOptions = {}) {
               flush(controller) {
                 const actual = hash.digest("hex");
                 if (actual !== expected) {
-                  controller.error(
-                    new ChecksumMismatchError(originalFile.href, expected, actual)
-                  );
+                  controller.error(new ChecksumMismatchError(originalFile.href, expected, actual));
                 }
               },
             });

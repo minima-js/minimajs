@@ -47,7 +47,11 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
   // Overload: put with File auto-generates path
   async put(data: File, putOptions?: PutOptions): Promise<DiskFile>;
   async put(path: string, data: DiskData, putOptions?: PutOptions): Promise<DiskFile>;
-  async put(pathOrData: string | File, dataOrOptions?: DiskData | PutOptions, putOptions?: PutOptions): Promise<DiskFile> {
+  async put(
+    pathOrData: string | File,
+    dataOrOptions?: DiskData | PutOptions,
+    putOptions: PutOptions = {}
+  ): Promise<DiskFile> {
     if (pathOrData instanceof File) {
       const ext = extname(pathOrData.name);
       const generatedPath = `${randomUUID()}${ext}`;
@@ -55,11 +59,18 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
       mergedOptions.type ??= pathOrData.type;
       return this.put(generatedPath, pathOrData, mergedOptions);
     }
+
     const [path, stream, options] = await this.$hookManager.trigger.put(pathOrData, dataOrOptions as DiskData, {
       ...putOptions,
     });
 
-    const metadata = await this.driver.put(path, stream, options);
+    const metadata = await this.driver
+      .put(path, await this.$hookManager.trigger.storing(stream, options), options)
+      .catch(async (err) => {
+        await this.driver.delete(path).catch(() => {});
+        throw err;
+      });
+
     const filename = basename(path);
 
     const diskFile = createDiskFile(filename, metadata, async (file) => {
@@ -159,7 +170,7 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
   }
 
   async *[Symbol.asyncIterator](): AsyncIterableIterator<DiskFile> {
-    yield* this.list();
+    yield* this.list(undefined, { recursive: true });
   }
 
   async metadata(path: string): Promise<FileMetadata | null> {

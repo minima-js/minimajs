@@ -66,10 +66,7 @@ export function partition(options: PartitionOptions) {
 
   return (disk: Disk) => {
     disk.hook("put", (path, data, opts) => {
-      const prefix =
-        by === "date"
-          ? applyDateFormat(dateFormat, new Date())
-          : buildHashPrefix(path, levels, charsPerLevel);
+      const prefix = by === "date" ? applyDateFormat(dateFormat, new Date()) : buildHashPrefix(path, levels, charsPerLevel);
       return [`${prefix}/${path}`, data, opts];
     });
   };

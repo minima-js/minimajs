@@ -12,7 +12,6 @@ export type DiskData = ReadableStream | Blob | ArrayBufferView | ArrayBuffer | F
  */
 export type FileSource = string | DiskFile;
 
-export type Metadata = Record<symbol, unknown> | Record<string, string>;
 /**
  * Options for putting/storing a file
  * Extends FilePropertyBag to stay web-native
@@ -24,11 +23,11 @@ export interface PutOptions extends FilePropertyBag {
    * Symbol-keyed entries are in-memory only — plugins use them to pass
    * private state through the hook pipeline without hitting the driver.
    */
-  metadata?: Metadata;
+  metadata?: DiskFile["metadata"];
   /** Cache-Control header value */
   cacheControl?: string;
+  signal?: AbortSignal;
 }
-
 /**
  * Options for generating signed/public URLs
  */
@@ -49,6 +48,7 @@ export interface ListOptions {
   cursor?: string;
   /** Include files in subdirectories */
   recursive?: boolean;
+  signal?: AbortSignal;
 }
 
 /**
@@ -60,7 +60,7 @@ export interface FileMetadata extends FilePropertyBag {
   href: string;
   size: number;
   /** Custom metadata to store with the file */
-  metadata?: Record<string, string>;
+  metadata?: DiskFile["metadata"];
 }
 
 /**
