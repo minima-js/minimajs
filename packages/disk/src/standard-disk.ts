@@ -60,9 +60,13 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
       return this.put(generatedPath, pathOrData, mergedOptions);
     }
 
-    const [path, stream, options] = await this.$hookManager.trigger.put(pathOrData, dataOrOptions as DiskData, {
-      ...putOptions,
-    });
+    const data = dataOrOptions as DiskData;
+    const resolvedOptions: PutOptions = { ...putOptions };
+    if (resolvedOptions.size === undefined && data instanceof Blob) {
+      resolvedOptions.size = data.size;
+    }
+
+    const [path, stream, options] = await this.$hookManager.trigger.put(pathOrData, data, resolvedOptions);
 
     const metadata = await this.driver
       .put(path, await this.$hookManager.trigger.storing(stream, options), options)

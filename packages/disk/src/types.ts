@@ -27,6 +27,8 @@ export interface PutOptions extends FilePropertyBag {
   /** Cache-Control header value */
   cacheControl?: string;
   signal?: AbortSignal;
+  /** Total byte size of the data — enables percentage in progress plugins */
+  size?: number;
 }
 /**
  * Options for generating signed/public URLs

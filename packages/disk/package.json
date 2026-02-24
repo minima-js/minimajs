@@ -8,7 +8,8 @@
   "exports": {
     ".": "./lib/index.js",
     "./adapters": "./lib/adapters/index.js",
-    "./snapshot": "./lib/snapshot.js"
+    "./snapshot": "./lib/snapshot.js",
+    "./plugins": "./lib/plugins/index.js"
   },
   "scripts": {
     "dev": "tsc -w --preserveWatchOutput",

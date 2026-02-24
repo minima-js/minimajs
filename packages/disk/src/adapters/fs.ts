@@ -92,10 +92,13 @@ export class FsDriver implements DiskDriver {
       const relativePath = href.slice(this.publicUrl.length).replace(/^\/+/, "");
       return resolve(this.root, relativePath);
     }
-
     // Handle file:// protocol
-    const filepath = fileURLToPath(href);
-    return resolve(this.root, relative("/", filepath));
+    if (href.startsWith("file://")) {
+      const filepath = fileURLToPath(href);
+      return resolve(this.root, relative("/", filepath));
+    }
+    // Plain relative path (e.g. "hello.txt", "uploads/photo.png")
+    return resolve(this.root, href);
   }
 
   /**
