@@ -4,7 +4,7 @@ import type { PutOptions, ListOptions, UrlOptions, DiskData, FileSource, FileMet
 /**
  * Hook return types for stream/file transformations
  */
-export type HookReturn<T> = void | Promise<void> | T | Promise<T>;
+export type HookReturn<T> = void | T | Promise<void | T>;
 
 /**
  * All available disk hooks

@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { format as dateFnsFormat } from "date-fns";
 import type { Disk } from "../../types.js";
 
 export type PartitionStrategy = "date" | "hash";
@@ -7,9 +8,10 @@ export interface PartitionOptions {
   /** Partition strategy — 'date' organizes by time, 'hash' by content hash */
   by: PartitionStrategy;
   /**
-   * Date format string — only used when `by: 'date'`
-   * Supports: YYYY, MM, DD, HH
-   * @default 'YYYY/MM/DD'
+   * Date format string — only used when `by: 'date'`.
+   * Uses date-fns format tokens when date-fns is installed, otherwise supports
+   * a basic subset: yyyy, MM, dd, HH.
+   * @default 'yyyy/MM/dd'
    */
   dateFormat?: string;
   /**
@@ -22,14 +24,6 @@ export interface PartitionOptions {
    * @default 2
    */
   charsPerLevel?: number;
-}
-
-function applyDateFormat(format: string, date: Date): string {
-  return format
-    .replace("YYYY", date.getFullYear().toString())
-    .replace("MM", String(date.getMonth() + 1).padStart(2, "0"))
-    .replace("DD", String(date.getDate()).padStart(2, "0"))
-    .replace("HH", String(date.getHours()).padStart(2, "0"));
 }
 
 function buildHashPrefix(path: string, levels: number, charsPerLevel: number): string {
@@ -47,6 +41,9 @@ function buildHashPrefix(path: string, levels: number, charsPerLevel: number): s
  * The path passed to `put` is preserved as the filename; a prefix is prepended.
  * Files stored under the partitioned path must be accessed using the full path.
  *
+ * Supports date-fns as an optional dependency for full format token support.
+ * Falls back to a basic formatter (yyyy, MM, dd, HH) if date-fns is not installed.
+ *
  * @example
  * // Date-based: uploads become 2024/01/15/avatar.jpg
  * const disk = createDisk({ driver }, partition({ by: 'date' }))
@@ -58,16 +55,19 @@ function buildHashPrefix(path: string, levels: number, charsPerLevel: number): s
  * await disk.put('avatar.jpg', data) // stored at ab/cd/avatar.jpg
  *
  * @example
- * // Custom date format — hourly buckets
- * const disk = createDisk({ driver }, partition({ by: 'date', dateFormat: 'YYYY/MM/DD/HH' }))
+ * // Custom date format — hourly buckets (requires date-fns for full token support)
+ * const disk = createDisk({ driver }, partition({ by: 'date', dateFormat: 'yyyy/MM/dd/HH' }))
  */
 export function partition(options: PartitionOptions) {
-  const { by, dateFormat = "YYYY/MM/DD", levels = 2, charsPerLevel = 2 } = options;
+  const { by, dateFormat = "yyyy/MM/dd", levels = 2, charsPerLevel = 2 } = options;
 
   return (disk: Disk) => {
     disk.hook("put", (path, data, opts) => {
-      const prefix = by === "date" ? applyDateFormat(dateFormat, new Date()) : buildHashPrefix(path, levels, charsPerLevel);
-      return [`${prefix}/${path}`, data, opts];
+      const prefix = by === "date" ? dateFnsFormat(new Date(), dateFormat) : buildHashPrefix(path, levels, charsPerLevel);
+      const lastSlash = path.lastIndexOf("/");
+      const dir = lastSlash >= 0 ? path.slice(0, lastSlash + 1) : "";
+      const filename = lastSlash >= 0 ? path.slice(lastSlash + 1) : path;
+      return [`${dir}${prefix}/${filename}`, data, opts];
     });
   };
 }

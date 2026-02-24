@@ -22,6 +22,7 @@
     "@types/mime-types": "^3.0.1",
     "@types/node": "^25.0.3",
     "chokidar": "^5.0.0",
+    "date-fns": "^4.1.0",
     "fflate": "^0.8.0"
   },
   "dependencies": {
@@ -29,10 +30,14 @@
   },
   "peerDependencies": {
     "chokidar": "^5.0.0",
+    "date-fns": "^4.0.0",
     "fflate": "^0.8.0"
   },
   "peerDependenciesMeta": {
     "chokidar": {
+      "optional": true
+    },
+    "date-fns": {
       "optional": true
     },
     "fflate": {
