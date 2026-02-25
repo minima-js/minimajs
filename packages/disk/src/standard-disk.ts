@@ -10,7 +10,7 @@ import type {
   WatchOptions,
 } from "./types.js";
 import { DiskFile } from "./file.js";
-import { createDiskFile } from "./helpers.js";
+import { fileFromMetadata, getDisk } from "./helpers.js";
 import { DiskReadError, DiskMetadataError } from "./errors.js";
 import { randomUUID } from "node:crypto";
 import { extname, basename } from "node:path";
@@ -33,7 +33,7 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
 
   constructor(driver: TDriver, options: StandardDiskOptions) {
     this.driver = driver;
-    this.$hookManager = new HookManager(options.hooks);
+    this.$hookManager = new HookManager(this, options.hooks);
   }
 
   /**
@@ -45,8 +45,8 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
   }
 
   // Overload: put with File auto-generates path
-  async put(data: File, putOptions?: PutOptions): Promise<DiskFile>;
-  async put(path: string, data: DiskData, putOptions?: PutOptions): Promise<DiskFile>;
+  async put(data: File, options?: PutOptions): Promise<DiskFile>;
+  async put(path: string, data: DiskData, options?: PutOptions): Promise<DiskFile>;
   async put(
     pathOrData: string | File,
     dataOrOptions?: DiskData | PutOptions,
@@ -75,13 +75,7 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
         throw err;
       });
 
-    const filename = basename(path);
-
-    const diskFile = createDiskFile(filename, metadata, async (file) => {
-      const result = await this.driver.get(metadata.href);
-      if (!result) throw new DiskReadError(metadata.href);
-      return this.$hookManager.trigger.streaming(result[0], file);
-    });
+    const diskFile = await fileFromMetadata(this.driver, this.$hookManager.trigger, metadata);
     return this.$hookManager.trigger.stored(diskFile);
   }
 
@@ -95,7 +89,7 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
     let cachedStream: ReadableStream<Uint8Array> | null = stream;
 
     const filename = basename(path);
-    const diskFile = createDiskFile(filename, metadata, async (file) => {
+    const diskFile = await this.$hookManager.trigger.file(filename, metadata, async (file) => {
       if (cachedStream) {
         const s = cachedStream;
         cachedStream = null;
@@ -126,36 +120,59 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
     return this.$hookManager.trigger.url(path, url, urlOptions);
   }
 
-  async copy(from: FileSource, to: string): Promise<DiskFile> {
-    const fromHref = typeof from === "string" ? from : from.href;
-    const [$from, $to] = await this.$hookManager.trigger.copy(fromHref, to);
+  async copy(from: File, to?: string): Promise<DiskFile>;
+  async copy(from: string, to: string): Promise<DiskFile>;
+  async copy(from: FileSource | File, to?: string): Promise<DiskFile> {
+    if (from instanceof File) {
+      const sourceDisk = getDisk(from);
+      const isSameDisk = sourceDisk === this;
 
+      if (isSameDisk) {
+        if (!to) throw new Error(`Explicit target path required when copying within the same disk`);
+        return this.copy((from as DiskFile).href, to);
+      }
+
+      // Different disk or plain File — stream transfer, default to from.name
+      const targetKey = to ?? from.name;
+      return this.put(targetKey, from);
+    }
+
+    // String source — same disk native copy
+    const [$from, $to] = await this.$hookManager.trigger.copy(from, to!);
     await this.driver.copy($from, $to);
     const metadata = await this.driver.metadata($to);
     if (!metadata) throw new DiskMetadataError($to, "Failed to get metadata for copied file");
-    const diskFile = createDiskFile(basename($to), metadata, async (file) => {
-      const result = await this.driver.get(metadata.href);
-      if (!result) throw new DiskReadError(metadata.href);
-      return this.$hookManager.trigger.streaming(result[0], file);
-    });
-
+    const diskFile = await fileFromMetadata(this.driver, this.$hookManager.trigger, metadata);
     return this.$hookManager.trigger.copied($from, $to, diskFile);
   }
 
-  async move(from: FileSource, to: string): Promise<DiskFile> {
-    const fromHref = typeof from === "string" ? from : from.href;
-    const [$from, $to] = await this.$hookManager.trigger.move(fromHref, to);
+  async move(from: File, to?: string): Promise<DiskFile>;
+  async move(from: string, to: string): Promise<DiskFile>;
+  async move(from: FileSource | File, to?: string): Promise<DiskFile> {
+    if (from instanceof File) {
+      const sourceDisk = getDisk(from);
+      const isSameDisk = sourceDisk === this;
 
+      if (isSameDisk) {
+        if (!to) throw new Error(`Explicit target path required when moving within the same disk`);
+        return this.move((from as DiskFile).href, to);
+      }
+
+      // Cross-disk: stream to this disk, then delete from source
+      const targetKey = to ?? from.name;
+      const copied = await this.put(targetKey, from);
+      if (sourceDisk && from instanceof DiskFile) {
+        await sourceDisk.delete(from.href);
+      }
+      return copied;
+    }
+
+    // String source — same disk native move
+    const [$from, $to] = await this.$hookManager.trigger.move(from, to!);
     await this.driver.move($from, $to);
     const metadata = await this.driver.metadata($to);
     if (!metadata) throw new DiskMetadataError($to, "Failed to get metadata for moved file");
-
-    const diskFile = createDiskFile(basename($to), metadata, async (file) => {
-      const result = await this.driver.get(metadata.href);
-      if (!result) throw new DiskReadError(metadata.href);
-      return this.$hookManager.trigger.streaming(result[0], file);
-    });
-
+    const diskFile = await fileFromMetadata(this.driver, this.$hookManager.trigger, metadata);
     return this.$hookManager.trigger.moved($from, $to, diskFile);
   }
 
@@ -163,13 +180,7 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
     const [$prefix, $listOptions] = await this.$hookManager.trigger.list(prefix, listOptions);
 
     for await (const metadata of this.driver.list($prefix, $listOptions)) {
-      const filename = basename(metadata.href);
-      yield createDiskFile(filename, metadata, async (file) => {
-        const result = await this.driver.get(metadata.href);
-        if (!result) throw new DiskReadError(metadata.href);
-        const [stream] = result;
-        return this.$hookManager.trigger.streaming(stream, file);
-      });
+      yield fileFromMetadata(this.driver, this.$hookManager.trigger, metadata);
     }
   }
 

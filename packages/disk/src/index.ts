@@ -3,12 +3,14 @@ import { StandardDisk } from "./standard-disk.js";
 import { ProtoDisk } from "./proto-disk.js";
 import type { DiskDriver, Disk, ProtoDiskOptions } from "./types.js";
 import type { DiskHooks } from "./hooks/types.js";
+import { tmpdir } from "node:os";
 
 // Core types and utilities
 export * from "./types.js";
 export * from "./snapshot.js";
 export * from "./file.js";
 export * from "./helpers.js";
+export * from "./symbols.js";
 export * from "./errors.js";
 export * from "./hooks/manager.js";
 
@@ -80,7 +82,7 @@ export function createDisk<TDriver extends DiskDriver = FsDriver>(
   options: CreateDiskOptions<TDriver> = {},
   ...plugins: DiskPlugin[]
 ): Disk<TDriver> {
-  const driver = (options.driver ?? createFsDriver({ root: process.cwd() })) as TDriver;
+  const driver = (options.driver ?? createFsDriver({ root: "file://" + process.cwd() + "/" })) as TDriver;
   const disk = new StandardDisk(driver, { hooks: options.hooks });
   for (const plugin of plugins) plugin(disk);
   return disk;
@@ -139,4 +141,10 @@ export function createDisk<TDriver extends DiskDriver = FsDriver>(
  */
 export function createProtoDisk(options: ProtoDiskOptions) {
   return new ProtoDisk(options);
+}
+
+export function createTempDisk(...plugins: DiskPlugin[]) {
+  const disk = new StandardDisk(new FsDriver({ root: "file://" + tmpdir() + "/" }), {});
+  for (const plugin of plugins) plugin(disk);
+  return disk;
 }

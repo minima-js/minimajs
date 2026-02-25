@@ -1,5 +1,6 @@
 import { HookTrigger } from "./trigger.js";
 import type { DiskHooks } from "./types.js";
+import type { Disk, DiskDriver } from "../types.js";
 
 /**
  * Hook manager for disk operations
@@ -9,7 +10,7 @@ export class HookManager {
 
   public readonly trigger: HookTrigger;
 
-  constructor(initialHooks?: Partial<DiskHooks>) {
+  constructor(disk: Disk<DiskDriver>, initialHooks?: Partial<DiskHooks>) {
     if (initialHooks) {
       for (const [event, handler] of Object.entries(initialHooks)) {
         if (handler) {
@@ -17,7 +18,7 @@ export class HookManager {
         }
       }
     }
-    this.trigger = new HookTrigger(this.hooks);
+    this.trigger = new HookTrigger(this.hooks, disk);
   }
 
   /**

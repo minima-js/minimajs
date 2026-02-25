@@ -172,8 +172,10 @@ export interface Disk<TDriver extends DiskDriver = DiskDriver> extends AsyncIter
   delete(key: string): Promise<string>;
   exists(key: string): Promise<boolean>;
   url(key: string, options?: UrlOptions): Promise<string>;
-  copy(from: FileSource, to: string): Promise<DiskFile>;
-  move(from: FileSource, to: string): Promise<DiskFile>;
+  copy(from: File, to?: string): Promise<DiskFile>;
+  copy(from: string, to: string): Promise<DiskFile>;
+  move(from: File, to?: string): Promise<DiskFile>;
+  move(from: string, to: string): Promise<DiskFile>;
   list(prefix?: string, options?: ListOptions): AsyncIterable<DiskFile>;
   metadata(key: string): Promise<FileMetadata | null>;
 

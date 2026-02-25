@@ -1,8 +1,21 @@
-import { extname } from "node:path";
+import { basename, extname } from "node:path";
 import { randomUUID } from "node:crypto";
-import type { DiskData, FileMetadata, FileSource, PutOptions } from "./types.js";
+import type { Disk, DiskDriver, DiskData, FileMetadata, FileSource, PutOptions } from "./types.js";
+import { kDisk } from "./symbols.js";
 import { DiskFile } from "./file.js";
 import { lookup as lookupMimeType } from "mime-types";
+import { DiskReadError } from "./errors.js";
+import type { HookTrigger } from "./hooks/trigger.js";
+
+/** Retrieve the originating Disk from any File (undefined if not set) */
+export function getDisk<TDriver extends DiskDriver = DiskDriver>(file: File): Disk<TDriver> | undefined {
+  return (file as any)[kDisk] as Disk<TDriver> | undefined;
+}
+
+/** Attach a Disk reference to a file — called internally by StandardDisk */
+export function setDisk(file: File, disk: Disk): void {
+  (file as any)[kDisk] = disk;
+}
 
 export function isBlob(value: unknown): value is Blob {
   return typeof Blob !== "undefined" && value instanceof Blob;
@@ -166,4 +179,12 @@ export function createDiskFile(
     stream: () => factory(file),
   });
   return file;
+}
+
+export async function fileFromMetadata(driver: DiskDriver, trigger: HookTrigger, metadata: FileMetadata): Promise<DiskFile> {
+  return trigger.file(basename(metadata.href), metadata, async (file) => {
+    const result = await driver.get(metadata.href);
+    if (!result) throw new DiskReadError(metadata.href);
+    return trigger.streaming(result[0], file);
+  });
 }

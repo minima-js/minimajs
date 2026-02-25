@@ -121,3 +121,15 @@ export class DiskConfigError extends DiskError {
     super(message);
   }
 }
+
+/**
+ * Thrown when access to a path is denied (e.g. path traversal outside root)
+ */
+export class DiskAccessError extends DiskError {
+  constructor(
+    public readonly href: string,
+    message?: string
+  ) {
+    super(message || `Access denied: "${href}" resolves outside the root directory`);
+  }
+}

@@ -1,11 +1,12 @@
 import { mkdir, rm, stat, access, copyFile, rename, readdir, writeFile, readFile, statfs, chmod } from "node:fs/promises";
-import { dirname, resolve, join, relative } from "node:path";
+import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createReadStream, createWriteStream } from "node:fs";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { inspect } from "node:util";
 import type { DiskDriver, PutOptions, UrlOptions, ListOptions, FileMetadata, WatchOptions } from "../types.js";
+import { DiskAccessError, DiskConfigError } from "../errors.js";
 import type { FSWatcher } from "chokidar";
 
 export interface MetadataSerializer {
@@ -26,7 +27,10 @@ export interface SidecarMetadataOptions {
 }
 
 export interface FsDriverOptions {
-  /** Root directory for file storage */
+  /**
+   * Root directory as a `file://` URL — **must end with a trailing slash**.
+   * @example "file:///var/storage/"
+   */
   root: string;
   /** Base URL for public file access */
   publicUrl?: string;
@@ -57,6 +61,7 @@ export interface StorageInfo {
  */
 export class FsDriver implements DiskDriver {
   readonly name = "fs";
+  /** Root as a `file://` URL — always ends with "/" (enforced in constructor) */
   private readonly root: string;
   private readonly publicUrl?: string;
   private readonly fileMode: number;
@@ -67,7 +72,12 @@ export class FsDriver implements DiskDriver {
   private readonly metadataSerializer: MetadataSerializer;
 
   constructor(options: FsDriverOptions) {
-    this.root = resolve(options.root);
+    if (!options.root.startsWith("file://") || !options.root.endsWith("/")) {
+      throw new DiskConfigError(
+        `FsDriver root must be a file:// URL ending with "/" (e.g. "file:///var/storage/"), got: "${options.root}"`
+      );
+    }
+    this.root = options.root;
     this.publicUrl = options.publicUrl;
     this.fileMode = options.fileMode ?? 0o644;
     this.dirMode = options.dirMode ?? 0o755;
@@ -83,57 +93,43 @@ export class FsDriver implements DiskDriver {
   }
 
   /**
-   * Convert href to local file path
-   * Handles both file:// URLs and public URLs
+   * Resolve any href to a canonical `file://` URL validated within root.
+   * Accepts: relative keys ("hello.txt"), file:// URLs, or public URLs.
    */
-  private hrefToPath(href: string): string {
-    // If public URL is configured and href starts with it, convert to file path
-    if (this.publicUrl && href.startsWith(this.publicUrl)) {
-      const relativePath = href.slice(this.publicUrl.length).replace(/^\/+/, "");
-      return resolve(this.root, relativePath);
+  private resolveHref(href: string): string {
+    const key =
+      this.publicUrl && href.startsWith(this.publicUrl) ? href.slice(this.publicUrl.length).replace(/^\/+/, "") : href;
+
+    const resolvedUrl = new URL(key, this.root).href;
+
+    // Trailing slash on root prevents prefix-collision (e.g. file:///root-evil/)
+    if (!resolvedUrl.startsWith(this.root)) {
+      throw new DiskAccessError(href);
     }
-    // Handle file:// protocol
-    if (href.startsWith("file://")) {
-      const filepath = fileURLToPath(href);
-      return resolve(this.root, relative("/", filepath));
-    }
-    // Plain relative path (e.g. "hello.txt", "uploads/photo.png")
-    return resolve(this.root, href);
+
+    return resolvedUrl;
   }
 
-  /**
-   * Get path to metadata sidecar file
-   */
-  private metadataPath(filepath: string): string {
-    return `${filepath}${this.metadataExtension}`;
+  /** Sidecar metadata URL — append extension in URL space */
+  private sidecarUrl(fileUrl: string): string {
+    return `${fileUrl}${this.metadataExtension}`;
   }
 
-  /**
-   * Save metadata to sidecar file
-   */
-  private async saveMetadata(filepath: string, metadata: Record<string, any>): Promise<void> {
-    const metaPath = this.metadataPath(filepath);
-    await writeFile(metaPath, this.metadataSerializer.serialize(metadata), "utf-8");
+  private async saveMetadata(fileUrl: string, metadata: Record<string, any>): Promise<void> {
+    await writeFile(new URL(this.sidecarUrl(fileUrl)), this.metadataSerializer.serialize(metadata), "utf-8");
   }
 
-  /**
-   * Load metadata from sidecar file
-   */
-  private async loadMetadata(filepath: string): Promise<Record<string, any> | undefined> {
-    const metaPath = this.metadataPath(filepath);
+  private async loadMetadata(fileUrl: string): Promise<Record<string, any> | undefined> {
     try {
-      const content = await readFile(metaPath, "utf-8");
+      const content = await readFile(new URL(this.sidecarUrl(fileUrl)), "utf-8");
       return this.metadataSerializer.deserialize(content);
     } catch {
       return undefined;
     }
   }
 
-  /**
-   * Get storage information
-   */
   async storageInfo(): Promise<StorageInfo> {
-    const stats = await statfs(this.root);
+    const stats = await statfs(new URL(this.root));
     const blockSize = stats.bsize;
     const total = stats.blocks * blockSize;
     const free = stats.bfree * blockSize;
@@ -144,30 +140,26 @@ export class FsDriver implements DiskDriver {
   }
 
   async put(href: string, stream: ReadableStream<Uint8Array>, putOptions: PutOptions): Promise<FileMetadata> {
-    const destination = this.hrefToPath(href);
+    const fileUrl = this.resolveHref(href);
 
-    await mkdir(dirname(destination), { recursive: true, mode: this.dirMode });
+    // new URL(".", fileUrl) resolves to the parent directory URL
+    await mkdir(new URL(".", fileUrl), { recursive: true, mode: this.dirMode });
 
-    // Create write pipeline
     const nodeReadable = Readable.fromWeb(stream as any);
-    const writeStream = createWriteStream(destination, { mode: this.fileMode });
+    const writeStream = createWriteStream(new URL(fileUrl), { mode: this.fileMode });
 
     await pipeline(nodeReadable, writeStream);
 
-    const stats = await stat(destination);
+    const stats = await stat(new URL(fileUrl));
 
-    // Prepare metadata
-    const metadata: Record<string, any> = {
-      ...putOptions.metadata,
-    };
+    const metadata: Record<string, any> = { ...putOptions.metadata };
 
-    // Save sidecar metadata if enabled
     if (this.sidecarMetadata && putOptions.metadata) {
-      await this.saveMetadata(destination, putOptions.metadata);
+      await this.saveMetadata(fileUrl, putOptions.metadata);
     }
 
     return {
-      href: pathToFileURL(destination).href,
+      href: fileUrl,
       size: stats.size,
       type: putOptions.type,
       lastModified: stats.mtime.getTime(),
@@ -176,49 +168,44 @@ export class FsDriver implements DiskDriver {
   }
 
   async get(href: string): Promise<[ReadableStream<Uint8Array>, FileMetadata] | null> {
-    const destination = this.hrefToPath(href);
+    const fileUrl = this.resolveHref(href);
 
     try {
-      const stats = await stat(destination, { bigint: false });
+      const stats = await stat(new URL(fileUrl), { bigint: false });
+      const sidecarMeta = this.sidecarMetadata ? await this.loadMetadata(fileUrl) : undefined;
 
-      // Load sidecar metadata if enabled
-      const sidecarMeta = this.sidecarMetadata ? await this.loadMetadata(destination) : undefined;
-
-      // Create Node.js read stream
-      const nodeStream = createReadStream(destination);
+      const nodeStream = createReadStream(new URL(fileUrl));
       const webStream = Readable.toWeb(nodeStream) as ReadableStream<Uint8Array>;
 
-      const metadata: FileMetadata = {
-        href: pathToFileURL(destination).href,
-        size: stats.size,
-        lastModified: stats.mtime.getTime(),
-        metadata: sidecarMeta,
-      };
-
-      return [webStream, metadata];
+      return [
+        webStream,
+        {
+          href: fileUrl,
+          size: stats.size,
+          lastModified: stats.mtime.getTime(),
+          metadata: sidecarMeta,
+        },
+      ];
     } catch {
       return null;
     }
   }
 
   async delete(href: string): Promise<void> {
-    const destination = this.hrefToPath(href);
+    const fileUrl = this.resolveHref(href);
 
-    // Delete main file
-    await rm(destination, { force: true });
+    await rm(new URL(fileUrl), { force: true });
 
-    // Delete sidecar metadata if it exists
     if (this.sidecarMetadata) {
-      const metaPath = this.metadataPath(destination);
-      await rm(metaPath, { force: true });
+      await rm(new URL(this.sidecarUrl(fileUrl)), { force: true });
     }
   }
 
   async exists(href: string): Promise<boolean> {
-    const destination = this.hrefToPath(href);
+    const fileUrl = this.resolveHref(href);
 
     try {
-      await access(destination);
+      await access(new URL(fileUrl));
       return true;
     } catch {
       return false;
@@ -229,60 +216,58 @@ export class FsDriver implements DiskDriver {
     if (!this.publicUrl) {
       throw new Error("publicUrl is required to generate a url");
     }
-    const destination = this.hrefToPath(href);
-    const relativePath = relative(this.root, destination);
+    const fileUrl = this.resolveHref(href);
+    // Strip root prefix to get the relative segment, append to publicUrl
+    const relativePath = fileUrl.slice(this.root.length);
     return `${this.publicUrl.replace(/\/$/, "")}/${relativePath}`;
   }
 
   async copy(from: string, to: string): Promise<void> {
-    const srcDest = this.hrefToPath(from);
-    const destDest = this.hrefToPath(to);
+    const srcUrl = this.resolveHref(from);
+    const destUrl = this.resolveHref(to);
 
-    await mkdir(dirname(destDest), { recursive: true, mode: this.dirMode });
-    await copyFile(srcDest, destDest);
-    await chmod(destDest, this.fileMode);
+    await mkdir(new URL(".", destUrl), { recursive: true, mode: this.dirMode });
+    await copyFile(new URL(srcUrl), new URL(destUrl));
+    await chmod(new URL(destUrl), this.fileMode);
 
-    // Copy sidecar metadata if it exists
     if (this.sidecarMetadata) {
-      const srcMeta = this.metadataPath(srcDest);
-      const destMeta = this.metadataPath(destDest);
       try {
-        await copyFile(srcMeta, destMeta);
+        await copyFile(new URL(this.sidecarUrl(srcUrl)), new URL(this.sidecarUrl(destUrl)));
       } catch {
-        // Metadata file may not exist, ignore
+        // Sidecar may not exist
       }
     }
   }
 
   async move(from: string, to: string): Promise<void> {
-    const srcDest = this.hrefToPath(from);
-    const destDest = this.hrefToPath(to);
+    const srcUrl = this.resolveHref(from);
+    const destUrl = this.resolveHref(to);
 
-    await mkdir(dirname(destDest), { recursive: true, mode: this.dirMode });
-    await rename(srcDest, destDest);
+    await mkdir(new URL(".", destUrl), { recursive: true, mode: this.dirMode });
+    await rename(new URL(srcUrl), new URL(destUrl));
 
-    // Move sidecar metadata if it exists
     if (this.sidecarMetadata) {
-      const srcMeta = this.metadataPath(srcDest);
-      const destMeta = this.metadataPath(destDest);
       try {
-        await rename(srcMeta, destMeta);
+        await rename(new URL(this.sidecarUrl(srcUrl)), new URL(this.sidecarUrl(destUrl)));
       } catch {
-        // Metadata file may not exist, ignore
+        // Sidecar may not exist
       }
     }
   }
 
   async *list(prefix?: string, listOptions?: ListOptions): AsyncIterable<FileMetadata> {
-    const searchPath = prefix ? join(this.root, prefix) : this.root;
+    const searchUrl = prefix ? new URL(prefix, this.root).href : this.root;
+    if (!searchUrl.startsWith(this.root)) throw new DiskAccessError(prefix ?? "");
+
     const recursive = listOptions?.recursive ?? true;
     let count = 0;
     const limit = listOptions?.limit;
 
-    const walkDir = async function* (this: FsDriver, dir: string): AsyncGenerator<FileMetadata> {
+    const walkDir = async function* (this: FsDriver, dirUrl: string): AsyncGenerator<FileMetadata> {
       let entries;
       try {
-        entries = await readdir(dir, { withFileTypes: true });
+        // readdir needs a path; dirUrl is always within root so this is safe
+        entries = await readdir(fileURLToPath(dirUrl), { withFileTypes: true });
       } catch {
         return;
       }
@@ -290,71 +275,49 @@ export class FsDriver implements DiskDriver {
       for (const entry of entries) {
         if (limit !== undefined && count >= limit) return;
 
-        const fullPath = join(dir, entry.name);
+        if (this.sidecarMetadata && entry.name.endsWith(this.metadataExtension)) continue;
+        if (entry.name === ".tmp") continue;
 
-        // Skip metadata sidecar files
-        if (this.sidecarMetadata && entry.name.endsWith(".metadata.json")) {
-          continue;
-        }
+        // Build child URL via path join to correctly handle filenames with special chars
+        const childUrl = pathToFileURL(join(fileURLToPath(dirUrl), entry.name)).href;
 
-        // Skip .tmp directory
-        if (entry.name === ".tmp") {
-          continue;
-        }
-
-        // Handle symlinks
         if (entry.isSymbolicLink()) {
           if (!this.followSymlinks) continue;
-
           try {
-            const stats = await stat(fullPath);
+            const stats = await stat(new URL(childUrl));
             if (stats.isFile()) {
-              // Load sidecar metadata if enabled
-              const sidecarMeta = this.sidecarMetadata ? await this.loadMetadata(fullPath) : undefined;
-
-              yield {
-                href: pathToFileURL(fullPath).href,
-                size: stats.size,
-                lastModified: stats.mtime.getTime(),
-                metadata: sidecarMeta,
-              };
+              const sidecarMeta = this.sidecarMetadata ? await this.loadMetadata(childUrl) : undefined;
+              yield { href: childUrl, size: stats.size, lastModified: stats.mtime.getTime(), metadata: sidecarMeta };
               count++;
             } else if (stats.isDirectory() && recursive) {
-              yield* walkDir.call(this, fullPath);
+              yield* walkDir.call(this, childUrl + "/");
             }
           } catch {
-            // Broken symlink, skip
-            continue;
+            continue; // Broken symlink
           }
         } else if (entry.isFile()) {
-          const stats = await stat(fullPath);
-          const sidecarMeta = this.sidecarMetadata ? await this.loadMetadata(fullPath) : undefined;
-
-          yield {
-            href: pathToFileURL(fullPath).href,
-            size: stats.size,
-            lastModified: stats.mtime.getTime(),
-            metadata: sidecarMeta,
-          };
+          const stats = await stat(new URL(childUrl));
+          const sidecarMeta = this.sidecarMetadata ? await this.loadMetadata(childUrl) : undefined;
+          yield { href: childUrl, size: stats.size, lastModified: stats.mtime.getTime(), metadata: sidecarMeta };
           count++;
         } else if (entry.isDirectory() && recursive) {
-          yield* walkDir.call(this, fullPath);
+          yield* walkDir.call(this, childUrl + "/");
         }
       }
     }.bind(this);
 
-    yield* walkDir(searchPath);
+    yield* walkDir(searchUrl);
   }
 
   async metadata(href: string): Promise<FileMetadata | null> {
-    const destination = this.hrefToPath(href);
+    const fileUrl = this.resolveHref(href);
 
     try {
-      const stats = await stat(destination);
-      const sidecarMeta = this.sidecarMetadata ? await this.loadMetadata(destination) : undefined;
+      const stats = await stat(new URL(fileUrl));
+      const sidecarMeta = this.sidecarMetadata ? await this.loadMetadata(fileUrl) : undefined;
 
       return {
-        href: pathToFileURL(destination).href,
+        href: fileUrl,
         size: stats.size,
         lastModified: stats.mtime.getTime(),
         metadata: sidecarMeta,
@@ -370,20 +333,19 @@ export class FsDriver implements DiskDriver {
   async watch(pattern: string, options?: WatchOptions): Promise<FSWatcher> {
     const { recursive = true, ignoreInitial = true, chokidar: chokidarOpts = {} } = options || {};
 
-    // Lazy load chokidar
     let chokidar: typeof import("chokidar");
     try {
       chokidar = await import("chokidar");
-    } catch (error) {
+    } catch {
       throw new Error(
         "chokidar is required for file watching. Install it with: npm install chokidar\nOr with bun: bun add chokidar"
       );
     }
 
-    // Resolve full path
-    const watchPath = pattern.startsWith("/") ? pattern : join(this.root, pattern);
+    // Resolve pattern within root, then convert to path for chokidar
+    const watchUrl = new URL(pattern, this.root).href;
+    const watchPath = fileURLToPath(watchUrl);
 
-    // Create and return chokidar watcher directly
     return chokidar.watch(watchPath, {
       persistent: true,
       ignoreInitial,

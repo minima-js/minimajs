@@ -1,6 +1,6 @@
 import { DiskFile, type StreamFactory } from "../file.js";
-import { getMimeType, toReadableStream } from "../helpers.js";
-import type { DiskData, FileMetadata, FileSource, ListOptions, PutOptions, UrlOptions } from "../types.js";
+import { getMimeType, setDisk, toReadableStream } from "../helpers.js";
+import type { Disk, DiskData, DiskDriver, FileMetadata, FileSource, ListOptions, PutOptions, UrlOptions } from "../types.js";
 import type { DiskHooks } from "./types.js";
 
 type DiskHookStore = {
@@ -8,7 +8,10 @@ type DiskHookStore = {
 };
 
 export class HookTrigger {
-  constructor(private readonly hooks: DiskHookStore) {}
+  constructor(
+    private readonly hooks: DiskHookStore,
+    private readonly disk: Disk<DiskDriver>
+  ) {}
 
   async put(
     path: string,
@@ -181,20 +184,30 @@ export class HookTrigger {
     return stream;
   }
 
-  async file(filename: string, metadata: FileMetadata, factory: StreamFactory) {
+  async file(filename: string, metadata: FileMetadata, factory: StreamFactory): Promise<DiskFile> {
     const hooks = this.hooks["file"];
+    let file: File | undefined;
     if (hooks) {
       for (const handler of hooks) {
-        return handler(filename, metadata, factory);
+        const result = await handler(filename, metadata, factory);
+        if (result) {
+          file = result;
+          break;
+        }
       }
     }
-    return new DiskFile(filename, {
-      href: metadata.href,
-      size: metadata.size,
-      type: metadata.type,
-      lastModified: metadata.lastModified,
-      metadata: metadata.metadata,
-      stream: factory,
-    });
+    if (!file) {
+      file = new DiskFile(filename, {
+        href: metadata.href,
+        size: metadata.size,
+        type: metadata.type,
+        lastModified: metadata.lastModified,
+        metadata: metadata.metadata,
+        stream: factory,
+      });
+    }
+    // Attach the originating Disk — always, regardless of whether a hook ran
+    setDisk(file, this.disk);
+    return file as DiskFile;
   }
 }
