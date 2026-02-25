@@ -179,7 +179,7 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
   async *list(prefix?: string, listOptions?: ListOptions): AsyncIterable<DiskFile> {
     const [$prefix, $listOptions] = await this.$hookManager.trigger.list(prefix, listOptions);
 
-    for await (const metadata of this.driver.list($prefix, $listOptions)) {
+    for await (const metadata of this.driver.list($prefix ?? "", $listOptions)) {
       yield fileFromMetadata(this.driver, this.$hookManager.trigger, metadata);
     }
   }

@@ -185,29 +185,19 @@ export class HookTrigger {
   }
 
   async file(filename: string, metadata: FileMetadata, factory: StreamFactory): Promise<DiskFile> {
-    const hooks = this.hooks["file"];
-    let file: File | undefined;
-    if (hooks) {
-      for (const handler of hooks) {
-        const result = await handler(filename, metadata, factory);
-        if (result) {
-          file = result;
-          break;
-        }
-      }
+    let file = new DiskFile(filename, {
+      href: metadata.href,
+      size: metadata.size,
+      type: metadata.type || getMimeType(metadata.href),
+      lastModified: metadata.lastModified,
+      metadata: metadata.metadata,
+      stream: factory,
+    });
+    for (const handler of this.hooks["file"] ?? []) {
+      const result = await handler(file);
+      if (result instanceof DiskFile) file = result;
     }
-    if (!file) {
-      file = new DiskFile(filename, {
-        href: metadata.href,
-        size: metadata.size,
-        type: metadata.type,
-        lastModified: metadata.lastModified,
-        metadata: metadata.metadata,
-        stream: factory,
-      });
-    }
-    // Attach the originating Disk — always, regardless of whether a hook ran
     setDisk(file, this.disk);
-    return file as DiskFile;
+    return file;
   }
 }

@@ -127,11 +127,11 @@ export interface DiskDriver {
   move(from: string, to: string): Promise<void>;
 
   /**
-   * List files with optional prefix
-   * @param prefix - Filter by href prefix
+   * List files under a prefix href.
+   * @param prefix - Absolute href prefix ending with `/`, or `""` to list everything.
    * @param options - Pagination options
    */
-  list(prefix?: string, options?: ListOptions): AsyncIterable<FileMetadata>;
+  list(prefix: string, options?: ListOptions): AsyncIterable<FileMetadata>;
 
   /**
    * Get file metadata without content

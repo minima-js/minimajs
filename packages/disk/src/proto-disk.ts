@@ -272,7 +272,7 @@ export class ProtoDisk implements Disk<DiskDriver> {
     // No prefix: list from all drivers
     for (const [_protocol, driver] of Object.entries(this.protocols)) {
       try {
-        for await (const metadata of driver.list(undefined, $options)) {
+        for await (const metadata of driver.list("", $options)) {
           yield fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata);
         }
       } catch (_error) {

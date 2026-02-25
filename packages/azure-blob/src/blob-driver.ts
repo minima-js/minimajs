@@ -212,7 +212,7 @@ export class AzureBlobDriver implements DiskDriver {
     await this.delete(from);
   }
 
-  async *list(prefixHref?: string, listOptions?: ListOptions): AsyncIterable<FileMetadata> {
+  async *list(prefixHref: string, listOptions?: ListOptions): AsyncIterable<FileMetadata> {
     let container: string;
     let prefix: string | undefined;
 
@@ -268,6 +268,35 @@ export class AzureBlobDriver implements DiskDriver {
       }
       throw error;
     }
+  }
+
+  async updateMetadata(href: string, updates: { type?: string; metadata?: Record<string, string> }): Promise<FileMetadata> {
+    const { container, blob } = this.hrefToBlob(href);
+    const containerClient = this.client.getContainerClient(container);
+    const blobClient = containerClient.getBlockBlobClient(blob);
+
+    const current = await blobClient.getProperties();
+
+    await Promise.all([
+      updates.metadata !== undefined ? blobClient.setMetadata(updates.metadata) : undefined,
+      updates.type !== undefined
+        ? blobClient.setHTTPHeaders({
+            blobContentType: updates.type,
+            blobCacheControl: current.cacheControl,
+            blobContentEncoding: current.contentEncoding,
+            blobContentLanguage: current.contentLanguage,
+            blobContentDisposition: current.contentDisposition,
+          })
+        : undefined,
+    ]);
+
+    return {
+      href: this.blobToHref(container, blob),
+      size: current.contentLength ?? 0,
+      type: updates.type ?? current.contentType,
+      lastModified: current.lastModified?.getTime() || Date.now(),
+      metadata: updates.metadata ?? current.metadata,
+    };
   }
 
   [utils.inspect.custom]() {
