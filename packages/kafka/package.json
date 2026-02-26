@@ -1,4 +1,9 @@
 {
   "name": "@minimajs/kafka",
-  "version": "0.0.1"
+  "version": "0.0.1",
+  "repository": {
+    "type": "github",
+    "directory": "packages/kafka",
+    "url": "https://github.com/minima-js/minimajs"
+  }
 }

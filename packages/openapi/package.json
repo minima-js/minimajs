@@ -4,7 +4,7 @@
   "description": "OpenAPI 3.1 specification generator for MinimaJS with Zod schema integration",
   "type": "module",
   "license": "MIT",
-  "homepage": "https://minima-js.github.io/",
+  "homepage": "https://minimajs.com/",
   "repository": {
     "type": "github",
     "directory": "packages/openapi",

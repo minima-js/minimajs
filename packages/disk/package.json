@@ -58,6 +58,11 @@
   ],
   "author": "Adil <adil.sudo@gmail.com>",
   "license": "MIT",
+  "repository": {
+    "type": "github",
+    "directory": "packages/disk",
+    "url": "https://github.com/minima-js/minimajs"
+  },
   "files": [
     "lib"
   ]

@@ -40,5 +40,10 @@
   "files": [
     "lib"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "github",
+    "directory": "packages/aws-s3",
+    "url": "https://github.com/minima-js/minimajs"
+  }
 }

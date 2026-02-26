@@ -30,10 +30,15 @@ export function isDiskFile(value: unknown): value is DiskFile {
 }
 
 /**
- * Resolve key from string or DiskFile
+ * Resolve a path/key from a FileSource.
+ * - `DiskFile` → `.href` (storage identifier)
+ * - `File` → `.name`
+ * - `string` → returned as-is
  */
 export function resolveKey(from: FileSource): string {
-  return typeof from === "string" ? from : from.href;
+  if (typeof from === "string") return from;
+  if (from instanceof DiskFile) return from.href;
+  return from.name;
 }
 
 export function isArrayBuffer(value: unknown): value is ArrayBuffer {

@@ -10,7 +10,7 @@ export type DiskData = ReadableStream | Blob | ArrayBufferView | ArrayBuffer | F
 /**
  * Source for copy/move operations - string key or DiskFile
  */
-export type FileSource = string | DiskFile;
+export type FileSource = string | File;
 
 /**
  * Options for putting/storing a file
@@ -186,6 +186,7 @@ export interface Disk<TDriver extends DiskDriver = DiskDriver> extends AsyncIter
    */
   get(key: string): Promise<DiskFile | null>;
 
+  delete(file: File): Promise<string>;
   delete(key: string): Promise<string>;
   exists(key: string): Promise<boolean>;
   url(key: string, options?: UrlOptions): Promise<string>;

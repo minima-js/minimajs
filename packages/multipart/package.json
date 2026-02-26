@@ -2,6 +2,11 @@
   "name": "@minimajs/multipart",
   "version": "1.2.0",
   "description": "Multipart/form-data handling with file upload support, validation, and schema integration",
+  "repository": {
+    "type": "github",
+    "directory": "packages/multipart",
+    "url": "https://github.com/minima-js/minimajs"
+  },
   "type": "module",
   "exports": {
     ".": "./lib/index.js",

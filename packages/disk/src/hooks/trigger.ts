@@ -1,5 +1,5 @@
 import { DiskFile, type StreamFactory } from "../file.js";
-import { getMimeType, setDisk, toReadableStream } from "../helpers.js";
+import { getMimeType, resolveKey, setDisk, toReadableStream } from "../helpers.js";
 import type { Disk, DiskData, DiskDriver, FileMetadata, FileSource, ListOptions, PutOptions, UrlOptions } from "../types.js";
 import type { DiskHooks } from "./types.js";
 
@@ -77,12 +77,12 @@ export class HookTrigger {
     return file;
   }
 
-  async delete(path: string): Promise<string> {
+  async delete(source: FileSource): Promise<string> {
     for (const handler of this.hooks["delete"] ?? []) {
-      const res = await handler(path);
-      if (res) path = res;
+      const res = await handler(source);
+      if (res) source = res;
     }
-    return path;
+    return resolveKey(source);
   }
 
   async deleted(path: string): Promise<string> {
@@ -136,8 +136,7 @@ export class HookTrigger {
       const r = await handler(...result);
       if (r) result = r;
     }
-    const fromHref = typeof from === "string" ? from : from.href;
-    return [fromHref, to];
+    return [resolveKey(result[0]), result[1]];
   }
 
   async moved(from: string, to: string, file: DiskFile): Promise<DiskFile> {

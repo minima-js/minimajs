@@ -139,8 +139,8 @@ export class ProtoDisk implements Disk<DiskDriver> {
     return this.$hookManager.trigger.retrieved(diskFile);
   }
 
-  async delete(path: string): Promise<string> {
-    const href = this.toHref(await this.$hookManager.trigger.delete(path));
+  async delete(source: FileSource): Promise<string> {
+    const href = this.toHref(await this.$hookManager.trigger.delete(source));
     const driver = this.getDriver(href);
     await driver.delete(href);
     return this.$hookManager.trigger.deleted(href);
@@ -163,14 +163,14 @@ export class ProtoDisk implements Disk<DiskDriver> {
   async copy(from: File, to?: string): Promise<DiskFile>;
   async copy(from: FileSource, to: string): Promise<DiskFile>;
   async copy(from: FileSource | File, to?: string): Promise<DiskFile> {
-    if (from instanceof File && !(from instanceof DiskFile)) {
+    if (from instanceof DiskFile) {
+      if ((getDisk(from) as unknown) === this) {
+        if (!to) throw new Error(`Explicit target path required when copying within the same disk`);
+        return this.copy(from.href, to);
+      }
       return this.put(to ?? from.name, from);
     }
     if (from instanceof File) {
-      if (getDisk(from) === this) {
-        if (!to) throw new Error(`Explicit target path required when copying within the same disk`);
-        return this.copy((from as DiskFile).href, to);
-      }
       return this.put(to ?? from.name, from);
     }
     const [$from, $to] = await this.$hookManager.trigger.copy(from, to!);
@@ -210,15 +210,14 @@ export class ProtoDisk implements Disk<DiskDriver> {
   async move(from: File, to?: string): Promise<DiskFile>;
   async move(from: FileSource, to: string): Promise<DiskFile>;
   async move(from: FileSource | File, to?: string): Promise<DiskFile> {
-    if (from instanceof File && !(from instanceof DiskFile)) {
-      const copied = await this.put(to ?? from.name, from);
-      return copied;
+    if (from instanceof DiskFile) {
+      if ((getDisk(from) as unknown) === this) {
+        if (!to) throw new Error(`Explicit target path required when moving within the same disk`);
+        return this.move(from.href, to);
+      }
+      return this.put(to ?? from.name, from);
     }
     if (from instanceof File) {
-      if (getDisk(from) === this) {
-        if (!to) throw new Error(`Explicit target path required when moving within the same disk`);
-        return this.move((from as DiskFile).href, to);
-      }
       return this.put(to ?? from.name, from);
     }
     const [$from, $to] = await this.$hookManager.trigger.move(from, to!);

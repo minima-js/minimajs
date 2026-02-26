@@ -1,4 +1,5 @@
-import { FsDriver, createFsDriver } from "./adapters/fs.js";
+import { FsDriver } from "./adapters/fs.js";
+import { createFsDriver } from "./adapters/index.js";
 import { StandardDisk } from "./standard-disk.js";
 import { ProtoDisk } from "./proto-disk.js";
 import type { DiskDriver, Disk, ProtoDiskOptions } from "./types.js";
@@ -82,7 +83,7 @@ export function createDisk<TDriver extends DiskDriver = FsDriver>(
   options: CreateDiskOptions<TDriver> = {},
   ...plugins: DiskPlugin[]
 ): Disk<TDriver> {
-  const driver = (options.driver ?? createFsDriver({ root: "file://" + process.cwd() + "/" })) as TDriver;
+  const driver = (options.driver ?? createFsDriver()) as TDriver;
   const disk = new StandardDisk(driver, { hooks: options.hooks });
   for (const plugin of plugins) plugin(disk);
   return disk;
@@ -139,10 +140,33 @@ export function createDisk<TDriver extends DiskDriver = FsDriver>(
  * const blob = await file.blob(); // Standard File.blob()
  * ```
  */
-export function createProtoDisk(options: ProtoDiskOptions) {
-  return new ProtoDisk(options);
+export function createProtoDisk(options: ProtoDiskOptions, ...plugins: DiskPlugin[]) {
+  const disk = new ProtoDisk(options);
+  for (const plugin of plugins) plugin(disk);
+  return disk;
 }
 
+/**
+ * Create a temporary disk backed by the OS temp directory.
+ *
+ * Useful for short-lived file operations (e.g., processing uploads before
+ * moving them to permanent storage). Files are stored under `os.tmpdir()`
+ * and are not automatically cleaned up — delete them when done.
+ *
+ * @param plugins - Optional disk plugins to apply (e.g., compression, encryption)
+ * @returns A `StandardDisk` instance rooted at the system temp directory
+ *
+ * @example
+ * ```typescript
+ * import { createTempDisk } from "@minimajs/disk";
+ *
+ * const tmp = createTempDisk();
+ *
+ * const file = await tmp.put("upload.jpg", imageStream);
+ * // process file...
+ * await tmp.delete(file);
+ * ```
+ */
 export function createTempDisk(...plugins: DiskPlugin[]) {
   const disk = new StandardDisk(new FsDriver({ root: "file://" + tmpdir() + "/" }), {});
   for (const plugin of plugins) plugin(disk);

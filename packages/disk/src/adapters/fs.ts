@@ -33,7 +33,7 @@ export interface SidecarMetadataOptions {
   serializer?: MetadataSerializer;
 }
 
-export interface FsDriverOptions {
+export interface FsDriverBaseOptions {
   /**
    * Root directory as a `file://` URL — **must end with a trailing slash**.
    * @example "file:///var/storage/"
@@ -85,7 +85,7 @@ export class FsDriver implements DiskDriver {
     return { metadata: this.sidecar.enabled };
   }
 
-  constructor(options: FsDriverOptions) {
+  constructor(options: FsDriverBaseOptions) {
     if (!options.root.startsWith("file://") || !options.root.endsWith("/")) {
       throw new DiskConfigError(
         `FsDriver root must be a file:// URL ending with "/" (e.g. "file:///var/storage/"), got: "${options.root}"`
@@ -379,8 +379,4 @@ export class FsDriver implements DiskDriver {
   get [Symbol.toStringTag]() {
     return "FsDriver";
   }
-}
-
-export function createFsDriver(options: FsDriverOptions): DiskDriver {
-  return new FsDriver(options);
 }

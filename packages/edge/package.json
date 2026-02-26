@@ -2,6 +2,11 @@
   "name": "@minimajs/edge.js",
   "version": "0.1.0",
   "type": "module",
+  "repository": {
+    "type": "github",
+    "directory": "packages/edge",
+    "url": "https://github.com/minima-js/minimajs"
+  },
   "exports": "./lib/index.js",
   "dependencies": {
     "edge.js": "^6.4.0"

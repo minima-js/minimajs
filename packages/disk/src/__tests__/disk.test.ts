@@ -4,7 +4,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createDisk } from "../index.js";
-import { createFsDriver } from "../adapters/fs.js";
+import { createFsDriver } from "../adapters/index.js";
 import { createMemoryDriver } from "../adapters/memory.js";
 
 let rootDir: string;

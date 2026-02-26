@@ -109,8 +109,8 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
     return this.$hookManager.trigger.retrieved(diskFile);
   }
 
-  async delete(path: string): Promise<string> {
-    const href = await this.$hookManager.trigger.delete(path);
+  async delete(source: FileSource): Promise<string> {
+    const href = await this.$hookManager.trigger.delete(source);
     await this.driver.delete(href);
     return this.$hookManager.trigger.deleted(href);
   }

@@ -3,6 +3,11 @@
   "version": "1.3.0",
   "description": "Schema validation powered by Zod for request/response validation with type safety",
   "license": "MIT",
+  "repository": {
+    "type": "github",
+    "directory": "packages/schema",
+    "url": "https://github.com/minima-js/minimajs"
+  },
   "type": "module",
   "exports": {
     ".": "./lib/index.js",

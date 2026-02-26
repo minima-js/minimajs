@@ -21,7 +21,7 @@ export interface DiskHooks {
   retrieved(file: DiskFile): HookReturn<DiskFile>;
 
   /** Called before delete */
-  delete(path: string): HookReturn<string>;
+  delete(source: FileSource): HookReturn<FileSource>;
   /** Called after delete */
   deleted(href: string): HookReturn<string>;
 

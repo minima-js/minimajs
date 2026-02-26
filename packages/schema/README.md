@@ -538,8 +538,8 @@ export type UpdateUser = z.infer<typeof updateUserSchema>;
 ## Related
 
 - [Zod Documentation](https://zod.dev/) - Schema validation library
-- [Minima.js Server](https://minima-js.github.io/) - Web framework
-- [Validation Guide](https://minima-js.github.io/guides/validation) - Comprehensive validation guide
+- [Minima.js Server](https://minimajs.com/) - Web framework
+- [Validation Guide](https://minimajs.com/guides/validation) - Comprehensive validation guide
 
 ## License
 
