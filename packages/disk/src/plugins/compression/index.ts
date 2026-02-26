@@ -1,5 +1,6 @@
 import type { CompressionFormat } from "stream/web";
 import type { Disk } from "../../types.js";
+import type { DiskFile } from "../../file.js";
 
 // CompressionFormat is a DOM type not available in ESNext lib
 // type CompressionFormat = "gzip" | "deflate" | "deflate-raw";
@@ -7,8 +8,6 @@ import type { Disk } from "../../types.js";
 export interface CompressionOptions {
   /** Compression algorithm (default: 'gzip') */
   algorithm?: CompressionFormat;
-  /** Store compression algorithm in metadata to enable auto-decompression on read (default: true) */
-  storeMetadata?: boolean;
 }
 
 const METADATA_KEY = "x-compression";
@@ -17,7 +16,13 @@ const METADATA_KEY = "x-compression";
  * Compression plugin — compresses files on put, decompresses on get.
  *
  * Uses the Web API CompressionStream/DecompressionStream (Node 18+, all modern browsers).
- * The algorithm is stored in file metadata so decompression is automatic on read.
+ *
+ * **Behavior depends on driver metadata support (`capabilities.metadata`):**
+ * - `true`  — algorithm is stored per-file in metadata; mixed compressed/uncompressed
+ *             files are safe, and the correct algorithm is always used on read.
+ * - `false` or absent — algorithm is NOT stored; every file read through this disk
+ *             is assumed to be compressed with the configured algorithm.
+ *             Do not mix compressed and uncompressed files on the same disk.
  *
  * @example
  * const disk = createDisk({ driver }, compression())
@@ -29,10 +34,17 @@ const METADATA_KEY = "x-compression";
  * const disk = createDisk({ driver }, compression({ algorithm: 'deflate-raw' }))
  */
 export function compression(options: CompressionOptions = {}) {
-  const { algorithm = "gzip", storeMetadata = true } = options;
+  const { algorithm = "gzip" } = options;
   return (disk: Disk) => {
-    disk.hook("storing", (stream, putOptions) => {
-      if (storeMetadata) {
+    function getAlgo(file: DiskFile): CompressionFormat | undefined {
+      if (!disk.driver.capabilities?.metadata) {
+        return algorithm;
+      }
+      return file.metadata?.[METADATA_KEY] as CompressionFormat | undefined;
+    }
+
+    disk.hook("storing", (_path, stream, putOptions) => {
+      if (disk.driver.capabilities?.metadata) {
         putOptions.metadata ??= {};
         putOptions.metadata[METADATA_KEY] = algorithm;
       }
@@ -40,7 +52,7 @@ export function compression(options: CompressionOptions = {}) {
     });
 
     disk.hook("streaming", (stream, file) => {
-      const algo = file.metadata?.[METADATA_KEY] as CompressionFormat | undefined;
+      const algo = getAlgo(file);
       if (!algo) return;
       return stream.pipeThrough(new DecompressionStream(algo) as unknown as TransformStream<Uint8Array, Uint8Array>);
     });

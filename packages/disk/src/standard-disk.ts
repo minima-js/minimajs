@@ -10,7 +10,7 @@ import type {
   WatchOptions,
 } from "./types.js";
 import { DiskFile } from "./file.js";
-import { fileFromMetadata, getDisk } from "./helpers.js";
+import { fileFromMetadata, getDisk, ensureMetadataSymbols } from "./helpers.js";
 import { DiskReadError, DiskMetadataError } from "./errors.js";
 import { randomUUID } from "node:crypto";
 import { extname, basename } from "node:path";
@@ -69,11 +69,17 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
     const [path, stream, options] = await this.$hookManager.trigger.put(pathOrData, data, resolvedOptions);
 
     const metadata = await this.driver
-      .put(path, await this.$hookManager.trigger.storing(stream, options), options)
+      .put(path, await this.$hookManager.trigger.storing(path, stream, options), options)
       .catch(async (err) => {
         await this.driver.delete(path).catch(() => {});
         throw err;
       });
+
+    // Merge symbol-keyed entries from options.metadata into the returned metadata.
+    // Symbol keys are plugin-private state; drivers are not responsible for preserving them.
+    if (options.metadata) {
+      ensureMetadataSymbols(options.metadata, metadata.metadata);
+    }
 
     const diskFile = await fileFromMetadata(this.driver, this.$hookManager.trigger, metadata);
     return this.$hookManager.trigger.stored(diskFile);

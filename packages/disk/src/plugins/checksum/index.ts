@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { Disk } from "../../types.js";
 import { DiskError } from "../../errors.js";
+import { text2stream } from "../../helpers.js";
 
 export class ChecksumMismatchError extends DiskError {
   readonly name = "ChecksumMismatchError";
@@ -40,33 +41,21 @@ export interface ChecksumOptions {
  */
 export function checksum(options: ChecksumOptions = {}) {
   const { algorithm = "sha256", extension = ".sha256" } = options;
-
   return (disk: Disk) => {
-    // After the file is stored, compute its hash incrementally and write the
-    // sidecar directly via driver (skips all hooks, invisible to other plugins).
-    disk.hook("stored", async (file) => {
+    disk.hook("storing", (path, stream) => {
       const hash = createHash(algorithm);
-      const reader = file.stream().getReader();
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          if (value) hash.update(value);
-        }
-      } finally {
-        reader.releaseLock();
-      }
-
-      const digest = hash.digest("hex");
-      const sidecarStream = new ReadableStream<Uint8Array>({
-        start(controller) {
-          controller.enqueue(new TextEncoder().encode(digest));
-          controller.close();
-        },
-      });
-
-      await disk.driver.put(`${file.href}${extension}`, sidecarStream, {});
-      return file;
+      return stream.pipeThrough(
+        new TransformStream<Uint8Array, Uint8Array>({
+          transform(chunk, controller) {
+            hash.update(chunk);
+            controller.enqueue(chunk);
+          },
+          async flush() {
+            const digest = hash.digest("hex");
+            await disk.driver.put(`${path}${extension}`, text2stream(digest), {});
+          },
+        })
+      );
     });
 
     // Wrap the stream with an incremental hash verifier. Reads the sidecar

@@ -1,6 +1,6 @@
 import { BlobServiceClient } from "@azure/storage-blob";
 import { Readable } from "node:stream";
-import type { DiskDriver, PutOptions, ListOptions, FileMetadata } from "@minimajs/disk";
+import type { DiskDriver, DriverCapabilities, PutOptions, ListOptions, FileMetadata } from "@minimajs/disk";
 import utils from "node:util";
 export interface AzureBlobBaseDriverOptions {
   container?: string;
@@ -38,6 +38,7 @@ export interface AzureBlobBaseDriverOptions {
  */
 export class AzureBlobDriver implements DiskDriver {
   readonly name = "azure-blob";
+  readonly capabilities: DriverCapabilities = { metadata: true };
   private readonly options: AzureBlobBaseDriverOptions;
   private readonly endpoint: string;
 

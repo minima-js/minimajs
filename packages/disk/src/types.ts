@@ -73,9 +73,26 @@ export interface FileMetadata extends FilePropertyBag {
  * - s3://bucket-name/path/to/file
  * - https://storage.example.com/path/to/file
  */
+/**
+ * Capability declarations for a driver.
+ * Every driver should implement this. An absent field or absent `capabilities`
+ * object is treated as `false` — the feature is not supported.
+ */
+export interface DriverCapabilities {
+  /**
+   * Whether the driver persists and returns string-keyed metadata from PutOptions.
+   * - `true`  — metadata round-trips through put → get
+   * - `false` or absent — metadata is not supported / silently dropped
+   */
+  metadata?: boolean;
+}
+
 export interface DiskDriver {
   /** Driver name (e.g., 'fs', 's3', 'azure') */
   readonly name: string;
+
+  /** Optional capability declarations — see {@link DriverCapabilities} */
+  readonly capabilities?: DriverCapabilities;
 
   /**
    * Store data from a ReadableStream

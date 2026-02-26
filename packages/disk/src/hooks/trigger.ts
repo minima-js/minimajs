@@ -175,10 +175,10 @@ export class HookTrigger {
     }
     return stream;
   }
-  async storing(stream: ReadableStream, options: PutOptions) {
+  async storing(path: string, stream: ReadableStream, options: PutOptions) {
     const hooks = this.hooks["storing"] ?? [];
     for (const handler of hooks) {
-      const result = await handler(stream, options);
+      const result = await handler(path, stream, options);
       if (result) stream = result;
     }
     return stream;

@@ -22,15 +22,19 @@ function concat(a: Uint8Array, b: Uint8Array): Uint8Array<ArrayBuffer> {
 export interface EncryptionOptions {
   /** Encryption algorithm (default: aes-256-gcm) */
   algorithm?: string;
+  /** Password for encryption/decryption */
+  password: string;
 }
 
 export class EncryptionManager {
   public readonly algorithm: string;
   private readonly isGcm: boolean;
+  private readonly password: string;
 
-  constructor(options: EncryptionOptions = {}) {
+  constructor(options: EncryptionOptions) {
     this.algorithm = options.algorithm ?? "aes-256-gcm";
     this.isGcm = this.algorithm.includes("gcm");
+    this.password = options.password;
   }
 
   private deriveKey(password: string, salt: Buffer): Buffer {
@@ -49,10 +53,10 @@ export class EncryptionManager {
    * Encrypt a stream. Pipes through a TransformStream that prepends the header
    * and appends the GCM auth tag — backpressure is handled automatically.
    */
-  encrypt(stream: ReadableStream<Uint8Array>, password: string): ReadableStream<Uint8Array> {
+  encrypt(stream: ReadableStream<Uint8Array>): ReadableStream<Uint8Array> {
     const salt = randomBytes(32);
     const iv = randomBytes(16);
-    const key = this.deriveKey(password, salt);
+    const key = this.deriveKey(this.password, salt);
     const cipher = createCipheriv(this.algorithm, key, iv);
     const { isGcm } = this;
 
@@ -83,8 +87,8 @@ export class EncryptionManager {
    * Decrypt a stream produced by `encrypt`. Pipes through a TransformStream
    * with a stateful header parser + 16-byte GCM auth tag lookahead — O(chunk) memory.
    */
-  decrypt(stream: ReadableStream<Uint8Array>, password: string): ReadableStream<Uint8Array> {
-    const { algorithm, isGcm } = this;
+  decrypt(stream: ReadableStream<Uint8Array>): ReadableStream<Uint8Array> {
+    const { algorithm, isGcm, password } = this;
     const deriveKey = this.deriveKey.bind(this);
     const tagSize = isGcm ? GCM_TAG_SIZE : 0;
 

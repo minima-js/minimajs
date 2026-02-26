@@ -49,8 +49,8 @@ export interface DiskHooks {
   /** Called when a file stream is accessed - can return transformed stream */
   streaming(stream: ReadableStream<Uint8Array>, file: DiskFile): HookReturn<ReadableStream<Uint8Array>>;
 
-  /** Called when a file stream is accessed - can return transformed stream */
-  storing(stream: ReadableStream<Uint8Array>, options: PutOptions): HookReturn<ReadableStream<Uint8Array>>;
+  /** Called when a file stream is being stored - can return transformed stream */
+  storing(path: string, stream: ReadableStream<Uint8Array>, options: PutOptions): HookReturn<ReadableStream<Uint8Array>>;
 
   /** Called when constructing a DiskFile — can return a transformed DiskFile */
   file(file: DiskFile): HookReturn<DiskFile>;

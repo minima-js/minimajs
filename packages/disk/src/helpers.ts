@@ -111,6 +111,16 @@ export function getMimeType(pathOrKey: string): string | undefined {
   return result || undefined;
 }
 
+export function text2stream(text: string): ReadableStream<Uint8Array> {
+  const encoded = new TextEncoder().encode(text);
+  return new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoded);
+      controller.close();
+    },
+  });
+}
+
 export async function stream2bytes(stream: ReadableStream<Uint8Array>): Promise<Uint8Array<ArrayBuffer>> {
   const reader = stream.getReader();
   let buffer = new Uint8Array(64 * 1024); // 64KB initial size
@@ -179,6 +189,21 @@ export function createDiskFile(
     stream: () => factory(file),
   });
   return file;
+}
+
+/**
+ * Copies symbol-keyed entries from `src` into `dest`.
+ * Used to propagate plugin-private state through the put pipeline without
+ * requiring drivers to preserve symbol keys.
+ */
+export function ensureMetadataSymbols(
+  src: Record<string | symbol, unknown>,
+  dest: Record<string | symbol, unknown> | undefined
+): void {
+  dest ??= {};
+  for (const sym of Object.getOwnPropertySymbols(src)) {
+    dest[sym] = src[sym];
+  }
 }
 
 export async function fileFromMetadata(driver: DiskDriver, trigger: HookTrigger, metadata: FileMetadata): Promise<DiskFile> {

@@ -1,4 +1,4 @@
-import type { DiskDriver, PutOptions, UrlOptions, ListOptions, FileMetadata } from "../types.js";
+import type { DiskDriver, DriverCapabilities, PutOptions, UrlOptions, ListOptions, FileMetadata } from "../types.js";
 
 interface StoredFile {
   data: Buffer;
@@ -18,6 +18,7 @@ export interface MemoryDriverOptions {
  */
 class MemoryDriver implements DiskDriver {
   readonly name = "memory";
+  readonly capabilities: DriverCapabilities = { metadata: true };
   private readonly storage = new Map<string, StoredFile>();
   private readonly publicUrl?: string;
 

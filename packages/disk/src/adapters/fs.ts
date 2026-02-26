@@ -4,7 +4,15 @@ import { createReadStream, createWriteStream } from "node:fs";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { inspect } from "node:util";
-import type { DiskDriver, PutOptions, UrlOptions, ListOptions, FileMetadata, WatchOptions } from "../types.js";
+import type {
+  DiskDriver,
+  DriverCapabilities,
+  PutOptions,
+  UrlOptions,
+  ListOptions,
+  FileMetadata,
+  WatchOptions,
+} from "../types.js";
 import { DiskAccessError, DiskConfigError } from "../errors.js";
 import type { FSWatcher } from "chokidar";
 
@@ -72,6 +80,10 @@ export class FsDriver implements DiskDriver {
   private readonly dirMode: number;
   private readonly followSymlinks: boolean;
   private readonly sidecar = { enabled: false, extension: ".metadata.json", serializer: sidecarSerializer };
+
+  get capabilities(): DriverCapabilities {
+    return { metadata: this.sidecar.enabled };
+  }
 
   constructor(options: FsDriverOptions) {
     if (!options.root.startsWith("file://") || !options.root.endsWith("/")) {

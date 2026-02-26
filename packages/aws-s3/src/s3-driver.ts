@@ -10,7 +10,7 @@ import {
   type ServerSideEncryption,
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
-import type { DiskDriver, FileMetadata, PutOptions, ListOptions } from "@minimajs/disk";
+import type { DiskDriver, DriverCapabilities, FileMetadata, PutOptions, ListOptions } from "@minimajs/disk";
 import { Readable } from "node:stream";
 import { inspect } from "node:util";
 
@@ -64,6 +64,7 @@ export interface S3BaseDriverOptions {
  */
 export class S3Driver implements DiskDriver {
   readonly name = "s3";
+  readonly capabilities: DriverCapabilities = { metadata: true };
 
   private readonly bucket?: string;
   private readonly prefix: string;

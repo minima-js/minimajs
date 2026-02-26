@@ -13,7 +13,7 @@ export interface UploadProgress {
  */
 export function uploadProgress(onProgress: (progress: UploadProgress) => void) {
   return (disk: Disk) => {
-    disk.hook("storing", (stream, options) => {
+    disk.hook("storing", (_path, stream, options) => {
       const total = options.size;
       let loaded = 0;
 
