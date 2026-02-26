@@ -268,22 +268,26 @@ console.log(invoiceUrl); // https://...
 ### Multipart Upload Handler
 
 ```typescript
-import { createDisk } from "@minimajs/disk";
+import { createDisk, storeAs } from "@minimajs/disk";
 import { createS3Driver } from "@minimajs/aws-s3";
 import { Application } from "@minimajs/server";
 import { multipart } from "@minimajs/multipart";
 
 const app = new Application();
 
-const disk = createDisk({
-  driver: createS3Driver({
-    bucket: "uploads",
-    region: "us-east-1",
-    credentials: {
-      /* ... */
-    },
-  }),
-});
+// storeAs("uuid-original") renames files to "<uuid>-originalname.ext" automatically
+const disk = createDisk(
+  {
+    driver: createS3Driver({
+      bucket: "uploads",
+      region: "us-east-1",
+      credentials: {
+        /* ... */
+      },
+    }),
+  },
+  storeAs("uuid-original")
+);
 
 app.use(multipart());
 
@@ -296,15 +300,10 @@ app.post("/upload", async (ctx) => {
 
   const uploadedFiles = await Promise.all(
     files.map(async (file) => {
-      // Generate unique filename
-      const filename = `${Date.now()}-${file.name}`;
-      const path = `uploads/${filename}`;
-
-      // Upload to S3
-      const uploaded = await disk.put(path, file.stream(), {
-        type: file.type,
+      // Put the File directly — storeAs generates a unique name automatically
+      // file.metadata.originalName holds the original filename
+      const uploaded = await disk.put(file, {
         metadata: {
-          originalName: file.name,
           uploadedBy: ctx.get("userId") ?? "anonymous",
           uploadedAt: new Date().toISOString(),
         },
@@ -314,9 +313,9 @@ app.post("/upload", async (ctx) => {
       const url = await disk.url(uploaded.href);
 
       return {
-        name: file.name,
-        size: file.size,
-        type: file.type,
+        name: uploaded.metadata.originalName ?? uploaded.name,
+        size: uploaded.size,
+        type: uploaded.type,
         url,
       };
     })

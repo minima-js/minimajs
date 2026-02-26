@@ -12,8 +12,7 @@ import type {
 import { DiskFile } from "./file.js";
 import { fileFromMetadata, getDisk, ensureMetadataSymbols } from "./helpers.js";
 import { DiskReadError, DiskMetadataError } from "./errors.js";
-import { randomUUID } from "node:crypto";
-import { extname, basename } from "node:path";
+import { basename } from "node:path";
 import { inspect } from "node:util";
 import type { FSWatcher } from "chokidar";
 import { HookManager } from "./hooks/manager.js";
@@ -44,7 +43,6 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
     return () => this.$hookManager.remove(event, handler);
   }
 
-  // Overload: put with File auto-generates path
   async put(data: File, options?: PutOptions): Promise<DiskFile>;
   async put(path: string, data: DiskData, options?: PutOptions): Promise<DiskFile>;
   async put(
@@ -53,11 +51,9 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
     putOptions: PutOptions = {}
   ): Promise<DiskFile> {
     if (pathOrData instanceof File) {
-      const ext = extname(pathOrData.name);
-      const generatedPath = `${randomUUID()}${ext}`;
       const mergedOptions: PutOptions = (dataOrOptions as PutOptions) ?? {};
       mergedOptions.type ??= pathOrData.type;
-      return this.put(generatedPath, pathOrData, mergedOptions);
+      return this.put(pathOrData.name, pathOrData, mergedOptions);
     }
 
     const data = dataOrOptions as DiskData;

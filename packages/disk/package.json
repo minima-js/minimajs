@@ -58,6 +58,7 @@
   ],
   "author": "Adil <adil.sudo@gmail.com>",
   "license": "MIT",
+  "homepage": "https://minimajs.com/packages/disk/",
   "repository": {
     "type": "github",
     "directory": "packages/disk",

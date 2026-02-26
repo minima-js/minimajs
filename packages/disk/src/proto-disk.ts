@@ -14,8 +14,7 @@ import { DiskFile } from "./file.js";
 import { fileFromMetadata, getDisk } from "./helpers.js";
 import { DiskReadError, DiskFileNotFoundError, DiskMetadataError, DiskConfigError } from "./errors.js";
 import { pathToFileURL } from "node:url";
-import { randomUUID } from "node:crypto";
-import { extname, basename } from "node:path";
+import { basename } from "node:path";
 import { inspect } from "node:util";
 import { HookManager } from "./hooks/manager.js";
 import { type DiskHooks } from "./hooks/types.js";
@@ -87,16 +86,13 @@ export class ProtoDisk implements Disk<DiskDriver> {
     return `${this.defaultProtocol}${this.basePath ? `${this.basePath}/` : ""}${normalizedPath}`;
   }
 
-  // Overload: put with File auto-generates path
   async put(data: File, putOptions?: PutOptions): Promise<DiskFile>;
   async put(path: string, data: DiskData, putOptions?: PutOptions): Promise<DiskFile>;
   async put(pathOrData: string | File, dataOrOptions?: DiskData | PutOptions, putOptions?: PutOptions): Promise<DiskFile> {
     if (pathOrData instanceof File) {
-      const ext = extname(pathOrData.name);
-      const generatedPath = `${randomUUID()}${ext}`;
       const mergedOptions: PutOptions = (dataOrOptions as PutOptions) ?? {};
       mergedOptions.type ??= pathOrData.type;
-      return this.put(generatedPath, pathOrData, mergedOptions);
+      return this.put(pathOrData.name, pathOrData, mergedOptions);
     }
 
     const [path, stream, options] = await this.$hookManager.trigger.put(

@@ -23,6 +23,7 @@ export * from "./proto-disk.js";
 export * from "./plugins/atomic-write/index.js";
 export * from "./plugins/partition/index.js";
 export * from "./plugins/checksum/index.js";
+export * from "./plugins/store-as/index.js";
 
 export interface CreateDiskOptions<TDriver extends DiskDriver = DiskDriver> {
   driver?: TDriver;

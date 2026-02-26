@@ -36,6 +36,7 @@
   ],
   "author": "Adil <adil.sudo@gmail.com>",
   "license": "MIT",
+  "homepage": "https://minimajs.com/packages/disk/azure-blob",
   "repository": {
     "type": "github",
     "directory": "packages/azure-blob",

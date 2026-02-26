@@ -41,6 +41,7 @@
     "lib"
   ],
   "license": "MIT",
+  "homepage": "https://minimajs.com/packages/disk/aws-s3",
   "repository": {
     "type": "github",
     "directory": "packages/aws-s3",
