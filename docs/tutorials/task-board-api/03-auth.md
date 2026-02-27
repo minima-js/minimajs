@@ -6,14 +6,24 @@ title: "3. Authentication"
 
 We'll implement JWT authentication with access tokens (short-lived, in `Authorization` header) and refresh tokens (long-lived, in an `httpOnly` cookie).
 
+## Step Outcome
+
+After this step, you can:
+
+- register and login users
+- issue short-lived access tokens
+- persist refresh tokens in secure cookies
+- refresh access tokens without forcing re-login
+- enforce auth in any module with `authenticated()`
+
 ## Auth Setup
 
 Create `src/auth/index.ts`:
 
-```typescript
+::: code-group
+```typescript [src/auth/index.ts]
 import { headers } from "@minimajs/server";
 import { createAuth, UnauthorizedError } from "@minimajs/auth";
-import { cookies } from "@minimajs/cookie";
 import jwt from "jsonwebtoken";
 import { prisma } from "../database.js";
 
@@ -65,16 +75,18 @@ export const [authPlugin, getUser] = createAuth(async () => {
 
 export { ACCESS_SECRET, REFRESH_SECRET };
 ```
+:::
 
 ## Auth Guards
 
 Create `src/auth/guards.ts`:
 
-```typescript
+::: code-group
+```typescript [src/auth/guards.ts]
 import { getUser } from "./index.js";
 import { ForbiddenError } from "@minimajs/auth";
 import { prisma } from "../database.js";
-import { params } from "@minimajs/server";
+import { params, abort } from "@minimajs/server";
 
 // Requires a valid access token
 export function authenticated() {
@@ -97,6 +109,36 @@ export async function workspaceMember() {
   return member;
 }
 
+// For routes scoped by :boardId (e.g. /boards/:boardId/tasks),
+// resolve board -> workspace and then reuse membership check logic.
+export async function boardMember() {
+  const user = getUser.required();
+  const boardId = Number(params.get("boardId"));
+
+  const board = await prisma.board.findUnique({
+    where: { id: boardId },
+    select: { workspaceId: true },
+  });
+  if (!board) {
+    abort.notFound("Board not found");
+  }
+
+  const member = await prisma.member.findUnique({
+    where: {
+      userId_workspaceId: {
+        userId: user.id,
+        workspaceId: board.workspaceId,
+      },
+    },
+  });
+
+  if (!member) {
+    throw new ForbiddenError("You are not a member of this workspace");
+  }
+
+  return member;
+}
+
 // Requires admin or owner role in the workspace
 export async function workspaceAdmin() {
   const member = await workspaceMember();
@@ -108,13 +150,15 @@ export async function workspaceAdmin() {
   return member;
 }
 ```
+:::
 
 ## Auth Routes
 
 Create `src/auth/module.ts`:
 
-```typescript
-import { type Meta, type Routes, hook, body, abort } from "@minimajs/server";
+::: code-group
+```typescript [src/auth/module.ts]
+import { type Routes, abort } from "@minimajs/server";
 import { cookies } from "@minimajs/cookie";
 import { createBody } from "@minimajs/schema";
 import { z } from "zod";
@@ -124,7 +168,6 @@ import {
   signAccessToken,
   signRefreshToken,
   REFRESH_SECRET,
-  type AuthUser,
 } from "./index.js";
 import bcrypt from "bcryptjs";
 
@@ -223,14 +266,16 @@ export const routes: Routes = {
   "POST /logout": logout,
 };
 ```
+:::
 
 ### Register the auth plugin globally
 
 Update `src/module.ts` to register the `authPlugin` so it runs on every request (but only throws in routes that call `getUser.required()`):
 
-```typescript
+::: code-group
+```typescript [src/module.ts]
 import { type Meta, hook } from "@minimajs/server";
-import { cors, gracefulShutdown } from "@minimajs/server/plugins";
+import { cors, shutdown } from "@minimajs/server/plugins";
 import { authPlugin } from "./auth/index.js";
 import { dbLifespan } from "./database.js";
 
@@ -242,7 +287,7 @@ export const meta: Meta = {
       credentials: true,
       allowedHeaders: ["Content-Type", "Authorization"],
     }),
-    gracefulShutdown(),
+    shutdown(),
     hook("request", ({ request, pathname }) => {
       console.log(`[${new Date().toISOString()}] ${request.method} ${pathname}`);
     }),
@@ -251,17 +296,22 @@ export const meta: Meta = {
   ],
 };
 ```
+:::
 
-## Install Missing Dependency
+## Dependency Note
 
-```bash
+::: code-group
+```bash [Terminal]
+# If you skipped Step 1's full install list:
 npm install bcryptjs
 npm install -D @types/bcryptjs
 ```
+:::
 
 ## Test It
 
-```bash
+::: code-group
+```bash [Terminal]
 # Register
 curl -X POST http://localhost:3000/auth/register \
   -H "Content-Type: application/json" \
@@ -273,6 +323,27 @@ curl -X POST http://localhost:3000/auth/login \
   -d '{"email":"alice@example.com","password":"secret123"}'
 # → { "accessToken": "eyJ...", "user": { ... } }
 ```
+:::
+
+Full refresh-cookie flow:
+
+::: code-group
+```bash [Terminal]
+# Save cookie jar
+curl -c cookies.txt -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"alice@example.com","password":"secret123"}'
+
+# Use refresh token from cookie jar
+curl -b cookies.txt -X POST http://localhost:3000/auth/refresh
+```
+:::
+
+## Troubleshooting
+
+- Always unauthorized: check `Authorization: Bearer <token>` format.
+- Refresh fails: verify cookie name is exactly `refresh_token`.
+- Invalid signature errors: make sure `ACCESS_SECRET`/`REFRESH_SECRET` are stable between restarts.
 
 ---
 

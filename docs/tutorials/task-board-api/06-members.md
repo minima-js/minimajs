@@ -6,16 +6,27 @@ title: "6. Members & Roles"
 
 Members connect users to workspaces. Only workspace admins and owners can add or remove members.
 
+## Step Outcome
+
+After this step, each workspace supports team management:
+
+- list all members (for any member)
+- invite users by email (admin/owner only)
+- change member role between `admin` and `member`
+- remove non-owner members
+
 ## Module
 
 Create `src/members/module.ts`:
 
-```typescript
+::: code-group
+```typescript [src/members/module.ts]
 import { type Meta, type Routes, hook, params, abort } from "@minimajs/server";
+import { descriptor } from "@minimajs/server/plugins";
+import { describe } from "@minimajs/openapi";
 import { createBody } from "@minimajs/schema";
 import { z } from "zod";
 import { prisma } from "../database.js";
-import { getUser } from "../auth/index.js";
 import { authenticated, workspaceMember, workspaceAdmin } from "../auth/guards.js";
 
 const inviteBody = createBody(
@@ -100,6 +111,7 @@ export const meta: Meta = {
   plugins: [
     hook("request", authenticated),
     hook("request", workspaceMember),
+    descriptor(describe({ tags: ["Members"] })),
   ],
 };
 
@@ -110,8 +122,37 @@ export const routes: Routes = {
   "DELETE /:id": remove,
 };
 ```
+:::
 
 `list` is available to any workspace member. The `invite`, `updateRole`, and `remove` handlers call `await workspaceAdmin()` themselves — this is the idiomatic way to apply per-handler authorization without splitting routes into separate modules.
+
+## Smoke Check
+
+::: code-group
+```bash [Terminal]
+# List members
+curl http://localhost:3000/workspaces/1/members \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+
+# Invite a member
+curl -X POST http://localhost:3000/workspaces/1/members \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"bob@example.com","role":"member"}'
+
+# Promote member (replace :id)
+curl -X PATCH http://localhost:3000/workspaces/1/members/:id \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"role":"admin"}'
+```
+:::
+
+## Troubleshooting
+
+- `404 No user with that email address`: invite target must register first.
+- `403 Admin access required`: caller lacks admin/owner role in that workspace.
+- Last owner protections are intentional to prevent orphaned workspaces.
 
 ---
 

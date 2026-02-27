@@ -4,48 +4,66 @@ title: "1. Project Setup"
 
 # Step 1: Project Setup
 
+## Step Outcome
+
+After this step, you will have:
+
+- a running Minima.js app on port `3000`
+- a generated Prisma client
+- the full initial database schema migrated to SQLite
+
 ## Install Dependencies
 
-```bash
+::: code-group
+```bash [Terminal]
 mkdir task-board && cd task-board
 npm init -y
 npm install @minimajs/server @minimajs/auth @minimajs/cookie @minimajs/schema @minimajs/multipart @minimajs/openapi
-npm install prisma @prisma/client zod jsonwebtoken
-npm install -D typescript tsx @types/node @types/jsonwebtoken
+npm install prisma @prisma/client zod jsonwebtoken bcryptjs
+npm install -D typescript tsc-watch @types/node @types/jsonwebtoken @types/bcryptjs
 npx prisma init --datasource-provider sqlite
 ```
+:::
 
 Update `package.json`:
 
-```json
+::: code-group
+```json [package.json]
 {
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "start": "tsx src/index.ts"
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc-watch --onSuccess \"node dist/index.js\"",
+    "start": "node dist/index.js"
   }
 }
 ```
+:::
 
 Create `tsconfig.json`:
 
-```json
+::: code-group
+```json [tsconfig.json]
 {
   "compilerOptions": {
     "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "rootDir": "src",
+    "outDir": "dist"
   },
   "include": ["src"]
 }
 ```
+:::
 
 ## Prisma Schema
 
 Replace `prisma/schema.prisma` with:
 
-```prisma
+::: code-group
+```prisma [prisma/schema.prisma]
 generator client {
   provider = "prisma-client-js"
 }
@@ -124,18 +142,30 @@ model Attachment {
   task      Task     @relation(fields: [taskId], references: [id])
 }
 ```
+:::
 
 Run the migration:
 
-```bash
+::: code-group
+```bash [Terminal]
 npx prisma migrate dev --name init
 ```
+:::
+
+Optional: open Prisma Studio to inspect your tables:
+
+::: code-group
+```bash [Terminal]
+npx prisma studio
+```
+:::
 
 ## Entry Point
 
 Create `src/index.ts`:
 
-```typescript
+::: code-group
+```typescript [src/index.ts]
 import { createApp } from "@minimajs/server/node";
 
 const app = createApp();
@@ -143,8 +173,43 @@ const app = createApp();
 const address = await app.listen({ port: 3000 });
 console.log(`Task Board API running at ${address}`);
 ```
+:::
 
 At this point `npm run dev` should start without errors. The `createApp()` call auto-discovers all `module.ts` files under `src/` — we'll add those next.
+
+## Smoke Check
+
+Run:
+
+::: code-group
+```bash [Terminal]
+npm run dev
+```
+:::
+
+Expected output:
+
+::: code-group
+```text [Output]
+Task Board API running at http://localhost:3000
+```
+:::
+
+And in a second terminal:
+
+::: code-group
+```bash [Terminal]
+curl -i http://localhost:3000/
+```
+:::
+
+Any HTTP response here is fine for now. The important part is that the process boots cleanly.
+
+## Troubleshooting
+
+- `prisma: command not found`: use `npx prisma ...` (not global prisma).
+- ESM import errors: ensure `"type": "module"` is present in `package.json`.
+- SQLite file issues: check `DATABASE_URL` in `.env` created by `prisma init`.
 
 ---
 

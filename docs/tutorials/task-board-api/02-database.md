@@ -4,11 +4,22 @@ title: "2. Database & Root Module"
 
 # Step 2: Database & Root Module
 
+## Step Outcome
+
+After this step, your app has global runtime behavior:
+
+- database lifecycle management
+- CORS policy
+- request logging
+- graceful shutdown handling
+- generated OpenAPI document at `/openapi.json`
+
 ## Database Module
 
 Create `src/database.ts` — a single Prisma instance shared across the entire app, with a `hook.lifespan` that connects on startup and disconnects on shutdown:
 
-```typescript
+::: code-group
+```typescript [src/database.ts]
 import { PrismaClient } from "@prisma/client";
 import { hook } from "@minimajs/server";
 
@@ -24,6 +35,7 @@ export const dbLifespan = hook.lifespan(async () => {
   };
 });
 ```
+:::
 
 `hook.lifespan` runs the setup function when the app starts and the returned cleanup function when `app.close()` is called. This is the idiomatic way to manage resources in Minima.js.
 
@@ -33,10 +45,10 @@ The root module (`src/module.ts`) is the first module discovered. Anything regis
 
 Create `src/module.ts`:
 
-```typescript
+::: code-group
+```typescript [src/module.ts]
 import { type Meta } from "@minimajs/server";
-import { cors } from "@minimajs/server/plugins";
-import { gracefulShutdown } from "@minimajs/server/plugins";
+import { cors, shutdown } from "@minimajs/server/plugins";
 import { dbLifespan } from "./database.js";
 
 export const meta: Meta = {
@@ -52,10 +64,11 @@ export const meta: Meta = {
     }),
 
     // Graceful shutdown on SIGTERM / SIGINT
-    gracefulShutdown(),
+    shutdown(),
   ],
 };
 ```
+:::
 
 > **Why the root module?**
 > `meta.plugins` registered here run for every request in every child module. CORS and the DB connection are app-wide concerns, so this is the right place for them.
@@ -64,9 +77,10 @@ export const meta: Meta = {
 
 Add a request logger to the root module so every route is logged:
 
-```typescript
+::: code-group
+```typescript [src/module.ts]
 import { type Meta, hook } from "@minimajs/server";
-import { cors, gracefulShutdown } from "@minimajs/server/plugins";
+import { cors, shutdown } from "@minimajs/server/plugins";
 import { openapi } from "@minimajs/openapi";
 import { dbLifespan } from "./database.js";
 
@@ -78,7 +92,7 @@ export const meta: Meta = {
       credentials: true,
       allowedHeaders: ["Content-Type", "Authorization"],
     }),
-    gracefulShutdown(),
+    shutdown(),
 
     // Log every request
     hook("request", ({ request, pathname }) => {
@@ -103,17 +117,37 @@ export const meta: Meta = {
   ],
 };
 ```
+:::
 
 ## Verify
 
 Run `npm run dev`. You should see:
 
-```
+::: code-group
+```text [Output]
 Database connected
 Task Board API running at http://localhost:3000
 ```
+:::
 
 Every request will now be logged, CORS headers will be set, and the database will be cleanly disconnected when the process exits.
+
+Quick checks:
+
+::: code-group
+```bash [Terminal]
+curl http://localhost:3000/openapi.json | head
+curl -i -X OPTIONS http://localhost:3000/workspaces \
+  -H "Origin: http://localhost:5173" \
+  -H "Access-Control-Request-Method: GET"
+```
+:::
+
+## Troubleshooting
+
+- No `/openapi.json`: confirm `openapi(...)` is included in root `meta.plugins`.
+- CORS headers missing: ensure `cors(...)` is in `src/module.ts` (not a child module).
+- Shutdown hook not running: use `Ctrl+C` and verify `Database disconnected` appears.
 
 ---
 

@@ -4,13 +4,23 @@ title: "7. Error Handling & Polish"
 
 # Step 7: Error Handling & Polish
 
+## Step Outcome
+
+After this step, your API has production-facing polish:
+
+- consistent error response shape
+- centralized unhandled error logging
+- validation issue normalization
+- complete, coherent API surface for demos and onboarding
+
 ## Centralized Error Format
 
 By default, `abort` errors render themselves. To give every error response a consistent shape across the API, override `HttpError.toJSON` once at startup.
 
 Add this to `src/index.ts` before `app.listen`:
 
-```typescript
+::: code-group
+```typescript [src/index.ts]
 import { createApp } from "@minimajs/server/node";
 import { HttpError } from "@minimajs/server/error";
 
@@ -28,10 +38,12 @@ const app = createApp();
 const address = await app.listen({ port: 3000 });
 console.log(`Task Board API running at ${address}`);
 ```
+:::
 
 Now every HTTP error — whether from `abort.notFound()`, `abort.unauthorized()`, or a validation failure — returns:
 
-```json
+::: code-group
+```json [Error Response]
 {
   "success": false,
   "error": {
@@ -40,15 +52,17 @@ Now every HTTP error — whether from `abort.notFound()`, `abort.unauthorized()`
   }
 }
 ```
+:::
 
 ## Global Error Hook
 
 For logging errors and catching unhandled exceptions, add an `error` hook to the root module:
 
-```typescript
+::: code-group
+```typescript [src/module.ts]
 // src/module.ts
 import { type Meta, hook, abort } from "@minimajs/server";
-import { cors, gracefulShutdown } from "@minimajs/server/plugins";
+import { cors, shutdown } from "@minimajs/server/plugins";
 import { authPlugin } from "./auth/index.js";
 import { dbLifespan } from "./database.js";
 
@@ -60,7 +74,7 @@ export const meta: Meta = {
       credentials: true,
       allowedHeaders: ["Content-Type", "Authorization"],
     }),
-    gracefulShutdown(),
+    shutdown(),
 
     hook("request", ({ request, pathname }) => {
       console.log(`[${new Date().toISOString()}] ${request.method} ${pathname}`);
@@ -70,23 +84,25 @@ export const meta: Meta = {
 
     // Centralized error handling
     hook("error", (error) => {
-      // Log unexpected errors
-      if (!abort.is(error)) {
-        console.error("[Unhandled Error]", error);
-        abort({ message: "Internal server error" }, 500);
+      // Let expected HTTP errors use the standard serializer.
+      if (abort.is(error)) {
+        throw error;
       }
-      // HTTP errors are re-thrown to use the HttpError.toJSON format
-      throw error;
+
+      console.error("[Unhandled Error]", error);
+      abort({ message: "Internal server error" }, 500);
     }),
   ],
 };
 ```
+:::
 
 ## Validation Error Format
 
 Override the validation error shape from `@minimajs/schema` to match the same API format:
 
-```typescript
+::: code-group
+```typescript [src/index.ts]
 // src/index.ts
 import { ValidationError } from "@minimajs/schema/error";
 
@@ -102,17 +118,19 @@ ValidationError.toJSON = (err) => ({
   },
 });
 ```
+:::
 
 ## Final Project Structure
 
-```
+::: code-group
+```text [Project Tree]
 src/
 ├── index.ts          # Entry + error format overrides
 ├── module.ts         # Global plugins: CORS, auth, DB, logging, error hook
 ├── database.ts       # Prisma instance + lifespan hook
 ├── auth/
 │   ├── index.ts      # createAuth, token helpers
-│   ├── guards.ts     # authenticated, workspaceMember, workspaceAdmin
+│   ├── guards.ts     # authenticated, workspaceMember, boardMember, workspaceAdmin
 │   └── module.ts     # /auth/register, /login, /refresh, /logout
 ├── workspaces/
 │   └── module.ts     # GET|POST|PATCH|DELETE /workspaces
@@ -123,6 +141,7 @@ src/
 └── members/
     └── module.ts     # /workspaces/:workspaceId/members
 ```
+:::
 
 ## Complete API Surface
 
@@ -166,7 +185,28 @@ You've now built a production-grade REST API using virtually every major feature
 - **`abort` helpers** — semantic HTTP errors throughout
 - **`HttpError.toJSON`** — single place to define API error format
 - **`export const routes: Routes`** — handlers wired directly in the module, no extra files
-- **`cors` + `gracefulShutdown`** — production-ready global plugins
+- **`cors` + `shutdown`** — production-ready global plugins
+
+## 5-Minute Demo Script (For Presenting Minima.js)
+
+Use this live flow when introducing Minima.js to other developers:
+
+1. Show `src/module.ts` and explain global composition (`meta.plugins`).
+2. Show one feature module (`src/workspaces/module.ts`) and point out `routes` + hooks in one file.
+3. Run `POST /auth/login`, then `GET /workspaces` with Bearer token.
+4. Trigger a controlled error (`GET /workspaces/999`) to show consistent error JSON.
+5. Open `/openapi.json` to prove docs are generated from real route metadata.
+
+This sequence demonstrates Minima.js value quickly: minimal boilerplate, strong structure, and predictable runtime behavior.
+
+## Final Verification Checklist
+
+- `npm run dev` starts without runtime errors.
+- `POST /auth/register` and `POST /auth/login` succeed.
+- Protected routes reject missing/invalid Bearer tokens.
+- Workspace-scoped routes enforce role checks.
+- Task attachment upload writes files to `./uploads/attachments`.
+- Error responses follow the `HttpError.toJSON` shape.
 
 ## Next Steps
 
