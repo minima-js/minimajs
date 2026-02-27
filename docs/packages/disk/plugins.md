@@ -13,6 +13,7 @@ Plugins extend `@minimajs/disk` by hooking into file operation lifecycle events.
 | [`compression`](#compression) | `@minimajs/disk` | Transparent gzip/deflate compression |
 | [`encryption`](#encryption) | `@minimajs/disk` | Transparent AES-256-GCM encryption |
 | [`uploadProgress`](#uploadprogress) | `@minimajs/disk` | Track upload byte progress |
+| [`downloadProgress`](#downloadprogress) | `@minimajs/disk` | Track download byte progress |
 
 ## Usage
 
@@ -130,7 +131,7 @@ import { partition } from "@minimajs/disk";
 
 ### Date-based
 
-Groups files by upload date. Requires `date-fns` for full format token support; falls back to a basic formatter (`yyyy`, `MM`, `dd`, `HH`) otherwise.
+Groups files by upload date. Requires `date-fns` to be installed (`bun add date-fns`). Uses date-fns format tokens.
 
 ```typescript
 // Default: yyyy/MM/dd
@@ -209,6 +210,7 @@ const disk = createDisk({ driver }, atomicWrite({ tempPrefix: ".staging/" }));
 
 - Best suited for filesystem drivers where atomic rename is a native OS operation.
 - The original path is tracked via a Symbol key in `put` options — no in-memory state, no memory leaks.
+- If the rename step fails, the temp file is automatically deleted by the disk's put cleanup — no orphaned `.tmp/` files.
 
 ---
 
@@ -416,6 +418,55 @@ interface UploadProgress {
 
 ---
 
+## downloadProgress
+
+Tracks bytes read from the driver during a download. Fires a callback for each chunk as it passes through.
+
+```typescript
+import { downloadProgress } from "@minimajs/disk";
+```
+
+```typescript
+const disk = createDisk(
+  { driver },
+  downloadProgress(({ loaded, total, percentage }) => {
+    if (percentage !== undefined) {
+      console.log(`Download: ${percentage.toFixed(1)}%`);
+    } else {
+      console.log(`Downloaded: ${loaded} bytes`);
+    }
+  })
+);
+
+const file = await disk.get("video.mp4");
+await file.arrayBuffer(); // progress fires as bytes are read
+```
+
+### Progress object
+
+```typescript
+interface DownloadProgress {
+  loaded: number;       // bytes read so far
+  total?: number;       // total bytes from file.size (available when driver returns size)
+  percentage?: number;  // 0–100, only available when total is known
+}
+```
+
+### Difference from `uploadProgress`
+
+| | `uploadProgress` | `downloadProgress` |
+|---|---|---|
+| Hook | `storing` | `streaming` |
+| `total` source | `options.size` — caller must pass it | `file.size` — from driver metadata automatically |
+
+### Notes
+
+- `total` is populated automatically from `file.size` — no extra configuration needed.
+- `downloadProgress` hooks into the `streaming` event (when the file stream is opened), so it fires on `file.arrayBuffer()`, `file.text()`, `file.bytes()`, or any stream read.
+- For per-request callbacks, create the disk per-request rather than globally.
+
+---
+
 ## Combining Plugins
 
 Plugins compose cleanly — order matters for stream transforms (`storing`/`streaming` hooks run sequentially):
@@ -450,12 +501,28 @@ app.post("/upload", async (ctx) => {
     { driver },
     storeAs("uuid-original"),
     uploadProgress(({ percentage }) => {
-      console.log(`${percentage?.toFixed(0)}%`);
+      console.log(`Upload: ${percentage?.toFixed(0)}%`);
     })
   );
 
   const uploaded = await progressDisk.put(file, { size: file.size });
   return ctx.json({ href: uploaded.href, name: uploaded.metadata.originalName });
+});
+```
+
+```typescript
+// Download handler with progress tracking
+app.get("/download/:key", async (ctx) => {
+  const progressDisk = createDisk(
+    { driver },
+    downloadProgress(({ loaded, total, percentage }) => {
+      if (percentage !== undefined) console.log(`Download: ${percentage.toFixed(0)}%`);
+    })
+  );
+
+  const file = await progressDisk.get(ctx.params.key);
+  if (!file) return ctx.status(404);
+  return new Response(file.stream(), { headers: { "Content-Type": file.type } });
 });
 ```
 

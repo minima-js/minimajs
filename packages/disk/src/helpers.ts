@@ -93,17 +93,6 @@ export function resolveContentType(data: DiskData, options?: PutOptions): string
   return undefined;
 }
 
-/**
- * Resolve size from data
- */
-export function resolveSize(data: DiskData): number | undefined {
-  if (isBlob(data)) return data.size;
-  if (isArrayBuffer(data)) return data.byteLength;
-  if (isArrayBufferView(data)) return data.byteLength;
-  if (typeof data === "string") return Buffer.byteLength(data);
-  return undefined;
-}
-
 export function randomName(base: string): string {
   return `${randomUUID()}-${extname(base)}`;
 }

@@ -72,6 +72,7 @@ export class S3Driver implements DiskDriver {
   private readonly storageClass?: StorageClass;
   private readonly serverSideEncryption?: ServerSideEncryption;
   private readonly publicUrl?: string;
+  private region?: string;
 
   constructor(
     public readonly client: S3Client,
@@ -209,7 +210,7 @@ export class S3Driver implements DiskDriver {
     return {
       href: this.keyToHref(bucket, fullKey),
       size: head.ContentLength || 0,
-      type: head.ContentType || "application/octet-stream",
+      type: head.ContentType,
       lastModified: head.LastModified?.getTime() || Date.now(),
       metadata: head.Metadata,
     };
@@ -292,8 +293,8 @@ export class S3Driver implements DiskDriver {
       return `${this.publicUrl}/${fullKey}`;
     }
 
-    // Get region from client config
-    const region = await this.client.config.region();
+    // Get region from client config (cached after first call — may do file I/O on first resolve)
+    this.region ??= await this.client.config.region();
 
     // If custom endpoint is configured, use it
     if (this.client.config.endpoint) {
@@ -310,14 +311,14 @@ export class S3Driver implements DiskDriver {
     }
 
     // Determine the AWS partition suffix based on region
-    const partitionSuffix = this.getPartitionSuffix(region);
+    const partitionSuffix = this.getPartitionSuffix(this.region);
 
     // Default AWS S3 URL with correct partition
     if (this.client.config.forcePathStyle) {
-      return `https://s3.${region}.${partitionSuffix}/${bucket}/${fullKey}`;
+      return `https://s3.${this.region}.${partitionSuffix}/${bucket}/${fullKey}`;
     }
 
-    return `https://${bucket}.s3.${region}.${partitionSuffix}/${fullKey}`;
+    return `https://${bucket}.s3.${this.region}.${partitionSuffix}/${fullKey}`;
   }
 
   async copy(from: string, to: string): Promise<void> {

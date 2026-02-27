@@ -5,7 +5,7 @@ import type { FSWatcher } from "chokidar";
 /**
  * Data types accepted for upload at Disk level (will be converted to streams)
  */
-export type DiskData = ReadableStream | Blob | ArrayBufferView | ArrayBuffer | FormData | string | File;
+export type DiskData = ReadableStream | Blob | ArrayBufferView | ArrayBuffer | string | File;
 
 /**
  * Source for copy/move operations - string key or DiskFile

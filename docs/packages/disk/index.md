@@ -11,7 +11,7 @@ Universal file storage abstraction for Node.js and Bun. Write once, store anywhe
 - 🔀 **Protocol Routing** - Route to different drivers based on URL prefixes
 - 🚀 **Streaming** - Efficient stream-based operations
 - 🔒 **Type Safe** - Full TypeScript support
-- 🧩 **Plugins** - `storeAs`, `partition`, `atomicWrite`, `checksum`, `compression`, `encryption` and more
+- 🧩 **Plugins** - `storeAs`, `partition`, `atomicWrite`, `checksum`, `uploadProgress`, `downloadProgress`, `compression`, `encryption` and more
 - 🌍 **Web Standards** - Works with `File`, `Blob`, and `ReadableStream` natively
 - 📎 **File Integrity** - `put(file)` preserves the original filename by default
 - 🧪 **Testing** - Memory driver for fast unit tests
@@ -340,7 +340,7 @@ if (metadata) {
 Plugins extend disk behavior by hooking into file operations. Pass them as rest arguments to `createDisk`:
 
 ```typescript
-import { createDisk, storeAs, partition, atomicWrite, checksum } from "@minimajs/disk";
+import { createDisk, storeAs, partition, atomicWrite, checksum, uploadProgress, downloadProgress } from "@minimajs/disk";
 
 const disk = createDisk(
   { driver: createFsDriver({ root: "./uploads" }) },

@@ -9,8 +9,7 @@ export interface PartitionOptions {
   by: PartitionStrategy;
   /**
    * Date format string — only used when `by: 'date'`.
-   * Uses date-fns format tokens when date-fns is installed, otherwise supports
-   * a basic subset: yyyy, MM, dd, HH.
+   * Uses date-fns format tokens. Requires date-fns to be installed.
    * @default 'yyyy/MM/dd'
    */
   dateFormat?: string;

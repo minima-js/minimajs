@@ -25,10 +25,10 @@ export interface DiskHooks {
   /** Called after delete */
   deleted(href: string): HookReturn<string>;
 
-  /** Called before exists */
-  exists(path: string): HookReturn<void>;
-  /** Called after exists */
-  checked(path: string, exists: boolean): HookReturn<void>;
+  /** Called before exists - can return transformed path */
+  exists(path: string): HookReturn<string>;
+  /** Called after exists - can return transformed result */
+  checked(path: string, exists: boolean): HookReturn<boolean>;
 
   /** Called before copy - can return transformed [from, to] */
   copy(from: string, to: string): HookReturn<[from: string, to: string]>;

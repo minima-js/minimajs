@@ -64,21 +64,21 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
 
     const [path, stream, options] = await this.$hookManager.trigger.put(pathOrData, data, resolvedOptions);
 
-    const metadata = await this.driver
-      .put(path, await this.$hookManager.trigger.storing(path, stream, options), options)
-      .catch(async (err) => {
-        await this.driver.delete(path).catch(() => {});
-        throw err;
-      });
+    try {
+      const metadata = await this.driver.put(path, await this.$hookManager.trigger.storing(path, stream, options), options);
 
-    // Merge symbol-keyed entries from options.metadata into the returned metadata.
-    // Symbol keys are plugin-private state; drivers are not responsible for preserving them.
-    if (options.metadata) {
-      ensureMetadataSymbols(options.metadata, metadata.metadata);
+      // Merge symbol-keyed entries from options.metadata into the returned metadata.
+      // Symbol keys are plugin-private state; drivers are not responsible for preserving them.
+      if (options.metadata) {
+        ensureMetadataSymbols(options.metadata, metadata.metadata);
+      }
+
+      const diskFile = await fileFromMetadata(this.driver, this.$hookManager.trigger, metadata);
+      return this.$hookManager.trigger.stored(diskFile);
+    } catch (err) {
+      await this.driver.delete(path).catch(() => {});
+      throw err;
     }
-
-    const diskFile = await fileFromMetadata(this.driver, this.$hookManager.trigger, metadata);
-    return this.$hookManager.trigger.stored(diskFile);
   }
 
   async get(origPath: string): Promise<DiskFile | null> {
