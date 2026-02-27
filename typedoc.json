@@ -1,7 +1,14 @@
 {
   "$schema": "https://typedoc.org/schema.json",
   "name": "Minima.js API",
-  "entryPoints": ["./packages/server", "./packages/auth", "./packages/schema", "./packages/multipart", "./packages/cookie"],
+  "entryPoints": [
+    "./packages/server",
+    "./packages/auth",
+    "./packages/schema",
+    "./packages/multipart",
+    "./packages/cookie",
+    "./packages/openapi"
+  ],
   "entryPointStrategy": "packages",
   "out": "docs/api",
   "basePath": "..",
@@ -12,6 +19,7 @@
   "hideGenerator": true,
   "githubPages": false,
   "cleanOutputDir": true,
+  "disableSources": true,
   "expandObjects": true,
   "useCodeBlocks": true,
   "indexFormat": "table",

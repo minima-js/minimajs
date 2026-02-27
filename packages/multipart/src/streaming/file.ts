@@ -1,5 +1,5 @@
 import { Readable } from "node:stream";
-import { stream2uint8array } from "../helpers.js";
+import { stream2bytes } from "../helpers.js";
 
 export interface StreamFileInit extends FilePropertyBag {
   stream: Readable;
@@ -40,7 +40,7 @@ export class StreamFile extends File {
   async bytes(): Promise<Uint8Array<ArrayBuffer>> {
     if (!this.#buffer) {
       if (!this.#stream) throw new Error("stream already consumed");
-      this.#buffer = await stream2uint8array(this.#stream, {});
+      this.#buffer = await stream2bytes(this.#stream, {});
       this.#stream = null;
     }
     return this.#buffer;

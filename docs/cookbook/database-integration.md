@@ -56,18 +56,18 @@ We need to connect to the database when the application starts and disconnect wh
 ::: code-group
 
 ```typescript [src/database.ts]
+import { hook, logger } from "@minimajs/server";
 import { PrismaClient } from "@prisma/client";
-import { hook } from "@minimajs/server";
 
 export const prisma = new PrismaClient();
 
 export const dbLifespan = hook.lifespan(async () => {
   await prisma.$connect();
-  console.log("Database connected");
+  logger.info("Database connected");
 
   return async () => {
     await prisma.$disconnect();
-    console.log("Database disconnected");
+    logger.info("Database disconnected");
   };
 });
 ```

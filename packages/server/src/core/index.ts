@@ -43,6 +43,34 @@ export interface CreateBaseSeverOptions {
   moduleDiscovery?: false | ModuleDiscoveryOptions;
 }
 
+/**
+ * Creates a Minima.js application instance using a custom runtime adapter.
+ *
+ * This is the low-level factory used internally by `createApp` from both the
+ * Bun and Node.js runtime packages. Use it directly when targeting a custom
+ * runtime (e.g. Deno, uWebSockets.js) by providing your own `ServerAdapter`.
+ *
+ * Registers the following built-in plugins automatically:
+ * - `contextProvider` — sets up per-request `AsyncLocalStorage` context
+ * - `deferrer` — enables post-response `defer()` callbacks
+ * - `bodyParser` — parses `application/json` request bodies by default
+ * - `routeLogger` — logs registered routes during startup
+ * - `moduleDiscovery` — auto-discovers `module.ts` files (unless disabled)
+ *
+ * @example
+ * ```typescript
+ * import { createBaseServer } from "@minimajs/server/core";
+ * import { MyCustomAdapter } from "./my-adapter.js";
+ *
+ * const app = createBaseServer(new MyCustomAdapter(), {
+ *   prefix: "/api",
+ *   logger: false,
+ * });
+ *
+ * app.get("/health", () => ({ status: "ok" }));
+ * await app.listen({ port: 3000 });
+ * ```
+ */
 export function createBaseServer<T>(server: ServerAdapter<T>, options: CreateBaseSeverOptions) {
   let logger: Logger | undefined = options.logger === false ? createLogger({ enabled: false }) : options.logger;
 

@@ -87,8 +87,8 @@ export function isRawField(f: any): f is MultipartRawField {
 }
 
 /** Converts a raw multipart file stream into a Web API File by buffering the entire stream. */
-export async function raw2file(raw: MultipartRawFile, options: Stream2uint8arrayOptions): Promise<File> {
-  return new File([await stream2uint8array(raw.stream, options)], raw.filename, {
+export async function raw2file(raw: MultipartRawFile, options: Stream2BytesOptions): Promise<File> {
+  return new File([await stream2bytes(raw.stream, options)], raw.filename, {
     type: raw.mimeType,
     lastModified: new Date().getTime(),
   });
@@ -130,15 +130,15 @@ export function drain(file: MultipartRawFile) {
 }
 
 /** Options for stream to Uint8Array conversion. */
-export interface Stream2uint8arrayOptions {
+export interface Stream2BytesOptions {
   /** Maximum allowed file size in bytes. */
   fileSize?: number;
 }
 
 /** Reads a stream into a Uint8Array with optional size limit. */
-export async function stream2uint8array(
+export async function stream2bytes(
   stream: Readable,
-  { fileSize = Infinity }: Stream2uint8arrayOptions = {}
+  { fileSize = Infinity }: Stream2BytesOptions = {}
 ): Promise<Uint8Array<ArrayBuffer>> {
   let buffer = new Uint8Array(64 * 1024); // 64KB
   let length = 0;

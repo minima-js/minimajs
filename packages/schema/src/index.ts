@@ -1,3 +1,4 @@
+export type * from "./types.js";
 export * from "./request.js";
 export * from "./response.js";
 export * from "./error.js";

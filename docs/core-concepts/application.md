@@ -59,15 +59,15 @@ The `.register()` method adds functionality to your application. While modules a
 
 ```typescript [Recommended: Using modules with meta.plugins]
 // src/users/module.ts
-import { hook } from "@minimajs/server";
+import { type Meta, type Routes, hook } from "@minimajs/server";
 
-export const meta = {
+export const meta: Meta = {
   plugins: [hook("request", () => console.log("Users hook"))],
 };
 
-export default async function (app) {
-  app.get("/list", () => "users");
-}
+export const routes: Routes = {
+  "GET /list": () => "users",
+};
 ```
 
 ```typescript [Alternative: Manual registration]
