@@ -2,8 +2,7 @@
  * Tests for cross-disk File operations — copying/moving DiskFile instances
  * between separate Disk instances (different drivers).
  */
-import { describe, test } from "@jest/globals";
-import assert from "node:assert/strict";
+import { describe, test, expect } from "@jest/globals";
 import { createDisk } from "../index.js";
 import { createMemoryDriver } from "../adapters/memory.js";
 
@@ -18,14 +17,14 @@ describe("cross-disk copy", () => {
 
     await diskA.put("source.txt", "cross-disk content");
     const sourceFile = await diskA.get("source.txt");
-    assert.ok(sourceFile);
+    expect(sourceFile).toBeTruthy();
 
     const copied = await diskB.copy(sourceFile);
 
-    assert.ok(await diskB.exists(copied.name));
+    expect(await diskB.exists(copied.name)).toBeTruthy();
     const retrieved = await diskB.get(copied.name);
-    assert.ok(retrieved);
-    assert.equal(await retrieved.text(), "cross-disk content");
+    expect(retrieved).toBeTruthy();
+    expect(await retrieved.text()).toBe("cross-disk content");
   });
 
   test("original file remains on source disk after cross-disk copy", async () => {
@@ -34,11 +33,11 @@ describe("cross-disk copy", () => {
 
     await diskA.put("original.txt", "keep me");
     const sourceFile = await diskA.get("original.txt");
-    assert.ok(sourceFile);
+    expect(sourceFile).toBeTruthy();
 
     await diskB.copy(sourceFile);
 
-    assert.equal(await diskA.exists("original.txt"), true);
+    expect(await diskA.exists("original.txt")).toBe(true);
   });
 
   test("cross-disk copy with explicit target path", async () => {
@@ -47,12 +46,12 @@ describe("cross-disk copy", () => {
 
     await diskA.put("file.txt", "hello");
     const sourceFile = await diskA.get("file.txt");
-    assert.ok(sourceFile);
+    expect(sourceFile).toBeTruthy();
 
     const copied = await diskB.copy(sourceFile, "renamed.txt");
 
-    assert.equal(copied.name, "renamed.txt");
-    assert.equal(await diskB.exists("renamed.txt"), true);
+    expect(copied.name).toBe("renamed.txt");
+    expect(await diskB.exists("renamed.txt")).toBe(true);
   });
 
   test("same-disk copy with DiskFile requires explicit target path", async () => {
@@ -60,11 +59,9 @@ describe("cross-disk copy", () => {
 
     await disk.put("file.txt", "data");
     const file = await disk.get("file.txt");
-    assert.ok(file);
+    expect(file).toBeTruthy();
 
-    await assert.rejects(() => disk.copy(file), {
-      message: /Explicit target path required/,
-    });
+    await expect(disk.copy(file)).rejects.toThrow(/Explicit target path required/);
   });
 
   test("same-disk copy with DiskFile and explicit target", async () => {
@@ -72,13 +69,13 @@ describe("cross-disk copy", () => {
 
     await disk.put("file.txt", "data");
     const file = await disk.get("file.txt");
-    assert.ok(file);
+    expect(file).toBeTruthy();
 
     const copied = await disk.copy(file, "copy.txt");
 
-    assert.ok(copied.name.endsWith("copy.txt"));
-    assert.equal(await disk.exists("file.txt"), true);
-    assert.equal(await disk.exists("copy.txt"), true);
+    expect(copied.name.endsWith("copy.txt")).toBeTruthy();
+    expect(await disk.exists("file.txt")).toBe(true);
+    expect(await disk.exists("copy.txt")).toBe(true);
   });
 });
 
@@ -89,15 +86,15 @@ describe("cross-disk move", () => {
 
     await diskA.put("move-me.txt", "move content");
     const sourceFile = await diskA.get("move-me.txt");
-    assert.ok(sourceFile);
+    expect(sourceFile).toBeTruthy();
 
     const moved = await diskB.move(sourceFile);
 
     // File should exist on diskB
-    assert.ok(await diskB.exists(moved.name));
+    expect(await diskB.exists(moved.name)).toBeTruthy();
 
     // File should be deleted from diskA
-    assert.equal(await diskA.exists("move-me.txt"), false);
+    expect(await diskA.exists("move-me.txt")).toBe(false);
   });
 
   test("cross-disk move with explicit target path", async () => {
@@ -106,13 +103,13 @@ describe("cross-disk move", () => {
 
     await diskA.put("src.txt", "payload");
     const sourceFile = await diskA.get("src.txt");
-    assert.ok(sourceFile);
+    expect(sourceFile).toBeTruthy();
 
     const moved = await diskB.move(sourceFile, "dest.txt");
 
-    assert.equal(moved.name, "dest.txt");
-    assert.equal(await diskB.exists("dest.txt"), true);
-    assert.equal(await diskA.exists("src.txt"), false);
+    expect(moved.name).toBe("dest.txt");
+    expect(await diskB.exists("dest.txt")).toBe(true);
+    expect(await diskA.exists("src.txt")).toBe(false);
   });
 
   test("same-disk move with DiskFile requires explicit target path", async () => {
@@ -120,11 +117,9 @@ describe("cross-disk move", () => {
 
     await disk.put("file.txt", "data");
     const file = await disk.get("file.txt");
-    assert.ok(file);
+    expect(file).toBeTruthy();
 
-    await assert.rejects(() => disk.move(file), {
-      message: /Explicit target path required/,
-    });
+    await expect(disk.move(file)).rejects.toThrow(/Explicit target path required/);
   });
 });
 
@@ -141,7 +136,7 @@ describe("Symbol.asyncIterator on StandardDisk", () => {
       hrefs.push(file.href);
     }
 
-    assert.equal(hrefs.length, 3);
+    expect(hrefs.length).toBe(3);
   });
 
   test("returns empty iterator when disk has no files", async () => {
@@ -152,7 +147,7 @@ describe("Symbol.asyncIterator on StandardDisk", () => {
       files.push(file.href);
     }
 
-    assert.equal(files.length, 0);
+    expect(files.length).toBe(0);
   });
 });
 
@@ -161,61 +156,61 @@ describe("DiskFile", () => {
     const disk = makeDisk();
     await disk.put("text.txt", "hello world");
     const file = await disk.get("text.txt");
-    assert.ok(file);
-    assert.equal(await file.text(), "hello world");
+    expect(file).toBeTruthy();
+    expect(await file.text()).toBe("hello world");
   });
 
   test("arrayBuffer() returns content as ArrayBuffer", async () => {
     const disk = makeDisk();
     await disk.put("buf.bin", "binary");
     const file = await disk.get("buf.bin");
-    assert.ok(file);
+    expect(file).toBeTruthy();
     const buf = await file.arrayBuffer();
-    assert.ok(buf instanceof ArrayBuffer);
-    assert.equal(new TextDecoder().decode(buf), "binary");
+    expect(buf instanceof ArrayBuffer).toBeTruthy();
+    expect(new TextDecoder().decode(buf)).toBe("binary");
   });
 
   test("bytes() returns Uint8Array", async () => {
     const disk = makeDisk();
     await disk.put("bytes.bin", "data");
     const file = await disk.get("bytes.bin");
-    assert.ok(file);
+    expect(file).toBeTruthy();
     const bytes = await file.bytes();
-    assert.ok(bytes instanceof Uint8Array);
-    assert.equal(new TextDecoder().decode(bytes), "data");
+    expect(bytes instanceof Uint8Array).toBeTruthy();
+    expect(new TextDecoder().decode(bytes)).toBe("data");
   });
 
   test("bytes() caches the result on repeated calls", async () => {
     const disk = makeDisk();
     await disk.put("cached.txt", "content");
     const file = await disk.get("cached.txt");
-    assert.ok(file);
+    expect(file).toBeTruthy();
     const first = await file.bytes();
     const second = await file.bytes();
-    assert.ok(first === second, "should return the same cached Uint8Array instance");
+    expect(first).toBe(second);
   });
 
   test("stream() returns a ReadableStream", async () => {
     const disk = makeDisk();
     await disk.put("stream.txt", "streamed");
     const file = await disk.get("stream.txt");
-    assert.ok(file);
+    expect(file).toBeTruthy();
     const stream = file.stream();
-    assert.ok(stream instanceof ReadableStream);
+    expect(stream instanceof ReadableStream).toBeTruthy();
   });
 
   test("size reflects stored byte length", async () => {
     const disk = makeDisk();
     await disk.put("sized.txt", "12345");
     const file = await disk.get("sized.txt");
-    assert.ok(file);
-    assert.equal(file.size, 5);
+    expect(file).toBeTruthy();
+    expect(file.size).toBe(5);
   });
 
   test("href is set correctly", async () => {
     const disk = makeDisk();
     const stored = await disk.put("named.txt", "x");
-    assert.ok(stored.href.endsWith("named.txt"));
+    expect(stored.href.endsWith("named.txt")).toBeTruthy();
   });
 });
 
@@ -229,12 +224,12 @@ describe("hooks API", () => {
     });
 
     await disk.put("tracked.txt", "data");
-    assert.ok(calls.includes("tracked.txt"));
+    expect(calls.includes("tracked.txt")).toBeTruthy();
 
     // After unsubscribing, the hook should not be called
     unsubscribe();
     await disk.put("untracked.txt", "data");
-    assert.ok(!calls.includes("untracked.txt"));
+    expect(calls.includes("untracked.txt")).toBeFalsy();
   });
 
   test("hooks option on createDisk registers handlers upfront", async () => {
@@ -250,7 +245,7 @@ describe("hooks API", () => {
     });
 
     await disk.put("early.txt", "content");
-    assert.ok(seen.includes("early.txt"));
+    expect(seen.includes("early.txt")).toBeTruthy();
   });
 
   test("put hook can rewrite the path", async () => {
@@ -264,7 +259,27 @@ describe("hooks API", () => {
     });
 
     const stored = await disk.put("file.txt", "x");
-    assert.ok(stored.href.includes("prefixed/file.txt"), `got: ${stored.href}`);
+    expect(stored.href.includes("prefixed/file.txt")).toBeTruthy();
+  });
+
+  test("put hook transformed path/data/options are respected end-to-end", async () => {
+    const disk = createDisk({
+      driver: createMemoryDriver(),
+      hooks: {
+        put(_path, _data, opts) {
+          const transformed = new Blob(["hooked"], { type: "application/x-hooked" });
+          return ["rewritten.bin", transformed, { ...opts, type: transformed.type }];
+        },
+      },
+    });
+
+    const stored = await disk.put("original.txt", "ignored");
+    expect(stored.href.endsWith("rewritten.bin")).toBeTruthy();
+    expect(stored.type).toBe("application/x-hooked");
+
+    const loaded = await disk.get("rewritten.bin");
+    expect(loaded).toBeTruthy();
+    expect(await loaded.text()).toBe("hooked");
   });
 
   test("stored hook receives the final DiskFile", async () => {
@@ -276,8 +291,22 @@ describe("hooks API", () => {
     });
 
     await disk.put("tracked.txt", "value");
-    assert.equal(storedHrefs.length, 1);
-    assert.ok(storedHrefs[0].endsWith("tracked.txt"));
+    expect(storedHrefs.length).toBe(1);
+    expect(storedHrefs[0].endsWith("tracked.txt")).toBeTruthy();
+  });
+
+  test("put failure after driver write does not auto-delete target", async () => {
+    const disk = makeDisk();
+    let failOnce = true;
+
+    disk.hook("stored", () => {
+      if (!failOnce) return;
+      failOnce = false;
+      throw new Error("stored hook failure");
+    });
+
+    await expect(disk.put("kept.txt", "first")).rejects.toThrow("stored hook failure");
+    expect(await disk.exists("kept.txt")).toBe(true);
   });
 
   test("deleted hook fires with the deleted file href", async () => {
@@ -291,6 +320,6 @@ describe("hooks API", () => {
     const stored = await disk.put("bye.txt", "bye");
     await disk.delete("bye.txt");
 
-    assert.ok(deletedPaths.includes(stored.href));
+    expect(deletedPaths.includes(stored.href)).toBeTruthy();
   });
 });

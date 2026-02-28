@@ -62,29 +62,39 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
       resolvedOptions.size = data.size;
     }
 
+    // Hook errors in trigger.put / trigger.storing are the hook implementor's responsibility.
+    // Only driver.put is wrapped — failed() receives the final transformed values (what the
+    // driver actually attempted), consistent with how each put hook sees previous hooks' output.
     const [path, stream, options] = await this.$hookManager.trigger.put(pathOrData, data, resolvedOptions);
+    const storingStream = await this.$hookManager.trigger.storing(path, stream, options);
 
+    let metadata;
     try {
-      const metadata = await this.driver.put(path, await this.$hookManager.trigger.storing(path, stream, options), options);
-
-      // Merge symbol-keyed entries from options.metadata into the returned metadata.
-      // Symbol keys are plugin-private state; drivers are not responsible for preserving them.
-      if (options.metadata) {
-        ensureMetadataSymbols(options.metadata, metadata.metadata);
-      }
-
-      const diskFile = await fileFromMetadata(this.driver, this.$hookManager.trigger, metadata);
-      return this.$hookManager.trigger.stored(diskFile);
-    } catch (err) {
-      await this.driver.delete(path).catch(() => {});
-      throw err;
+      metadata = await this.driver.put(path, storingStream, options);
+    } catch (error) {
+      return this.$hookManager.trigger.failed("put", error, path, storingStream, options);
     }
+
+    // Merge symbol-keyed entries from options.metadata into the returned metadata.
+    // Symbol keys are plugin-private state; drivers are not responsible for preserving them.
+    if (options.metadata) {
+      ensureMetadataSymbols(options.metadata, metadata.metadata);
+    }
+
+    const diskFile = await fileFromMetadata(this.driver, this.$hookManager.trigger, metadata);
+    return this.$hookManager.trigger.stored(diskFile);
   }
 
   async get(origPath: string): Promise<DiskFile | null> {
     const path = await this.$hookManager.trigger.get(origPath);
 
-    const result = await this.driver.get(path);
+    let result;
+    try {
+      result = await this.driver.get(path);
+    } catch (error) {
+      return this.$hookManager.trigger.failed("get", error, path);
+    }
+
     if (!result) return null;
 
     const [stream, metadata] = result;
@@ -107,7 +117,11 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
 
   async delete(source: FileSource): Promise<string> {
     const href = await this.$hookManager.trigger.delete(source);
-    await this.driver.delete(href);
+    try {
+      await this.driver.delete(href);
+    } catch (error) {
+      return this.$hookManager.trigger.failed("delete", error, href);
+    }
     return this.$hookManager.trigger.deleted(href);
   }
 

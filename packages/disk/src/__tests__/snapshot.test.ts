@@ -1,5 +1,4 @@
-import { describe, test } from "@jest/globals";
-import assert from "node:assert/strict";
+import { describe, test, expect } from "@jest/globals";
 import { createDisk } from "../index.js";
 import { createMemoryDriver } from "../adapters/memory.js";
 import { snapshot, restore } from "../snapshot.js";
@@ -14,9 +13,9 @@ describe("snapshot", () => {
 
     const snapshotFile = await snapshot(src, dest);
 
-    assert.ok(snapshotFile.startsWith("snapshots/"), `expected snapshots/ prefix, got: ${snapshotFile}`);
-    assert.ok(snapshotFile.endsWith(".zip"), `expected .zip suffix, got: ${snapshotFile}`);
-    assert.equal(await dest.exists(snapshotFile), true);
+    expect(snapshotFile.startsWith("snapshots/")).toBeTruthy();
+    expect(snapshotFile.endsWith(".zip")).toBeTruthy();
+    expect(await dest.exists(snapshotFile)).toBe(true);
   });
 
   test("snapshot uses custom prefix option", async () => {
@@ -27,7 +26,7 @@ describe("snapshot", () => {
 
     const snapshotFile = await snapshot(src, dest, { prefix: "backups/" });
 
-    assert.ok(snapshotFile.startsWith("backups/"), `expected backups/ prefix, got: ${snapshotFile}`);
+    expect(snapshotFile.startsWith("backups/")).toBeTruthy();
   });
 
   test("snapshot only includes files under the given path", async () => {
@@ -48,10 +47,10 @@ describe("snapshot", () => {
     const files: string[] = [];
     for await (const f of target.list()) files.push(f.href);
 
-    assert.equal(files.length, 2, `expected 2 files, got: ${files.join(", ")}`);
-    assert.ok(files.some((f) => f.endsWith("a.jpg")));
-    assert.ok(files.some((f) => f.endsWith("b.jpg")));
-    assert.ok(!files.some((f) => f.endsWith("readme.txt")));
+    expect(files.length).toBe(2, `expected 2 files, got: ${files.join(", ")}`);
+    expect(files.some((f) => f.endsWith("a.jpg"))).toBeTruthy();
+    expect(files.some((f) => f.endsWith("b.jpg"))).toBeTruthy();
+    expect(files.some((f) => f.endsWith("readme.txt"))).toBeFalsy();
   });
 });
 
@@ -69,12 +68,12 @@ describe("restore", () => {
     await restore(snapshotFile, dest, target);
 
     const hello = await target.get("hello.txt");
-    assert.ok(hello, "hello.txt should be restored");
-    assert.equal(await hello.text(), "hello world");
+    expect(hello).toBeTruthy();
+    expect(await hello.text()).toBe("hello world");
 
     const deep = await target.get("nested/deep.txt");
-    assert.ok(deep, "nested/deep.txt should be restored");
-    assert.equal(await deep.text(), "deep value");
+    expect(deep).toBeTruthy();
+    expect(await deep.text()).toBe("deep value");
   });
 
   test("restores to a different target path with targetPath option", async () => {
@@ -91,8 +90,8 @@ describe("restore", () => {
     const files: string[] = [];
     for await (const f of target.list()) files.push(f.href);
 
-    assert.ok(files.some((f) => f.includes("restored")), `expected restored/ prefix, got: ${files.join(", ")}`);
-    assert.equal(await target.exists("file.txt"), false, "should NOT be at original path");
+    expect(files.some((f) => f.includes("restored"))).toBeTruthy();
+    expect(await target.exists("file.txt")).toBe(false, "should NOT be at original path");
   });
 
   test("does not overwrite existing files when overwrite is false (default)", async () => {
@@ -110,8 +109,8 @@ describe("restore", () => {
     await restore(snapshotFile, dest, target, { overwrite: false });
 
     const file = await target.get("shared.txt");
-    assert.ok(file);
-    assert.equal(await file.text(), "existing version", "existing file should not be overwritten");
+    expect(file).toBeTruthy();
+    expect(await file.text()).toBe("existing version", "existing file should not be overwritten");
   });
 
   test("overwrites existing files when overwrite is true", async () => {
@@ -128,16 +127,14 @@ describe("restore", () => {
     await restore(snapshotFile, dest, target, { overwrite: true });
 
     const file = await target.get("overwrite.txt");
-    assert.ok(file);
-    assert.equal(await file.text(), "new version", "file should be overwritten");
+    expect(file).toBeTruthy();
+    expect(await file!.text()).toBe("new version", "file should be overwritten");
   });
 
   test("throws when snapshot file is not found", async () => {
     const src = createDisk({ driver: createMemoryDriver() });
 
-    await assert.rejects(() => restore("snapshots/nonexistent.zip", src), {
-      message: "Snapshot not found: snapshots/nonexistent.zip",
-    });
+    await expect(restore("snapshots/nonexistent.zip", src)).rejects.toThrow("Snapshot not found: snapshots/nonexistent.zip");
   });
 
   test("restores to same disk when dest is omitted", async () => {
@@ -153,7 +150,7 @@ describe("restore", () => {
     await restore(snapshotFile, disk);
 
     const file = await disk.get("original.txt");
-    assert.ok(file, "file should be restored to same disk");
-    assert.equal(await file.text(), "content");
+    expect(file).toBeTruthy();
+    expect(await file.text()).toBe("content");
   });
 });

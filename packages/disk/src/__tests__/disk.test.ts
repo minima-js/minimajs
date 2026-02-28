@@ -1,5 +1,4 @@
 import { describe, test, beforeEach, expect, afterEach } from "@jest/globals";
-import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -26,17 +25,17 @@ describe("disk fs driver", () => {
     const blob = new Blob(["hello world"], { type: "text/plain" });
     const stored = await disk.put("uploads/hello.txt", blob, { type: "text/plain" });
 
-    assert.equal(stored.href, `file://${rootDir}/uploads/hello.txt`);
-    assert.ok(stored.type.startsWith("text/plain"));
+    expect(stored.href).toBe(`file://${rootDir}/uploads/hello.txt`);
+    expect(stored.type.startsWith("text/plain")).toBeTruthy();
 
     const result = await disk.get("uploads/hello.txt");
-    assert.ok(result);
+    expect(result).toBeTruthy();
     const text = await result.text();
-    assert.equal(text, "hello world");
+    expect(text).toBe("hello world");
 
     await disk.delete("uploads/hello.txt");
     const missing = await disk.get("uploads/hello.txt");
-    assert.equal(missing, null);
+    expect(missing).toBe(null);
   });
 
   test("stores string data", async () => {
@@ -46,10 +45,10 @@ describe("disk fs driver", () => {
 
     const stored = await disk.put("docs/readme.txt", "Hello from string");
 
-    assert.ok(stored.href.endsWith("docs/readme.txt"));
+    expect(stored.href.endsWith("docs/readme.txt")).toBeTruthy();
     const result = await disk.get("docs/readme.txt");
-    assert.ok(result);
-    assert.equal(await result.text(), "Hello from string");
+    expect(result).toBeTruthy();
+    expect(await result.text()).toBe("Hello from string");
   });
 
   test("stores ArrayBuffer data", async () => {
@@ -60,10 +59,10 @@ describe("disk fs driver", () => {
     const data = new TextEncoder().encode("binary data");
     const stored = await disk.put("data/binary.bin", data);
 
-    assert.ok(stored.href.endsWith("data/binary.bin"));
+    expect(stored.href.endsWith("data/binary.bin")).toBeTruthy();
     const result = await disk.get("data/binary.bin");
-    assert.ok(result);
-    assert.equal(await result.text(), "binary data");
+    expect(result).toBeTruthy();
+    expect(await result.text()).toBe("binary data");
   });
 
   test("checks file existence", async () => {
@@ -71,13 +70,13 @@ describe("disk fs driver", () => {
       driver: createFsDriver({ root: rootDir }),
     });
 
-    assert.equal(await disk.exists("missing.txt"), false);
+    expect(await disk.exists("missing.txt")).toBe(false);
 
     await disk.put("exists.txt", "content");
-    assert.equal(await disk.exists("exists.txt"), true);
+    expect(await disk.exists("exists.txt")).toBe(true);
 
     await disk.delete("exists.txt");
-    assert.equal(await disk.exists("exists.txt"), false);
+    expect(await disk.exists("exists.txt")).toBe(false);
   });
 
   test("generates public url", async () => {
@@ -88,7 +87,7 @@ describe("disk fs driver", () => {
     await disk.put("images/photo.jpg", new Blob(["fake image"]));
     const url = await disk.url("images/photo.jpg");
 
-    assert.equal(url, "https://cdn.example.com/images/photo.jpg");
+    expect(url).toBe("https://cdn.example.com/images/photo.jpg");
   });
 
   test("throws when url called without publicUrl", async () => {
@@ -97,18 +96,17 @@ describe("disk fs driver", () => {
     });
 
     await disk.put("file.txt", "content");
-    await assert.rejects(() => disk.url("file.txt"), {
-      message: "publicUrl is required to generate a url",
-    });
+    await expect(disk.url("file.txt")).rejects.toThrow("publicUrl is required to generate a url");
   });
 
-  test("sanitizes directory traversal in keys", async () => {
+  test("blocks directory traversal in keys", async () => {
     const disk = createDisk({
       driver: createFsDriver({ root: rootDir }),
     });
 
-    const stored = await disk.put("../../../etc/passwd", "malicious");
-    assert.ok(stored.href.endsWith("etc/passwd"));
+    await expect(disk.put("../../../etc/passwd", "malicious")).rejects.toMatchObject({
+      name: "DiskAccessError",
+    });
   });
 
   test("stores with custom metadata", async () => {
@@ -120,7 +118,7 @@ describe("disk fs driver", () => {
       metadata: { userId: "123", category: "documents" },
     });
 
-    assert.deepEqual(stored.metadata, { userId: "123", category: "documents" });
+    expect(stored.metadata).toEqual({ userId: "123", category: "documents" });
   });
 
   test("copies a file", async () => {
@@ -131,12 +129,12 @@ describe("disk fs driver", () => {
     await disk.put("original.txt", "original content");
     const copied = await disk.copy("original.txt", "copied.txt");
 
-    assert.ok(copied.href.endsWith("copied.txt"));
-    assert.equal(await disk.exists("original.txt"), true);
-    assert.equal(await disk.exists("copied.txt"), true);
+    expect(copied.href.endsWith("copied.txt")).toBeTruthy();
+    expect(await disk.exists("original.txt")).toBe(true);
+    expect(await disk.exists("copied.txt")).toBe(true);
 
     const copiedContent = await disk.get("copied.txt");
-    assert.equal(await copiedContent?.text(), "original content");
+    expect(await copiedContent?.text()).toBe("original content");
   });
 
   test("copies using DiskFile instance", async () => {
@@ -147,9 +145,9 @@ describe("disk fs driver", () => {
     const original = await disk.put("original.txt", "original content");
     const copied = await disk.copy(original, "copied-from-file.txt");
 
-    assert.ok(copied.href.endsWith("copied-from-file.txt"));
-    assert.equal(await disk.exists("original.txt"), true);
-    assert.equal(await disk.exists("copied-from-file.txt"), true);
+    expect(copied.href.endsWith("copied-from-file.txt")).toBeTruthy();
+    expect(await disk.exists("original.txt")).toBe(true);
+    expect(await disk.exists("copied-from-file.txt")).toBe(true);
   });
 
   test("moves a file", async () => {
@@ -160,12 +158,12 @@ describe("disk fs driver", () => {
     await disk.put("source.txt", "source content");
     const moved = await disk.move("source.txt", "destination.txt");
 
-    assert.ok(moved.href.endsWith("destination.txt"));
-    assert.equal(await disk.exists("source.txt"), false);
-    assert.equal(await disk.exists("destination.txt"), true);
+    expect(moved.href.endsWith("destination.txt")).toBeTruthy();
+    expect(await disk.exists("source.txt")).toBe(false);
+    expect(await disk.exists("destination.txt")).toBe(true);
 
     const movedContent = await disk.get("destination.txt");
-    assert.equal(await movedContent?.text(), "source content");
+    expect(await movedContent?.text()).toBe("source content");
   });
 
   test("moves using DiskFile instance", async () => {
@@ -176,9 +174,9 @@ describe("disk fs driver", () => {
     const source = await disk.put("source.txt", "source content");
     const moved = await disk.move(source, "moved-from-file.txt");
 
-    assert.ok(moved.href.endsWith("moved-from-file.txt"));
-    assert.equal(await disk.exists("source.txt"), false);
-    assert.equal(await disk.exists("moved-from-file.txt"), true);
+    expect(moved.href.endsWith("moved-from-file.txt")).toBeTruthy();
+    expect(await disk.exists("source.txt")).toBe(false);
+    expect(await disk.exists("moved-from-file.txt")).toBe(true);
   });
 
   test("lists files with prefix", async () => {
@@ -195,9 +193,9 @@ describe("disk fs driver", () => {
       files.push(file.href);
     }
 
-    assert.equal(files.length, 2);
-    assert.ok(files.some((f) => f.endsWith("images/a.jpg")));
-    assert.ok(files.some((f) => f.endsWith("images/b.jpg")));
+    expect(files.length).toBe(2);
+    expect(files.some((f) => f.endsWith("images/a.jpg"))).toBeTruthy();
+    expect(files.some((f) => f.endsWith("images/b.jpg"))).toBeTruthy();
   });
 
   test("lists all files", async () => {
@@ -214,7 +212,7 @@ describe("disk fs driver", () => {
       files.push(file.href);
     }
 
-    assert.equal(files.length, 3);
+    expect(files.length).toBe(3);
   });
 
   test("lists with limit", async () => {
@@ -231,7 +229,7 @@ describe("disk fs driver", () => {
       files.push(file.href);
     }
 
-    assert.equal(files.length, 2);
+    expect(files.length).toBe(2);
   });
 
   test("gets file metadata", async () => {
@@ -242,9 +240,9 @@ describe("disk fs driver", () => {
     await disk.put("meta.txt", "some content");
     const metadata = await disk.metadata("meta.txt");
 
-    assert.ok(metadata);
-    assert.ok(metadata.href.endsWith("meta.txt"));
-    assert.equal(metadata.size, 12); // "some content" = 12 bytes
+    expect(metadata).toBeTruthy();
+    expect(metadata.href.endsWith("meta.txt")).toBeTruthy();
+    expect(metadata.size).toBe(12); // "some content" = 12 bytes
     expect(metadata.lastModified).not.toBeNaN();
   });
 
@@ -254,7 +252,7 @@ describe("disk fs driver", () => {
     });
 
     const metadata = await disk.metadata("nonexistent.txt");
-    assert.equal(metadata, null);
+    expect(metadata).toBe(null);
   });
 });
 
@@ -264,11 +262,11 @@ describe("disk memory driver", () => {
     const disk = createDisk({ driver });
 
     const stored = await disk.put("test.txt", "hello memory");
-    assert.ok(stored.href.includes("test.txt"));
+    expect(stored.href.includes("test.txt")).toBeTruthy();
 
     const result = await disk.get("test.txt");
-    assert.ok(result);
-    assert.equal(await result.text(), "hello memory");
+    expect(result).toBeTruthy();
+    expect(await result.text()).toBe("hello memory");
 
     driver.clear();
   });
@@ -280,12 +278,12 @@ describe("disk memory driver", () => {
     await disk.put("original.txt", "content");
 
     await disk.copy("original.txt", "copy.txt");
-    assert.equal(await disk.exists("original.txt"), true);
-    assert.equal(await disk.exists("copy.txt"), true);
+    expect(await disk.exists("original.txt")).toBe(true);
+    expect(await disk.exists("copy.txt")).toBe(true);
 
     await disk.move("copy.txt", "moved.txt");
-    assert.equal(await disk.exists("copy.txt"), false);
-    assert.equal(await disk.exists("moved.txt"), true);
+    expect(await disk.exists("copy.txt")).toBe(false);
+    expect(await disk.exists("moved.txt")).toBe(true);
 
     driver.clear();
   });
@@ -303,7 +301,7 @@ describe("disk memory driver", () => {
       files.push(file.href);
     }
 
-    assert.equal(files.length, 2);
+    expect(files.length).toBe(2);
     driver.clear();
   });
 
@@ -314,9 +312,9 @@ describe("disk memory driver", () => {
     await disk.put("file.json", '{"key": "value"}', { type: "application/json" });
     const metadata = await disk.metadata("file.json");
 
-    assert.ok(metadata);
-    assert.equal(metadata.type, "application/json");
-    assert.equal(metadata.size, 16);
+    expect(metadata).toBeTruthy();
+    expect(metadata.type).toBe("application/json");
+    expect(metadata.size).toBe(16);
 
     driver.clear();
   });
@@ -325,11 +323,11 @@ describe("disk memory driver", () => {
     const driver = createMemoryDriver();
     const disk = createDisk({ driver });
 
-    await assert.rejects(() => disk.copy("missing.txt", "dest.txt"), {
+    await expect(disk.copy("missing.txt", "dest.txt")).rejects.toMatchObject({
       name: "DiskFileNotFoundError",
     });
 
-    await assert.rejects(() => disk.move("missing.txt", "dest.txt"), {
+    await expect(disk.move("missing.txt", "dest.txt")).rejects.toMatchObject({
       name: "DiskFileNotFoundError",
     });
   });

@@ -1,7 +1,7 @@
 import { DiskFile, type StreamFactory } from "../file.js";
 import { getMimeType, resolveKey, setDisk, toReadableStream } from "../helpers.js";
 import type { Disk, DiskData, DiskDriver, FileMetadata, FileSource, ListOptions, PutOptions, UrlOptions } from "../types.js";
-import type { DiskHooks } from "./types.js";
+import type { DiskHooks, FailedArgs } from "./types.js";
 
 type DiskHookStore = {
   [K in keyof DiskHooks]?: Set<DiskHooks[K]>;
@@ -26,15 +26,15 @@ export class HookTrigger {
     }
     const [$path, $data, $options] = returned;
 
-    if (!options.type) {
-      if (data instanceof Blob) {
-        options.type = data.type;
+    if (!$options.type) {
+      if ($data instanceof Blob) {
+        $options.type = $data.type;
       } else {
-        options.type = getMimeType(path);
+        $options.type = getMimeType($path);
       }
     }
 
-    const { signal } = options;
+    const { signal } = $options;
 
     const stream = toReadableStream($data);
     if (signal) {
@@ -198,5 +198,23 @@ export class HookTrigger {
     }
     setDisk(file, this.disk);
     return file;
+  }
+
+  failed(op: "put", error: unknown, path: string, data: DiskData, options: PutOptions): Promise<never>;
+  failed(op: "get", error: unknown, path: string): Promise<never>;
+  failed(op: "delete", error: unknown, source: FileSource): Promise<never>;
+  async failed(...args: FailedArgs): Promise<never> {
+    let error = args[1];
+    const hooks = this.hooks["failed"];
+    if (!hooks) throw error;
+    for (const handler of [...hooks].reverse()) {
+      args[1] = error;
+      try {
+        await (handler as (...a: FailedArgs) => unknown)(...args);
+      } catch (e) {
+        error = e; // next hook sees the thrown error, not the original
+      }
+    }
+    throw error;
   }
 }

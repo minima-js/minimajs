@@ -1,5 +1,4 @@
 import { createHash } from "node:crypto";
-import { format as dateFnsFormat } from "date-fns";
 import type { Disk } from "../../types.js";
 
 export type PartitionStrategy = "date" | "hash";
@@ -9,7 +8,7 @@ export interface PartitionOptions {
   by: PartitionStrategy;
   /**
    * Date format string — only used when `by: 'date'`.
-   * Uses date-fns format tokens. Requires date-fns to be installed.
+   * Supports common tokens: yyyy, MM, dd, HH, mm, ss.
    * @default 'yyyy/MM/dd'
    */
   dateFormat?: string;
@@ -23,6 +22,17 @@ export interface PartitionOptions {
    * @default 2
    */
   charsPerLevel?: number;
+}
+
+function formatDate(date: Date, format: string): string {
+  const pad = (value: number) => value.toString().padStart(2, "0");
+  return format
+    .replace(/yyyy/g, date.getFullYear().toString())
+    .replace(/MM/g, pad(date.getMonth() + 1))
+    .replace(/dd/g, pad(date.getDate()))
+    .replace(/HH/g, pad(date.getHours()))
+    .replace(/mm/g, pad(date.getMinutes()))
+    .replace(/ss/g, pad(date.getSeconds()));
 }
 
 function buildHashPrefix(path: string, levels: number, charsPerLevel: number): string {
@@ -39,9 +49,6 @@ function buildHashPrefix(path: string, levels: number, charsPerLevel: number): s
  *
  * The path passed to `put` is preserved as the filename; a prefix is prepended.
  * Files stored under the partitioned path must be accessed using the full path.
- *
- * Supports date-fns as an optional dependency for full format token support.
- * Falls back to a basic formatter (yyyy, MM, dd, HH) if date-fns is not installed.
  *
  * @example
  * // Date-based: uploads become 2024/01/15/avatar.jpg
@@ -62,7 +69,7 @@ export function partition(options: PartitionOptions) {
 
   return (disk: Disk) => {
     disk.hook("put", (path, data, opts) => {
-      const prefix = by === "date" ? dateFnsFormat(new Date(), dateFormat) : buildHashPrefix(path, levels, charsPerLevel);
+      const prefix = by === "date" ? formatDate(new Date(), dateFormat) : buildHashPrefix(path, levels, charsPerLevel);
       const lastSlash = path.lastIndexOf("/");
       const dir = lastSlash >= 0 ? path.slice(0, lastSlash + 1) : "";
       const filename = lastSlash >= 0 ? path.slice(lastSlash + 1) : path;

@@ -21,7 +21,7 @@ export interface AtomicWriteOptions {
  * await disk.put('important.json', data) // written atomically
  */
 export function atomicWrite(options: AtomicWriteOptions = {}) {
-  const { tempPrefix = ".tmp/" } = options;
+  const tempPrefix = options.tempPrefix ?? ".tmp/";
 
   return (disk: Disk) => {
     disk.hook("put", (path, data, opts) => {
@@ -29,10 +29,18 @@ export function atomicWrite(options: AtomicWriteOptions = {}) {
       return [tempPath, data, { ...opts, metadata: { ...opts.metadata, [ORIGINAL_PATH]: path } }];
     });
 
-    disk.hook("stored", (file) => {
+    disk.hook("stored", async (file) => {
       const originalPath = file.metadata[ORIGINAL_PATH] as string | undefined;
       if (!originalPath) return;
-      return disk.move(file, originalPath);
+      try {
+        const moved = await disk.move(file, originalPath);
+        delete moved.metadata[ORIGINAL_PATH];
+        return moved;
+      } catch (error) {
+        // If finalization fails, remove the temp object best-effort.
+        await disk.delete(file.href).catch(() => {});
+        throw error;
+      }
     });
   };
 }

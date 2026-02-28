@@ -1,5 +1,4 @@
-import { describe, test, beforeEach, expect } from "@jest/globals";
-import assert from "node:assert/strict";
+import { describe, test, expect } from "@jest/globals";
 import { createHash } from "node:crypto";
 import { createDisk, text2stream } from "../index.js";
 import { createMemoryDriver } from "../adapters/memory.js";
@@ -19,8 +18,8 @@ describe("atomicWrite plugin", () => {
 
     const stored = await disk.put("important.json", '{"ok":true}');
 
-    assert.ok(stored.href.endsWith("important.json"));
-    assert.equal(await disk.exists("important.json"), true);
+    expect(stored.href.endsWith("important.json")).toBeTruthy();
+    expect(await disk.exists("important.json")).toBe(true);
   });
 
   test("temp file is cleaned up after put", async () => {
@@ -34,8 +33,8 @@ describe("atomicWrite plugin", () => {
       files.push(f.href);
     }
     // Only the final file should exist — no temp file
-    assert.equal(files.length, 1);
-    assert.ok(!files[0].startsWith(".tmp/"), `unexpected temp file: ${files[0]}`);
+    expect(files.length).toBe(1);
+    expect(files[0].startsWith(".tmp/")).toBeFalsy();
   });
 
   test("supports a custom tempPrefix", async () => {
@@ -43,7 +42,7 @@ describe("atomicWrite plugin", () => {
     const disk = createDisk({ driver }, atomicWrite({ tempPrefix: ".staging/" }));
 
     const stored = await disk.put("output.txt", "value");
-    assert.ok(stored.href.endsWith("output.txt"));
+    expect(stored.href.endsWith("output.txt")).toBeTruthy();
   });
 
   test("file content is preserved after atomic move", async () => {
@@ -53,8 +52,23 @@ describe("atomicWrite plugin", () => {
     await disk.put("config.json", '{"version":2}');
 
     const file = await disk.get("config.json");
-    assert.ok(file);
-    assert.equal(await file.text(), '{"version":2}');
+    expect(file).toBeTruthy();
+    expect(await file.text()).toBe('{"version":2}');
+  });
+
+  test("cleans temp file when final atomic move fails", async () => {
+    const driver = createMemoryDriver();
+    driver.move = async () => {
+      throw new Error("move failed");
+    };
+    const disk = createDisk({ driver }, atomicWrite({ tempPrefix: ".tmp/" }));
+
+    await expect(disk.put("broken.txt", "payload")).rejects.toThrow("move failed");
+    expect(await disk.exists("broken.txt")).toBe(false);
+
+    const files: string[] = [];
+    for await (const f of disk.list()) files.push(f.href);
+    expect(files.length).toBe(0);
   });
 });
 
@@ -75,9 +89,9 @@ describe("partition plugin — hash strategy", () => {
     const files: string[] = [];
     for await (const f of disk.list()) files.push(f.href);
 
-    assert.equal(files.length, 1);
-    assert.ok(files[0].startsWith(expectedPrefix), `expected prefix ${expectedPrefix}, got ${files[0]}`);
-    assert.ok(files[0].endsWith("avatar.jpg"));
+    expect(files.length).toBe(1);
+    expect(files[0].startsWith(expectedPrefix)).toBeTruthy();
+    expect(files[0].endsWith("avatar.jpg")).toBeTruthy();
   });
 
   test("custom levels and charsPerLevel", async () => {
@@ -92,8 +106,8 @@ describe("partition plugin — hash strategy", () => {
     const files: string[] = [];
     for await (const f of disk.list()) files.push(f.href);
 
-    assert.equal(files.length, 1);
-    assert.ok(files[0].startsWith(expectedPrefix), `expected prefix ${expectedPrefix}, got ${files[0]}`);
+    expect(files.length).toBe(1);
+    expect(files[0].startsWith(expectedPrefix)).toBeTruthy();
   });
 
   test("preserves directory prefix from original path", async () => {
@@ -108,10 +122,10 @@ describe("partition plugin — hash strategy", () => {
     const files: string[] = [];
     for await (const f of disk.list()) files.push(f.href);
 
-    assert.equal(files.length, 1);
+    expect(files.length).toBe(1);
     // Directory prefix comes first, then hash prefix, then filename
-    assert.ok(files[0].startsWith(`uploads/${hashPrefix}`), `got: ${files[0]}`);
-    assert.ok(files[0].endsWith("photo.jpg"));
+    expect(files[0].startsWith(`uploads/${hashPrefix}`)).toBeTruthy();
+    expect(files[0].endsWith("photo.jpg")).toBeTruthy();
   });
 
   test("original path no longer exists", async () => {
@@ -120,7 +134,7 @@ describe("partition plugin — hash strategy", () => {
 
     await disk.put("doc.txt", "content");
 
-    assert.equal(await disk.exists("doc.txt"), false);
+    expect(await disk.exists("doc.txt")).toBe(false);
   });
 });
 
@@ -134,9 +148,9 @@ describe("partition plugin — date strategy", () => {
     const files: string[] = [];
     for await (const f of disk.list()) files.push(f.href);
 
-    assert.equal(files.length, 1);
+    expect(files.length).toBe(1);
     // Default dateFormat is yyyy/MM/dd
-    assert.match(files[0], /^\d{4}\/\d{2}\/\d{2}\/upload\.png$/);
+    expect(files[0]).toMatch(/^\d{4}\/\d{2}\/\d{2}\/upload\.png$/);
   });
 
   test("supports custom dateFormat", async () => {
@@ -148,8 +162,8 @@ describe("partition plugin — date strategy", () => {
     const files: string[] = [];
     for await (const f of disk.list()) files.push(f.href);
 
-    assert.equal(files.length, 1);
-    assert.match(files[0], /^\d{4}\/\d{2}\/log\.txt$/);
+    expect(files.length).toBe(1);
+    expect(files[0]).toMatch(/^\d{4}\/\d{2}\/log\.txt$/);
   });
 });
 
@@ -166,7 +180,7 @@ describe("checksum plugin", () => {
 
     // Sidecar should exist directly in the driver
     const sidecar = await driver.get(`${stored.href}.sha256`);
-    assert.ok(sidecar, "sidecar file should exist");
+    expect(sidecar).toBeTruthy();
 
     const [stream] = sidecar;
     const chunks: Uint8Array[] = [];
@@ -178,7 +192,7 @@ describe("checksum plugin", () => {
     }
     const digest = new TextDecoder().decode(Buffer.concat(chunks));
     // SHA-256 hex is 64 chars
-    assert.equal(digest.length, 64);
+    expect(digest.length).toBe(64);
   });
 
   test("reading a file with an intact checksum succeeds", async () => {
@@ -188,8 +202,8 @@ describe("checksum plugin", () => {
     await disk.put("intact.txt", "verified content");
 
     const file = await disk.get("intact.txt");
-    assert.ok(file);
-    assert.equal(await file.text(), "verified content");
+    expect(file).toBeTruthy();
+    expect(await file.text()).toBe("verified content");
   });
 
   test("reading a tampered file throws ChecksumMismatchError", async () => {
@@ -202,9 +216,9 @@ describe("checksum plugin", () => {
     await driver.put(stored.href, text2stream("tampered content"), {});
 
     const file = await disk.get("secure.txt");
-    assert.ok(file);
+    expect(file).toBeTruthy();
 
-    await assert.rejects(() => file.text(), { name: "ChecksumMismatchError" });
+    await expect(file.text()).rejects.toMatchObject({ name: "ChecksumMismatchError" });
   });
 
   test("deleting a file also removes its sidecar", async () => {
@@ -214,11 +228,11 @@ describe("checksum plugin", () => {
     const stored = await disk.put("to-delete.txt", "bye");
     const sidecarKey = `${stored.href}.sha256`;
 
-    assert.ok(await driver.exists(sidecarKey), "sidecar should exist before delete");
+    expect(await driver.exists(sidecarKey)).toBeTruthy();
 
     await disk.delete("to-delete.txt");
 
-    assert.equal(await driver.exists(sidecarKey), false, "sidecar should be gone after delete");
+    expect(await driver.exists(sidecarKey)).toBe(false, "sidecar should be gone after delete");
   });
 
   test("supports custom algorithm and extension", async () => {
@@ -228,7 +242,7 @@ describe("checksum plugin", () => {
     const stored = await disk.put("file.bin", "some bytes");
 
     const sidecar = await driver.get(`${stored.href}.md5`);
-    assert.ok(sidecar, "custom-extension sidecar should exist");
+    expect(sidecar).toBeTruthy();
 
     const [stream] = sidecar;
     const chunks: Uint8Array[] = [];
@@ -240,7 +254,7 @@ describe("checksum plugin", () => {
     }
     const digest = new TextDecoder().decode(Buffer.concat(chunks));
     // MD5 hex is 32 chars
-    assert.equal(digest.length, 32);
+    expect(digest.length).toBe(32);
   });
 
   test("ChecksumMismatchError includes path, expected, and actual", async () => {
@@ -251,18 +265,18 @@ describe("checksum plugin", () => {
     await driver.put(stored.href, text2stream("bad"), {});
 
     const file = await disk.get("check.txt");
-    assert.ok(file);
+    expect(file).toBeTruthy();
 
     try {
       await file.text();
-      assert.fail("should have thrown");
+      throw new Error("should have thrown");
     } catch (err: unknown) {
-      assert.ok(err instanceof ChecksumMismatchError);
-      assert.equal(err.name, "ChecksumMismatchError");
-      assert.equal(err.path, stored.href);
-      assert.ok(err.expected, "expected should be set");
-      assert.ok(err.actual, "actual should be set");
-      assert.notEqual(err.expected, err.actual);
+      expect(err instanceof ChecksumMismatchError).toBeTruthy();
+      expect(err.name).toBe("ChecksumMismatchError");
+      expect(err.path).toBe(stored.href);
+      expect(err.expected).toBeTruthy();
+      expect(err.actual).toBeTruthy();
+      expect(err.expected).not.toBe(err.actual);
     }
   });
 });
@@ -280,10 +294,10 @@ describe("storeAs plugin", () => {
     const stored = await disk.put(file);
 
     // filename should be UUID + .jpg, not the original "photo.jpg"
-    assert.ok(stored.name !== "photo.jpg", "should rename with UUID");
-    assert.ok(stored.name.endsWith(".jpg"), "should preserve extension");
+    expect(stored.name !== "photo.jpg").toBeTruthy();
+    expect(stored.name.endsWith(".jpg")).toBeTruthy();
     // UUID is 36 chars; uuid + ext = 36 + 4 = 40
-    assert.match(stored.name, /^[0-9a-f-]{36}\.jpg$/);
+    expect(stored.name).toMatch(/^[0-9a-f-]{36}\.jpg$/);
   });
 
   test("uuid-original strategy prefixes UUID before the original name", async () => {
@@ -293,7 +307,7 @@ describe("storeAs plugin", () => {
     const file = new File(["data"], "document.pdf");
     const stored = await disk.put(file);
 
-    assert.match(stored.name, /^[0-9a-f-]{36}-document\.pdf$/);
+    expect(stored.name).toMatch(/^[0-9a-f-]{36}-document\.pdf$/);
   });
 
   test("custom generator function is called with the File", async () => {
@@ -306,7 +320,7 @@ describe("storeAs plugin", () => {
     const file = new File(["data"], "note.txt");
     const stored = await disk.put(file);
 
-    assert.equal(stored.name, "custom-note.txt");
+    expect(stored.name).toBe("custom-note.txt");
   });
 
   test("async custom generator is supported", async () => {
@@ -319,7 +333,7 @@ describe("storeAs plugin", () => {
     const file = new File(["data"], "report.csv");
     const stored = await disk.put(file);
 
-    assert.equal(stored.name, "async-report.csv");
+    expect(stored.name).toBe("async-report.csv");
   });
 
   test("originalName is preserved in metadata when name changes", async () => {
@@ -329,7 +343,7 @@ describe("storeAs plugin", () => {
     const file = new File(["img"], "original.png");
     const stored = await disk.put(file);
 
-    assert.equal(stored.metadata.originalName, "original.png");
+    expect(stored.metadata.originalName).toBe("original.png");
   });
 
   test("no-op when a string path is passed (not a File)", async () => {
@@ -338,7 +352,7 @@ describe("storeAs plugin", () => {
 
     const stored = await disk.put("explicit-name.txt", "content");
 
-    assert.ok(stored.name.endsWith("explicit-name.txt"), `should keep explicit name, got: ${stored.name}`);
+    expect(stored.name.endsWith("explicit-name.txt")).toBeTruthy();
   });
 
   test("default strategy is uuid", async () => {
@@ -349,8 +363,8 @@ describe("storeAs plugin", () => {
     const file = new File(["x"], "img.webp");
     const stored = await disk.put(file);
 
-    assert.ok(stored.name !== "img.webp");
-    assert.ok(stored.name.endsWith(".webp"));
+    expect(stored.name !== "img.webp").toBeTruthy();
+    expect(stored.name.endsWith(".webp")).toBeTruthy();
   });
 });
 
@@ -365,11 +379,11 @@ describe("plugin composition", () => {
 
     await disk.put("composed.txt", "composed content");
 
-    assert.equal(await disk.exists("composed.txt"), true);
+    expect(await disk.exists("composed.txt")).toBe(true);
 
     const file = await disk.get("composed.txt");
-    assert.ok(file);
-    assert.equal(await file.text(), "composed content");
+    expect(file).toBeTruthy();
+    expect(await file.text()).toBe("composed content");
   });
 
   test("storeAs + partition — file is renamed and partitioned", async () => {
@@ -380,11 +394,11 @@ describe("plugin composition", () => {
     const stored = await disk.put(original);
 
     // The stored name is a UUID.txt, and it's under a hash partition
-    assert.ok(stored.name !== "my-file.txt");
-    assert.ok(stored.name.endsWith(".txt"));
+    expect(stored.name !== "my-file.txt").toBeTruthy();
+    expect(stored.name.endsWith(".txt")).toBeTruthy();
 
     const files: string[] = [];
     for await (const f of disk.list()) files.push(f.href);
-    assert.equal(files.length, 1);
+    expect(files.length).toBe(1);
   });
 });

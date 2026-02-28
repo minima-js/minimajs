@@ -1,6 +1,6 @@
 import type { Disk } from "./types.js";
 import { PassThrough, Readable } from "node:stream";
-import { Zip, AsyncZipDeflate, Unzip, AsyncUnzipInflate } from "fflate";
+import { Zip, ZipDeflate, Unzip, UnzipInflate } from "fflate";
 import type { UnzipFile } from "fflate";
 
 export interface SnapshotOptions {
@@ -60,7 +60,7 @@ export async function snapshot(src: Disk, dest: Disk, options: SnapshotOptions =
     const srcFile = await src.get(file.href);
     if (!srcFile) continue;
 
-    const entry = new AsyncZipDeflate(file.href, { level: 6 });
+    const entry = new ZipDeflate(file.href, { level: 6 });
     zip.add(entry);
 
     const reader = srcFile.stream().getReader();
@@ -138,7 +138,7 @@ export async function restore(
     entry.start();
   });
 
-  unzip.register(AsyncUnzipInflate);
+  unzip.register(UnzipInflate);
 
   const reader = file.stream().getReader();
   while (true) {

@@ -7,6 +7,16 @@ import type { PutOptions, ListOptions, UrlOptions, DiskData, FileSource } from "
 export type HookReturn<T> = void | T | Promise<void | T>;
 
 /**
+ * Discriminated union of (op, error, ...operation-args) tuples for the failed hook.
+ * Handlers receive the operation name as the first argument so they can narrow the
+ * remaining arguments to the exact types for that operation.
+ */
+export type FailedArgs =
+  | [op: "put", error: unknown, path: string, data: DiskData, options: PutOptions]
+  | [op: "get", error: unknown, path: string]
+  | [op: "delete", error: unknown, source: FileSource];
+
+/**
  * All available disk hooks
  */
 export interface DiskHooks {
@@ -54,6 +64,14 @@ export interface DiskHooks {
 
   /** Called when constructing a DiskFile — can return a transformed DiskFile */
   file(file: DiskFile): HookReturn<DiskFile>;
+
+  /**
+   * Called when any disk operation throws. The handler **must** re-throw — the return
+   * type is `never` to enforce this. If no handler is registered the original error is
+   * re-thrown automatically. The first argument is the operation name so handlers can
+   * narrow the remaining arguments to the exact types for that operation.
+   */
+  failed(...args: FailedArgs): never;
 }
 
 /** Derives the trigger's return type from the hook's declared return type */

@@ -152,6 +152,28 @@ describe("ProtoDisk - Prefix-Based Routing", () => {
       const moved = await bucket2Driver.get("s3://bucket-2/moved.txt");
       expect(moved).not.toBeNull();
     });
+
+    it("should delete source when moving a DiskFile from another disk", async () => {
+      const diskA = createProtoDisk({
+        protocols: {
+          "s3://bucket-1/": bucket1Driver,
+        },
+      });
+      const diskB = createProtoDisk({
+        protocols: {
+          "s3://bucket-2/": bucket2Driver,
+        },
+      });
+
+      await diskA.put("s3://bucket-1/source.txt", "from-a");
+      const sourceFile = await diskA.get("s3://bucket-1/source.txt");
+      expect(sourceFile).toBeTruthy();
+
+      await diskB.move(sourceFile, "s3://bucket-2/dest.txt");
+
+      expect(await diskA.exists("s3://bucket-1/source.txt")).toBe(false);
+      expect(await diskB.exists("s3://bucket-2/dest.txt")).toBe(true);
+    });
   });
 
   describe("Same-Driver Optimization", () => {
@@ -235,6 +257,33 @@ describe("ProtoDisk - Prefix-Based Routing", () => {
       // Should be accessible via file:// protocol
       const file = await disk.get("file:///uploads/images/avatar.jpg");
       expect(file).not.toBeNull();
+    });
+  });
+
+  describe("Hooks", () => {
+    it("runs storing hook on put", async () => {
+      const disk = createProtoDisk({
+        protocols: {
+          "s3://bucket-1/": bucket1Driver,
+        },
+        hooks: {
+          storing(_path, stream) {
+            return stream.pipeThrough(
+              new TransformStream<Uint8Array, Uint8Array>({
+                transform(chunk, controller) {
+                  const text = new TextDecoder().decode(chunk).toUpperCase();
+                  controller.enqueue(new TextEncoder().encode(text));
+                },
+              })
+            );
+          },
+        },
+      });
+
+      await disk.put("s3://bucket-1/value.txt", "abc");
+      const file = await disk.get("s3://bucket-1/value.txt");
+      expect(file).not.toBeNull();
+      expect(await file?.text()).toBe("ABC");
     });
   });
 });
