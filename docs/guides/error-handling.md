@@ -362,3 +362,12 @@ app.register(
 - **Use scoped error hooks** for module-specific error handling
 - **Keep error messages generic in production** to avoid leaking sensitive information
 - **Create custom error classes** for different error types (API errors, validation errors, etc.)
+
+---
+
+## Related Guides
+
+- [Hooks](/guides/hooks) - Understand execution order and scope of `error`/`send` hooks
+- [HTTP Helpers](/guides/http) - Set response status/headers in handlers and hooks
+- [Testing](/guides/testing) - Validate error scenarios and response payloads
+- [Route Descriptors](/guides/route-descriptors) - Drive policy decisions from route metadata

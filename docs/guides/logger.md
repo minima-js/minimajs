@@ -1,64 +1,106 @@
 ---
 title: Logging
-sidebar_position: 4
+sidebar_position: 7
 tags:
-  - context
   - logger
+  - observability
 ---
 
-# Minima.js: Integrated Logging with Pino
+# Logger
 
-Minima.js streamlines development by offering a built-in logger powered by Pino. This logger simplifies debugging and monitoring by providing informative messages about your application's execution.
+Minima.js includes a built-in logger powered by Pino. You can use it in handlers, hooks, and plugins without manually wiring logger instances.
 
 ## Quick Reference
 
-- [`logger.info()`](#leveraging-the-built-in-logger) - Log informational messages
-- [`logger.error()`](#logging-errors) - Log errors
-- [`logger.debug()`](#debug-logging) - Log debug information
-- [`logger.warn()`](#warning-logs) - Log warnings
-- [`app.log`](#accessing-logger) - Access logger from app instance
+- [`logger.info()`](#loggerinfo) - Log normal operational events
+- [`logger.warn()`](#loggerwarn) - Log recoverable issues
+- [`logger.error()`](#loggererror) - Log failures
+- [`logger.debug()`](#loggerdebug) - Log debug details
+- [`app.log`](#applog) - Access app-level logger during setup
 
 ---
 
-**Leveraging the Built-in Logger:**
+## Basic Usage
 
-Here's how to integrate it into your code:
+```typescript
+import { logger, searchParams, type Routes } from "@minimajs/server";
 
-**Example:**
-
-```typescript title="src/services/index.ts"
-import { logger, type App, searchParams } from "@minimajs/server";
-
-async function serviceHandler() {
-  // Log request details with search parameters
-  logger.info("received service request with %o", searchParams());
-  return "service request";
+async function listServices() {
+  logger.info("Service request", { query: searchParams().toJSON() });
+  return { ok: true };
 }
 
-export async function serviceModule(app: App) {
-  app.get("/", serviceHandler);
+export const routes: Routes = {
+  "GET /services": listServices,
+};
+```
+
+## `logger.info()`
+
+Use for expected, successful application flow.
+
+```typescript
+import { logger } from "@minimajs/server";
+
+logger.info("User signed in", { userId: "u_123" });
+```
+
+## `logger.warn()`
+
+Use for non-fatal issues you should monitor.
+
+```typescript
+import { logger } from "@minimajs/server";
+
+logger.warn("Rate limit near threshold", { ip: "203.0.113.10" });
+```
+
+## `logger.error()`
+
+Use for failed operations and exceptions.
+
+```typescript
+import { logger } from "@minimajs/server";
+
+try {
+  await saveUser();
+} catch (error) {
+  logger.error("Failed to save user", { error });
 }
 ```
 
-In this example:
+## `logger.debug()`
 
-1. We import `logger` and other necessary functions.
-2. Inside `serviceHandler`, we leverage `logger.info` to log a message with the received search parameters using a placeholder (`%o`) for the object.
+Use for verbose diagnostics during development.
 
-**Console Output:**
+```typescript
+import { logger } from "@minimajs/server";
 
-When you run your application and make a request like `curl http://localhost:1234/services?name=John`, the console might display an output similar to:
-
-```
-INFO (serviceModule:serviceHandler): received service request with {"name":"John"}
+logger.debug("Payload received", { size: 1024 });
 ```
 
-**Breakdown of the Output:**
+## `app.log`
 
-- `INFO`: The log level (in this case, informational)
-- `(serviceModule:serviceHandler)`: Indicates the source of the log message (&lt;Module Name>:&lt;Handler function>)
-- `received service request with {"name":"John"}`: The actual log message with the interpolated search parameters object.
+Use the app-level logger in bootstrap/setup code.
 
-**Embrace Streamlined Development with Minima.js's Built-in Logging**
+```typescript
+import { createApp } from "@minimajs/server/bun";
 
-By incorporating the built-in Pino logger, Minima.js empowers you to construct well-instrumented Node.js applications, fostering efficient development and a clear understanding of your application's execution flow.
+const app = createApp();
+app.log.info("Bootstrapping application");
+```
+
+## Best Practices
+
+- Prefer structured fields over string interpolation.
+- Use consistent keys (`requestId`, `userId`, `durationMs`) to simplify queries.
+- Keep debug logs focused to avoid noisy production output.
+
+---
+
+## Related Guides
+
+- [Hooks](/guides/hooks) - Log request/response lifecycle events with `request` and `send`
+- [Error Handling](/guides/error-handling) - Standardize error logging and formatting
+- [HTTP Helpers](/guides/http) - Add request metadata (headers, params) to logs
+- [Middleware](/guides/middleware) - Wrap full request timing or tracing flows

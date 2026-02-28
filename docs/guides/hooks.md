@@ -116,8 +116,6 @@ await app.listen({ port: 3000 });
 
 :::
 
-:::
-
 ### Other Application Lifecycle Hooks
 
 #### `ready`
@@ -778,3 +776,12 @@ await app.listen({ port: 3000 });
 - **Use `response()` helper** to create responses that preserve context headers set by plugins
 - **Register hooks in the appropriate scope** to ensure proper FIFO/LIFO ordering based on hook type
 - **Use `hook.define`** to organize multiple related hooks together
+
+---
+
+## Related Guides
+
+- [Error Handling](/guides/error-handling) - Detailed `error` hook behavior and patterns
+- [HTTP Helpers](/guides/http) - Response shaping and request helper APIs
+- [Middleware](/guides/middleware) - When full request wrapping is required
+- [Route Descriptors](/guides/route-descriptors) - Read route metadata inside hooks

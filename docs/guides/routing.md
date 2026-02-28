@@ -20,6 +20,7 @@ In Minima.js, you can define routes using the `routes` export in a module file, 
 - [`params()`](#route-parameters) - Get route parameters
 - [`searchParams()`](#query-parameters) - Get query string parameters
 - [Route metadata](#route-metadata) - Attach metadata to routes
+- [Route Descriptors](/guides/route-descriptors) - Build reusable metadata helpers
 
 ---
 
@@ -137,6 +138,28 @@ export const routes: Routes = {
 };
 ```
 
+## Query Parameters
+
+Use `searchParams()` to read URL query string values.
+
+```typescript
+import type { Routes } from "@minimajs/server";
+import { searchParams } from "@minimajs/server";
+
+function listUsers() {
+  const page = searchParams.get("page", Number) ?? 1;
+  const role = searchParams.get("role") ?? "all";
+  return { page, role };
+}
+
+export const routes: Routes = {
+  // GET /users?page=2&role=admin
+  "GET /users": listUsers,
+};
+```
+
+For complete request helper coverage, see the [HTTP Helpers guide](/guides/http).
+
 ### Optional Parameters
 
 You can make a route parameter optional by adding a question mark (`?`) to the end of its name.
@@ -211,18 +234,14 @@ import { handler, type Routes } from "@minimajs/server";
 const kAuthRequired = Symbol("AuthRequired");
 const kPermissions = Symbol("Permissions");
 
-function getAdmin() {
-  return { message: "Welcome, admin!" };
-}
-
-function createData() {
-  return { message: "Data created" };
-}
-
 // Wrap handlers with descriptors using the handler() helper
-const adminHandler = handler([kAuthRequired, true], [kPermissions, ["admin", "moderator"]], getAdmin);
+const adminHandler = handler([kAuthRequired, true], [kPermissions, ["admin", "moderator"]], function getAdmin() {
+  return { message: "Welcome, admin!" };
+});
 
-const dataHandler = handler([kAuthRequired, false], createData);
+const dataHandler = handler([kAuthRequired, false], function createData() {
+  return { message: "Data created" };
+});
 
 export const routes: Routes = {
   "GET /admin": adminHandler,
@@ -256,15 +275,18 @@ app.post("/api/data", [kAuthRequired, false], () => {
 You can access the metadata for the current route using the `context().route.metadata` object within any handler or any function called within the handler's scope.
 
 ```typescript
-import { context } from "@minimajs/server";
+import { context, createApp } from "@minimajs/server";
+
+const app = createApp();
+
 // Assuming kAuthRequired and kPermissions are imported or defined
 const kAuthRequired = Symbol("AuthRequired");
 const kPermissions = Symbol("Permissions");
 
 app.get("/admin-dashboard", [kAuthRequired, true], [kPermissions, ["admin"]], () => {
   const routeMetadata = context().route.metadata;
-  const authRequired = routeMetadata.get(kAuthRequired); // true
-  const requiredPermissions = routeMetadata.get(kPermissions); // ["admin"]
+  const authRequired = routeMetadata[kAuthRequired]; // true
+  const requiredPermissions = routeMetadata[kPermissions]; // ["admin"]
 
   console.log(`Auth Required: ${authRequired}`);
   console.log(`Required Permissions: ${requiredPermissions}`);
@@ -278,14 +300,15 @@ app.get("/admin-dashboard", [kAuthRequired, true], [kPermissions, ["admin"]], ()
 Metadata is especially useful in hooks for implementing cross-cutting concerns dynamically. For instance, an authentication hook can check if a route requires authentication based on its metadata.
 
 ```typescript
-import { app } from "./your-app-instance"; // Your app instance
-import { hook, context, abort } from "@minimajs/server";
+import { createApp, hook, context, abort } from "@minimajs/server";
+
+const app = createApp();
 const kAuthRequired = Symbol("AuthRequired"); // Must be the same Symbol instance
 
 app.register(
   hook("request", () => {
-    const routeMetadata = context().route.metadata;
-    const authRequired = routeMetadata[kAuthRequired];
+    const metadata = context().route.metadata;
+    const authRequired = metadata[kAuthRequired];
 
     if (authRequired) {
       // Perform actual authentication check
@@ -346,3 +369,12 @@ export const routes: Routes = {
 ```
 
 To learn more about how to structure your application with modules, please refer to the [Modules](/core-concepts/modules) guide.
+
+---
+
+## Related Guides
+
+- [Controllers](/guides/controllers) - Type-safe controller-to-route mapping
+- [HTTP Helpers](/guides/http) - Read request data and shape responses
+- [Route Descriptors](/guides/route-descriptors) - Add route metadata for auth/docs/policies
+- [Hooks](/guides/hooks) - Apply route-adjacent behavior (auth, transforms, errors)

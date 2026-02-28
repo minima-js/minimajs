@@ -364,4 +364,13 @@ All patterns maintain FIFO order for the "before" phase and LIFO for the "after"
 - **Order matters** - Register middleware in the order you want them to execute
 - **Prefer hooks** - Use hooks for error handling, authentication, validation, and side effects
 
-> **Advanced:** To customize `AsyncLocalStorage` behavior, see [Context Provider](../advanced/context-provider.md).
+> **Advanced:** To customize `AsyncLocalStorage` behavior, see [Context Provider](/advanced/context-provider).
+
+---
+
+## Related Guides
+
+- [Hooks](/guides/hooks) - Preferred for most request lifecycle concerns
+- [Error Handling](/guides/error-handling) - Use scoped `error` hooks instead of middleware for formatting errors
+- [HTTP Helpers](/guides/http) - Request and response context APIs inside handlers/hooks
+- [Context Provider](/advanced/context-provider) - Deep dive on request context propagation
