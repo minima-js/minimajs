@@ -10,9 +10,9 @@ graph TB
     Route1 -.->|Executes<br/>request hook| Exec1["1. Parent Hook<br/>2. Child 1 Hook"]
     Route2 -.->|Executes<br/>request hook| Exec2["1. Parent Hook<br/>2. Child 2 Hook"]
 
-    style Root fill:#e7f5ff
-    style Child1 fill:#d0ebff
-    style Child2 fill:#d0ebff
-    style Exec1 fill:#fff3bf
-    style Exec2 fill:#fff3bf
+    class Root accent
+    class Child1,Child2 info
+    class Route1,Route2 neutral
+    class Exec1,Exec2 warn
+
 ```

@@ -199,23 +199,19 @@ describe("index", () => {
     });
 
     test("should throw ValidationError for missing required param", () => {
-      const schema = {
-        page: z.string(),
-      };
-
       mockContext(() => {
-        const getSearchParams = createSearchParams(schema);
+        const getSearchParams = createSearchParams({
+          page: z.string(),
+        });
         expect(() => getSearchParams()).toThrow(ValidationError);
       });
     });
 
     test("should handle optional params", () => {
-      const schema = {
-        page: z.string().optional(),
-      };
-
       mockContext(() => {
-        const getSearchParams = createSearchParams(schema);
+        const getSearchParams = createSearchParams({
+          page: z.string().optional(),
+        });
         const result = getSearchParams();
         expect(result.page).toBeUndefined();
       });

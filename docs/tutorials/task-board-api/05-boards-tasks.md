@@ -21,6 +21,7 @@ After this step, you will support:
 Create `src/boards/module.ts`:
 
 ::: code-group
+
 ```typescript [src/boards/module.ts]
 import { type Meta, type Routes, hook, params, abort } from "@minimajs/server";
 import { descriptor } from "@minimajs/server/plugins";
@@ -30,9 +31,7 @@ import { z } from "zod";
 import { prisma } from "../database.js";
 import { authenticated, workspaceMember, workspaceAdmin } from "../auth/guards.js";
 
-const boardBody = createBody(
-  z.object({ name: z.string().min(1).max(100) })
-);
+const boardBody = createBody(z.object({ name: z.string().min(1).max(100) }));
 
 async function list() {
   const workspaceId = Number(params.get("workspaceId"));
@@ -80,11 +79,7 @@ async function remove() {
 
 export const meta: Meta = {
   prefix: "/workspaces/:workspaceId/boards",
-  plugins: [
-    hook("request", authenticated),
-    hook("request", workspaceMember),
-    descriptor(describe({ tags: ["Boards"] })),
-  ],
+  plugins: [hook("request", authenticated), hook("request", workspaceMember), descriptor(describe({ tags: ["Boards"] }))],
 };
 
 export const routes: Routes = {
@@ -95,6 +90,7 @@ export const routes: Routes = {
   "DELETE /:id": remove,
 };
 ```
+
 :::
 
 Because this module exports `routes` (instead of a default registration function), keep module discovery enabled and use `meta.prefix` for nesting. The `prefix` above mounts this module at `/workspaces/:workspaceId/boards`.
@@ -106,6 +102,7 @@ Do the same for tasks in the next section.
 Create `src/tasks/module.ts`:
 
 ::: code-group
+
 ```typescript [src/tasks/module.ts]
 import { type Meta, type Routes, hook, params, abort } from "@minimajs/server";
 import { descriptor } from "@minimajs/server/plugins";
@@ -125,13 +122,11 @@ const taskBody = createBody(
   })
 );
 
-const paginationParams = createSearchParams(
-  z.object({
-    page: z.number({ coerce: true }).int().positive().default(1),
-    limit: z.number({ coerce: true }).int().positive().max(100).default(20),
-    status: z.enum(["todo", "in_progress", "done"]).optional(),
-  })
-);
+const paginationParams = createSearchParams({
+  page: z.number({ coerce: true }).int().positive().default(1),
+  limit: z.number({ coerce: true }).int().positive().max(100).default(20),
+  status: z.enum(["todo", "in_progress", "done"]).optional(),
+});
 
 async function list() {
   const boardId = Number(params.get("boardId"));
@@ -210,7 +205,7 @@ async function uploadAttachment() {
   if (!task) abort.notFound("Task not found");
 
   const file = await multipart.file("file");
-  if (!file) abort.badRequest("No file uploaded");
+  if (!file) abort("No file uploaded", 400);
 
   const uploadDir = await helpers.ensurePath("./uploads", "attachments");
   const savedAs = await helpers.save(file, uploadDir);
@@ -228,11 +223,7 @@ async function uploadAttachment() {
 
 export const meta: Meta = {
   prefix: "/boards/:boardId/tasks",
-  plugins: [
-    hook("request", authenticated),
-    hook("request", boardMember),
-    descriptor(describe({ tags: ["Tasks"] })),
-  ],
+  plugins: [hook("request", authenticated), hook("request", boardMember), descriptor(describe({ tags: ["Tasks"] }))],
 };
 
 export const routes: Routes = {
@@ -244,24 +235,26 @@ export const routes: Routes = {
   "POST /:id/attachments": uploadAttachment,
 };
 ```
+
 :::
 
 ## What We Just Used
 
-| Pattern | Where |
-|---|---|
-| `export const routes: Routes` | All handlers wired directly in the module |
-| `createBody` with Zod | Request body validation in every handler |
-| `createSearchParams` | Pagination and filtering in `list()` |
-| `multipart.file()` | Single file upload in `uploadAttachment()` |
-| `helpers.save()` | Persist file to disk with UUID filename |
-| `abort.notFound()` | Return 404 when a resource doesn't exist |
-| `meta.prefix` | Mount module under nested resource paths |
+| Pattern                        | Where                                                     |
+| ------------------------------ | --------------------------------------------------------- |
+| `export const routes: Routes`  | All handlers wired directly in the module                 |
+| `createBody` with Zod          | Request body validation in every handler                  |
+| `createSearchParams`           | Pagination and filtering in `list()`                      |
+| `multipart.file()`             | Single file upload in `uploadAttachment()`                |
+| `helpers.save()`               | Persist file to disk with UUID filename                   |
+| `abort.notFound()`             | Return 404 when a resource doesn't exist                  |
+| `meta.prefix`                  | Mount module under nested resource paths                  |
 | `hook("request", boardMember)` | Enforce workspace membership for board-scoped task routes |
 
 ## Smoke Check
 
 ::: code-group
+
 ```bash [Terminal]
 # Create board in a workspace
 curl -X POST http://localhost:3000/workspaces/1/boards \
@@ -284,6 +277,7 @@ curl -X POST http://localhost:3000/boards/1/tasks/1/attachments \
   -H "Authorization: Bearer <ACCESS_TOKEN>" \
   -F "file=@./README.md"
 ```
+
 :::
 
 ## Troubleshooting

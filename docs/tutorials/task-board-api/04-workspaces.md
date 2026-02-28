@@ -80,7 +80,7 @@ async function update() {
     where: { userId_workspaceId: { userId: user.id, workspaceId: id } },
   });
   if (!membership || !["owner", "admin"].includes(membership.role)) {
-    abort.forbidden("Admin access required");
+    abort("Admin access required", 403);
   }
 
   return prisma.workspace.update({ where: { id }, data: { name } });
@@ -94,7 +94,7 @@ async function remove() {
     where: { userId_workspaceId: { userId: user.id, workspaceId: id } },
   });
   if (!membership || !["owner", "admin"].includes(membership.role)) {
-    abort.forbidden("Admin access required");
+    abort("Admin access required", 403);
   }
 
   await prisma.workspace.delete({ where: { id } });

@@ -60,7 +60,7 @@ async function invite() {
   const existing = await prisma.member.findUnique({
     where: { userId_workspaceId: { userId: user.id, workspaceId } },
   });
-  if (existing) abort.badRequest("User is already a member");
+  if (existing) abort("User is already a member", 400);
 
   return prisma.member.create({
     data: { userId: user.id, workspaceId, role },
@@ -82,7 +82,7 @@ async function updateRole() {
     const ownerCount = await prisma.member.count({
       where: { workspaceId, role: "owner" },
     });
-    if (ownerCount <= 1) abort.badRequest("Cannot change role of the last owner");
+    if (ownerCount <= 1) abort("Cannot change role of the last owner", 400);
   }
 
   return prisma.member.update({
@@ -100,7 +100,7 @@ async function remove() {
   if (!member) abort.notFound("Member not found");
 
   if (member.role === "owner") {
-    abort.forbidden("Cannot remove a workspace owner");
+    abort("Cannot remove a workspace owner", 403);
   }
 
   await prisma.member.delete({ where: { id: memberId } });

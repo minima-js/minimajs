@@ -190,7 +190,7 @@ async function register() {
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    abort.badRequest("Email already in use");
+    abort("Email already in use", 400);
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
@@ -216,7 +216,7 @@ async function login() {
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-    abort.unauthorized("Invalid email or password");
+    abort("Invalid email or password", 401);
   }
 
   const accessToken = signAccessToken({ id: user.id, email: user.email, name: user.name });
@@ -235,19 +235,19 @@ async function login() {
 async function refresh() {
   const token = cookies.get("refresh_token");
   if (!token) {
-    abort.unauthorized("No refresh token");
+    abort("No refresh token", 401);
   }
 
   let payload: { id: number };
   try {
     payload = jwt.verify(token, REFRESH_SECRET) as { id: number };
   } catch {
-    abort.unauthorized("Invalid or expired refresh token");
+    abort("Invalid or expired refresh token", 401);
   }
 
   const user = await prisma.user.findUnique({ where: { id: payload.id } });
   if (!user) {
-    abort.unauthorized("User not found");
+    abort("User not found", 401);
   }
 
   const accessToken = signAccessToken({ id: user.id, email: user.email, name: user.name });

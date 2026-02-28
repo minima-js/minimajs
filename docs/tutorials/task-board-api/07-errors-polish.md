@@ -40,7 +40,7 @@ console.log(`Task Board API running at ${address}`);
 ```
 :::
 
-Now every HTTP error — whether from `abort.notFound()`, `abort.unauthorized()`, or a validation failure — returns:
+Now every HTTP error — whether from `abort.notFound()`, `abort("Unauthorized", 401)`, or a validation failure — returns:
 
 ::: code-group
 ```json [Error Response]

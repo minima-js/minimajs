@@ -11,8 +11,10 @@ graph LR
 
     Exit1 & Exit2 & Exit3 & G --> H[Send to Client]
 
-    style Exit1 fill:#ff6b6b
-    style Exit2 fill:#ff6b6b
-    style Exit3 fill:#ff6b6b
-    style G fill:#51cf66
+    class A,B,D,E,F accent
+    class C warn
+    class G neutral
+    class H success
+    class Exit1,Exit2,Exit3 danger
+
 ```
