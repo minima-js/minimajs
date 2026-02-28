@@ -8,7 +8,6 @@ import { tmpdir } from "node:os";
 
 // Core types and utilities
 export * from "./types.js";
-export * from "./snapshot.js";
 export * from "./file.js";
 export * from "./helpers.js";
 export * from "./symbols.js";
@@ -23,13 +22,6 @@ export * from "./standard-disk.js";
 export * from "./proto-disk.js";
 
 // Plugins
-export * from "./plugins/atomic-write/index.js";
-export * from "./plugins/partition/index.js";
-export * from "./plugins/checksum/index.js";
-export * from "./plugins/store-as/index.js";
-export * from "./plugins/progress/upload.js";
-export * from "./plugins/progress/download.js";
-
 export interface CreateDiskOptions<TDriver extends DiskDriver = DiskDriver> {
   driver?: TDriver;
   hooks?: Partial<DiskHooks>;

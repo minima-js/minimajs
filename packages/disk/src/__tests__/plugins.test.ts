@@ -34,7 +34,7 @@ describe("atomicWrite plugin", () => {
     }
     // Only the final file should exist — no temp file
     expect(files.length).toBe(1);
-    expect(files[0].startsWith(".tmp/")).toBeFalsy();
+    expect(files[0]!.startsWith(".tmp/")).toBeFalsy();
   });
 
   test("supports a custom tempPrefix", async () => {
@@ -53,7 +53,7 @@ describe("atomicWrite plugin", () => {
 
     const file = await disk.get("config.json");
     expect(file).toBeTruthy();
-    expect(await file.text()).toBe('{"version":2}');
+    expect(await file!.text()).toBe('{"version":2}');
   });
 
   test("cleans temp file when final atomic move fails", async () => {
@@ -90,8 +90,8 @@ describe("partition plugin — hash strategy", () => {
     for await (const f of disk.list()) files.push(f.href);
 
     expect(files.length).toBe(1);
-    expect(files[0].startsWith(expectedPrefix)).toBeTruthy();
-    expect(files[0].endsWith("avatar.jpg")).toBeTruthy();
+    expect(files[0]!.startsWith(expectedPrefix)).toBeTruthy();
+    expect(files[0]!.endsWith("avatar.jpg")).toBeTruthy();
   });
 
   test("custom levels and charsPerLevel", async () => {
@@ -107,7 +107,7 @@ describe("partition plugin — hash strategy", () => {
     for await (const f of disk.list()) files.push(f.href);
 
     expect(files.length).toBe(1);
-    expect(files[0].startsWith(expectedPrefix)).toBeTruthy();
+    expect(files[0]!.startsWith(expectedPrefix)).toBeTruthy();
   });
 
   test("preserves directory prefix from original path", async () => {
@@ -124,8 +124,8 @@ describe("partition plugin — hash strategy", () => {
 
     expect(files.length).toBe(1);
     // Directory prefix comes first, then hash prefix, then filename
-    expect(files[0].startsWith(`uploads/${hashPrefix}`)).toBeTruthy();
-    expect(files[0].endsWith("photo.jpg")).toBeTruthy();
+    expect(files[0]!.startsWith(`uploads/${hashPrefix}`)).toBeTruthy();
+    expect(files[0]!.endsWith("photo.jpg")).toBeTruthy();
   });
 
   test("original path no longer exists", async () => {
@@ -179,7 +179,7 @@ describe("checksum plugin", () => {
     const stored = await disk.put("data.json", '{"value":1}');
 
     // Sidecar should exist directly in the driver
-    const sidecar = await driver.get(`${stored.href}.sha256`);
+    const sidecar = (await driver.get(`${stored.href}.sha256`))!;
     expect(sidecar).toBeTruthy();
 
     const [stream] = sidecar;
@@ -203,7 +203,7 @@ describe("checksum plugin", () => {
 
     const file = await disk.get("intact.txt");
     expect(file).toBeTruthy();
-    expect(await file.text()).toBe("verified content");
+    expect(await file!.text()).toBe("verified content");
   });
 
   test("reading a tampered file throws ChecksumMismatchError", async () => {
@@ -218,7 +218,7 @@ describe("checksum plugin", () => {
     const file = await disk.get("secure.txt");
     expect(file).toBeTruthy();
 
-    await expect(file.text()).rejects.toMatchObject({ name: "ChecksumMismatchError" });
+    await expect(file!.text()).rejects.toMatchObject({ name: "ChecksumMismatchError" });
   });
 
   test("deleting a file also removes its sidecar", async () => {
@@ -232,7 +232,7 @@ describe("checksum plugin", () => {
 
     await disk.delete("to-delete.txt");
 
-    expect(await driver.exists(sidecarKey)).toBe(false, "sidecar should be gone after delete");
+    expect(await driver.exists(sidecarKey)).toBe(false);
   });
 
   test("supports custom algorithm and extension", async () => {
@@ -241,7 +241,7 @@ describe("checksum plugin", () => {
 
     const stored = await disk.put("file.bin", "some bytes");
 
-    const sidecar = await driver.get(`${stored.href}.md5`);
+    const sidecar = (await driver.get(`${stored.href}.md5`))!;
     expect(sidecar).toBeTruthy();
 
     const [stream] = sidecar;
@@ -268,9 +268,9 @@ describe("checksum plugin", () => {
     expect(file).toBeTruthy();
 
     try {
-      await file.text();
+      await file!.text();
       throw new Error("should have thrown");
-    } catch (err: unknown) {
+    } catch (err: any) {
       expect(err instanceof ChecksumMismatchError).toBeTruthy();
       expect(err.name).toBe("ChecksumMismatchError");
       expect(err.path).toBe(stored.href);
@@ -383,7 +383,7 @@ describe("plugin composition", () => {
 
     const file = await disk.get("composed.txt");
     expect(file).toBeTruthy();
-    expect(await file.text()).toBe("composed content");
+    expect(await file!.text()).toBe("composed content");
   });
 
   test("storeAs + partition — file is renamed and partitioned", async () => {

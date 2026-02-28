@@ -169,7 +169,7 @@ describe("ProtoDisk - Prefix-Based Routing", () => {
       const sourceFile = await diskA.get("s3://bucket-1/source.txt");
       expect(sourceFile).toBeTruthy();
 
-      await diskB.move(sourceFile, "s3://bucket-2/dest.txt");
+      await diskB.move(sourceFile!, "s3://bucket-2/dest.txt");
 
       expect(await diskA.exists("s3://bucket-1/source.txt")).toBe(false);
       expect(await diskB.exists("s3://bucket-2/dest.txt")).toBe(true);

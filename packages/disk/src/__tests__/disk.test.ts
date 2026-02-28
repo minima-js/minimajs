@@ -30,7 +30,7 @@ describe("disk fs driver", () => {
 
     const result = await disk.get("uploads/hello.txt");
     expect(result).toBeTruthy();
-    const text = await result.text();
+    const text = await result!.text();
     expect(text).toBe("hello world");
 
     await disk.delete("uploads/hello.txt");
@@ -48,7 +48,7 @@ describe("disk fs driver", () => {
     expect(stored.href.endsWith("docs/readme.txt")).toBeTruthy();
     const result = await disk.get("docs/readme.txt");
     expect(result).toBeTruthy();
-    expect(await result.text()).toBe("Hello from string");
+    expect(await result!.text()).toBe("Hello from string");
   });
 
   test("stores ArrayBuffer data", async () => {
@@ -62,7 +62,7 @@ describe("disk fs driver", () => {
     expect(stored.href.endsWith("data/binary.bin")).toBeTruthy();
     const result = await disk.get("data/binary.bin");
     expect(result).toBeTruthy();
-    expect(await result.text()).toBe("binary data");
+    expect(await result!.text()).toBe("binary data");
   });
 
   test("checks file existence", async () => {
@@ -238,7 +238,7 @@ describe("disk fs driver", () => {
     });
 
     await disk.put("meta.txt", "some content");
-    const metadata = await disk.metadata("meta.txt");
+    const metadata = (await disk.metadata("meta.txt"))!;
 
     expect(metadata).toBeTruthy();
     expect(metadata.href.endsWith("meta.txt")).toBeTruthy();
@@ -266,7 +266,7 @@ describe("disk memory driver", () => {
 
     const result = await disk.get("test.txt");
     expect(result).toBeTruthy();
-    expect(await result.text()).toBe("hello memory");
+    expect(await result!.text()).toBe("hello memory");
 
     driver.clear();
   });
@@ -310,7 +310,7 @@ describe("disk memory driver", () => {
     const disk = createDisk({ driver });
 
     await disk.put("file.json", '{"key": "value"}', { type: "application/json" });
-    const metadata = await disk.metadata("file.json");
+    const metadata = (await disk.metadata("file.json"))!;
 
     expect(metadata).toBeTruthy();
     expect(metadata.type).toBe("application/json");

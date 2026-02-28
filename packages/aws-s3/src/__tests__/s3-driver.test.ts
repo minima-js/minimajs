@@ -1,5 +1,4 @@
-import { describe, test, jest } from "@jest/globals";
-import assert from "node:assert/strict";
+import { describe, test, jest, expect } from "@jest/globals";
 import { Readable } from "node:stream";
 import {
   HeadObjectCommand,
@@ -101,9 +100,9 @@ describe("S3Driver — href parsing", () => {
     await driver.exists("s3://my-bucket/uploads/photo.jpg");
 
     const cmd: any = sendFn.mock.calls[0]![0];
-    assert.ok(cmd instanceof HeadObjectCommand);
-    assert.equal(cmd.input.Bucket, "my-bucket");
-    assert.equal(cmd.input.Key, "uploads/photo.jpg");
+    expect(cmd).toBeInstanceOf(HeadObjectCommand);
+    expect(cmd.input.Bucket).toBe("my-bucket");
+    expect(cmd.input.Key).toBe("uploads/photo.jpg");
   });
 
   test("uses bucket from constructor when href is a plain key", async () => {
@@ -113,8 +112,8 @@ describe("S3Driver — href parsing", () => {
     await driver.exists("some/key.txt");
 
     const cmd: any = sendFn.mock.calls[0]![0];
-    assert.equal(cmd.input.Bucket, "default-bucket");
-    assert.equal(cmd.input.Key, "some/key.txt");
+    expect(cmd.input.Bucket).toBe("default-bucket");
+    expect(cmd.input.Key).toBe("some/key.txt");
   });
 
   test("resolves publicUrl href back to s3 key", async () => {
@@ -127,8 +126,8 @@ describe("S3Driver — href parsing", () => {
     await driver.exists("https://cdn.example.com/images/photo.jpg");
 
     const cmd: any = sendFn.mock.calls[0]![0];
-    assert.equal(cmd.input.Bucket, "my-bucket");
-    assert.equal(cmd.input.Key, "images/photo.jpg");
+    expect(cmd.input.Bucket).toBe("my-bucket");
+    expect(cmd.input.Key).toBe("images/photo.jpg");
   });
 
   test("applies prefix to plain key hrefs", async () => {
@@ -138,21 +137,21 @@ describe("S3Driver — href parsing", () => {
     await driver.exists("file.txt");
 
     const cmd: any = sendFn.mock.calls[0]![0];
-    assert.equal(cmd.input.Key, "prod/file.txt");
+    expect(cmd.input.Key).toBe("prod/file.txt");
   });
 
   test("throws when no bucket is configured and href is a plain key", async () => {
     const { client } = createMockS3Client();
     const driver = new S3Driver(client, {});
 
-    await assert.rejects(() => driver.exists("plain-key.txt"), /Bucket must be specified/);
+    await expect(driver.exists("plain-key.txt")).rejects.toThrow(/Bucket must be specified/);
   });
 
   test("throws for empty S3 key in s3:// href", async () => {
     const { client } = createMockS3Client();
     const driver = new S3Driver(client, {});
 
-    await assert.rejects(() => driver.exists("s3://bucket/"), /S3 key cannot be empty/);
+    await expect(driver.exists("s3://bucket/")).rejects.toThrow(/Invalid S3/);
   });
 });
 
@@ -181,10 +180,10 @@ describe("S3Driver — put", () => {
 
     const metadata = await driver.put("s3://my-bucket/file.txt", stream, { type: "text/plain" });
 
-    assert.equal(metadata.href, "s3://my-bucket/file.txt");
-    assert.equal(metadata.size, 13);
-    assert.equal(metadata.type, "text/plain");
-    assert.deepEqual(metadata.metadata, { custom: "value" });
+    expect(metadata.href).toBe("s3://my-bucket/file.txt");
+    expect(metadata.size).toBe(13);
+    expect(metadata.type).toBe("text/plain");
+    expect(metadata.metadata).toEqual({ custom: "value" });
   });
 
   test("HeadObjectCommand is called after upload to fetch metadata", async () => {
@@ -201,7 +200,7 @@ describe("S3Driver — put", () => {
     await driver.put("s3://my-bucket/file.txt", stream, { type: "text/plain" });
 
     const headCall = sendFn.mock.calls.find(([cmd]: any[]) => cmd instanceof HeadObjectCommand);
-    assert.ok(headCall, "HeadObjectCommand should be called after upload");
+    expect(headCall).toBeDefined();
   });
 
   test("includes custom metadata in upload params", async () => {
@@ -220,7 +219,7 @@ describe("S3Driver — put", () => {
       metadata: { source: "upload" },
     });
 
-    assert.ok(result.href.includes("doc.txt"));
+    expect(result.href).toContain("doc.txt");
   });
 });
 
@@ -243,11 +242,11 @@ describe("S3Driver — get", () => {
 
     const result = await driver.get("s3://my-bucket/file.txt");
 
-    assert.ok(result);
-    const [stream, meta] = result;
-    assert.ok(stream instanceof ReadableStream);
-    assert.equal(meta.href, "s3://my-bucket/file.txt");
-    assert.equal(meta.size, 14);
+    expect(result).not.toBeNull();
+    const [stream, meta] = result!;
+    expect(stream).toBeInstanceOf(ReadableStream);
+    expect(meta.href).toBe("s3://my-bucket/file.txt");
+    expect(meta.size).toBe(14);
   });
 
   test("returns null for NoSuchKey error", async () => {
@@ -257,7 +256,7 @@ describe("S3Driver — get", () => {
     const { client } = createMockS3Client({ get: err });
     const driver = new S3Driver(client, { bucket: "my-bucket" });
 
-    assert.equal(await driver.get("s3://my-bucket/missing.txt"), null);
+    expect(await driver.get("s3://my-bucket/missing.txt")).toBeNull();
   });
 
   test("returns null for 404 HTTP status", async () => {
@@ -267,7 +266,7 @@ describe("S3Driver — get", () => {
     const { client } = createMockS3Client({ get: err });
     const driver = new S3Driver(client, { bucket: "my-bucket" });
 
-    assert.equal(await driver.get("s3://my-bucket/missing.txt"), null);
+    expect(await driver.get("s3://my-bucket/missing.txt")).toBeNull();
   });
 
   test("rethrows non-404 errors", async () => {
@@ -277,7 +276,7 @@ describe("S3Driver — get", () => {
     const { client } = createMockS3Client({ get: err });
     const driver = new S3Driver(client, { bucket: "my-bucket" });
 
-    await assert.rejects(() => driver.get("s3://my-bucket/file.txt"), { message: "InternalError" });
+    await expect(driver.get("s3://my-bucket/file.txt")).rejects.toThrow("InternalError");
   });
 });
 
@@ -290,7 +289,7 @@ describe("S3Driver — exists", () => {
     const { client } = createMockS3Client();
     const driver = new S3Driver(client, { bucket: "my-bucket" });
 
-    assert.equal(await driver.exists("s3://my-bucket/file.txt"), true);
+    expect(await driver.exists("s3://my-bucket/file.txt")).toBe(true);
   });
 
   test("returns false for NotFound error", async () => {
@@ -300,7 +299,7 @@ describe("S3Driver — exists", () => {
     const { client } = createMockS3Client({ head: err });
     const driver = new S3Driver(client, { bucket: "my-bucket" });
 
-    assert.equal(await driver.exists("s3://my-bucket/missing.txt"), false);
+    expect(await driver.exists("s3://my-bucket/missing.txt")).toBe(false);
   });
 
   test("returns false for 404 HTTP status", async () => {
@@ -310,7 +309,7 @@ describe("S3Driver — exists", () => {
     const { client } = createMockS3Client({ head: err });
     const driver = new S3Driver(client, { bucket: "my-bucket" });
 
-    assert.equal(await driver.exists("s3://my-bucket/missing.txt"), false);
+    expect(await driver.exists("s3://my-bucket/missing.txt")).toBe(false);
   });
 
   test("rethrows non-404 errors from HeadObject", async () => {
@@ -320,7 +319,7 @@ describe("S3Driver — exists", () => {
     const { client } = createMockS3Client({ head: err });
     const driver = new S3Driver(client, { bucket: "my-bucket" });
 
-    await assert.rejects(() => driver.exists("s3://my-bucket/file.txt"), { message: "AccessDenied" });
+    await expect(driver.exists("s3://my-bucket/file.txt")).rejects.toThrow("AccessDenied");
   });
 });
 
@@ -336,10 +335,10 @@ describe("S3Driver — delete", () => {
     await driver.delete("s3://my-bucket/file.txt");
 
     const deleteCall = sendFn.mock.calls.find(([cmd]: any[]) => cmd instanceof DeleteObjectCommand);
-    assert.ok(deleteCall);
-    const cmd: any = deleteCall[0];
-    assert.equal(cmd.input.Bucket, "my-bucket");
-    assert.equal(cmd.input.Key, "file.txt");
+    expect(deleteCall).toBeDefined();
+    const cmd: any = deleteCall![0];
+    expect(cmd.input.Bucket).toBe("my-bucket");
+    expect(cmd.input.Key).toBe("file.txt");
   });
 });
 
@@ -355,11 +354,11 @@ describe("S3Driver — copy", () => {
     await driver.copy("s3://bucket-a/source.txt", "s3://bucket-b/dest.txt");
 
     const copyCall = sendFn.mock.calls.find(([cmd]: any[]) => cmd instanceof CopyObjectCommand);
-    assert.ok(copyCall);
-    const cmd: any = copyCall[0];
-    assert.equal(cmd.input.Bucket, "bucket-b");
-    assert.equal(cmd.input.Key, "dest.txt");
-    assert.equal(cmd.input.CopySource, "bucket-a/source.txt");
+    expect(copyCall).toBeDefined();
+    const cmd: any = copyCall![0];
+    expect(cmd.input.Bucket).toBe("bucket-b");
+    expect(cmd.input.Key).toBe("dest.txt");
+    expect(cmd.input.CopySource).toBe("bucket-a/source.txt");
   });
 
   test("can copy within the same bucket", async () => {
@@ -369,7 +368,7 @@ describe("S3Driver — copy", () => {
     await driver.copy("s3://same-bucket/original.txt", "s3://same-bucket/copy.txt");
 
     const copyCall = sendFn.mock.calls.find(([cmd]: any[]) => cmd instanceof CopyObjectCommand);
-    assert.ok(copyCall);
+    expect(copyCall).toBeDefined();
   });
 });
 
@@ -387,11 +386,11 @@ describe("S3Driver — move", () => {
     const copyCall = sendFn.mock.calls.find(([cmd]: any[]) => cmd instanceof CopyObjectCommand);
     const deleteCall = sendFn.mock.calls.find(([cmd]: any[]) => cmd instanceof DeleteObjectCommand);
 
-    assert.ok(copyCall, "should copy");
-    assert.ok(deleteCall, "should delete source");
+    expect(copyCall).toBeDefined();
+    expect(deleteCall).toBeDefined();
 
-    const deleteCmd: any = deleteCall[0];
-    assert.equal(deleteCmd.input.Key, "source.txt");
+    const deleteCmd: any = deleteCall![0];
+    expect(deleteCmd.input.Key).toBe("source.txt");
   });
 });
 
@@ -417,10 +416,10 @@ describe("S3Driver — list", () => {
       files.push(file);
     }
 
-    assert.equal(files.length, 2);
-    assert.equal(files[0]!.href, "s3://my-bucket/uploads/a.jpg");
-    assert.equal(files[0]!.size, 100);
-    assert.equal(files[1]!.href, "s3://my-bucket/uploads/b.jpg");
+    expect(files.length).toBe(2);
+    expect(files[0]!.href).toBe("s3://my-bucket/uploads/a.jpg");
+    expect(files[0]!.size).toBe(100);
+    expect(files[1]!.href).toBe("s3://my-bucket/uploads/b.jpg");
   });
 
   test("respects limit option via MaxKeys", async () => {
@@ -440,10 +439,10 @@ describe("S3Driver — list", () => {
       files.push(file);
     }
 
-    assert.equal(files.length, 2);
+    expect(files.length).toBe(2);
     const listCmd: any = sendFn.mock.calls.find(([cmd]: any[]) => cmd instanceof ListObjectsV2Command)?.[0];
-    assert.ok(listCmd);
-    assert.equal(listCmd.input.MaxKeys, 2);
+    expect(listCmd).toBeDefined();
+    expect(listCmd.input.MaxKeys).toBe(2);
   });
 
   test("paginates using ContinuationToken", async () => {
@@ -477,21 +476,21 @@ describe("S3Driver — list", () => {
       files.push(file);
     }
 
-    assert.equal(files.length, 2);
-    assert.equal(callCount, 2);
+    expect(files.length).toBe(2);
+    expect(callCount).toBe(2);
     const secondListCmd: any = pageSend.mock.calls[1]![0];
-    assert.equal(secondListCmd.input.ContinuationToken, "token-123");
+    expect(secondListCmd.input.ContinuationToken).toBe("token-123");
   });
 
   test("throws when no bucket is given and none in config", async () => {
     const { client } = createMockS3Client();
     const driver = new S3Driver(client, {});
 
-    await assert.rejects(async () => {
+    await expect(async () => {
       for await (const _ of driver.list("", {})) {
         // iterate
       }
-    }, /Bucket must be specified/);
+    }).rejects.toThrow(/Bucket must be specified/);
   });
 });
 
@@ -513,11 +512,11 @@ describe("S3Driver — metadata", () => {
 
     const meta = await driver.metadata("s3://my-bucket/data.json");
 
-    assert.ok(meta);
-    assert.equal(meta.href, "s3://my-bucket/data.json");
-    assert.equal(meta.size, 42);
-    assert.equal(meta.type, "application/json");
-    assert.deepEqual(meta.metadata, { env: "prod" });
+    expect(meta).not.toBeNull();
+    expect(meta!.href).toBe("s3://my-bucket/data.json");
+    expect(meta!.size).toBe(42);
+    expect(meta!.type).toBe("application/json");
+    expect(meta!.metadata).toEqual({ env: "prod" });
   });
 
   test("returns null for NotFound error", async () => {
@@ -527,7 +526,7 @@ describe("S3Driver — metadata", () => {
     const { client } = createMockS3Client({ head: err });
     const driver = new S3Driver(client, { bucket: "my-bucket" });
 
-    assert.equal(await driver.metadata("s3://my-bucket/missing.json"), null);
+    expect(await driver.metadata("s3://my-bucket/missing.json")).toBeNull();
   });
 
   test("returns null for 404 HTTP status", async () => {
@@ -537,7 +536,7 @@ describe("S3Driver — metadata", () => {
     const { client } = createMockS3Client({ head: err });
     const driver = new S3Driver(client, { bucket: "my-bucket" });
 
-    assert.equal(await driver.metadata("s3://my-bucket/missing.json"), null);
+    expect(await driver.metadata("s3://my-bucket/missing.json")).toBeNull();
   });
 });
 
@@ -554,7 +553,7 @@ describe("S3Driver — url", () => {
     });
 
     const url = await driver.url("s3://my-bucket/images/photo.jpg");
-    assert.equal(url, "https://cdn.example.com/images/photo.jpg");
+    expect(url).toBe("https://cdn.example.com/images/photo.jpg");
   });
 
   test("returns standard S3 URL when no publicUrl", async () => {
@@ -562,7 +561,7 @@ describe("S3Driver — url", () => {
     const driver = new S3Driver(client, { bucket: "my-bucket" });
 
     const url = await driver.url("s3://my-bucket/file.txt");
-    assert.match(url, /^https:\/\/my-bucket\.s3\.us-east-1\.amazonaws\.com\/file\.txt$/);
+    expect(url).toMatch(/^https:\/\/my-bucket\.s3\.us-east-1\.amazonaws\.com\/file\.txt$/);
   });
 
   test("generates path-style URL when forcePathStyle is true", async () => {
@@ -577,7 +576,7 @@ describe("S3Driver — url", () => {
 
     const driver = new S3Driver(client, { bucket: "my-bucket" });
     const url = await driver.url("s3://my-bucket/file.txt");
-    assert.match(url, /^https:\/\/s3\.us-east-1\.amazonaws\.com\/my-bucket\/file\.txt$/);
+    expect(url).toMatch(/^https:\/\/s3\.us-east-1\.amazonaws\.com\/my-bucket\/file\.txt$/);
   });
 
   test("generates custom endpoint URL with path-style", async () => {
@@ -592,7 +591,7 @@ describe("S3Driver — url", () => {
 
     const driver = new S3Driver(client, { bucket: "my-bucket" });
     const url = await driver.url("s3://my-bucket/file.txt");
-    assert.equal(url, "http://localhost:9000/my-bucket/file.txt");
+    expect(url).toBe("http://localhost:9000/my-bucket/file.txt");
   });
 });
 
@@ -622,7 +621,7 @@ describe("S3Driver — AWS partition suffix", () => {
 
       const driver = new S3Driver(client, { bucket: "my-bucket" });
       const url = await driver.url("s3://my-bucket/file.txt");
-      assert.ok(url.includes(expectedDomain), `expected ${expectedDomain} in ${url}`);
+      expect(url).toContain(expectedDomain);
     });
   }
 });
@@ -641,12 +640,12 @@ describe("createS3Driver factory", () => {
         secretAccessKey: "fake-secret",
       },
     });
-    assert.ok(driver);
+    expect(driver).toBeDefined();
   });
 
   test("accepts an S3Client instance + options", () => {
     const client = new S3Client({ region: "us-east-1" });
     const driver = createS3Driver(client, { bucket: "test-bucket" });
-    assert.ok(driver);
+    expect(driver).toBeDefined();
   });
 });

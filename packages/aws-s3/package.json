@@ -17,7 +17,8 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.992.0",
-    "@aws-sdk/lib-storage": "^3.992.0"
+    "@aws-sdk/lib-storage": "^3.992.0",
+    "@jest/globals": "^30.2.0"
   },
   "peerDependencies": {
     "@minimajs/disk": ">=0.0.1"

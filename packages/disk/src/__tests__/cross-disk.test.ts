@@ -19,12 +19,12 @@ describe("cross-disk copy", () => {
     const sourceFile = await diskA.get("source.txt");
     expect(sourceFile).toBeTruthy();
 
-    const copied = await diskB.copy(sourceFile);
+    const copied = await diskB.copy(sourceFile!);
 
     expect(await diskB.exists(copied.name)).toBeTruthy();
     const retrieved = await diskB.get(copied.name);
     expect(retrieved).toBeTruthy();
-    expect(await retrieved.text()).toBe("cross-disk content");
+    expect(await retrieved!.text()).toBe("cross-disk content");
   });
 
   test("original file remains on source disk after cross-disk copy", async () => {
@@ -35,7 +35,7 @@ describe("cross-disk copy", () => {
     const sourceFile = await diskA.get("original.txt");
     expect(sourceFile).toBeTruthy();
 
-    await diskB.copy(sourceFile);
+    await diskB.copy(sourceFile!);
 
     expect(await diskA.exists("original.txt")).toBe(true);
   });
@@ -48,7 +48,7 @@ describe("cross-disk copy", () => {
     const sourceFile = await diskA.get("file.txt");
     expect(sourceFile).toBeTruthy();
 
-    const copied = await diskB.copy(sourceFile, "renamed.txt");
+    const copied = await diskB.copy(sourceFile!, "renamed.txt");
 
     expect(copied.name).toBe("renamed.txt");
     expect(await diskB.exists("renamed.txt")).toBe(true);
@@ -61,7 +61,7 @@ describe("cross-disk copy", () => {
     const file = await disk.get("file.txt");
     expect(file).toBeTruthy();
 
-    await expect(disk.copy(file)).rejects.toThrow(/Explicit target path required/);
+    await expect(disk.copy(file!)).rejects.toThrow(/Explicit target path required/);
   });
 
   test("same-disk copy with DiskFile and explicit target", async () => {
@@ -71,7 +71,7 @@ describe("cross-disk copy", () => {
     const file = await disk.get("file.txt");
     expect(file).toBeTruthy();
 
-    const copied = await disk.copy(file, "copy.txt");
+    const copied = await disk.copy(file!, "copy.txt");
 
     expect(copied.name.endsWith("copy.txt")).toBeTruthy();
     expect(await disk.exists("file.txt")).toBe(true);
@@ -88,7 +88,7 @@ describe("cross-disk move", () => {
     const sourceFile = await diskA.get("move-me.txt");
     expect(sourceFile).toBeTruthy();
 
-    const moved = await diskB.move(sourceFile);
+    const moved = await diskB.move(sourceFile!);
 
     // File should exist on diskB
     expect(await diskB.exists(moved.name)).toBeTruthy();
@@ -105,7 +105,7 @@ describe("cross-disk move", () => {
     const sourceFile = await diskA.get("src.txt");
     expect(sourceFile).toBeTruthy();
 
-    const moved = await diskB.move(sourceFile, "dest.txt");
+    const moved = await diskB.move(sourceFile!, "dest.txt");
 
     expect(moved.name).toBe("dest.txt");
     expect(await diskB.exists("dest.txt")).toBe(true);
@@ -119,7 +119,7 @@ describe("cross-disk move", () => {
     const file = await disk.get("file.txt");
     expect(file).toBeTruthy();
 
-    await expect(disk.move(file)).rejects.toThrow(/Explicit target path required/);
+    await expect(disk.move(file!)).rejects.toThrow(/Explicit target path required/);
   });
 });
 
@@ -157,7 +157,7 @@ describe("DiskFile", () => {
     await disk.put("text.txt", "hello world");
     const file = await disk.get("text.txt");
     expect(file).toBeTruthy();
-    expect(await file.text()).toBe("hello world");
+    expect(await file!.text()).toBe("hello world");
   });
 
   test("arrayBuffer() returns content as ArrayBuffer", async () => {
@@ -165,7 +165,7 @@ describe("DiskFile", () => {
     await disk.put("buf.bin", "binary");
     const file = await disk.get("buf.bin");
     expect(file).toBeTruthy();
-    const buf = await file.arrayBuffer();
+    const buf = await file!.arrayBuffer();
     expect(buf instanceof ArrayBuffer).toBeTruthy();
     expect(new TextDecoder().decode(buf)).toBe("binary");
   });
@@ -175,7 +175,7 @@ describe("DiskFile", () => {
     await disk.put("bytes.bin", "data");
     const file = await disk.get("bytes.bin");
     expect(file).toBeTruthy();
-    const bytes = await file.bytes();
+    const bytes = await file!.bytes();
     expect(bytes instanceof Uint8Array).toBeTruthy();
     expect(new TextDecoder().decode(bytes)).toBe("data");
   });
@@ -185,8 +185,8 @@ describe("DiskFile", () => {
     await disk.put("cached.txt", "content");
     const file = await disk.get("cached.txt");
     expect(file).toBeTruthy();
-    const first = await file.bytes();
-    const second = await file.bytes();
+    const first = await file!.bytes();
+    const second = await file!.bytes();
     expect(first).toBe(second);
   });
 
@@ -195,7 +195,7 @@ describe("DiskFile", () => {
     await disk.put("stream.txt", "streamed");
     const file = await disk.get("stream.txt");
     expect(file).toBeTruthy();
-    const stream = file.stream();
+    const stream = file!.stream();
     expect(stream instanceof ReadableStream).toBeTruthy();
   });
 
@@ -204,7 +204,7 @@ describe("DiskFile", () => {
     await disk.put("sized.txt", "12345");
     const file = await disk.get("sized.txt");
     expect(file).toBeTruthy();
-    expect(file.size).toBe(5);
+    expect(file!.size).toBe(5);
   });
 
   test("href is set correctly", async () => {
@@ -219,7 +219,7 @@ describe("hooks API", () => {
     const disk = makeDisk();
     const calls: string[] = [];
 
-    const unsubscribe = disk.hook("put", (path, data, opts) => {
+    const unsubscribe = disk.hook("put", (path, _data, _opts) => {
       calls.push(path);
     });
 
@@ -279,7 +279,7 @@ describe("hooks API", () => {
 
     const loaded = await disk.get("rewritten.bin");
     expect(loaded).toBeTruthy();
-    expect(await loaded.text()).toBe("hooked");
+    expect(await loaded!.text()).toBe("hooked");
   });
 
   test("stored hook receives the final DiskFile", async () => {
@@ -292,7 +292,7 @@ describe("hooks API", () => {
 
     await disk.put("tracked.txt", "value");
     expect(storedHrefs.length).toBe(1);
-    expect(storedHrefs[0].endsWith("tracked.txt")).toBeTruthy();
+    expect(storedHrefs[0]!.endsWith("tracked.txt")).toBeTruthy();
   });
 
   test("put failure after driver write does not auto-delete target", async () => {

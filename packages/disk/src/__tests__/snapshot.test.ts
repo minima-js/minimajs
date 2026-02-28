@@ -47,7 +47,7 @@ describe("snapshot", () => {
     const files: string[] = [];
     for await (const f of target.list()) files.push(f.href);
 
-    expect(files.length).toBe(2, `expected 2 files, got: ${files.join(", ")}`);
+    expect(files.length).toBe(2);
     expect(files.some((f) => f.endsWith("a.jpg"))).toBeTruthy();
     expect(files.some((f) => f.endsWith("b.jpg"))).toBeTruthy();
     expect(files.some((f) => f.endsWith("readme.txt"))).toBeFalsy();
@@ -69,11 +69,11 @@ describe("restore", () => {
 
     const hello = await target.get("hello.txt");
     expect(hello).toBeTruthy();
-    expect(await hello.text()).toBe("hello world");
+    expect(await hello!.text()).toBe("hello world");
 
     const deep = await target.get("nested/deep.txt");
     expect(deep).toBeTruthy();
-    expect(await deep.text()).toBe("deep value");
+    expect(await deep!.text()).toBe("deep value");
   });
 
   test("restores to a different target path with targetPath option", async () => {
@@ -91,7 +91,7 @@ describe("restore", () => {
     for await (const f of target.list()) files.push(f.href);
 
     expect(files.some((f) => f.includes("restored"))).toBeTruthy();
-    expect(await target.exists("file.txt")).toBe(false, "should NOT be at original path");
+    expect(await target.exists("file.txt")).toBe(false);
   });
 
   test("does not overwrite existing files when overwrite is false (default)", async () => {
@@ -110,7 +110,7 @@ describe("restore", () => {
 
     const file = await target.get("shared.txt");
     expect(file).toBeTruthy();
-    expect(await file.text()).toBe("existing version", "existing file should not be overwritten");
+    expect(await file!.text()).toBe("existing version");
   });
 
   test("overwrites existing files when overwrite is true", async () => {
@@ -128,7 +128,7 @@ describe("restore", () => {
 
     const file = await target.get("overwrite.txt");
     expect(file).toBeTruthy();
-    expect(await file!.text()).toBe("new version", "file should be overwritten");
+    expect(await file!.text()).toBe("new version");
   });
 
   test("throws when snapshot file is not found", async () => {
@@ -151,6 +151,6 @@ describe("restore", () => {
 
     const file = await disk.get("original.txt");
     expect(file).toBeTruthy();
-    expect(await file.text()).toBe("content");
+    expect(await file!.text()).toBe("content");
   });
 });
