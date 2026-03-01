@@ -18,6 +18,8 @@
  * app.register(shutdown());
  * ```
  */
+export * from "./module-discovery/index.js";
+export * from "./deferrer/index.js";
 export * from "./context-provider/index.js";
 export * from "./body-parser/index.js";
 export * from "./router/index.js";

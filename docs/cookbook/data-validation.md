@@ -7,7 +7,7 @@ sidebar_position: 4
 
 Data validation is a critical part of any web application. It ensures that the data you receive from clients is in the correct format and meets your application's requirements.
 
-Minima.js provides a powerful package, `@minimajs/schema`, for data validation. This package is designed to work seamlessly with popular validation libraries like [Zod](https://zod.dev/), and others.
+Minima.js provides a powerful package, `@minimajs/schema`, for data validation. This package is designed to work seamlessly with popular validation libraries like [Zod](https://zod.dev/).
 
 This recipe will show you how to use `@minimajs/schema` with Zod to validate incoming request data.
 
@@ -23,9 +23,7 @@ npm install @minimajs/schema zod
 
 The first step is to create a validation schema using Zod. A schema defines the structure and constraints of your data.
 
-Let's create a schema for a new user:
-
-```typescript title="src/user/schema.ts"
+```typescript [src/user/schema.ts]
 import { z } from "zod";
 
 export const createUserSchema = z.object({
@@ -41,26 +39,37 @@ This schema defines a user object with a `name`, `email`, and `password`. It als
 
 Now that we have a schema, we can use it to validate the request body. The `@minimajs/schema` package provides a `createBody` function for this purpose.
 
-```typescript
-import { createApp } from "@minimajs/server";
-import { createBody } from "@minimajs/schema";
-import { createUserSchema } from "./user/schema";
+::: code-group
 
-const app = createApp();
+```typescript [src/users/module.ts]
+import { createBody } from "@minimajs/schema";
+import { type Routes } from "@minimajs/server";
+import { createUserSchema } from "./user/schema.js";
 
 const getValidatedBody = createBody(createUserSchema);
 
-app.post("/users", () => {
+function createUser() {
   const { name, email, password } = getValidatedBody();
 
   // At this point, you can be sure that the data is valid.
   // ... create the user ...
 
   return { message: "User created" };
-});
+}
 
+export const routes: Routes = {
+  "POST /": createUser,
+};
+```
+
+```typescript [src/index.ts]
+import { createApp } from "@minimajs/server/bun";
+
+const app = createApp();
 await app.listen({ port: 3000 });
 ```
+
+:::
 
 In this example:
 
@@ -75,23 +84,32 @@ In this example:
 
 You can also validate request headers and search parameters using the `createHeaders` and `createSearchParams` functions.
 
-```typescript
+::: code-group
+
+```typescript [src/posts/module.ts]
 import { createSearchParams } from "@minimajs/schema";
+import { type Routes } from "@minimajs/server";
 import { z } from "zod";
 
 const paginationSchema = z.object({
-  page: z.number().int().positive().default(1),
-  limit: z.number().int().positive().default(10),
+  page: z.number({ coerce: true }).int().positive().default(1),
+  limit: z.number({ coerce: true }).int().positive().default(10),
 });
 
 const getPagination = createSearchParams(paginationSchema);
 
-app.get("/posts", () => {
+function listPosts() {
   const { page, limit } = getPagination();
   // ... fetch posts with pagination ...
   return { page, limit };
-});
+}
+
+export const routes: Routes = {
+  "GET /": listPosts,
+};
 ```
+
+:::
 
 In this example, we use `createSearchParams` to validate and parse the `page` and `limit` search parameters.
 

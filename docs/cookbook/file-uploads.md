@@ -15,41 +15,52 @@ npm install @minimajs/multipart
 
 ## Quick Start
 
-```typescript
-import { createApp, abort } from "@minimajs/server";
+::: code-group
+
+```typescript [src/uploads/module.ts]
+import { abort, type Routes } from "@minimajs/server";
 import { multipart, helpers } from "@minimajs/multipart";
 
-const app = createApp();
-
-app.post("/upload", async () => {
+async function uploadAvatar() {
   const file = await multipart.file("avatar");
 
   if (!file) {
-    return abort({ error: "No file uploaded" }, 400);
+    abort({ error: "No file uploaded" }, 400);
   }
 
   await helpers.save(file, "./uploads");
   return { message: "Uploaded", filename: file.name };
-});
+}
 
+export const routes: Routes = {
+  "POST /upload": uploadAvatar,
+};
+```
+
+```typescript [src/index.ts]
+import { createApp } from "@minimajs/server/bun";
+
+const app = createApp();
 await app.listen({ port: 3000 });
 ```
+
+:::
 
 ## Single File Upload
 
 Use `multipart.file(fieldName)` to get a single file by field name. Returns a native `File` object.
 
-```typescript
-import { createApp, abort } from "@minimajs/server";
+::: code-group
+
+```typescript [src/uploads/module.ts]
+import { abort, type Routes } from "@minimajs/server";
 import { multipart, helpers } from "@minimajs/multipart";
 
-const app = createApp();
-
-app.post("/upload/avatar", async () => {
+async function uploadAvatar() {
   const avatar = await multipart.file("avatar");
 
   if (!avatar) {
-    return abort({ error: "No avatar uploaded" }, 400);
+    abort({ error: "No avatar uploaded" }, 400);
   }
 
   // Save with auto-generated UUID filename
@@ -62,28 +73,32 @@ app.post("/upload/avatar", async () => {
     size: helpers.humanFileSize(avatar.size),
     type: avatar.type,
   };
-});
+}
 
-await app.listen({ port: 3000 });
+export const routes: Routes = {
+  "POST /avatar": uploadAvatar,
+};
 ```
+
+:::
 
 Test with curl:
 
 ```bash
-curl -X POST -F "avatar=@photo.jpg" http://localhost:3000/upload/avatar
+curl -X POST -F "avatar=@photo.jpg" http://localhost:3000/uploads/avatar
 ```
 
 ## Multiple File Uploads
 
 Use `multipart.files()` to iterate over all uploaded files.
 
-```typescript
-import { createApp } from "@minimajs/server";
+::: code-group
+
+```typescript [src/gallery/module.ts]
+import { type Routes } from "@minimajs/server";
 import { multipart, helpers } from "@minimajs/multipart";
 
-const app = createApp();
-
-app.post("/upload/gallery", async () => {
+async function uploadGallery() {
   const uploaded = [];
 
   for await (const [field, file] of multipart.files()) {
@@ -97,10 +112,14 @@ app.post("/upload/gallery", async () => {
   }
 
   return { message: "Gallery uploaded", files: uploaded };
-});
+}
 
-await app.listen({ port: 3000 });
+export const routes: Routes = {
+  "POST /gallery": uploadGallery,
+};
 ```
+
+:::
 
 Test with curl:
 
@@ -109,20 +128,20 @@ curl -X POST \
   -F "photo1=@image1.jpg" \
   -F "photo2=@image2.jpg" \
   -F "photo3=@image3.jpg" \
-  http://localhost:3000/upload/gallery
+  http://localhost:3000/gallery
 ```
 
 ## Mixed Fields and Files
 
 Use `multipart.body()` to process both text fields and files together.
 
-```typescript
-import { createApp } from "@minimajs/server";
+::: code-group
+
+```typescript [src/profile/module.ts]
+import { type Routes } from "@minimajs/server";
 import { multipart, helpers } from "@minimajs/multipart";
 
-const app = createApp();
-
-app.post("/upload/profile", async () => {
+async function updateProfile() {
   const data: Record<string, unknown> = {};
 
   for await (const [name, value] of multipart.body()) {
@@ -135,10 +154,14 @@ app.post("/upload/profile", async () => {
   }
 
   return { message: "Profile updated", data };
-});
+}
 
-await app.listen({ port: 3000 });
+export const routes: Routes = {
+  "POST /update": updateProfile,
+};
 ```
+
+:::
 
 Test with curl:
 
@@ -147,43 +170,49 @@ curl -X POST \
   -F "username=john" \
   -F "email=john@example.com" \
   -F "avatar=@photo.jpg" \
-  http://localhost:3000/upload/profile
+  http://localhost:3000/profile/update
 ```
 
 ## Large File Uploads (Streaming)
 
 For large files, use the `streaming` module to avoid memory buffering:
 
-```typescript
-import { createApp, abort } from "@minimajs/server";
+::: code-group
+
+```typescript [src/videos/module.ts]
+import { abort, type Routes } from "@minimajs/server";
 import { streaming } from "@minimajs/multipart";
 import { pipeline } from "node:stream/promises";
 import { createWriteStream } from "node:fs";
 
-const app = createApp();
-
-app.post("/upload/video", async () => {
+async function uploadVideo() {
   const file = await streaming.file("video");
 
   if (!file) {
-    return abort({ error: "No video uploaded" }, 400);
+    abort({ error: "No video uploaded" }, 400);
   }
 
   // Stream directly to disk without buffering
   await pipeline(file.stream(), createWriteStream(`./uploads/${file.name}`));
 
   return { message: "Video uploaded", filename: file.name };
-});
+}
 
-await app.listen({ port: 3000 });
+export const routes: Routes = {
+  "POST /upload": uploadVideo,
+};
 ```
+
+:::
 
 ## Validated Uploads with Zod
 
 Use the schema module for type-safe validation:
 
-```typescript
-import { createApp } from "@minimajs/server";
+::: code-group
+
+```typescript [src/posts/module.ts]
+import { type Routes } from "@minimajs/server";
 import { z } from "zod";
 import { createMultipart } from "@minimajs/multipart/schema";
 import { helpers } from "@minimajs/multipart";
@@ -191,15 +220,14 @@ import { helpers } from "@minimajs/multipart";
 const upload = createMultipart({
   title: z.string().min(1).max(100),
   description: z.string().optional(),
-  image: z
-    .file()
-    .mime(["image/jpeg", "image/png", "image/webp"])
-    .max(5 * 1024 * 1024), // 5MB
+  image:
+    z
+      .file()
+      .mime(["image/jpeg", "image/png", "image/webp"])
+      .max(5 * 1024 * 1024), // 5MB
 });
 
-const app = createApp();
-
-app.post("/upload/post", async () => {
+async function createPost() {
   const data = await upload();
 
   const savedName = await helpers.save(data.image, "./uploads/posts");
@@ -209,10 +237,14 @@ app.post("/upload/post", async () => {
     description: data.description,
     imageUrl: `/uploads/posts/${savedName}`,
   };
-});
+}
 
-await app.listen({ port: 3000 });
+export const routes: Routes = {
+  "POST /create": createPost,
+};
 ```
+
+:::
 
 ## File Size Limits
 
@@ -231,8 +263,10 @@ const file = await multipart.file("document", {
 
 Files can be returned directly from handlers with automatic `Content-Type`:
 
-```typescript
-import { createApp } from "@minimajs/server";
+::: code-group
+
+```typescript [src/preview/module.ts]
+import { type Routes } from "@minimajs/server";
 import { z } from "zod";
 import { createMultipart } from "@minimajs/multipart/schema";
 
@@ -240,16 +274,17 @@ const upload = createMultipart({
   image: z.file().mime(["image/jpeg", "image/png"]),
 });
 
-const app = createApp();
-
-// Echo back the uploaded image
-app.post("/preview", async () => {
+async function previewImage() {
   const data = await upload();
   return data.image; // Returns with correct Content-Type
-});
+}
 
-await app.listen({ port: 3000 });
+export const routes: Routes = {
+  "POST /image": previewImage,
+};
 ```
+
+:::
 
 ## Helper Functions
 

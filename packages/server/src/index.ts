@@ -35,4 +35,7 @@ export * from "./plugin.js";
 export * from "./plugins/module-discovery/types.js";
 export { compose } from "./compose.js";
 
+// Route Handler
+export { handler } from "./internal/route.js";
+
 export { createApp } from "./node/index.js";

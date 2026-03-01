@@ -15,7 +15,7 @@ describe("BunServerAdapter", () => {
       request: new Request("http://localhost"),
     } as any;
 
-    expect(adapter.remoteAddr(ctxWithIp)).toBe("1.2.3.4");
+    expect(adapter.remoteAddr(ctxWithIp)?.hostname).toBe("1.2.3.4");
     expect(adapter.remoteAddr(ctxWithoutIp)).toBeNull();
   });
 
@@ -56,13 +56,12 @@ describe("BunServerAdapter", () => {
       expect(await res.text()).toBe("ok");
 
       expect(result.server).toBe(fakeServer);
-      expect(result.address).toEqual({
-        hostname: "0.0.0.0",
-        port: 8080,
-        family: "IPv4",
-        protocol: "http",
-        address: "http://0.0.0.0:8080/",
-      });
+      expect(result.address.hostname).toBe("0.0.0.0");
+      expect(result.address.port).toBe(8080);
+      expect(result.address.family).toBe("IPv4");
+      expect(result.address.protocol).toBe("http");
+      expect(result.address.href).toBe("http://0.0.0.0:8080/");
+      expect(result.address.toString()).toBe("http://0.0.0.0:8080/");
     } finally {
       (Bun as any).serve = originalServe;
       process.env.NODE_ENV = originalEnv;

@@ -12,24 +12,33 @@ Minima.js comes with a set of pre-built plugins to handle common web development
 
 ## Quick Example
 
-```typescript
-// src/module.ts
-import { type Meta } from "@minimajs/server";
+::: code-group
+
+```typescript [src/module.ts]
+import { type Meta, type Routes } from "@minimajs/server";
 import { cors } from "@minimajs/server/plugins";
 
+// Apply CORS globally to all routes in this scope
 export const meta: Meta = {
   plugins: [cors({ origin: "*" })],
 };
 
-export default async function (app) {
-  app.get("/api/data", () => ({ data: "value" }));
+function getData() {
+  return { data: "value" };
 }
+
+export const routes: Routes = {
+  "GET /api/data": getData,
+};
 ```
+
+:::
 
 ## Available Plugins
 
 - **[Body Parser](./body-parser.md)**: For parsing incoming request bodies (e.g., JSON, text).
 - **[CORS](./cors.md)**: For managing Cross-Origin Resource Sharing headers.
+- **[Descriptor](./descriptor.md)**: For applying route metadata to entire scopes.
 - **[Express Middleware](./express.md)**: For integrating Express.js-style middleware (Node.js only).
 - **[Proxy](./proxy.md)**: For extracting client information from proxy headers (IP, protocol, hostname).
 - **[Route Logger](./route-logger.md)**: A development utility to log all registered routes.

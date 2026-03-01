@@ -13,8 +13,8 @@
  *
  * const app = createApp();
  *
- * app.get('/hello', (req, res) => {
- *   res.json({ message: 'Hello from Bun!' });
+ * app.get('/hello', () => {
+ *   return { message: 'Hello from Bun!' };
  * });
  * app.listen({ port: 1234 })
  * ```

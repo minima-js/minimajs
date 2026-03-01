@@ -41,7 +41,7 @@ The `app` object provides a small but powerful set of methods for managing your 
 The `listen` method starts the web server, making it ready to accept incoming requests on a specified port and host. It returns an object containing the server's address.
 
 ```typescript
-const { address } = await app.listen({ port: 3000 });
+const address = await app.listen({ port: 3000 });
 console.log(`Server running at ${address}`);
 ```
 
@@ -59,15 +59,15 @@ The `.register()` method adds functionality to your application. While modules a
 
 ```typescript [Recommended: Using modules with meta.plugins]
 // src/users/module.ts
-import { hook } from "@minimajs/server";
+import { type Meta, type Routes, hook } from "@minimajs/server";
 
-export const meta = {
+export const meta: Meta = {
   plugins: [hook("request", () => console.log("Users hook"))],
 };
 
-export default async function (app) {
-  app.get("/list", () => "users");
-}
+export const routes: Routes = {
+  "GET /list": () => "users",
+};
 ```
 
 ```typescript [Alternative: Manual registration]

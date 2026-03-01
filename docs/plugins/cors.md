@@ -12,12 +12,21 @@ import { cors } from "@minimajs/server/plugins";
 
 ## Usage
 
-Register the plugin with your application instance. The default configuration is permissive, allowing requests from all origins.
+Register the plugin within your module's `meta.plugins`. The default configuration is permissive, allowing requests from all origins.
 
-```typescript
-// Allow requests from all origins
-app.register(cors());
+::: code-group
+
+```typescript [src/module.ts]
+import { cors } from "@minimajs/server/plugins";
+import { type Meta } from "@minimajs/server";
+
+// Allow requests from all origins globally
+export const meta: Meta = {
+  plugins: [cors()],
+};
 ```
+
+:::
 
 ## Configuration
 
@@ -30,23 +39,32 @@ Controls the `Access-Control-Allow-Origin` header.
 - **Type**: `string | string[] | ((origin: string) => boolean | Promise<boolean>)`
 - **Default**: `*`
 
-```typescript
-// Allow a single origin
-app.register(cors({ origin: "https://my-app.com" }));
+::: code-group
 
-// Allow multiple origins
-app.register(cors({ origin: ["https://app-v1.com", "https://app-v2.com"] }));
+```typescript [src/module.ts]
+import { cors } from "@minimajs/server/plugins";
+import { type Meta } from "@minimajs/server";
 
-// Dynamic origin validation
-app.register(
-  cors({
-    origin: (origin) => {
-      // Allow all subdomains of example.com
-      return origin.endsWith(".example.com");
-    },
-  })
-);
+export const meta: Meta = {
+  plugins: [
+    // Allow a single origin
+    cors({ origin: "https://my-app.com" }),
+
+    // Allow multiple origins
+    cors({ origin: ["https://app-v1.com", "https://app-v2.com"] }),
+
+    // Dynamic origin validation
+    cors({
+      origin: (origin) => {
+        // Allow all subdomains of example.com
+        return origin.endsWith(".example.com");
+      },
+    }),
+  ],
+};
 ```
+
+:::
 
 ### Other Options
 
@@ -59,13 +77,22 @@ app.register(
 
 **Example with multiple options:**
 
-```typescript
-app.register(
-  cors({
-    origin: "https://my-app.com",
-    methods: ["GET", "POST"],
-    credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+::: code-group
+
+```typescript [src/api/module.ts]
+import { cors } from "@minimajs/server/plugins";
+import { type Meta } from "@minimajs/server";
+
+export const meta: Meta = {
+  plugins: [
+    cors({
+      origin: "https://my-app.com",
+      methods: ["GET", "POST"],
+      credentials: true,
+      allowedHeaders: ["Content-Type", "Authorization"],
+    }),
+  ],
+};
 ```
+
+:::

@@ -29,7 +29,7 @@ This command will create a `prisma` directory with a `schema.prisma` file. This 
 
 Let's define a simple `User` model in `prisma/schema.prisma`:
 
-```prisma title="prisma/schema.prisma"
+```prisma [prisma/schema.prisma]
 model User {
   id    Int     @id @default(autoincrement())
   email String  @unique
@@ -51,11 +51,11 @@ This command will:
 
 ## 2. Connecting to the Database
 
-We need to connect to the database when the application starts and disconnect when it stops. The `hook.lifespan` utility is perfect for this.
+We need to connect to the database when the application starts and disconnect when it stops. The `hook.lifespan` utility is perfect for this. It is best to register this in your root module.
 
-Let's create a `database.ts` file to manage the Prisma Client instance.
+::: code-group
 
-```typescript title="src/database.ts"
+```typescript [src/database.ts]
 import { PrismaClient } from "@prisma/client";
 import { hook } from "@minimajs/server";
 
@@ -72,51 +72,41 @@ export const dbLifespan = hook.lifespan(async () => {
 });
 ```
 
-Now, we can register this `dbLifespan` hook in our main application file.
+```typescript [src/module.ts]
+import { type Meta } from "@minimajs/server";
+import { dbLifespan } from "./database.js";
 
-```typescript title="src/index.ts"
-import { createApp } from "@minimajs/server";
-import { dbLifespan } from "./database";
+// Global database connection management
+export const meta: Meta = {
+  plugins: [dbLifespan],
+};
+```
 
-const app = createApp();
+```typescript [src/index.ts]
+import { createApp } from "@minimajs/server/bun";
 
-app.register(dbLifespan);
-
-// ... your routes ...
-
+const app = createApp(); // Auto-discovers root module with dbLifespan
 await app.listen({ port: 3000 });
 ```
 
-This ensures that the database connection is properly managed throughout the application's lifecycle.
+:::
 
 ## 3. Using the Prisma Client in Routes
 
 Now that we have connected to the database, we can use the Prisma Client in our route handlers to query the database.
 
-Let's create a route to get all users.
+::: code-group
 
-```typescript title="src/index.ts"
-import { createApp } from "@minimajs/server";
-import { dbLifespan, prisma } from "./database";
+```typescript [src/users/module.ts]
+import { body, type Routes } from "@minimajs/server";
+import { prisma } from "../database.js";
 
-const app = createApp();
-
-app.register(dbLifespan);
-
-app.get("/users", async () => {
+async function listUsers() {
   const users = await prisma.user.findMany();
   return users;
-});
+}
 
-await app.listen({ port: 3000 });
-```
-
-And a route to create a new user:
-
-```typescript
-import { body } from "@minimajs/server";
-
-app.post("/users", async () => {
+async function createUser() {
   const { name, email } = body<{ name: string; email: string }>();
   const newUser = await prisma.user.create({
     data: {
@@ -125,49 +115,33 @@ app.post("/users", async () => {
     },
   });
   return newUser;
-});
-```
-
-## 4. Creating a Database Module
-
-To keep our code organized, we can encapsulate the database-related logic in a module.
-
-```typescript title="src/user/module.ts"
-import { type App, body } from "@minimajs/server";
-import { prisma } from "../database";
-
-export async function userModule(app: App) {
-  app.get("/users", async () => {
-    const users = await prisma.user.findMany();
-    return users;
-  });
-
-  app.post("/users", async () => {
-    const { name, email } = body<{ name: string; email: string }>();
-    const newUser = await prisma.user.create({
-      data: {
-        name,
-        email,
-      },
-    });
-    return newUser;
-  });
 }
+
+export const routes: Routes = {
+  "GET /": listUsers,
+  "POST /": createUser,
+};
 ```
 
-And then register the module in our main application file:
+:::
 
-```typescript title="src/index.ts"
-import { createApp } from "@minimajs/server";
-import { dbLifespan } from "./database";
-import { userModule } from "./user/module";
+## 4. REST API Example
 
-const app = createApp();
+To keep our code organized, we encapsulate the database-related logic in a feature-based module structure.
 
-app.register(dbLifespan);
-app.register(userModule);
-
-await app.listen({ port: 3000 });
+```text
+src/
+├── database.ts       # Prisma instance & lifespan hook
+├── module.ts         # Root module (global config)
+├── index.ts          # Entry point
+└── users/
+    └── module.ts     # CRUD for /users
 ```
 
 This approach makes our code more modular and easier to maintain. You now have a solid foundation for building database-driven applications with Minima.js and Prisma!
+
+## See Also
+
+- [Building with File-Based Modules](/core-concepts/modules)
+- [Application Lifespan Hooks](/guides/hooks#hooklifespansetupfn)
+- [Http Helpers](/guides/http)

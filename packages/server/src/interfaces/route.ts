@@ -17,7 +17,7 @@ export interface RouteConfig<S> extends Omit<Route<S>, "params"> {
   app: App<S>;
 }
 
-export type RouteMetaDescriptor<S = unknown> = [symbol: symbol, value: unknown] | ((config: RouteConfig<S>) => void);
+export type RouteMetaDescriptor<S = any> = [symbol: symbol, value: unknown] | ((config: RouteConfig<S>) => void);
 
 export interface RouteOptions {
   method: HTTPMethod | HTTPMethod[];

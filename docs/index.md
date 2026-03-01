@@ -20,30 +20,35 @@ hero:
 
 features:
   - icon:
+      src: /icon-globe.svg
+    title: Web Standards, Pure ESM, Zero Abstractions
+    details: "Built on Web APIs you already know—Request, Response, File, Blob, URL. No proprietary abstractions. Your code stays portable and future-proof."
+
+  - icon:
       src: /icon-lightning.svg
     title: Built from Scratch for Modern Runtimes
     details: "Not a legacy port. Designed ground-up for Bun and Node.js with native APIs, zero compatibility layers, zero historical baggage."
+
+  - icon:
+      src: /icon-bun.svg
+    title: 100% Bun-Native Compatible
+    details: First-class Bun support with dedicated imports. Full Node.js compatibility. Same code, different runtime.
+
   - icon:
       src: /icon-function.svg
     title: File-Based Modules with True Isolation
     details: "Create users/module.ts, it auto-loads as /users/*. Each module is encapsulated—plugins only affect that module and its children. No sibling interference."
+
   - icon:
       src: /icon-context.svg
     title: Write Code That Reads Naturally
     details: "Call body() from anywhere. No req.body drilling. No context passing. Access request data like it's global—because it is (safely)."
+
   - icon:
       src: /icon-typescript.svg
     title: TypeScript works with you
     details: |
       APIs are designed for inference, so types flow naturally from usage. You write logic.
-  - icon:
-      src: /icon-bun.svg
-    title: 100% Bun-Native Compatible
-    details: First-class Bun support with dedicated imports. Full Node.js compatibility. Same code, different runtime.
-  - icon:
-      src: /icon-globe.svg
-    title: Web Standards, Pure ESM, Zero Abstractions
-    details: "Built on Web APIs you already know—Request, Response, File, Blob, URL. No proprietary abstractions. Your code stays portable and future-proof."
 ---
 
 ## How It Feels to Build
@@ -62,7 +67,7 @@ await app.listen({ port: 3000 });
 ```
 
 ```typescript [src/module.ts]
-import { type Meta } from "@minimajs/server";
+import type { Meta, Routes } from "@minimajs/server";
 import { cors } from "@minimajs/server/plugins";
 
 // Global config - applies to every route
@@ -71,15 +76,19 @@ export const meta: Meta = {
   plugins: [cors()],
 };
 
-// sync / async supported
-export default async function (app) {
-  app.get("/health", () => ({ status: "ok" }));
+function getHealth() {
+  return { status: "ok" };
 }
+
+export const routes: Routes = {
+  "GET /health": getHealth,
+};
 ```
 
 ```typescript [src/users/module.ts]
 // Auto-loaded as /api/users/*
 
+import type { Routes } from "@minimajs/server";
 import { body } from "@minimajs/server";
 
 function getUsers() {
@@ -94,21 +103,24 @@ function createUser() {
   return { created: user };
 }
 
-export default function (app) {
-  app.get("/list", getUsers);
-  app.post("/create", createUser);
-}
+export const routes: Routes = {
+  "GET /list": getUsers,
+  "POST /create": createUser,
+};
 ```
 
 ```typescript [src/posts/module.ts]
 // Auto-loaded as /api/posts/*
 
+import type { Routes } from "@minimajs/server";
+
 function getLatestPosts() {
   return { posts: [] };
 }
-export default function (app) {
-  app.get("/latest", getLatestPosts);
-}
+
+export const routes: Routes = {
+  "GET /latest": getLatestPosts,
+};
 ```
 
 :::
@@ -129,6 +141,7 @@ Upload handling with `@minimajs/multipart` gives you native `File` instances—n
 ::: code-group
 
 ```typescript [src/uploads/module.ts]
+import type { Routes } from "@minimajs/server";
 import { multipart, helpers } from "@minimajs/multipart";
 
 export async function uploadAvatar() {
@@ -145,9 +158,9 @@ export async function uploadAvatar() {
   return avatar;
 }
 
-export default function (app) {
-  app.post("/avatar", uploadAvatar);
-}
+export const routes: Routes = {
+  "POST /avatar": uploadAvatar,
+};
 ```
 
 :::
@@ -181,7 +194,7 @@ export const meta: Meta = {
 ```
 
 ```typescript [src/users/module.ts]
-import { type Meta } from "@minimajs/server";
+import type { Meta, Routes } from "@minimajs/server";
 import { hook } from "@minimajs/server";
 
 // Users module - this hook ONLY affects /api/users/* routes
@@ -189,14 +202,19 @@ export const meta: Meta = {
   plugins: [hook("request", () => console.log("Users accessed"))],
 };
 
-export default async function (app) {
-  app.get("/list", () => [
+function listUsers() {
+  return [
     /* users */
-  ]);
+  ];
 }
+
+export const routes: Routes = {
+  "GET /list": listUsers,
+};
 ```
 
 ```typescript [src/posts/module.ts]
+import type { Routes } from "@minimajs/server";
 import { searchParams } from "@minimajs/server";
 // Posts module - no logging hook here
 // Completely isolated from users module
@@ -210,9 +228,9 @@ function getPosts() {
   };
 }
 
-export default async function (app) {
-  app.get("/latest", getPosts);
-}
+export const routes: Routes = {
+  "GET /latest": getPosts,
+};
 ```
 
 :::

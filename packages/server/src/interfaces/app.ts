@@ -5,7 +5,7 @@ import type { Context } from "./context.js";
 import type { RouteMetaDescriptor, RouteOptions } from "./route.js";
 import type { Logger } from "pino";
 import type { HookStore } from "../hooks/types.js";
-import type { kMiddlewares, kHooks, kAppDescriptor, kModulesChain } from "../symbols.js";
+import type { kMiddlewares, kHooks, kAppDescriptor, kModulesChain, kHandlerDescriptor } from "../symbols.js";
 
 // ============================================================================
 // App
@@ -81,7 +81,9 @@ export type Container<S = unknown> = {
 // ============================================================================
 // Handler
 // ============================================================================
-export type Handler<S = unknown> = (ctx: Context<S>) => unknown;
+export type Handler<S = unknown> = ((ctx: Context<S>) => unknown) & {
+  [kHandlerDescriptor]?: RouteMetaDescriptor<S>[];
+};
 
 // ============================================================================
 // Middleware Types
