@@ -1,6 +1,6 @@
-# @minimajs/aws-s3
+# @minimajs/azure-blob
 
-## 0.0.1
+## 0.0.2
 
 ### Patch Changes
 

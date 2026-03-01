@@ -1,6 +1,6 @@
 {
   "name": "@minimajs/aws-s3",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "description": "AWS S3 storage driver for @minimajs/disk—use web-native File APIs instead of AWS SDK",
   "main": "./lib/index.js",

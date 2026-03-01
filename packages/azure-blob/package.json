@@ -1,6 +1,6 @@
 {
   "name": "@minimajs/azure-blob",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "module",
   "description": "Azure Blob Storage driver for @minimajs/disk — use web-native File APIs instead of Azure SDK",
   "main": "./lib/index.js",
