@@ -4,7 +4,14 @@ import { S3Client, type S3ClientConfig } from "@aws-sdk/client-s3";
 
 export * from "./s3-driver.js";
 
-export interface S3DriverOptions extends S3BaseDriverOptions, S3ClientConfig {}
+export interface S3DriverOptions extends S3BaseDriverOptions, S3ClientConfig {
+  /**
+   * AWS SDK defaults mode.
+   *
+   * Uses the same value shape as `S3ClientConfig["defaultsMode"]`.
+   */
+  defaultsMode?: S3ClientConfig["defaultsMode"];
+}
 
 /**
  * Create an S3 storage driver for @minimajs/disk

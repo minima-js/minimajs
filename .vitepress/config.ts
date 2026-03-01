@@ -242,6 +242,7 @@ const config = defineConfig({
             collapsed: false,
             items: [
               { text: "Overview", link: "/packages/disk/" },
+              { text: "Decision Guide", link: "/packages/disk/decision-guide" },
               { text: "Plugins", link: "/packages/disk/plugins" },
               { text: "Protocol Disk", link: "/packages/disk/protocol-disk" },
               { text: "AWS S3", link: "/packages/disk/aws-s3" },

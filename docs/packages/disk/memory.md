@@ -2,6 +2,14 @@
 
 In-memory storage driver for testing and development. Data is stored in RAM and will be lost when the process exits.
 
+## Best Fit
+
+Use the memory driver when:
+
+- tests should be isolated and fast
+- local prototyping should avoid external dependencies
+- you need deterministic behavior without filesystem/network variability
+
 ## Features
 
 - ✅ **Fast** - No I/O operations, everything in memory
@@ -24,7 +32,8 @@ bun add @minimajs/disk
 ### Basic Usage
 
 ```typescript
-import { createMemoryDriver, createDisk } from "@minimajs/disk";
+import { createDisk } from "@minimajs/disk";
+import { createMemoryDriver } from "@minimajs/disk/adapters";
 
 const memoryDriver = createMemoryDriver();
 const disk = createDisk({ driver: memoryDriver });
@@ -42,7 +51,8 @@ if (file) {
 ### Testing Example
 
 ```typescript
-import { createMemoryDriver, createDisk } from "@minimajs/disk";
+import { createDisk } from "@minimajs/disk";
+import { createMemoryDriver } from "@minimajs/disk/adapters";
 import { describe, test, beforeEach, afterEach } from "@jest/globals";
 import assert from "node:assert/strict";
 
@@ -80,7 +90,8 @@ describe("File Upload Service", () => {
 ### With Public URLs
 
 ```typescript
-import { createMemoryDriver, createDisk } from "@minimajs/disk";
+import { createDisk } from "@minimajs/disk";
+import { createMemoryDriver } from "@minimajs/disk/adapters";
 
 const memoryDriver = createMemoryDriver({
   publicUrl: "http://localhost:3000/files",
@@ -97,7 +108,8 @@ console.log(url); // http://localhost:3000/files/avatar.jpg
 ### Development Server Example
 
 ```typescript
-import { createMemoryDriver, createDisk } from "@minimajs/disk";
+import { createDisk } from "@minimajs/disk";
+import { createMemoryDriver } from "@minimajs/disk/adapters";
 import express from "express";
 
 const memoryDriver = createMemoryDriver({
@@ -212,5 +224,6 @@ const text2 = await new Response(stream2).text(); // "Hello World"
 ## See Also
 
 - [Main Documentation](./index.md)
-- [Testing Strategies](./examples.md#testing)
+- [Testing Strategies](./examples.md#testing-strategies)
 - [Filesystem Driver](./filesystem.md)
+- [Decision Guide](./decision-guide.md)

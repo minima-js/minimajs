@@ -12,6 +12,8 @@ export * from "./file.js";
 export * from "./symbols.js";
 export * from "./errors.js";
 export * from "./hooks/manager.js";
+export * from "./hooks/types.js";
+export * from "./hooks/trigger.js";
 
 // Errors
 export * from "./errors.js";
@@ -73,7 +75,7 @@ export type DiskPlugin = (disk: Disk) => void;
  *
  * // Upload File objects directly
  * const uploadedFile = new File(['content'], 'doc.txt');
- * await disk.put(uploadedFile); // Auto-generates unique filename
+ * await disk.put(uploadedFile); // Preserves original filename by default
  * ```
  */
 export function createDisk<TDriver extends DiskDriver = FsDriver>(

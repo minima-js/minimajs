@@ -2,6 +2,15 @@
 
 Local filesystem storage driver for Node.js. Store files on disk with optional public URL generation.
 
+## Best Fit
+
+Use the filesystem driver when:
+
+- you need low-latency local storage in development
+- you run a single-node or shared-volume deployment
+- you want simple operational setup with direct file access
+- you are iterating before moving to cloud object storage
+
 ## Features
 
 - 💾 **Local Storage** - Store files on local or network filesystem
@@ -24,7 +33,8 @@ bun add @minimajs/disk
 ### Basic Usage
 
 ```typescript
-import { createDisk, createFsDriver } from "@minimajs/disk";
+import { createDisk } from "@minimajs/disk";
+import { createFsDriver } from "@minimajs/disk/adapters";
 
 const disk = createDisk({
   driver: createFsDriver({
@@ -51,7 +61,8 @@ await disk.delete("images/avatar.jpg");
 ### With Public URLs
 
 ```typescript
-import { createDisk, createFsDriver } from "@minimajs/disk";
+import { createDisk } from "@minimajs/disk";
+import { createFsDriver } from "@minimajs/disk/adapters";
 
 const disk = createDisk({
   driver: createFsDriver({
@@ -71,7 +82,8 @@ console.log(url); // https://cdn.example.com/uploads/avatar.jpg
 
 ```typescript
 import express from "express";
-import { createDisk, createFsDriver } from "@minimajs/disk";
+import { createDisk } from "@minimajs/disk";
+import { createFsDriver } from "@minimajs/disk/adapters";
 
 const disk = createDisk({
   driver: createFsDriver({
@@ -422,3 +434,4 @@ await Promise.all([
 - [AWS S3 Driver](./aws-s3.md)
 - [Protocol Disk](./protocol-disk.md)
 - [Examples](./examples.md)
+- [Decision Guide](./decision-guide.md)

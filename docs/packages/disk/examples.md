@@ -2,15 +2,67 @@
 
 Comprehensive examples showing real-world usage patterns for `@minimajs/disk`.
 
+This guide is intentionally staged:
+
+1. Start with the capability tour and basic operations.
+2. Add plugin and reliability patterns for production readiness.
+3. Use architecture patterns when storage topology becomes multi-tenant or multi-tier.
+
 ## Table of Contents
 
+- [Capability Tour](#capability-tour)
 - [Basic Operations](#basic-operations)
 - [Image Processing](#image-processing)
 - [PDF Generation](#pdf-generation)
 - [File Uploads](#file-uploads)
+- [Plugin Pipelines](#plugin-pipelines)
 - [Backup & Sync](#backup--sync)
 - [Testing Strategies](#testing-strategies)
 - [Production Patterns](#production-patterns)
+- [Architecture Patterns](#architecture-patterns)
+
+## Capability Tour
+
+### One API across local, temp, S3, Azure, and plugins
+
+```typescript
+import { createDisk, createTempDisk } from "@minimajs/disk";
+import { createS3Driver } from "@minimajs/aws-s3";
+import { createAzureBlobDriver } from "@minimajs/azure-blob";
+import { createFsDriver } from "@minimajs/disk/adapters";
+import { encryption, partition, storeAs } from "@minimajs/disk/plugins";
+
+const localDisk = createDisk();
+await localDisk.put("hello.txt", "hello world");
+
+const tempDisk = createTempDisk();
+await tempDisk.put("preview.txt", "temporary data");
+
+const encryptedS3 = createDisk(
+  { driver: createS3Driver({ bucket: "secure-files", region: "us-east-1" }) },
+  encryption({ password: process.env.DISK_ENCRYPTION_PASSWORD! })
+);
+
+const report = new File(["Quarterly report"], "q1.txt", { type: "text/plain" });
+const encrypted = await encryptedS3.put(report);
+console.log(encrypted.href); // s3://secure-files/q1.txt
+
+const partitionedFs = createDisk(
+  { driver: createFsDriver({ root: "file:///var/storage/" }) },
+  partition({ by: "date" })
+);
+
+const dated = await partitionedFs.put(new File(["abc"], "notes.txt"));
+console.log(dated.href); // file:///var/storage/2026/03/01/notes.txt
+
+const azure = createDisk(
+  { driver: createAzureBlobDriver({ container: "public-assets" }) },
+  storeAs("uuid")
+);
+
+const image = await azure.put(new File(["abc"], "avatar.png", { type: "image/png" }));
+console.log(image.href); // https://.../<uuid>.png
+```
 
 ## Basic Operations
 
@@ -18,7 +70,7 @@ Comprehensive examples showing real-world usage patterns for `@minimajs/disk`.
 
 ```typescript
 import { createDisk } from "@minimajs/disk";
-import { createFsDriver } from "@minimajs/disk/adapters/fs";
+import { createFsDriver } from "@minimajs/disk/adapters";
 
 const disk = createDisk({
   driver: createFsDriver({ root: "./storage" }),
@@ -51,15 +103,6 @@ console.log(exists); // true
 const file = await disk.get("documents/missing.txt");
 if (!file) {
   console.log("File not found");
-}
-
-// Try/catch approach
-try {
-  const file = await disk.get("documents/missing.txt");
-} catch (error) {
-  if (error instanceof DiskFileNotFoundError) {
-    console.log("File not found");
-  }
 }
 ```
 
@@ -200,6 +243,7 @@ const disk = createDisk({
     credentials: {
       /* ... */
     },
+    acl: "public-read",
   }),
 });
 
@@ -268,7 +312,8 @@ console.log(invoiceUrl); // https://...
 ### Multipart Upload Handler
 
 ```typescript
-import { createDisk, storeAs } from "@minimajs/disk";
+import { createDisk } from "@minimajs/disk";
+import { storeAs } from "@minimajs/disk/plugins";
 import { createS3Driver } from "@minimajs/aws-s3";
 import { Application } from "@minimajs/server";
 import { multipart } from "@minimajs/multipart";
@@ -364,12 +409,65 @@ async function uploadWithValidation(path: string, file: File): Promise<string> {
 }
 ```
 
+## Plugin Pipelines
+
+### Security + naming + partitioning + integrity in one stack
+
+```typescript
+import { createDisk } from "@minimajs/disk";
+import { createS3Driver } from "@minimajs/aws-s3";
+import { storeAs, partition, encryption, checksum } from "@minimajs/disk/plugins";
+
+const disk = createDisk(
+  {
+    driver: createS3Driver({
+      bucket: "compliance-files",
+      region: "us-east-1",
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+      },
+    }),
+  },
+  storeAs("uuid-original"),
+  partition({ by: "date", format: "yyyy/MM/dd/HH" }),
+  encryption({ password: process.env.DISK_ENCRYPTION_PASSWORD! }),
+  checksum({ algorithm: "sha256", extension: ".sha256" })
+);
+
+const stored = await disk.put(new File(["tax document"], "invoice.pdf", { type: "application/pdf" }));
+console.log(stored.metadata.originalName); // invoice.pdf
+```
+
+### Upload/download observability
+
+```typescript
+import { createDisk } from "@minimajs/disk";
+import { createFsDriver } from "@minimajs/disk/adapters";
+import { uploadProgress, downloadProgress } from "@minimajs/disk/plugins";
+
+const disk = createDisk(
+  { driver: createFsDriver({ root: "file:///tmp/uploads/" }) },
+  uploadProgress(({ loaded, total }) => {
+    const pct = total ? ((loaded / total) * 100).toFixed(1) : "0.0";
+    console.log(`upload ${loaded}/${total ?? "?"} (${pct}%)`);
+  }),
+  downloadProgress(({ loaded, total }) => {
+    const pct = total ? ((loaded / total) * 100).toFixed(1) : "0.0";
+    console.log(`download ${loaded}/${total ?? "?"} (${pct}%)`);
+  })
+);
+
+await disk.put("movie.mp4", movieReadableStream, { type: "video/mp4" });
+await disk.get("movie.mp4");
+```
+
 ## Backup & Sync
 
 ### Cross-Storage Backup
 
 ```typescript
-import { createProtocolDisk } from "@minimajs/disk";
+import { createProtoDisk } from "@minimajs/disk";
 import { createS3Driver } from "@minimajs/aws-s3";
 
 // Primary storage (S3)
@@ -390,7 +488,7 @@ const backup = createS3Driver({
   },
 });
 
-const disk = createProtocolDisk({
+const disk = createProtoDisk({
   protocols: {
     "s3://prod-data/": primary,
     "s3://backup-data/": backup,
@@ -456,7 +554,7 @@ backupJob.start();
 
 ```typescript
 import { createDisk } from "@minimajs/disk";
-import { createMemoryDriver } from "@minimajs/disk/adapters/memory";
+import { createMemoryDriver } from "@minimajs/disk/adapters";
 import { describe, it, expect, beforeEach } from "@jest/globals";
 
 describe("FileService", () => {
@@ -533,9 +631,9 @@ describe("ImageProcessor", () => {
 ### Environment-Based Storage
 
 ```typescript
-import { createProtocolDisk } from "@minimajs/disk";
+import { createDisk } from "@minimajs/disk";
 import { createS3Driver } from "@minimajs/aws-s3";
-import { createFsDriver } from "@minimajs/disk/adapters/fs";
+import { createFsDriver } from "@minimajs/disk/adapters";
 
 function createStorageDisk() {
   if (process.env.NODE_ENV === "production") {
@@ -655,6 +753,54 @@ new CronJob("0 3 * * *", async () => {
 }).start();
 ```
 
+## Architecture Patterns
+
+### Multi-tenant isolation with protocol routing
+
+```typescript
+import { createProtoDisk } from "@minimajs/disk";
+import { createS3Driver } from "@minimajs/aws-s3";
+
+const credentials = {
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+};
+
+const disk = createProtoDisk({
+  protocols: {
+    "s3://tenant-acme/": createS3Driver({ bucket: "tenant-acme", region: "us-east-1", credentials }),
+    "s3://tenant-globex/": createS3Driver({ bucket: "tenant-globex", region: "us-east-1", credentials }),
+    "s3://tenant-initrode/": createS3Driver({ bucket: "tenant-initrode", region: "us-east-1", credentials }),
+  },
+});
+
+async function uploadTenantFile(tenant: "acme" | "globex" | "initrode", path: string, file: File) {
+  return disk.put(`s3://tenant-${tenant}/uploads/${path}`, file);
+}
+```
+
+### Hot/warm/cold data tiers
+
+```typescript
+import { createProtoDisk } from "@minimajs/disk";
+import { createS3Driver } from "@minimajs/aws-s3";
+
+const disk = createProtoDisk({
+  protocols: {
+    "s3://hot/": createS3Driver({ bucket: "hot-tier", region: "us-east-1" }),
+    "s3://warm/": createS3Driver({ bucket: "warm-tier", region: "us-east-1" }),
+    "s3://cold/": createS3Driver({ bucket: "cold-tier", region: "us-west-2" }),
+  },
+});
+
+// Fresh uploads go to hot tier
+await disk.put("s3://hot/events/2026-03-01.log", eventStream);
+
+// Lifecycle policy: move older data between tiers
+await disk.move("s3://hot/events/2026-01-01.log", "s3://warm/events/2026-01-01.log");
+await disk.move("s3://warm/events/2025-01-01.log", "s3://cold/events/2025-01-01.log");
+```
+
 ## See Also
 
 - [Main Documentation](./index.md)
@@ -662,3 +808,4 @@ new CronJob("0 3 * * *", async () => {
 - [Protocol Disk](./protocol-disk.md)
 - [Memory Driver](./memory.md)
 - [Filesystem Driver](./filesystem.md)
+- [Decision Guide](./decision-guide.md)

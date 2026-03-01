@@ -1,6 +1,6 @@
 # AWS S3 Driver
 
-**AWS S3 storage driver for @minimajs/disk.** Use web-native File APIs to interact with AWS S3—forget the AWS SDK and its inconsistent APIs.
+**AWS S3 storage driver for `@minimajs/disk`.** Keep your application code on web-native File APIs while using S3 for durable, scalable storage.
 
 ## Features
 
@@ -15,6 +15,15 @@
 - ✅ **Encryption** - AES256 and KMS encryption support
 - ✅ **ACL Support** - Control file access permissions
 - ✅ **Minimal Dependencies** - Only requires @aws-sdk/client-s3
+
+## Best Fit
+
+Choose the S3 driver when you need:
+
+- durable storage across deployments and regions
+- large-scale object storage with lifecycle policies
+- CDN-backed delivery (CloudFront or custom public URL)
+- IAM, KMS, and compliance-oriented controls
 
 ## Installation
 
@@ -46,7 +55,11 @@ const disk = createDisk({
 
 // Web-native API - works like browser File API
 const file = new File(["Hello World"], "hello.txt");
-await disk.put(file); // Auto-generates unique filename
+await disk.put(file); // Stored as "hello.txt" (original filename preserved)
+
+// Use storeAs(...) plugin if you want UUID naming
+// import { storeAs } from "@minimajs/disk/plugins";
+// const disk = createDisk({ driver: createS3Driver({...}) }, storeAs("uuid"));
 
 // Or specify path
 await disk.put("uploads/avatar.jpg", imageBuffer);
@@ -565,18 +578,17 @@ const disk = createDisk({
 });
 ```
 
-## Related Documentation
+## See Also
 
 - [Core Disk Package](./index.md) - Main documentation
 - [ProtoDisk](./protocol-disk.md) - Multi-cloud routing
 - [Azure Blob Driver](./azure-blob.md) - Azure Blob Storage
 - [Filesystem Driver](./filesystem.md) - Local filesystem storage
+- [Decision Guide](./decision-guide.md) - Driver and plugin selection
 
 ## Key Benefits
 
-✅ **Web-Native APIs** - Use familiar File, Blob, ReadableStream APIs  
-✅ **No AWS SDK Learning Curve** - Forget complex SDK methods  
-✅ **Provider Agnostic** - Same code works with filesystem, Azure, etc.  
-✅ **Type-Safe** - Full TypeScript support  
-✅ **Streaming** - Efficient large file handling  
-✅ **Multi-Cloud** - Easy to switch or combine providers
+- Use one application-level API across local, S3, and other drivers.
+- Keep large uploads/downloads stream-first.
+- Integrate cleanly with CloudFront and signed URL flows.
+- Apply cross-cutting concerns through plugins, not bespoke middleware.

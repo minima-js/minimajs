@@ -2,6 +2,15 @@
 
 Multi-driver routing with prefix-based matching. Route storage operations to different drivers based on URL prefixes with automatic longest-match-first algorithm.
 
+## Why ProtoDisk
+
+Use `createProtoDisk` when one storage backend is no longer enough:
+
+- split traffic by tenant, bucket, or domain
+- move data across providers without custom transfer code
+- keep one API while routing to many drivers
+- evolve architecture incrementally (dev local, prod cloud, archival tiers)
+
 ## Features
 
 - 🎯 **Prefix-Based Routing** - Route by protocol, bucket, domain, or any prefix
@@ -21,11 +30,11 @@ npm install @minimajs/aws-s3
 ## Basic Usage
 
 ```typescript
-import { createProtocolDisk } from "@minimajs/disk";
-import { createFsDriver } from "@minimajs/disk";
+import { createProtoDisk } from "@minimajs/disk";
+import { createFsDriver } from "@minimajs/disk/adapters";
 import { createS3Driver } from "@minimajs/aws-s3";
 
-const disk = createProtocolDisk({
+const disk = createProtoDisk({
   protocols: {
     "file://": createFsDriver({ root: "/var/uploads" }),
     "s3://": createS3Driver({ region: "us-east-1" }),
@@ -48,7 +57,7 @@ await disk.put("uploads/avatar.jpg", imageData);
 More specific prefixes take precedence:
 
 ```typescript
-const disk = createProtocolDisk({
+const disk = createProtoDisk({
   protocols: {
     "s3://": generalS3Driver, // Matches: s3://anything/
     "s3://images-bucket/": imagesDriver, // Matches: s3://images-bucket/*
@@ -73,10 +82,10 @@ await disk.put("s3://other-bucket/file.txt", data);
 Different configurations per bucket:
 
 ```typescript
-import { createProtocolDisk } from "@minimajs/disk";
+import { createProtoDisk } from "@minimajs/disk";
 import { createS3Driver } from "@minimajs/aws-s3";
 
-const disk = createProtocolDisk({
+const disk = createProtoDisk({
   protocols: {
     "s3://images-prod/": createS3Driver({
       bucket: "images-prod",
@@ -107,7 +116,7 @@ await disk.move("s3://images-prod/old.jpg", "s3://archive/old.jpg");
 Route to different CDN providers:
 
 ```typescript
-const disk = createProtocolDisk({
+const disk = createProtoDisk({
   protocols: {
     "https://cdn1.example.com/": azureDriver,
     "https://cdn2.example.com/": cloudflareDriver,
@@ -128,7 +137,7 @@ await disk.copy("https://cdn1.example.com/logo.png", "https://cdn2.example.com/l
 ### Environment-Based Routing
 
 ```typescript
-const disk = createProtocolDisk({
+const disk = createProtoDisk({
   protocols: {
     "s3://prod/": prodS3Driver,
     "s3://staging/": stagingS3Driver,
@@ -146,7 +155,7 @@ await disk.put("uploads/file.txt", data);
 Hot/warm/cold data storage:
 
 ```typescript
-const disk = createProtocolDisk({
+const disk = createProtoDisk({
   protocols: {
     "s3://hot-data/": createS3Driver({ bucket: "hot-data" }),
     "s3://warm-data/": createS3Driver({ bucket: "warm-data" }),
@@ -170,7 +179,7 @@ await disk.move("s3://hot-data/old/file.jpg", "s3://cold-data/archive/file.jpg")
 Separate storage per tenant:
 
 ```typescript
-const disk = createProtocolDisk({
+const disk = createProtoDisk({
   protocols: {
     "s3://tenant-acme/": acmeTenantDriver,
     "s3://tenant-bigco/": bigcoTenantDriver,
@@ -283,7 +292,7 @@ All standard [Disk operations](./index.md#api-reference) are supported:
 ### Hybrid Storage Strategy
 
 ```typescript
-const disk = createProtocolDisk({
+const disk = createProtoDisk({
   protocols: {
     // Frequently accessed files on CDN
     "https://cdn.example.com/": cdnDriver,
@@ -313,7 +322,7 @@ await disk.copy(uploaded, "file:///cache/avatar.jpg");
 ```typescript
 function createStorageDisk() {
   if (process.env.NODE_ENV === "production") {
-    return createProtocolDisk({
+    return createProtoDisk({
       protocols: {
         "s3://prod-bucket/": createS3Driver({
           bucket: "prod-bucket",
@@ -325,7 +334,7 @@ function createStorageDisk() {
   }
 
   // Development: use local filesystem
-  return createProtocolDisk({
+  return createProtoDisk({
     protocols: {
       "file:///tmp/dev/": createFsDriver({ root: "/tmp/dev" }),
     },
@@ -344,3 +353,4 @@ await disk.put("uploads/file.txt", data);
 - [AWS S3 Driver](./aws-s3.md)
 - [Filesystem Driver](./filesystem.md)
 - [Examples](./examples.md)
+- [Decision Guide](./decision-guide.md)

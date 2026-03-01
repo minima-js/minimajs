@@ -1,6 +1,6 @@
 # Azure Blob Driver
 
-**Azure Blob Storage driver for @minimajs/disk.** Use web-native File APIs to interact with Azure Blob Storage—no need to learn the Azure SDK.
+**Azure Blob Storage driver for `@minimajs/disk`.** Use one File API across local and Azure environments while keeping Azure Blob as the storage backend.
 
 ## Features
 
@@ -13,6 +13,15 @@
 - ✅ **List Operations** - Paginated blob listing with prefix support
 - ✅ **Multi-Container** - Work across multiple containers using full Azure URLs
 - ✅ **Minimal Dependencies** - Only requires `@azure/storage-blob`
+
+## Best Fit
+
+Choose the Azure Blob driver when you need:
+
+- managed object storage on Azure
+- container-level separation across apps or tenants
+- CDN/public URL delivery for static assets
+- a shared API with non-Azure environments
 
 ## Installation
 
@@ -39,7 +48,11 @@ const disk = createDisk({
 
 // Web-native API - works like browser File API
 const file = new File(["Hello World"], "hello.txt");
-await disk.put(file); // Auto-generates unique filename
+await disk.put(file); // Stored as "hello.txt" (original filename preserved)
+
+// Use storeAs(...) plugin if you want UUID naming
+// import { storeAs } from "@minimajs/disk/plugins";
+// const disk = createDisk({ driver: createAzureBlobDriver({...}) }, storeAs("uuid"));
 
 // Or specify path
 await disk.put("avatars/photo.jpg", imageBuffer);
@@ -359,18 +372,17 @@ try {
 }
 ```
 
-## Related Documentation
+## See Also
 
 - [Core Disk Package](./index.md) - Main documentation
 - [AWS S3 Driver](./aws-s3.md) - Amazon S3 storage
 - [Protocol Disk](./protocol-disk.md) - Multi-cloud routing
 - [Filesystem Driver](./filesystem.md) - Local filesystem storage
+- [Decision Guide](./decision-guide.md) - Driver and plugin selection
 
 ## Key Benefits
 
-✅ **Web-Native APIs** - Use familiar File, Blob, ReadableStream APIs
-✅ **No Azure SDK Learning Curve** - Forget complex SDK methods
-✅ **Provider Agnostic** - Same code works with filesystem, S3, etc.
-✅ **Type-Safe** - Full TypeScript support
-✅ **Streaming** - Efficient large file handling
-✅ **Multi-Cloud** - Easy to switch or combine providers
+- Use one application-level API across local, Azure, S3, and memory drivers.
+- Keep stream-based transfers for large file workflows.
+- Integrate with CDN/public URL patterns without changing app logic.
+- Add naming, partitioning, and security policies through plugins.
