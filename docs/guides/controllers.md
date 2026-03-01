@@ -1,3 +1,12 @@
+---
+title: Controllers
+sidebar_position: 2
+tags:
+  - routing
+  - controllers
+  - plugins
+---
+
 # Controllers
 
 Type-safe route registration by mapping HTTP methods and paths to controller functions.
@@ -68,10 +77,11 @@ For standard CRUD operations:
 
 ```typescript
 // src/posts/module.ts
+import type { Meta } from "@minimajs/server";
 import { controller } from "@minimajs/server";
 
 export const meta: Meta = {
-  plugins: [controller.rest(import("./controller"), "id")],
+  plugins: [controller.rest(import("./controller"), "post")],
 };
 ```
 
@@ -84,3 +94,12 @@ Automatically creates:
 - `DELETE /:id` → `remove`
 
 Missing handlers are automatically skipped.
+
+---
+
+## Related Guides
+
+- [Routing](/guides/routing) - Core route definitions and matching behavior
+- [Route Descriptors](/guides/route-descriptors) - Attach route-level metadata
+- [HTTP Helpers](/guides/http) - Access `params()`, `body()`, and response helpers
+- [Testing](/guides/testing) - Test controller handlers and route behavior

@@ -458,9 +458,11 @@ export const routes: Routes = {
    };
    ```
 
-## See Also
+## Related Guides
 
 - [Plugins - Descriptor](/core-concepts/plugins#route-metadata-with-descriptor)
+- [Routing](/guides/routing) - Route definitions and metadata placement
+- [Controllers](/guides/controllers) - Route registration patterns with controller mapping
 - [Hooks](/guides/hooks)
 - [OpenAPI Generation](/packages/openapi)
 - [Schema Validation](/packages/schema)

@@ -3,7 +3,7 @@ layout: home
 
 hero:
   name: "Minima.js"
-  text: Thoughtfully Designed for Modern Runtimes
+  text: Javascript Backend Framework, Thoughtfully Designed for Modern Runtimes
   tagline: |
     Most frameworks optimize features.
     Minima.js optimizes how it feels to work every day.
@@ -278,7 +278,7 @@ src/
           <article class="VPFeature">
             <h2 class="title">Why Minima.js?</h2>
             <p class="details">
-              Minima.js removes the friction you’ve learned to tolerate—slow feedback, noisy types, hidden lifecycles, and tangled modules—so building backends feels fast, clear, and predictable again.
+             Minima.js is a backend framework built for modern JavaScript runtimes. It removes the friction you’ve learned to tolerate—slow feedback, noisy types, hidden lifecycles, and tangled modules—so building APIs and services feels fast, clear, and predictable again.
             </p>
             <div style="height: 1rem;"></div>
             <a href="/getting-started" class="VPButton" role="button" style="background-color: var(--vp-c-brand-1); color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.25rem;">

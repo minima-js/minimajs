@@ -4,11 +4,16 @@
   "description": "Type-safe cookie management for Minima.js",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "github",
+    "directory": "packages/cookie",
+    "url": "https://github.com/minima-js/minimajs"
+  },
   "exports": {
     ".": "./lib/index.js"
   },
   "scripts": {
-    "dev": "tsc -w",
+    "dev": "tsc -w --preserveWatchOutput",
     "test": "bun test",
     "coverage": "bun test --coverage",
     "build": "tsc -p ./tsconfig.build.json",
@@ -26,6 +31,7 @@
   "peerDependencies": {
     "@minimajs/server": ">=0.3.0"
   },
+  "author": "Adil <adil.sudo@gmail.com>",
   "files": [
     "lib"
   ]

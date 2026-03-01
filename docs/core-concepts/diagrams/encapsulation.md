@@ -13,11 +13,11 @@ graph TB
     Child1 -.->|influences| U1
     Child2 -.->|influences| A1
 
-    style Root fill:#e1f5ff,stroke:#2196f3,stroke-width:2px
-    style Child1 fill:#e7f9e7,stroke:#4caf50,stroke-width:2px
-    style Child2 fill:#fff4e1,stroke:#ff9800,stroke-width:2px
-    style UE1 fill:#cfe8fc
-    style UE2 fill:#d4f1d4
-    style AE1 fill:#cfe8fc
-    style AE2 fill:#fff0cc
+    class Root accent
+    class Child1 info
+    class Child2 warn
+    class U1,A1 neutral
+    class UE1,UE2,UE3,AE1,AE3 success
+    class AE2 warn
+
 ```

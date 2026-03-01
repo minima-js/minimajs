@@ -55,9 +55,6 @@ export const routes: Routes = {
 
 ```typescript
 abort.notFound("User not found"); // 404
-abort.badRequest("Invalid input"); // 400
-abort.unauthorized("Login required"); // 401
-abort.forbidden("Access denied"); // 403
 ```
 
 **Check if error is from abort:**
@@ -358,10 +355,19 @@ app.register(
 
 ## Best Practices
 
-- **Use `abort` shortcuts** for common HTTP errors (`abort.notFound()`, `abort.badRequest()`, etc.)
+- **Use `abort` helpers** for common HTTP errors (`abort.notFound()`, `abort("message", 400)`, etc.)
 - **Override `toJSON`** for custom error response formats instead of custom error handlers
 - **Re-throw errors in hooks** to allow other handlers to process them
 - **Log errors** before handling them for debugging and monitoring
 - **Use scoped error hooks** for module-specific error handling
 - **Keep error messages generic in production** to avoid leaking sensitive information
 - **Create custom error classes** for different error types (API errors, validation errors, etc.)
+
+---
+
+## Related Guides
+
+- [Hooks](/guides/hooks) - Understand execution order and scope of `error`/`send` hooks
+- [HTTP Helpers](/guides/http) - Set response status/headers in handlers and hooks
+- [Testing](/guides/testing) - Validate error scenarios and response payloads
+- [Route Descriptors](/guides/route-descriptors) - Drive policy decisions from route metadata

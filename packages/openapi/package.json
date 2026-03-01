@@ -4,7 +4,7 @@
   "description": "OpenAPI 3.1 specification generator for MinimaJS with Zod schema integration",
   "type": "module",
   "license": "MIT",
-  "homepage": "https://minima-js.github.io/",
+  "homepage": "https://minimajs.com/",
   "repository": {
     "type": "github",
     "directory": "packages/openapi",
@@ -14,7 +14,7 @@
     ".": "./lib/index.js"
   },
   "scripts": {
-    "dev": "tsc -w",
+    "dev": "tsc -w --preserveWatchOutput",
     "build": "bun run clean && tsc --build",
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },

@@ -1,10 +1,11 @@
+---
 title: Testing
 sidebar_position: 8
 tags:
-
-- testing
-- unit-tests
-- integration-tests
+  - testing
+  - unit-tests
+  - integration-tests
+---
 
 # Testing
 
@@ -221,6 +222,8 @@ Test the full application with plugins and middleware.
 ### Testing with Plugins
 
 ```ts
+import { createApp } from "@minimajs/server/bun";
+import { body } from "@minimajs/server";
 import { createRequest } from "@minimajs/server/mock";
 import { bodyParser } from "@minimajs/server/plugins";
 
@@ -250,6 +253,7 @@ test("full app with plugins", async () => {
 ### Testing Module Encapsulation
 
 ```ts
+import { createApp } from "@minimajs/server/bun";
 import { createRequest } from "@minimajs/server/mock";
 
 test("module routes are isolated", async () => {
@@ -286,6 +290,7 @@ test("module routes are isolated", async () => {
 ### Testing Request Hooks
 
 ```ts
+import { createApp } from "@minimajs/server/bun";
 import { createRequest } from "@minimajs/server/mock";
 import { hook, createContext } from "@minimajs/server";
 
@@ -313,6 +318,8 @@ test("request hook modifies context", async () => {
 ### Testing Transform Hooks
 
 ```ts
+import { createApp } from "@minimajs/server/bun";
+import { hook } from "@minimajs/server";
 import { createRequest } from "@minimajs/server/mock";
 
 test("transform hook wraps response", async () => {
@@ -338,6 +345,8 @@ test("transform hook wraps response", async () => {
 ### Testing Send Hooks
 
 ```ts
+import { createApp } from "@minimajs/server/bun";
+import { hook, response } from "@minimajs/server";
 import { createRequest } from "@minimajs/server/mock";
 
 test("send hook adds custom header", async () => {
@@ -363,22 +372,26 @@ test("send hook adds custom header", async () => {
 ### Testing Custom Plugins
 
 ```ts
+import { createApp } from "@minimajs/server/bun";
 import { createRequest } from "@minimajs/server/mock";
-import { plugin } from "@minimajs/server";
+import { createContext, hook, plugin } from "@minimajs/server";
 
-const myPlugin = (options) => {
-  return app.register(
-    hook("request", () => {
-      context.set("pluginData", options.value);
-    })
-  );
-};
+const [getPluginData, setPluginData] = createContext<string>();
+
+const myPlugin = (options: { value: string }) =>
+  plugin.sync((app) => {
+    app.register(
+      hook("request", () => {
+        setPluginData(options.value);
+      })
+    );
+  });
 
 test("custom plugin sets context", async () => {
   const app = createApp();
   app.register(myPlugin({ value: "test" }));
   app.get("/", () => {
-    return { data: context.get("pluginData") };
+    return { data: getPluginData() };
   });
 
   const response = await app.handle(createRequest("/"));
@@ -392,6 +405,7 @@ test("custom plugin sets context", async () => {
 ### Mocking External Services
 
 ```ts
+import { createApp } from "@minimajs/server/bun";
 import { createRequest } from "@minimajs/server/mock";
 import { mock } from "bun:test";
 
@@ -418,12 +432,13 @@ test("mocked database query", async () => {
 ### Mocking Context Values
 
 ```ts
+import { createApp } from "@minimajs/server/bun";
 import { createRequest } from "@minimajs/server/mock";
-import { createContext } from "@minimajs/server";
+import { createContext, hook } from "@minimajs/server";
 
 test("mock context for testing", async () => {
   const app = createApp();
-  const [getUserId, setUserId] = createContext();
+  const [getUserId, setUserId] = createContext<string>();
 
   // Set up context in request hook
   app.register(
@@ -433,7 +448,7 @@ test("mock context for testing", async () => {
   );
 
   app.get("/profile", () => {
-    const userId = setUserId();
+    const userId = getUserId();
     return { userId };
   });
 
@@ -496,6 +511,7 @@ test("using helper", async () => {
 ### 3. Test Error Cases
 
 ```ts
+import { createApp } from "@minimajs/server/bun";
 import { createRequest } from "@minimajs/server/mock";
 
 test("handles errors gracefully", async () => {
@@ -513,7 +529,10 @@ test("handles errors gracefully", async () => {
 ### 4. Test Edge Cases
 
 ```ts
+import { createApp } from "@minimajs/server/bun";
+import { body, params, response } from "@minimajs/server";
 import { createRequest } from "@minimajs/server/mock";
+import { bodyParser } from "@minimajs/server/plugins";
 
 describe("Edge cases", () => {
   test("handles missing parameters", async () => {

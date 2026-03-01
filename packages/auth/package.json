@@ -4,9 +4,14 @@
   "description": "Authentication and authorization utilities with session management and guard support",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "github",
+    "directory": "packages/auth",
+    "url": "https://github.com/minima-js/minimajs"
+  },
   "exports": "./lib/index.js",
   "scripts": {
-    "dev": "tsc -w",
+    "dev": "tsc -w --preserveWatchOutput",
     "build": "tsc -p ./tsconfig.build.json",
     "test": "bun test",
     "coverage": "bun test --coverage",
@@ -27,6 +32,7 @@
     "ts-jest": "^29.4.6",
     "typescript": "^5.9.3"
   },
+  "author": "Adil <adil.sudo@gmail.com>",
   "files": [
     "lib"
   ]

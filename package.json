@@ -5,10 +5,10 @@
   "private": true,
   "type": "module",
   "packageManager": "bun@1.3.5",
-  "homepage": "https://minima-js.github.io",
+  "homepage": "https://minimajs.com",
   "repository": {
     "type": "github",
-    "url": "git@github.com:minima-js/minima-js.github.io"
+    "url": "https://github.com/minima-js/minimajs"
   },
   "workspaces": [
     "packages/*"

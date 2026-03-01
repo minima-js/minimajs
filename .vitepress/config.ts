@@ -4,7 +4,7 @@ import { withPwa } from "@vite-pwa/vitepress";
 import llmstxt from "vitepress-plugin-llms";
 
 const tagId = 'GTM-P9NLW275';
-const hostname = 'https://minima-js.github.io';
+const hostname = 'https://minimajs.com';
 
 const keywords = [
   // Brand
@@ -146,6 +146,26 @@ const config = defineConfig({
         ],
       },
       {
+        text: "Tutorial",
+        items: [
+          {
+            text: "Task Board API",
+            collapsed: true,
+            items: [
+              { text: "Overview", link: "/tutorials/task-board-api/" },
+              { text: "1. Project Setup", link: "/tutorials/task-board-api/01-setup" },
+              { text: "2. Database & Root Module", link: "/tutorials/task-board-api/02-database" },
+              { text: "3. Authentication", link: "/tutorials/task-board-api/03-auth" },
+              { text: "4. Workspaces", link: "/tutorials/task-board-api/04-workspaces" },
+              { text: "5. Boards & Tasks", link: "/tutorials/task-board-api/05-boards-tasks" },
+              { text: "6. Members & Roles", link: "/tutorials/task-board-api/06-members" },
+              { text: "7. Error Handling & Polish", link: "/tutorials/task-board-api/07-errors-polish" },
+              { text: "Presentation Playbook", link: "/tutorials/task-board-api/presentation-playbook" },
+            ],
+          },
+        ],
+      },
+      {
         text: "Core Concepts",
         items: [
           { text: "Architecture", link: "/core-concepts/architecture" },
@@ -217,6 +237,20 @@ const config = defineConfig({
             ],
           },
           { text: "Cookie", link: "/packages/cookie" },
+          {
+            text: "Disk",
+            collapsed: false,
+            items: [
+              { text: "Overview", link: "/packages/disk/" },
+              { text: "Plugins", link: "/packages/disk/plugins" },
+              { text: "Protocol Disk", link: "/packages/disk/protocol-disk" },
+              { text: "AWS S3", link: "/packages/disk/aws-s3" },
+              { text: "Azure Blob", link: "/packages/disk/azure-blob" },
+              { text: "Filesystem", link: "/packages/disk/filesystem" },
+              { text: "Memory", link: "/packages/disk/memory" },
+              { text: "Examples", link: "/packages/disk/examples" },
+            ],
+          },
         ],
       },
       {

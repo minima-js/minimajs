@@ -3,13 +3,18 @@
   "version": "1.4.0",
   "description": "Schema validation powered by Zod for request/response validation with type safety",
   "license": "MIT",
+  "repository": {
+    "type": "github",
+    "directory": "packages/schema",
+    "url": "https://github.com/minima-js/minimajs"
+  },
   "type": "module",
   "exports": {
     ".": "./lib/index.js",
     "./validation": "./lib/validation.js"
   },
   "scripts": {
-    "dev": "tsc -w",
+    "dev": "tsc -w --preserveWatchOutput",
     "test": "bun test",
     "coverage": "bun test --coverage",
     "build": "tsc -p ./tsconfig.build.json",
@@ -25,6 +30,7 @@
     "@types/node": "^25.0.3",
     "zod": "^4.3.2"
   },
+  "author": "Adil <adil.sudo@gmail.com>",
   "files": [
     "lib"
   ]

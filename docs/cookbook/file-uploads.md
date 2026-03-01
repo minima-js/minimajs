@@ -70,7 +70,7 @@ async function uploadAvatar() {
     message: "Avatar uploaded",
     originalName: avatar.name,
     savedAs: savedName,
-    size: helpers.humanFileSize(avatar.size),
+    size: avatar.size,
     type: avatar.type,
   };
 }
@@ -220,11 +220,10 @@ import { helpers } from "@minimajs/multipart";
 const upload = createMultipart({
   title: z.string().min(1).max(100),
   description: z.string().optional(),
-  image:
-    z
-      .file()
-      .mime(["image/jpeg", "image/png", "image/webp"])
-      .max(5 * 1024 * 1024), // 5MB
+  image: z
+    .file()
+    .mime(["image/jpeg", "image/png", "image/webp"])
+    .max(5 * 1024 * 1024), // 5MB
 });
 
 async function createPost() {

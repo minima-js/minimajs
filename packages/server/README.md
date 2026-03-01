@@ -411,17 +411,17 @@ expect(await response.text()).toBe("Hello World");
 
 For comprehensive documentation, guides, and examples, visit:
 
-**[https://minima-js.github.io/](https://minima-js.github.io/)**
+**[https://minimajs.com/](https://minimajs.com/)**
 
 ### Quick Links
 
-- [Getting Started](https://minima-js.github.io/getting-started)
-- [Core Concepts](https://minima-js.github.io/core-concepts/architecture)
-- [Routing Guide](https://minima-js.github.io/guides/routing)
-- [Hooks Guide](https://minima-js.github.io/guides/hooks)
-- [Plugin Development](https://minima-js.github.io/guides/plugin)
-- [Error Handling](https://minima-js.github.io/guides/error-handling)
-- [API Reference](https://minima-js.github.io/api/@minimajs/server)
+- [Getting Started](https://minimajs.com/getting-started)
+- [Core Concepts](https://minimajs.com/core-concepts/architecture)
+- [Routing Guide](https://minimajs.com/guides/routing)
+- [Hooks Guide](https://minimajs.com/guides/hooks)
+- [Plugin Development](https://minimajs.com/guides/plugin)
+- [Error Handling](https://minimajs.com/guides/error-handling)
+- [API Reference](https://minimajs.com/api/@minimajs/server)
 
 ## 🏗️ Project Structure
 
@@ -552,7 +552,7 @@ Built on top of excellent libraries:
 
 **Made with ❤️ for the modern web**
 
-See the full documentation at [minima-js.github.io](https://minima-js.github.io/)
+See the full documentation at [minimajs.com](https://minimajs.com/)
 
 ## License
 

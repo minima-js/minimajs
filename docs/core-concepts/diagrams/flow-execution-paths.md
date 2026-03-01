@@ -23,12 +23,10 @@ graph TD
     R2 --> R3["SEND Hook<br/><small>↑ LIFO</small>"]
     R3 --> R4[onError callbacks] --> N6
 
-    style N2 fill:#e7f9e7
-    style N3 fill:#e7f9e7
-    style N4 fill:#e7f9e7
-    style D2 fill:#fff4e1
-    style E2 fill:#e1f5ff
-    style R1 fill:#ffe1e1
-    style R2 fill:#ffe1e1
-    style R4 fill:#ffe1e1
+    class Start,Choice neutral
+    class N1,N2,N3,N4,N5,N6,N7 success
+    class D1,D2,D5 warn
+    class E1,E2,E5 info
+    class R1,R2,R3,R4 danger
+
 ```

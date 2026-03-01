@@ -2,8 +2,64 @@
   "name": "@minimajs/disk",
   "version": "0.0.1",
   "type": "module",
-  "private": true,
+  "description": "Web-native File API for any storage provider. Interact with filesystem, S3, Azure Blob, and more using consistent APIs—forget provider-specific SDKs.",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./helpers": "./lib/helpers.js",
+    "./adapters": "./lib/adapters/index.js",
+    "./snapshot": "./lib/snapshot.js",
+    "./plugins": "./lib/plugins/index.js"
+  },
+  "scripts": {
+    "dev": "tsc -w --preserveWatchOutput",
+    "build": "tsc -p ./tsconfig.build.json",
+    "test": "bun test --timeout=2000",
+    "coverage": "bun test --coverage --timeout=2000",
+    "clean": "rimraf -g '*.tsbuildinfo' lib"
+  },
   "devDependencies": {
-    "@types/node": "^25.0.3"
-  }
+    "@jest/globals": "^30.2.0",
+    "@types/mime-types": "^3.0.1",
+    "@types/node": "^25.0.3",
+    "chokidar": "^5.0.0",
+    "fflate": "^0.8.0"
+  },
+  "dependencies": {
+    "mime-types": "^3.0.2"
+  },
+  "peerDependencies": {
+    "chokidar": "^5.0.0",
+    "fflate": "^0.8.0"
+  },
+  "peerDependenciesMeta": {
+    "chokidar": {
+      "optional": true
+    },
+    "fflate": {
+      "optional": true
+    }
+  },
+  "keywords": [
+    "minimajs",
+    "disk",
+    "storage",
+    "filesystem",
+    "s3",
+    "azure",
+    "file-upload",
+    "cloud-storage",
+    "driver"
+  ],
+  "author": "Adil <adil.sudo@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://minimajs.com/packages/disk/",
+  "repository": {
+    "type": "github",
+    "directory": "packages/disk",
+    "url": "https://github.com/minima-js/minimajs"
+  },
+  "files": [
+    "lib"
+  ]
 }

@@ -4,7 +4,7 @@
   "description": "High-performance HTTP framework built for node/bun with context-aware request handling and zero boilerplate",
   "type": "module",
   "license": "MIT",
-  "homepage": "https://minima-js.github.io/",
+  "homepage": "https://minimajs.com",
   "repository": {
     "type": "github",
     "directory": "packages/server",
@@ -22,7 +22,7 @@
     "./mock": "./lib/mock/index.js"
   },
   "scripts": {
-    "dev": "tsc -w",
+    "dev": "tsc -w --preserveWatchOutput",
     "build": "tsc -p ./tsconfig.build.json",
     "test": "bun test --timeout=2000",
     "test:jest": "node --no-warnings --experimental-vm-modules node_modules/.bin/jest --detectOpenHandles",
@@ -75,5 +75,6 @@
     "router",
     "app",
     "api"
-  ]
+  ],
+  "author": "Adil <adil.sudo@gmail.com>"
 }
