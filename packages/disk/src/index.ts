@@ -1,3 +1,28 @@
+/**
+ * Provider-agnostic storage abstraction for `@minimajs/server`.
+ *
+ * Interact with the filesystem, AWS S3, Azure Blob, and any custom storage backend
+ * using a consistent web-native File API — no SDK-specific knowledge required.
+ *
+ * Supports single-driver disks via `createDisk`, multi-protocol routing via
+ * `createProtoDisk`, and short-lived temp storage via `createTempDisk`.
+ * Extend behavior with composable plugins (compression, encryption, atomic writes, etc.).
+ *
+ * @example
+ * ```typescript
+ * import { createDisk } from '@minimajs/disk';
+ * import { createS3Driver } from '@minimajs/aws-s3';
+ *
+ * const disk = createDisk({ driver: createS3Driver({ bucket: 'my-bucket', region: 'us-east-1' }) });
+ *
+ * await disk.put('avatar.jpg', imageBuffer);
+ * const file = await disk.get('avatar.jpg');
+ * const blob = await file.blob();
+ * ```
+ *
+ * @packageDocumentation
+ * @module @minimajs/disk
+ */
 import { FsDriver } from "./adapters/fs.js";
 import { createFsDriver } from "./adapters/index.js";
 import { StandardDisk } from "./standard-disk.js";

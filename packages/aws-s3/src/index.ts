@@ -1,15 +1,40 @@
+/**
+ * AWS S3 storage driver for `@minimajs/disk`.
+ *
+ * Interact with S3 using web-native File APIs — no need to learn the AWS SDK.
+ * Supports plain paths, `s3://bucket/key` URIs, and public CDN URLs as file references.
+ *
+ * @example
+ * ```typescript
+ * import { createS3Driver } from '@minimajs/aws-s3';
+ * import { createDisk } from '@minimajs/disk';
+ *
+ * const disk = createDisk({
+ *   driver: createS3Driver({
+ *     bucket: 'my-bucket',
+ *     region: 'us-east-1',
+ *     credentials: {
+ *       accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+ *       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+ *     },
+ *     publicUrl: 'https://d1234.cloudfront.net', // optional CDN
+ *   }),
+ * });
+ *
+ * await disk.put('uploads/photo.jpg', imageBuffer);
+ * const file = await disk.get('uploads/photo.jpg');
+ * const blob = await file.blob();
+ * ```
+ *
+ * @packageDocumentation
+ */
 import type { DiskDriver } from "@minimajs/disk";
 import { type S3BaseDriverOptions, S3Driver } from "./s3-driver.js";
 import { S3Client, type S3ClientConfig } from "@aws-sdk/client-s3";
 
 export * from "./s3-driver.js";
-
+/**@internal */
 export interface S3DriverOptions extends S3BaseDriverOptions, S3ClientConfig {
-  /**
-   * AWS SDK defaults mode.
-   *
-   * Uses the same value shape as `S3ClientConfig["defaultsMode"]`.
-   */
   defaultsMode?: S3ClientConfig["defaultsMode"];
 }
 
