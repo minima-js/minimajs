@@ -1,61 +1,85 @@
 # @minimajs/disk
 
-**Web-native File API for any storage provider.** Interact with filesystem, S3, Azure Blob, and more using consistent APIs—forget the inconsistency of dealing with multiple providers using different SDKs.
+Web-native file storage for Node.js and Bun.
 
-## Features
+Use the same API for filesystem, S3, Azure Blob, memory, or custom drivers.
 
-- 🌐 **Web-Native APIs** - Use familiar File, Blob, and ReadableStream APIs across all storage providers
-- 🔄 **Universal Interface** - Write once, deploy anywhere—switch storage backends without changing code
-- 🚀 **Zero Provider Lock-in** - No need to learn provider-specific SDKs (AWS SDK, Azure SDK, etc.)
-- ✅ **Type-Safe** - Full TypeScript support with strict types
-- 📦 **Streaming** - Efficient handling of large files
-- 🎯 **Protocol Routing** - Route by URL prefix (s3://, file://, azure://, etc.)
-- 🏷️ **Metadata** - Attach custom metadata to files
-- ⚡ **Error Handling** - Typed error classes for better error management
+`@minimajs/disk` is a standalone package and does not require the Minima.js framework.
+
+## Why use it
+
+- One storage API across providers
+- Works with `File`, `Blob`, and `ReadableStream`
+- No provider SDK lock-in at call-site
+- Type-safe return values (`DiskFile`)
+- Optional plugins (`storeAs`, `partition`, `atomicWrite`, `compression`, `encryption`, and more)
+- Protocol-based routing with `createProtoDisk()`
 
 ## Installation
 
 ```bash
 npm install @minimajs/disk
+# or
+bun add @minimajs/disk
 ```
 
-## Quick Start
+Provider packages:
 
-### Filesystem Storage
+```bash
+npm install @minimajs/aws-s3
+npm install @minimajs/azure-blob
+```
 
-```typescript
+## Quick start
+
+### Filesystem driver
+
+```ts
 import { createDisk } from "@minimajs/disk";
-import { createFsDriver } from "@minimajs/disk/adapters/fs";
+import { createFsDriver } from "@minimajs/disk/adapters";
 
 const disk = createDisk({
-  driver: createFsDriver({ root: "./storage" }),
+  driver: createFsDriver({
+    root: "file:///var/uploads/",
+  }),
 });
 
-// Store file
 await disk.put("documents/readme.txt", "Hello, World!");
 
-// Retrieve file
 const file = await disk.get("documents/readme.txt");
-const text = await file.text();
+if (file) {
+  console.log(file.href); // file:///var/uploads/documents/readme.txt
+  console.log(await file.text());
+}
 ```
 
-### Memory Storage (for testing)
+### Memory driver (testing)
 
-```typescript
+```ts
 import { createDisk } from "@minimajs/disk";
-import { createMemoryDriver } from "@minimajs/disk/adapters/memory";
+import { createMemoryDriver } from "@minimajs/disk/adapters";
 
-const disk = createDisk({
-  driver: createMemoryDriver(),
-});
+const driver = createMemoryDriver();
+const disk = createDisk({ driver });
 
-await disk.put("test.txt", "Test content");
+await disk.put("test.txt", "test content");
 const file = await disk.get("test.txt");
 ```
 
-### AWS S3 Storage
+### Upload a Web `File` directly
 
-```typescript
+`disk.put(file)` is supported. The file name and MIME type are automatically taken from the `File`.
+
+```ts
+const stored = await disk.put(new File(["hey there"], "greeting.txt", { type: "text/plain" }));
+
+console.log(stored.name); // greeting.txt
+console.log(stored.type); // text/plain
+```
+
+### AWS S3 driver
+
+```ts
 import { createDisk } from "@minimajs/disk";
 import { createS3Driver } from "@minimajs/aws-s3";
 
@@ -73,55 +97,89 @@ const disk = createDisk({
 await disk.put("uploads/avatar.jpg", imageBuffer);
 ```
 
-## API
+### Protocol routing with `createProtoDisk`
 
-### Storage Operations
+```ts
+import { createProtoDisk } from "@minimajs/disk";
+import { createFsDriver } from "@minimajs/disk/adapters";
+import { createS3Driver } from "@minimajs/aws-s3";
 
-- `put(path, data, options?)` - Store a file
-- `get(path)` - Retrieve a file
-- `exists(path)` - Check if file exists
-- `delete(path)` - Delete a file
-- `copy(from, to, options?)` - Copy a file
-- `move(from, to, options?)` - Move a file
-- `list(prefix?, options?)` - List files
-- `url(path, options?)` - Get public URL
+const disk = createProtoDisk({
+  protocols: {
+    "file://": createFsDriver({ root: "file:///var/data/" }),
+    "s3://assets/": createS3Driver({ bucket: "assets", region: "us-east-1" }),
+  },
+  defaultProtocol: "file://",
+});
 
-### File Operations
-
-The `DiskFile` extends the Web `File` API:
-
-```typescript
-const file = await disk.get("document.pdf");
-
-// Web File API
-file.name; // File name
-file.size; // File size in bytes
-file.type; // MIME type
-file.lastModified; // Last modified timestamp
-
-// Read operations
-await file.text(); // Read as text
-await file.arrayBuffer(); // Read as ArrayBuffer
-file.stream(); // Get ReadableStream
-
-// Disk-specific
-file.href; // Full storage path (e.g., s3://bucket/path)
-file.metadata; // Custom metadata
+await disk.put("file://logs/app.log", "ok");
+await disk.put("s3://assets/logo.png", imageBuffer);
 ```
 
-## Available Drivers
+## API at a glance
 
-| Driver     | Package            | Use Case    |
-| ---------- | ------------------ | ----------- |
-| Filesystem | `@minimajs/disk`   | Development |
-| Memory     | `@minimajs/disk`   | Testing     |
-| AWS S3     | `@minimajs/aws-s3` | Production  |
+Core operations:
+
+- `put(path, data, options?) => Promise<DiskFile>`
+- `put(file, options?) => Promise<DiskFile>`
+- `get(path) => Promise<DiskFile | null>`
+- `exists(path) => Promise<boolean>`
+- `delete(path | file) => Promise<string>`
+- `copy(from, to?) => Promise<DiskFile>`
+- `move(from, to?) => Promise<DiskFile>`
+- `url(path, options?) => Promise<string>`
+- `metadata(path) => Promise<FileMetadata | null>`
+- `list(prefix?, options?) => AsyncIterable<DiskFile>`
+
+Example listing:
+
+```ts
+for await (const file of disk.list("uploads/")) {
+  console.log(file.href, file.size);
+}
+```
+
+## `DiskFile`
+
+`get()`, `put()`, `copy()`, and `move()` return `DiskFile`, which extends the Web `File` API.
+
+```ts
+const file = await disk.get("document.pdf");
+if (!file) return;
+
+file.name;
+file.size;
+file.type;
+file.lastModified;
+file.href; // storage identifier (for example: s3://bucket/path/file.pdf)
+file.metadata;
+
+await file.text();
+await file.arrayBuffer();
+file.stream();
+```
+
+## Adapters and plugins
+
+- Built-in adapters: `@minimajs/disk/adapters` (`createFsDriver`, `createMemoryDriver`)
+- Cloud adapters: `@minimajs/aws-s3`, `@minimajs/azure-blob`
+- Plugins: `@minimajs/disk/plugins`
+
+```ts
+import { createDisk } from "@minimajs/disk";
+import { createFsDriver } from "@minimajs/disk/adapters";
+import { storeAs, atomicWrite } from "@minimajs/disk/plugins";
+
+const disk = createDisk(
+  { driver: createFsDriver({ root: "file:///var/uploads/" }) },
+  storeAs("uuid-original"),
+  atomicWrite()
+);
+```
 
 ## Documentation
 
-For comprehensive documentation, examples, and advanced usage, visit:
-
-- [Complete Documentation](../../docs/packages/disk/)
+- https://minimajs.com/packages/disk/
 
 ## License
 

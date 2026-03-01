@@ -1,18 +1,8 @@
 # @minimajs/azure-blob
 
-**Azure Blob Storage driver for [@minimajs/disk](../disk).** Use web-native File APIs to interact with Azure Blob—forget the Azure SDK and its inconsistent APIs.
+Azure Blob Storage driver for `@minimajs/disk`.
 
-## Features
-
-- 🌐 **Web-Native APIs** - Use File, Blob, ReadableStream instead of Azure SDK methods
-- ✅ **Streaming uploads** - Efficient streaming uploads to Azure Blob Storage
-- ✅ **Streaming downloads** - Direct streaming from Azure without buffering
-- ✅ **SAS URLs** - Generate shared access signature URLs
-- ✅ **Metadata support** - Store and retrieve custom metadata
-- ✅ **Server-side copy** - Fast native Azure copy operations
-- ✅ **List operations** - Paginated file listing with prefix support
-- ✅ **Access tiers** - Support for Hot, Cool, and Archive tiers
-- ✅ **Encryption** - Server-side encryption support
+Use the Disk API (`put`, `get`, `list`, `copy`, `move`, `url`) with Azure Blob storage.
 
 ## Installation
 
@@ -22,146 +12,93 @@ npm install @minimajs/azure-blob @minimajs/disk
 bun add @minimajs/azure-blob @minimajs/disk
 ```
 
-## Basic Usage
+## Quick start
 
-### With Container in Driver Config
-
-```typescript
-import { createAzureBlobDriver } from "@minimajs/azure-blob";
+```ts
 import { createDisk } from "@minimajs/disk";
+import { createAzureBlobDriver } from "@minimajs/azure-blob";
 
 const disk = createDisk({
   driver: createAzureBlobDriver({
-    accountName: "myaccount",
-    accountKey: process.env.AZURE_STORAGE_KEY!,
-    container: "my-container",
+    connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING!,
+    container: "uploads",
+    publicUrl: "https://cdn.example.com", // optional
   }),
 });
 
-// Store file
-await disk.put("uploads/document.pdf", pdfBuffer);
-
-// Retrieve file
-const file = await disk.get("uploads/document.pdf");
-const buffer = await file.arrayBuffer();
-
-// Delete file
-await disk.delete("uploads/document.pdf");
-```
-
-### Without Container (Multi-Container)
-
-Use full `azure://` URLs:
-
-```typescript
-const disk = createDisk({
-  driver: createAzureBlobDriver({
-    accountName: "myaccount",
-    accountKey: process.env.AZURE_STORAGE_KEY!,
-  }),
-});
-
-// Specify container in path
-await disk.put("azure://container-1/file.txt", data);
-await disk.put("azure://container-2/file.txt", data);
-```
-
-## Configuration
-
-```typescript
-interface AzureBlobDriverOptions {
-  /**
-   * Azure Storage account name
-   */
-  accountName: string;
-
-  /**
-   * Azure Storage account key or SAS token
-   */
-  accountKey?: string;
-
-  /**
-   * Connection string (alternative to accountName + accountKey)
-   */
-  connectionString?: string;
-
-  /**
-   * Default container name (optional)
-   */
-  container?: string;
-
-  /**
-   * Access tier for new blobs
-   * @default "Hot"
-   */
-  accessTier?: "Hot" | "Cool" | "Archive";
-
-  /**
-   * Blob service endpoint (for custom domains)
-   */
-  endpoint?: string;
-}
-```
-
-## Examples
-
-### Upload with Metadata
-
-```typescript
-await disk.put("documents/report.pdf", pdfData, {
-  type: "application/pdf",
-  metadata: {
-    author: "John Doe",
-    department: "Finance",
-  },
-});
+await disk.put("documents/report.pdf", pdfBuffer);
 
 const file = await disk.get("documents/report.pdf");
-console.log(file.metadata); // { author: "John Doe", ... }
-```
-
-### Access Tiers
-
-```typescript
-// Hot tier (default) - frequent access
-const hotStorage = createAzureBlobDriver({
-  accountName: "myaccount",
-  accountKey: process.env.AZURE_STORAGE_KEY!,
-  container: "hot-data",
-  accessTier: "Hot",
-});
-
-// Cool tier - infrequent access (cheaper)
-const coolStorage = createAzureBlobDriver({
-  accountName: "myaccount",
-  accountKey: process.env.AZURE_STORAGE_KEY!,
-  container: "cool-data",
-  accessTier: "Cool",
-});
-
-// Archive tier - long-term storage (cheapest)
-const archiveStorage = createAzureBlobDriver({
-  accountName: "myaccount",
-  accountKey: process.env.AZURE_STORAGE_KEY!,
-  container: "archive",
-  accessTier: "Archive",
-});
-```
-
-### List Files
-
-```typescript
-// List all files with prefix
-for await (const file of disk.list("uploads/2024/")) {
-  console.log(file.name, file.size, file.lastModified);
+if (file) {
+  console.log(file.href);
+  console.log(await file.arrayBuffer());
 }
 ```
+
+## Container modes
+
+### Single container (configured in driver)
+
+When `container` is configured, use normal keys:
+
+```ts
+await disk.put("images/avatar.png", imageBuffer);
+```
+
+### Multi-container (container not configured)
+
+When `container` is omitted, use full Azure Blob URLs:
+
+```ts
+const disk = createDisk({
+  driver: createAzureBlobDriver({
+    connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING!,
+  }),
+});
+
+await disk.put("https://myaccount.blob.core.windows.net/container-a/file.txt", "A");
+await disk.put("https://myaccount.blob.core.windows.net/container-b/file.txt", "B");
+```
+
+## Using an existing `BlobServiceClient`
+
+```ts
+import { BlobServiceClient } from "@azure/storage-blob";
+import { createAzureBlobDriver } from "@minimajs/azure-blob";
+
+const client = BlobServiceClient.fromConnectionString(process.env.AZURE_STORAGE_CONNECTION_STRING!);
+
+const driver = createAzureBlobDriver(client, {
+  container: "uploads",
+  publicUrl: "https://cdn.example.com",
+});
+```
+
+## Driver options
+
+`createAzureBlobDriver(options)` accepts:
+
+```ts
+interface AzureBlobDriverOptions {
+  connectionString: string;
+  container?: string;
+  publicUrl?: string;
+}
+```
+
+## URL behavior
+
+- If `publicUrl` is set, `disk.url(path)` returns `publicUrl + blob`.
+- Otherwise, it returns the direct Azure Blob URL.
+
+## Notes
+
+- Metadata is supported (`capabilities.metadata = true`).
+- `list(prefix, { limit })` is supported.
 
 ## Documentation
 
-For comprehensive documentation and examples, visit:
-
-- [Complete Documentation](../../docs/packages/disk/)
+- https://minimajs.com/packages/disk/azure-blob
 
 ## License
 

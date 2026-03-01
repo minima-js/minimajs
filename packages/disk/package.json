@@ -2,7 +2,6 @@
   "name": "@minimajs/disk",
   "version": "0.0.1",
   "type": "module",
-  "private": true,
   "description": "Web-native File API for any storage provider. Interact with filesystem, S3, Azure Blob, and more using consistent APIs—forget provider-specific SDKs.",
   "main": "./lib/index.js",
   "exports": {
