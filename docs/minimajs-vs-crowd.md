@@ -5,101 +5,207 @@ sidebar_position: 2
 
 # Minima.js vs. Other Frameworks
 
-Choosing the right framework is about finding the right tool for your specific needs. This guide compares Minima.js with popular alternatives to highlight where it fits in the modern backend landscape.
+Most framework comparisons are either hype or feature checklists.
+This page answers one practical question:
 
-## The Minima.js Philosophy
+**When is Minima.js the better choice for your team, and when is it not?**
 
-Minima.js occupies a unique sweet spot:
+## TL;DR
 
-1.  **Modern**: Built for **Bun** and **Node.js** using native APIs.
-2.  **Standard**: Uses **Web API** standards (`Request`, `Response`, `File`) instead of framework-specific wrappers.
-3.  **Context-Aware**: Eliminates prop-drilling with `AsyncLocalStorage`.
-4.  **Minimal**: Zero boilerplate, file-based auto-discovery.
+Choose **Minima.js** if you want:
 
-## Feature Comparison Matrix
+- modern server runtime support (Node.js + Bun)
+- Web API-first backend primitives (`Request`, `Response`, `File`)
+- low-boilerplate modular architecture
+- hook-driven composition instead of heavy framework ceremony
 
-| Feature             | Minima.js                      | Express            | Fastify          | NestJS               | Hono                 |
-| :------------------ | :----------------------------- | :----------------- | :--------------- | :------------------- | :------------------- |
-| **Primary Runtime** | **Bun** & Node.js              | Node.js            | Node.js          | Node.js              | Edge / Multi-runtime |
-| **API Style**       | **Web Standards**              | proprietary        | proprietary      | proprietary          | Web Standards        |
-| **Routing**         | **File-based + Code**          | Code-based         | Code-based       | Decorator-based      | Code-based           |
-| **Context**         | **Native `AsyncLocalStorage`** | `req` threading    | `req` decorators | Dependency Injection | `c` context object   |
-| **TypeScript**      | **First-class**                | Community `@types` | Schema-driven    | First-class          | First-class          |
-| **Architecture**    | **Functional / Modular**       | Middleware chain   | Plugin system    | OOP / Angular-style  | Functional           |
-| **Boilerplate**     | **Low**                        | Low                | Moderate         | High                 | Low                  |
+Do **not** choose Minima.js if you need:
 
----
+- Edge-first deployment model (Cloudflare-style first)
+- class/decorator-heavy enterprise patterns by default
+- a very large legacy plugin ecosystem like Express
 
-## vs. Express (The Legacy Standard)
+## What Minima.js Optimizes For
 
-**Express** is the grandfather of Node.js frameworks. It is stable but shows its age.
+Minima.js is designed around server-side developer productivity with strong architecture defaults:
 
-### The Difference
+1. **Web-standard primitives** instead of framework-specific request/response wrappers.
+2. **File-based module discovery** with explicit route maps.
+3. **Context availability via AsyncLocalStorage** without prop-drilling request objects.
+4. **Composable hooks/plugins** for lifecycle and cross-cutting concerns.
 
-- **Async Handling**: Express 4 was designed for callbacks. Async/await support was patched in later. Minima.js is async-native.
-- **Request/Response**: Express relies on Node.js's low-level `IncomingMessage` and `ServerResponse`. Minima.js uses the modern, portable `Request` and `Response` Web APIs.
-- **Context**: In Express, you must attach data to the `req` object (`req.user = user`) and pass it through every middleware. Minima.js allows you to access `context()` or `headers()` from _any_ function, anywhere in the call stack.
+## Why Minima.js Feels Different In Practice
 
-**Choose Minima.js if:** You want the simplicity of Express but with modern language features, better types, and 10x performance.
+These are not marketing points; they directly change how codebases scale.
 
----
+### 1. Pure ESM + Web-native APIs by default
 
-## vs. Fastify (The Performance King)
+Minima.js is aligned with modern runtime direction end-to-end:
 
-**Fastify** is an excellent framework that prioritized speed and low overhead. Minima.js actually shares some DNA with Fastify (using `find-my-way` for routing and `avvio` for booting), but takes a different philosophical approach.
+- native ESM imports/exports
+- first-class TypeScript + ESM workflows
+- standard Web primitives (`Request`, `Response`, `Headers`, `File`) instead of custom wrappers
+- no CommonJS compatibility tax in core architecture decisions
 
-### The Difference
+Practical impact:
 
-- **API Surface**: Fastify creates its own proprietary `FastifyRequest` and `FastifyReply` objects with a large API surface area. Minima.js sticks to standard Web APIs (`Request`, `Response`), meaning zero learning curve if you know `fetch`.
-- **Developer Experience**: Fastify relies heavily on schemas for serialization and validation to achieve speed. Minima.js offers great performance out of the box but prioritizes developer ergonomics (like file-based modules and context) over raw micro-optimizations that require verbose configuration.
-- **Modules**: Fastify plugins are powerful but require manual registration. Minima.js provides **automatic file-based module discovery**, making project structure intuitive and consistent.
+- less ambiguity in build/runtime behavior (Node.js + Bun)
+- easier onboarding for developers who know `fetch`
+- less lock-in to framework-specific object APIs
+- cleaner portability of helper logic
 
-**Choose Minima.js if:** You want Fastify-grade architecture but prefer standard Web APIs and zero-config module organization.
+### 2. Encapsulated module tree (strong isolation boundaries)
 
----
+Minima.js module composition is encapsulated by design. Parent/child boundaries help prevent accidental cross-module leakage of behavior.
 
-## vs. NestJS (The Enterprise Framework)
+Practical impact:
 
-**NestJS** is a heavy, opinionated framework heavily inspired by Angular and Spring Boot.
+- hooks/plugins can be scoped intentionally
+- route/module growth remains predictable
+- fewer “global side-effects” surprises as teams add features
 
-### The Difference
+This is a major difference from typical ad-hoc middleware layering in Express apps, where global behavior often grows implicitly over time.
 
-- **Complexity**: NestJS introduces a massive amount of concepts: Modules, Controllers, Providers, Services, Guards, Interceptors, Pipes, Decorators. Minima.js uses **functions and hooks**. That's it.
-- **Dependency Injection**: NestJS relies on a complex DI container. Minima.js encourages using standard JavaScript/TypeScript patterns (imports, closures, and functions) which are easier to debug and test.
-- **Verbosity**: A "Hello World" in NestJS involves multiple files and classes. In Minima.js, it's 3 lines of code.
+### 3. Auto module discovery with explicit route maps
 
-### Code Comparison
+Minima.js combines:
 
-**NestJS Request Scope:**
+- filesystem-driven module discovery
+- explicit `routes: Routes` declarations inside each module
 
-```typescript
-@Injectable({ scope: Scope.REQUEST })
-export class CatsService {
-  constructor(@Inject(REQUEST) private request: Request) {}
-}
-```
+That gives you both velocity and clarity: less registration boilerplate, but still obvious route ownership.
 
-**Minima.js Request Scope:**
+### 4. Hook system built for real application lifecycle
 
-```typescript
+Minima.js hooks cover the full lifecycle (request flow, errors, startup/shutdown, response stages), with module-aware scoping.
+
+Practical impact:
+
+- cross-cutting behavior stays centralized and testable
+- you can enforce policy by scope (global/module/route)
+- operational concerns (resource connect/disconnect, graceful shutdown) are first-class
+
+## Quick Comparison Matrix
+
+| Dimension | Minima.js | Express | Fastify | NestJS | Hono |
+|---|---|---|---|---|---|
+| Runtime focus | Node.js + Bun servers | Node.js servers | Node.js servers | Node.js servers | Edge + multi-runtime |
+| HTTP primitives | Web API (`Request`/`Response`) | Node req/res wrappers | Fastify req/reply wrappers | Framework abstractions | Web API style context |
+| Module isolation | Encapsulated module tree | Mostly convention-based | Plugin encapsulation | Module + DI boundaries | App/router composition |
+| Module discovery | Auto-discovery + explicit routes | Manual wiring | Manual wiring | CLI/decorator driven structure | Manual wiring |
+| Lifecycle model | Multi-stage hooks + lifespan | Middleware-first | Hooks + lifecycle | Interceptors/guards/pipes | Middleware + handlers |
+| Architecture style | Functional modules + hooks | Middleware chains | Plugin + schema-centric | DI + decorators + classes | Functional handlers |
+| Boilerplate | Low | Low | Medium | High | Low |
+| Best fit | Server APIs with clean modular growth | Legacy simplicity/ecosystem | High-throughput tuned APIs | Large enterprise org patterns | Edge-first apps |
+
+## Minima.js vs Express
+
+Express is proven and still widely used. But for modern TypeScript backends, teams often outgrow its patterns.
+
+### Where Minima.js is stronger
+
+- Pure ESM + TypeScript-first modern workflow.
+- Built around async-first modern code paths.
+- Uses standard Web APIs instead of legacy Node request/response ergonomics.
+- Cleaner request-scoped access patterns without manually threading `req` everywhere.
+
+### Where Express is stronger
+
+- Largest ecosystem and historical community footprint.
+- Easy fit for older codebases already centered on Express middleware.
+
+**Pick Minima.js over Express when:**
+You want a modern server foundation without carrying legacy ergonomics forward.
+
+## Minima.js vs Fastify
+
+Fastify is excellent for highly tuned Node APIs and has a strong performance culture.
+
+### Where Minima.js is stronger
+
+- Auto-discovery + module route ownership model improves structure at scale.
+- Smaller conceptual surface for teams that value flow and readability.
+- Web API-first developer model.
+- File-based module structure that scales cleanly without extra registration overhead.
+
+### Where Fastify is stronger
+
+- Mature ecosystem for schema-driven optimization patterns.
+- Better fit if your team is already deeply invested in Fastify plugins and conventions.
+
+**Pick Minima.js over Fastify when:**
+You care more about architecture clarity and low-ceremony development than maximizing framework-specific tuning knobs.
+
+## Minima.js vs NestJS
+
+NestJS is a full framework platform with strong opinions around classes, DI, and decorators.
+
+### Where Minima.js is stronger
+
+- Hook + module encapsulation model keeps cross-cutting concerns clean without deep class hierarchy.
+- Lower abstraction tax: fewer framework-specific concepts to onboard.
+- Function-first code style that stays close to plain TypeScript.
+- Less ceremony for straightforward API modules.
+
+### Where NestJS is stronger
+
+- Fits organizations that explicitly prefer Angular-like architecture.
+- Strong ecosystem around decorators, pipes, guards, and enterprise conventions.
+
+**Pick Minima.js over NestJS when:**
+You want scalable architecture without adopting a class/decorator-heavy programming model.
+
+## Minima.js vs Hono
+
+Hono is a strong choice for Edge-centric workloads.
+
+### Where Minima.js is stronger
+
+- Better default fit for long-running application servers on Node.js/Bun.
+- Rich server-side patterns (module discovery, deep plugin lifecycle, file-heavy APIs).
+- Pure ESM + Web API orientation without forcing Edge-first constraints.
+
+### Where Hono is stronger
+
+- Edge runtime footprint and deployment model.
+- Great option when your primary target is Workers-style environments.
+
+**Pick Minima.js over Hono when:**
+Your core product runs as a server backend, not primarily at the Edge.
+
+## Example: Request Access in Deep Helpers
+
+::: code-group
+```typescript [Minima.js]
 import { request } from "@minimajs/server";
 
-export function getCat() {
-  const req = request(); // Available anywhere, instantly
+export function auditAction(action: string) {
+  const req = request();
+  const ip = req.headers.get("x-forwarded-for");
+  console.log({ action, ip });
 }
 ```
 
-**Choose Minima.js if:** You want to build scalable applications without fighting the framework or writing "Java in JavaScript."
+```typescript [Traditional req threading]
+export function auditAction(req: RequestLike, action: string) {
+  const ip = req.headers["x-forwarded-for"];
+  console.log({ action, ip });
+}
 
----
+// Every caller must pass req manually
+handler((req) => auditAction(req, "create_task"));
+```
+:::
 
-## vs. Hono (The Edge Contender)
+## Decision Checklist
 
-**Hono** is a fantastic framework designed primarily for Edge runtimes (Cloudflare Workers, Deno, Bun).
+Choose **Minima.js** if most answers are “yes”:
 
-### The Difference
+- Do you want a pure ESM, Web-native API foundation on Node.js/Bun?
+- Do you want less framework ceremony and clearer modules?
+- Do you want strong module isolation boundaries as your codebase grows?
+- Do you want auto module discovery without losing explicit route ownership?
+- Do you want hooks/plugins for cross-cutting logic without class-heavy patterns?
+- Do you want to scale codebase structure through modules instead of conventions spread across many file types?
 
-- **Focus**: Hono is optimized for the Edge (small bundle size). Minima.js is optimized for **long-running Application Servers** (Node.js and Bun). This allows Minima.js to offer features like robust file uploading (`@minimajs/multipart`), file-system based module discovery, and deeper system integrations that aren't possible or efficient in Edge environments.
-- **Context Passing**: Hono passes a context object `c` to every handler (`app.get('/', (c) => ...)`). You must pass this `c` object around to helpers. Minima.js uses `AsyncLocalStorage`, so your helpers can be pure functions that don't need context arguments.
-
-**Choose Minima.js if:** You are building a backend server (Microservice, API, Monolith) on Bun or Node.js and want powerful, server-side features.
+If most answers are “no,” another framework may fit better for your constraints.

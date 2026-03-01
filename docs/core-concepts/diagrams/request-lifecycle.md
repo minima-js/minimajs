@@ -32,31 +32,12 @@ graph TD
         --> OnError(["onError()<br/><small>request cleanup</small>"])
         --> Defer
 
-    %% Styling - Hooks (diamonds)
-    style ReqHook fill:#fff4e1,stroke:#ffa726,stroke-width:2px
-    style Transform fill:#ffe7f0,stroke:#e91e63,stroke-width:2px
-    style SendHook fill:#e8f5e9,stroke:#4caf50,stroke-width:2px
-    style ErrorHook fill:#ffebee,stroke:#f44336,stroke-width:2px
-    style ErrorSendHook fill:#e8f5e9,stroke:#4caf50,stroke-width:2px
-
-    %% Initialization & Context
-    style CreateCtx fill:#e3f2fd,stroke:#2196f3,stroke-width:2px
-
-    %% Routing & Matching
-    style RouteMatch fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px
-
-    %% Main Processing
-    style Handler fill:#ede7f6,stroke:#673ab7,stroke-width:3px
-
-    %% Data Transformation (parallelograms)
-    style Serialize fill:#fff3e0,stroke:#ff9800,stroke-width:2px
-    style SerializeErr fill:#ffebee,stroke:#f44336,stroke-width:2px
-
-    %% Cleanup & Lifecycle (stadiums)
-    style Defer fill:#f5f5f5,stroke:#9e9e9e,stroke-width:2px
-    style OnError fill:#ffebee,stroke:#f44336,stroke-width:2px
-
-    %% Start/End
-    style Start fill:#e8f5e9,stroke:#4caf50,stroke-width:2px
-    style Complete fill:#e8f5e9,stroke:#4caf50,stroke-width:2px
+    class Start,Complete success
+    class CreateCtx info
+    class ReqHook,Transform accent
+    class RouteMatch,Handler neutral
+    class Serialize warn
+    class SendHook,Defer accent
+    class ErrorHook,SerializeErr,OnError danger
+    class ErrorSendHook warn
 ```

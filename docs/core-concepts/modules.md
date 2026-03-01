@@ -285,6 +285,60 @@ export const routes: Routes = {
 
 ---
 
+## How Parent-Child Module Resolution Works
+
+When you call `createApp()` from `src/index.ts`, module discovery root is usually `src/`.
+
+### Case 1: No `src/module.ts`
+
+If there is no root module file, discovered feature modules become direct children of the app scope.
+
+```
+src/
+├── index.ts
+└── users/
+    └── module.ts
+```
+
+```mermaid
+graph TD
+    App["createApp()"] --> Users["src/users/module.ts"]
+```
+
+In this case:
+
+- `src/users/module.ts` is mounted directly under app scope.
+- Its own `meta.prefix` and plugins apply to itself (and its nested children, if any).
+
+### Case 2: `src/module.ts` exists
+
+If `src/module.ts` exists, it becomes the root module under app scope, and other discovered modules become its children.
+
+```
+src/
+├── index.ts
+├── module.ts
+├── users/
+│   └── module.ts
+└── posts/
+    └── module.ts
+```
+
+```mermaid
+graph TD
+    App["createApp()"] --> Root["src/module.ts (root module)"]
+    Root --> Users["src/users/module.ts"]
+    Root --> Posts["src/posts/module.ts"]
+```
+
+In this case:
+
+- `src/module.ts` is the direct child of app scope.
+- `src/users/module.ts`, `src/posts/module.ts`, and other discovered modules inherit from that root module.
+- Root `meta.plugins` and root `meta.prefix` propagate to all children.
+
+---
+
 ## Step 5: Set Up a Root Module (Global Config)
 
 For truly global configuration that applies to **every module**, create a root module in your discovery root.

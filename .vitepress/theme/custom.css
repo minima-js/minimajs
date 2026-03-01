@@ -22,3 +22,146 @@
 code {
   color: var(--vp-code-color);
 }
+
+/* Mermaid contrast + semantic color templates. */
+:root {
+  --mm-text: #1f2937;
+  --mm-line: #4b5563;
+  --mm-edge-label-bg: #f3f4f6;
+}
+
+.dark {
+  --mm-text: #e5e7eb;
+  --mm-line: #d1d5db;
+  --mm-edge-label-bg: #111827;
+}
+
+.vp-doc .mermaid,
+.vp-doc .mermaid svg {
+  background: transparent !important;
+}
+
+.vp-doc .mermaid svg text,
+.vp-doc .mermaid svg tspan,
+.vp-doc .mermaid .label,
+.vp-doc .mermaid .edgeLabel,
+.vp-doc .mermaid .cluster-label,
+.vp-doc .mermaid .messageText,
+.vp-doc .mermaid .noteText {
+  fill: var(--mm-text) !important;
+  color: var(--mm-text) !important;
+}
+
+.vp-doc .mermaid .edgePath .path,
+.vp-doc .mermaid .flowchart-link,
+.vp-doc .mermaid .messageLine0,
+.vp-doc .mermaid .messageLine1,
+.vp-doc .mermaid .sequenceNumber,
+.vp-doc .mermaid .activation0,
+.vp-doc .mermaid .activation1,
+.vp-doc .mermaid .activation2,
+.vp-doc .mermaid .loopLine {
+  stroke: var(--mm-line) !important;
+  color: var(--mm-line) !important;
+}
+
+.vp-doc .mermaid .edgeLabel {
+  background-color: var(--mm-edge-label-bg) !important;
+}
+
+/* Shared Mermaid semantic templates */
+.vp-doc .mermaid .node.success rect,
+.vp-doc .mermaid .node.success polygon,
+.vp-doc .mermaid .node.success circle,
+.vp-doc .mermaid .node.success path {
+  fill: #dcfce7 !important;
+  stroke: #16a34a !important;
+}
+
+.vp-doc .mermaid .node.accent rect,
+.vp-doc .mermaid .node.accent polygon,
+.vp-doc .mermaid .node.accent circle,
+.vp-doc .mermaid .node.accent path {
+  fill: #f3e8ff !important;
+  stroke: #9333ea !important;
+}
+
+.vp-doc .mermaid .node.warn rect,
+.vp-doc .mermaid .node.warn polygon,
+.vp-doc .mermaid .node.warn circle,
+.vp-doc .mermaid .node.warn path {
+  fill: #fef3c7 !important;
+  stroke: #d97706 !important;
+}
+
+.vp-doc .mermaid .node.danger rect,
+.vp-doc .mermaid .node.danger polygon,
+.vp-doc .mermaid .node.danger circle,
+.vp-doc .mermaid .node.danger path {
+  fill: #fee2e2 !important;
+  stroke: #dc2626 !important;
+}
+
+.vp-doc .mermaid .node.info rect,
+.vp-doc .mermaid .node.info polygon,
+.vp-doc .mermaid .node.info circle,
+.vp-doc .mermaid .node.info path {
+  fill: #dbeafe !important;
+  stroke: #2563eb !important;
+}
+
+.vp-doc .mermaid .node.neutral rect,
+.vp-doc .mermaid .node.neutral polygon,
+.vp-doc .mermaid .node.neutral circle,
+.vp-doc .mermaid .node.neutral path {
+  fill: #f3f4f6 !important;
+  stroke: #6b7280 !important;
+}
+
+.dark .vp-doc .mermaid .node.success rect,
+.dark .vp-doc .mermaid .node.success polygon,
+.dark .vp-doc .mermaid .node.success circle,
+.dark .vp-doc .mermaid .node.success path {
+  fill: #14532d !important;
+  stroke: #4ade80 !important;
+}
+
+.dark .vp-doc .mermaid .node.accent rect,
+.dark .vp-doc .mermaid .node.accent polygon,
+.dark .vp-doc .mermaid .node.accent circle,
+.dark .vp-doc .mermaid .node.accent path {
+  fill: #4c1d95 !important;
+  stroke: #c084fc !important;
+}
+
+.dark .vp-doc .mermaid .node.warn rect,
+.dark .vp-doc .mermaid .node.warn polygon,
+.dark .vp-doc .mermaid .node.warn circle,
+.dark .vp-doc .mermaid .node.warn path {
+  fill: #78350f !important;
+  stroke: #fbbf24 !important;
+}
+
+.dark .vp-doc .mermaid .node.danger rect,
+.dark .vp-doc .mermaid .node.danger polygon,
+.dark .vp-doc .mermaid .node.danger circle,
+.dark .vp-doc .mermaid .node.danger path {
+  fill: #7f1d1d !important;
+  stroke: #f87171 !important;
+}
+
+.dark .vp-doc .mermaid .node.info rect,
+.dark .vp-doc .mermaid .node.info polygon,
+.dark .vp-doc .mermaid .node.info circle,
+.dark .vp-doc .mermaid .node.info path {
+  fill: #1e3a8a !important;
+  stroke: #60a5fa !important;
+}
+
+.dark .vp-doc .mermaid .node.neutral rect,
+.dark .vp-doc .mermaid .node.neutral polygon,
+.dark .vp-doc .mermaid .node.neutral circle,
+.dark .vp-doc .mermaid .node.neutral path {
+  fill: #1f2937 !important;
+  stroke: #9ca3af !important;
+}

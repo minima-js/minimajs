@@ -9,10 +9,10 @@ graph TD
     Serving -->|app.close| Close["hook:close · ↑ LIFO<br/><small>Cleanup & shutdown</small>"]
     Close --> End([Application Stopped])
 
-    style Register fill:#e1f5ff
-    style Ready fill:#e7f9e7
-    style Listen fill:#fff4e1
-    style Serving fill:#f0f0f0
-    style Close fill:#ffe1e1
-    style RequestCycle fill:#f5e1ff
+    class Start,Ready,End success
+    class Register,RequestCycle accent
+    class Listen warn
+    class Close danger
+    class Serving neutral
+
 ```

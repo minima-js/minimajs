@@ -4,7 +4,7 @@ import { withPwa } from "@vite-pwa/vitepress";
 import llmstxt from "vitepress-plugin-llms";
 
 const tagId = 'GTM-P9NLW275';
-const hostname = 'https://minima-js.github.io';
+const hostname = 'https://minimajs.com';
 
 const keywords = [
   // Brand
@@ -143,6 +143,26 @@ const config = defineConfig({
           { text: "What is Minima.js?", link: "/intro" },
           { text: "Minima.js vs Crowd", link: "/minimajs-vs-crowd" },
           { text: "Getting Started", link: "/getting-started" },
+        ],
+      },
+      {
+        text: "Tutorial",
+        items: [
+          {
+            text: "Task Board API",
+            collapsed: true,
+            items: [
+              { text: "Overview", link: "/tutorials/task-board-api/" },
+              { text: "1. Project Setup", link: "/tutorials/task-board-api/01-setup" },
+              { text: "2. Database & Root Module", link: "/tutorials/task-board-api/02-database" },
+              { text: "3. Authentication", link: "/tutorials/task-board-api/03-auth" },
+              { text: "4. Workspaces", link: "/tutorials/task-board-api/04-workspaces" },
+              { text: "5. Boards & Tasks", link: "/tutorials/task-board-api/05-boards-tasks" },
+              { text: "6. Members & Roles", link: "/tutorials/task-board-api/06-members" },
+              { text: "7. Error Handling & Polish", link: "/tutorials/task-board-api/07-errors-polish" },
+              { text: "Presentation Playbook", link: "/tutorials/task-board-api/presentation-playbook" },
+            ],
+          },
         ],
       },
       {

@@ -5,9 +5,12 @@ graph LR
     Hook2 --> Hook1["Send Hook 1 (registered first)<br/>▶ Runs LAST"]
     Hook1 --> Handler[Send Response]
 
-    style Hook3 fill:#51cf66
-    style Hook2 fill:#74c0fc
-    style Hook1 fill:#ffd43b
+    class Start info
+    class Hook3 success
+    class Hook2 accent
+    class Hook1 warn
+    class Handler neutral
+
 ```
 
 **Note**: LIFO order applies to Child → Parent hooks: `transform`, `send`, `error`, `close`, `timeout`. Parent → Child hooks like `request` use FIFO order.

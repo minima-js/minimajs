@@ -16,11 +16,11 @@ graph TB
 
     Response --> SendHook
 
-    style Start fill:#e3f2fd
-    style Handler fill:#fff3e0
-    style ErrorCheck fill:#fff9c4
-    style HookChain fill:#f3e5f5
-    style FallbackHandler fill:#fce4ec
-    style CreateResp fill:#ffebee
-    style End fill:#c8e6c9
+    class Start info
+    class Handler,HookChain accent
+    class Response,End success
+    class ErrorCheck warn
+    class FallbackHandler,CreateResp danger
+    class SendHook neutral
+
 ```

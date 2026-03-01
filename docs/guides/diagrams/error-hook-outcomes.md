@@ -9,8 +9,10 @@ graph TB
 
     NextHook --> Final[Final Error Response]
 
-    style Start fill:#ffcdd2
-    style Success fill:#c8e6c9
-    style Direct fill:#ffe0b2
-    style Final fill:#ffcdd2
+    class Start,Final danger
+    class Hook accent
+    class NextHook neutral
+    class Success success
+    class Direct warn
+
 ```
