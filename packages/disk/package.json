@@ -1,12 +1,13 @@
 {
   "name": "@minimajs/disk",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "private": true,
   "description": "Web-native File API for any storage provider. Interact with filesystem, S3, Azure Blob, and more using consistent APIs—forget provider-specific SDKs.",
   "main": "./lib/index.js",
   "exports": {
     ".": "./lib/index.js",
+    "./helpers": "./lib/helpers.js",
     "./adapters": "./lib/adapters/index.js",
     "./snapshot": "./lib/snapshot.js",
     "./plugins": "./lib/plugins/index.js"
@@ -23,7 +24,6 @@
     "@types/mime-types": "^3.0.1",
     "@types/node": "^25.0.3",
     "chokidar": "^5.0.0",
-    "date-fns": "^4.1.0",
     "fflate": "^0.8.0"
   },
   "dependencies": {
@@ -31,14 +31,10 @@
   },
   "peerDependencies": {
     "chokidar": "^5.0.0",
-    "date-fns": "^4.0.0",
     "fflate": "^0.8.0"
   },
   "peerDependenciesMeta": {
     "chokidar": {
-      "optional": true
-    },
-    "date-fns": {
       "optional": true
     },
     "fflate": {

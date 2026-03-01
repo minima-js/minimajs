@@ -7,7 +7,7 @@ Plugins extend `@minimajs/disk` by hooking into file operation lifecycle events.
 | Plugin | Import | What it does |
 |---|---|---|
 | [`storeAs`](#storenas) | `@minimajs/disk` | Rename files on upload (UUID, UUID+original, custom) |
-| [`partition`](#partition) | `@minimajs/disk` | Organize files into subdirectories (date or hash) |
+| [`partition`](#partition) | `@minimajs/disk` | Organize files into subdirectories (date, hash, or custom) |
 | [`atomicWrite`](#atomicwrite) | `@minimajs/disk` | Safe writes via temp-file-then-rename |
 | [`checksum`](#checksum) | `@minimajs/disk` | Write + verify SHA-256 sidecar files |
 | [`compression`](#compression) | `@minimajs/disk` | Transparent gzip/deflate compression |
@@ -143,11 +143,11 @@ await disk.put("avatar.jpg", data);
 
 ```typescript
 // Monthly buckets
-const disk = createDisk({ driver }, partition({ by: "date", dateFormat: "yyyy/MM" }));
+const disk = createDisk({ driver }, partition({ by: "date", format: "yyyy/MM" }));
 // stored at: "2024/01/avatar.jpg"
 
 // Hourly buckets
-const disk = createDisk({ driver }, partition({ by: "date", dateFormat: "yyyy/MM/dd/HH" }));
+const disk = createDisk({ driver }, partition({ by: "date", format: "yyyy/MM/dd/HH" }));
 // stored at: "2024/01/15/14/avatar.jpg"
 ```
 
@@ -163,20 +163,43 @@ const disk = createDisk({ driver }, partition({ by: "hash" }));
 const disk = createDisk({ driver }, partition({ by: "hash", levels: 3, charsPerLevel: 3 }));
 ```
 
+### Custom generator
+
+Pass a function for full control over the prefix. Receives the same `(path, data, options)` args as the `put` hook. Sync and async are both supported.
+
+```typescript
+// File-extension based buckets
+const disk = createDisk(
+  { driver },
+  partition((path) => `by-ext/${path.split(".").pop()}`)
+);
+await disk.put("photo.jpg", data);
+// stored at: "by-ext/jpg/photo.jpg"
+
+// Content-type based routing (async)
+const disk = createDisk(
+  { driver },
+  partition(async (_path, _data, opts) =>
+    opts.type?.startsWith("image/") ? "images" : "files"
+  )
+);
+```
+
 ### Options
 
 ```typescript
-interface PartitionOptions {
-  by: "date" | "hash";
-  dateFormat?: string; // default: "yyyy/MM/dd" — date-fns tokens
-  levels?: number;     // default: 2 — hash levels
-  charsPerLevel?: number; // default: 2 — chars per hash level
-}
+// Built-in strategies
+type PartitionOptions =
+  | { by: "date"; format?: string }   // format default: "yyyy/MM/dd"
+  | { by: "hash"; levels?: number; charsPerLevel?: number } // defaults: 2, 2
+
+// Custom generator
+type PartitionGenerator = (path: string, data: DiskData, opts: PutOptions) => string | Promise<string>;
 ```
 
 ### Notes
 
-- Files stored under the partitioned path must be accessed using the full path (e.g., `disk.get("2024/01/15/avatar.jpg")`).
+- Files stored under a partitioned path must be accessed using the full path (e.g., `disk.get("2024/01/15/avatar.jpg")`).
 - Combine with `storeAs` to both rename and partition.
 
 ---
@@ -206,11 +229,25 @@ interface AtomicWriteOptions {
 const disk = createDisk({ driver }, atomicWrite({ tempPrefix: ".staging/" }));
 ```
 
+### Automatic cleanup
+
+The plugin registers a `put:failed` hook that ensures the temp file is always removed on failure — no orphaned `.tmp/` files, regardless of what went wrong:
+
+| Failure scenario | What happens |
+|---|---|
+| `driver.put` throws (network error, disk full, etc.) | `put:failed` hook deletes the temp file, original path never touched |
+| Rename (`move`) to final path fails | `stored` hook catches the error, deletes the temp file, re-throws |
+
+```typescript
+// If this throws for any reason, ".tmp/<uuid>" is cleaned up automatically
+await disk.put("config.json", data);
+```
+
 ### Notes
 
-- Best suited for filesystem drivers where atomic rename is a native OS operation.
-- The original path is tracked via a Symbol key in `put` options — no in-memory state, no memory leaks.
-- If the rename step fails, the temp file is automatically deleted by the disk's put cleanup — no orphaned `.tmp/` files.
+- Best suited for filesystem drivers where rename is a native atomic OS operation.
+- The original path is tracked via a Symbol key in `put` options — no in-memory Map, no memory leaks.
+- The cleanup in `put:failed` is best-effort (`catch(() => {})`), so it does not mask the original error.
 
 ---
 
@@ -568,6 +605,9 @@ const disk = createDisk({ driver }, logger("[uploads]"));
 | `list` | Before listing files | Modified `[prefix, options]` tuple |
 | `url` | After a URL is generated | Modified URL string |
 | `file` | When a `DiskFile` is constructed | Modified `DiskFile` |
+| `put:failed` | When `driver.put` throws | Must re-throw (sync or async) |
+| `get:failed` | When `driver.get` throws | Must re-throw (sync or async) |
+| `delete:failed` | When `driver.delete` throws | Must re-throw (sync or async) |
 
 ## See Also
 

@@ -1,11 +1,17 @@
 import { describe, test, expect } from "@jest/globals";
 import { createHash } from "node:crypto";
-import { createDisk, text2stream } from "../index.js";
+import { createDisk } from "../index.js";
 import { createMemoryDriver } from "../adapters/memory.js";
 import { atomicWrite } from "../plugins/atomic-write/index.js";
 import { partition } from "../plugins/partition/index.js";
 import { checksum, ChecksumMismatchError } from "../plugins/checksum/index.js";
 import { storeAs } from "../plugins/store-as/index.js";
+import { compression } from "../plugins/compression/index.js";
+import { encryption } from "../plugins/encryption/index.js";
+import { uploadProgress, downloadProgress } from "../plugins/progress/index.js";
+import type { UploadProgress } from "../plugins/progress/upload.js";
+import type { DownloadProgress } from "../plugins/progress/download.js";
+import { text2stream } from "../helpers.js";
 
 // ---------------------------------------------------------------------------
 // atomicWrite
@@ -138,6 +144,41 @@ describe("partition plugin — hash strategy", () => {
   });
 });
 
+describe("partition plugin — custom generator", () => {
+  test("custom function receives path and its return is used as prefix", async () => {
+    const driver = createMemoryDriver();
+    const disk = createDisk(
+      { driver },
+      partition((path) => `custom/${path.split(".").pop()}`)
+    );
+
+    await disk.put("avatar.jpg", "img");
+
+    const files: string[] = [];
+    for await (const f of disk.list()) files.push(f.href);
+
+    expect(files.length).toBe(1);
+    expect(files[0]).toBe("custom/jpg/avatar.jpg");
+  });
+
+  test("async custom generator is supported", async () => {
+    const driver = createMemoryDriver();
+    const disk = createDisk(
+      { driver },
+      partition(async (_path, _data, opts) => (opts.type?.startsWith("image/") ? "images" : "files"))
+    );
+
+    await disk.put("photo.jpg", new Blob(["img"], { type: "image/jpeg" }), { type: "image/jpeg" });
+    await disk.put("doc.txt", "text");
+
+    const files: string[] = [];
+    for await (const f of disk.list()) files.push(f.href);
+
+    expect(files.some((f) => f.startsWith("images/"))).toBe(true);
+    expect(files.some((f) => f.startsWith("files/"))).toBe(true);
+  });
+});
+
 describe("partition plugin — date strategy", () => {
   test("stores file under date-derived subdirectory", async () => {
     const driver = createMemoryDriver();
@@ -149,13 +190,13 @@ describe("partition plugin — date strategy", () => {
     for await (const f of disk.list()) files.push(f.href);
 
     expect(files.length).toBe(1);
-    // Default dateFormat is yyyy/MM/dd
+    // Default format is yyyy/MM/dd
     expect(files[0]).toMatch(/^\d{4}\/\d{2}\/\d{2}\/upload\.png$/);
   });
 
-  test("supports custom dateFormat", async () => {
+  test("supports custom format", async () => {
     const driver = createMemoryDriver();
-    const disk = createDisk({ driver }, partition({ by: "date", dateFormat: "yyyy/MM" }));
+    const disk = createDisk({ driver }, partition({ by: "date", format: "yyyy/MM" }));
 
     await disk.put("log.txt", "log");
 
@@ -400,5 +441,416 @@ describe("plugin composition", () => {
     const files: string[] = [];
     for await (const f of disk.list()) files.push(f.href);
     expect(files.length).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// compression plugin
+// ---------------------------------------------------------------------------
+
+describe("compression plugin", () => {
+  test("transparently compresses and decompresses a file (gzip roundtrip)", async () => {
+    const driver = createMemoryDriver();
+    const disk = createDisk({ driver }, compression());
+
+    await disk.put("file.txt", "hello compression");
+
+    const file = await disk.get("file.txt");
+    expect(file).toBeTruthy();
+    expect(await file!.text()).toBe("hello compression");
+  });
+
+  test("raw bytes stored in driver are compressed (not plain text)", async () => {
+    const driver = createMemoryDriver();
+    const disk = createDisk({ driver }, compression());
+
+    await disk.put("data.txt", "hello compression");
+
+    const raw = await driver.get("data.txt");
+    expect(raw).toBeTruthy();
+    const [stream] = raw!;
+    const chunks: Uint8Array[] = [];
+    const reader = stream.getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) chunks.push(value);
+    }
+    const rawText = new TextDecoder().decode(Buffer.concat(chunks));
+    expect(rawText).not.toBe("hello compression");
+  });
+
+  test("stores algorithm in metadata when driver supports it", async () => {
+    const driver = createMemoryDriver(); // capabilities.metadata = true
+    const disk = createDisk({ driver }, compression());
+
+    await disk.put("meta.txt", "content");
+
+    const metadata = await driver.metadata("meta.txt");
+    expect(metadata?.metadata?.["x-compression"]).toBe("gzip");
+  });
+
+  test("supports custom algorithm (deflate-raw roundtrip)", async () => {
+    const driver = createMemoryDriver();
+    const disk = createDisk({ driver }, compression({ algorithm: "deflate-raw" }));
+
+    await disk.put("deflated.txt", "deflated content");
+
+    const file = await disk.get("deflated.txt");
+    expect(file).toBeTruthy();
+    expect(await file!.text()).toBe("deflated content");
+  });
+
+  test("does not decompress files that lack the x-compression metadata flag", async () => {
+    const driver = createMemoryDriver();
+    const disk = createDisk({ driver }, compression());
+
+    // Write a plain (uncompressed) file directly to the driver — no metadata flag
+    await driver.put("plain.txt", text2stream("plain text"), { type: "text/plain" });
+
+    // disk.get should return it as-is (no x-compression key => getAlgo returns undefined)
+    const file = await disk.get("plain.txt");
+    expect(file).toBeTruthy();
+    expect(await file!.text()).toBe("plain text");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// encryption plugin
+// ---------------------------------------------------------------------------
+
+describe("encryption plugin", () => {
+  test("throws DiskConfigError when driver has no metadata support", () => {
+    const driver = createMemoryDriver();
+    // Create a driver variant that reports no metadata capability
+    const noMetaDriver = Object.create(driver, {
+      capabilities: { value: { metadata: false }, configurable: true },
+    });
+
+    expect(() => createDisk({ driver: noMetaDriver }, encryption({ password: "secret" }))).toThrow(
+      expect.objectContaining({ name: "DiskConfigError" })
+    );
+  });
+
+  test("transparently encrypts and decrypts a file (AES-256-GCM roundtrip)", async () => {
+    const driver = createMemoryDriver();
+    const disk = createDisk({ driver }, encryption({ password: "test-password" }));
+
+    await disk.put("secret.txt", "sensitive data");
+
+    const file = await disk.get("secret.txt");
+    expect(file).toBeTruthy();
+    expect(await file!.text()).toBe("sensitive data");
+  });
+
+  test("raw bytes stored in driver are encrypted (not readable as plaintext)", async () => {
+    const driver = createMemoryDriver();
+    const disk = createDisk({ driver }, encryption({ password: "test-password" }));
+
+    await disk.put("encrypted.txt", "plaintext content");
+
+    const raw = await driver.get("encrypted.txt");
+    expect(raw).toBeTruthy();
+    const [stream] = raw!;
+    const chunks: Uint8Array[] = [];
+    const reader = stream.getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) chunks.push(value);
+    }
+    const rawText = new TextDecoder().decode(Buffer.concat(chunks));
+    expect(rawText).not.toContain("plaintext content");
+  });
+
+  test("marks file with encryption flag in driver metadata", async () => {
+    const driver = createMemoryDriver();
+    const disk = createDisk({ driver }, encryption({ password: "test-password" }));
+
+    await disk.put("flagged.txt", "data");
+
+    const metadata = await driver.metadata("flagged.txt");
+    expect(metadata?.metadata?.["x-minimajs-encrypt"]).toBeTruthy();
+  });
+
+  test("does not decrypt files that lack the encryption flag", async () => {
+    const driver = createMemoryDriver();
+    const disk = createDisk({ driver }, encryption({ password: "test-password" }));
+
+    // Write a plain file directly to the driver (no x-minimajs-encrypt metadata)
+    await driver.put("unencrypted.txt", text2stream("raw content"), { type: "text/plain" });
+
+    const file = await disk.get("unencrypted.txt");
+    expect(file).toBeTruthy();
+    expect(await file!.text()).toBe("raw content");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// progress plugins
+// ---------------------------------------------------------------------------
+
+describe("uploadProgress plugin", () => {
+  test("calls onProgress as bytes are uploaded", async () => {
+    const driver = createMemoryDriver();
+    const progress: UploadProgress[] = [];
+    const disk = createDisk(
+      { driver },
+      uploadProgress((p) => progress.push({ ...p }))
+    );
+
+    await disk.put("upload.txt", "hello upload progress");
+
+    expect(progress.length).toBeGreaterThan(0);
+    expect(progress[progress.length - 1]!.loaded).toBeGreaterThan(0);
+  });
+
+  test("reports total and percentage when size is known (Blob input)", async () => {
+    const driver = createMemoryDriver();
+    const progress: UploadProgress[] = [];
+    const disk = createDisk(
+      { driver },
+      uploadProgress((p) => progress.push({ ...p }))
+    );
+
+    const content = "sized content";
+    const blob = new Blob([content], { type: "text/plain" });
+    await disk.put("sized.txt", blob, { type: "text/plain" });
+
+    const last = progress[progress.length - 1]!;
+    expect(last.total).toBeDefined();
+    expect(last.percentage).toBeCloseTo(100);
+  });
+
+  test("percentage is undefined when size is not known (string input)", async () => {
+    const driver = createMemoryDriver();
+    const progress: UploadProgress[] = [];
+    const disk = createDisk(
+      { driver },
+      uploadProgress((p) => progress.push({ ...p }))
+    );
+
+    // String data: size is not passed via options, so total stays undefined
+    await disk.put("unknown.txt", "content without size");
+
+    expect(progress.length).toBeGreaterThan(0);
+    expect(progress[0]!.percentage).toBeUndefined();
+  });
+
+  test("loaded increases monotonically across chunks", async () => {
+    const driver = createMemoryDriver();
+    const progress: UploadProgress[] = [];
+    const disk = createDisk(
+      { driver },
+      uploadProgress((p) => progress.push({ ...p }))
+    );
+
+    const blob = new Blob(["chunk one", "chunk two"], { type: "text/plain" });
+    await disk.put("chunks.txt", blob);
+
+    for (let i = 1; i < progress.length; i++) {
+      expect(progress[i]!.loaded).toBeGreaterThanOrEqual(progress[i - 1]!.loaded);
+    }
+  });
+});
+
+describe("downloadProgress plugin", () => {
+  test("calls onProgress as bytes are downloaded", async () => {
+    const driver = createMemoryDriver();
+    const progress: DownloadProgress[] = [];
+    const disk = createDisk(
+      { driver },
+      downloadProgress((p) => progress.push({ ...p }))
+    );
+
+    await disk.put("download.txt", "hello download progress");
+
+    const file = await disk.get("download.txt");
+    expect(file).toBeTruthy();
+    await file!.text(); // consume stream to trigger progress callbacks
+
+    expect(progress.length).toBeGreaterThan(0);
+    expect(progress[progress.length - 1]!.loaded).toBeGreaterThan(0);
+  });
+
+  test("reports total and percentage when file size is known", async () => {
+    const driver = createMemoryDriver();
+    const progress: DownloadProgress[] = [];
+    const disk = createDisk(
+      { driver },
+      downloadProgress((p) => progress.push({ ...p }))
+    );
+
+    await disk.put("dl-sized.txt", "sized download content");
+
+    const file = await disk.get("dl-sized.txt");
+    expect(file).toBeTruthy();
+    await file!.text();
+
+    const last = progress[progress.length - 1]!;
+    expect(last.total).toBeDefined();
+    expect(last.percentage).toBeCloseTo(100);
+  });
+
+  test("loaded increases monotonically", async () => {
+    const driver = createMemoryDriver();
+    const progress: DownloadProgress[] = [];
+    const disk = createDisk(
+      { driver },
+      downloadProgress((p) => progress.push({ ...p }))
+    );
+
+    await disk.put("dl-mono.txt", "monotonic download content here");
+
+    const file = await disk.get("dl-mono.txt");
+    await file!.text();
+
+    for (let i = 1; i < progress.length; i++) {
+      expect(progress[i]!.loaded).toBeGreaterThanOrEqual(progress[i - 1]!.loaded);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// put:failed / get:failed / delete:failed hooks
+// ---------------------------------------------------------------------------
+
+describe("put:failed / get:failed / delete:failed hooks", () => {
+  test("put:failed fires when driver.put throws", async () => {
+    const driver = createMemoryDriver();
+    driver.put = async () => {
+      throw new Error("storage unavailable");
+    };
+
+    const errors: unknown[] = [];
+    const disk = createDisk({ driver });
+    disk.hook("put:failed", (err) => {
+      errors.push(err);
+      throw err;
+    });
+
+    await expect(disk.put("file.txt", "data")).rejects.toThrow("storage unavailable");
+    expect(errors.length).toBe(1);
+  });
+
+  test("put:failed receives the transformed path (atomicWrite temp path)", async () => {
+    const driver = createMemoryDriver();
+    driver.put = async () => {
+      throw new Error("put failed");
+    };
+
+    let receivedPath: string | undefined;
+    const disk = createDisk({ driver }, atomicWrite({ tempPrefix: ".tmp/" }));
+    disk.hook("put:failed", (err, path) => {
+      receivedPath = path;
+      throw err;
+    });
+
+    await expect(disk.put("final.txt", "content")).rejects.toThrow();
+    // atomicWrite transforms path to a temp path before driver.put
+    expect(receivedPath?.startsWith(".tmp/")).toBe(true);
+  });
+
+  test("put:failed hooks chain — each hook sees the error thrown by the previous (LIFO)", async () => {
+    const driver = createMemoryDriver();
+    driver.put = async () => {
+      throw new Error("original");
+    };
+
+    const seen: string[] = [];
+    const disk = createDisk({ driver });
+
+    // Registered first → runs second (LIFO)
+    disk.hook("put:failed", (err) => {
+      seen.push(`hook1: ${(err as Error).message}`);
+      throw err;
+    });
+    // Registered second → runs first (LIFO)
+    disk.hook("put:failed", (err) => {
+      seen.push(`hook2: ${(err as Error).message}`);
+      throw new Error("wrapped");
+    });
+
+    await expect(disk.put("file.txt", "data")).rejects.toThrow("wrapped");
+    expect(seen).toEqual(["hook2: original", "hook1: wrapped"]);
+  });
+
+  test("get:failed fires when driver.get throws", async () => {
+    const driver = createMemoryDriver();
+    driver.get = async () => {
+      throw new Error("read error");
+    };
+
+    const errors: unknown[] = [];
+    const disk = createDisk({ driver });
+    disk.hook("get:failed", (err) => {
+      errors.push(err);
+      throw err;
+    });
+
+    await expect(disk.get("file.txt")).rejects.toThrow("read error");
+    expect(errors.length).toBe(1);
+  });
+
+  test("get:failed receives the resolved path", async () => {
+    const driver = createMemoryDriver();
+    driver.get = async (path) => {
+      throw new Error(`cannot read ${path}`);
+    };
+
+    let receivedPath: string | undefined;
+    const disk = createDisk({ driver });
+    disk.hook("get:failed", (err, path) => {
+      receivedPath = path;
+      throw err;
+    });
+
+    await expect(disk.get("docs/readme.txt")).rejects.toThrow();
+    expect(receivedPath).toBe("docs/readme.txt");
+  });
+
+  test("delete:failed fires when driver.delete throws", async () => {
+    const driver = createMemoryDriver();
+    driver.delete = async () => {
+      throw new Error("delete error");
+    };
+
+    const errors: unknown[] = [];
+    const disk = createDisk({ driver });
+    disk.hook("delete:failed", (err) => {
+      errors.push(err);
+      throw err;
+    });
+
+    await expect(disk.delete("any.txt")).rejects.toThrow("delete error");
+    expect(errors.length).toBe(1);
+  });
+
+  test("delete:failed receives the resolved href", async () => {
+    const driver = createMemoryDriver();
+    driver.delete = async (href) => {
+      throw new Error(`cannot delete ${href}`);
+    };
+
+    let receivedHref: string | undefined;
+    const disk = createDisk({ driver });
+    disk.hook("delete:failed", (err, href) => {
+      receivedHref = href;
+      throw err;
+    });
+
+    await expect(disk.delete("uploads/photo.jpg")).rejects.toThrow();
+    expect(receivedHref).toBe("uploads/photo.jpg");
+  });
+
+  test("error propagates unchanged when no failed hooks are registered", async () => {
+    const driver = createMemoryDriver();
+    driver.put = async () => {
+      throw new Error("raw driver error");
+    };
+
+    const disk = createDisk({ driver });
+
+    await expect(disk.put("file.txt", "data")).rejects.toThrow("raw driver error");
   });
 });

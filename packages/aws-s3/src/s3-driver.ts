@@ -95,7 +95,7 @@ export class S3Driver implements DiskDriver {
    * - https://cdn.example.com/key (when public URL is configured)
    * - key (when bucket is in constructor)
    */
-  private hrefToKey(href: string): { bucket: string; key: string } {
+  private hrefToKey(href: string, { allowEmptyKey = false } = {}): { bucket: string; key: string } {
     // Handle public URL - convert back to S3 key
     if (this.publicUrl && href.startsWith(this.publicUrl)) {
       if (!this.bucket) {
@@ -119,7 +119,7 @@ export class S3Driver implements DiskDriver {
         const bucket = url.hostname;
         const key = url.pathname.slice(1);
 
-        if (!key) {
+        if (!key && !allowEmptyKey) {
           throw new Error("S3 key cannot be empty");
         }
 
@@ -175,9 +175,6 @@ export class S3Driver implements DiskDriver {
   async put(href: string, stream: ReadableStream<Uint8Array>, putOptions: PutOptions): Promise<FileMetadata> {
     const { bucket, key } = this.hrefToKey(href);
     const fullKey = this.buildKey(key);
-    // Convert ReadableStream to Node.js Readable
-    const nodeStream = Readable.fromWeb(stream);
-
     // Prepare metadata
     const metadata: Record<string, string> = {};
     if (putOptions.metadata) {
@@ -189,7 +186,7 @@ export class S3Driver implements DiskDriver {
       params: {
         Bucket: bucket,
         Key: fullKey,
-        Body: nodeStream,
+        Body: stream,
         ContentType: putOptions.type,
         Metadata: metadata,
         ACL: this.acl,
@@ -350,7 +347,7 @@ export class S3Driver implements DiskDriver {
     let keyPrefix = this.prefix;
 
     if (prefixHref) {
-      const extracted = this.hrefToKey(prefixHref);
+      const extracted = this.hrefToKey(prefixHref, { allowEmptyKey: true });
       bucket = extracted.bucket;
       keyPrefix = this.buildKey(extracted.key);
     } else {
@@ -361,6 +358,7 @@ export class S3Driver implements DiskDriver {
       throw new Error("Bucket must be specified either in constructor or in list prefix href");
     }
 
+    const PAGE_SIZE = 50;
     let continuationToken: string | undefined;
     let itemsYielded = 0;
     const limit = listOptions?.limit;
@@ -370,7 +368,7 @@ export class S3Driver implements DiskDriver {
         Bucket: bucket,
         Prefix: keyPrefix,
         ContinuationToken: continuationToken,
-        MaxKeys: limit ? Math.min(1000, limit - itemsYielded) : 1000,
+        MaxKeys: limit ? Math.min(PAGE_SIZE, limit - itemsYielded) : PAGE_SIZE,
         Delimiter: listOptions.recursive ? undefined : "/",
       });
 

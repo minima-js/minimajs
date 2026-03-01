@@ -24,6 +24,11 @@ export function atomicWrite(options: AtomicWriteOptions = {}) {
   const tempPrefix = options.tempPrefix ?? ".tmp/";
 
   return (disk: Disk) => {
+    disk.hook("put:failed", async (error, path) => {
+      await disk.delete(path).catch(() => {});
+      throw error;
+    });
+
     disk.hook("put", (path, data, opts) => {
       const tempPath = `${tempPrefix}${randomUUID()}`;
       return [tempPath, data, { ...opts, metadata: { ...opts.metadata, [ORIGINAL_PATH]: path } }];

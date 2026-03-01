@@ -9,7 +9,6 @@ import { tmpdir } from "node:os";
 // Core types and utilities
 export * from "./types.js";
 export * from "./file.js";
-export * from "./helpers.js";
 export * from "./symbols.js";
 export * from "./errors.js";
 export * from "./hooks/manager.js";

@@ -1,7 +1,7 @@
 import { DiskFile, type StreamFactory } from "../file.js";
 import { getMimeType, resolveKey, setDisk, toReadableStream } from "../helpers.js";
 import type { Disk, DiskData, DiskDriver, FileMetadata, FileSource, ListOptions, PutOptions, UrlOptions } from "../types.js";
-import type { DiskHooks, FailedArgs } from "./types.js";
+import type { DiskHooks } from "./types.js";
 
 type DiskHookStore = {
   [K in keyof DiskHooks]?: Set<DiskHooks[K]>;
@@ -200,21 +200,29 @@ export class HookTrigger {
     return file;
   }
 
-  failed(op: "put", error: unknown, path: string, data: DiskData, options: PutOptions): Promise<never>;
-  failed(op: "get", error: unknown, path: string): Promise<never>;
-  failed(op: "delete", error: unknown, source: FileSource): Promise<never>;
-  async failed(...args: FailedArgs): Promise<never> {
-    let error = args[1];
-    const hooks = this.hooks["failed"];
-    if (!hooks) throw error;
+  private async runFailed(key: keyof DiskHooks, error: unknown, ...args: unknown[]): Promise<never> {
+    let current = error;
+    const hooks = this.hooks[key];
+    if (!hooks) throw current;
     for (const handler of [...hooks].reverse()) {
-      args[1] = error;
       try {
-        await (handler as (...a: FailedArgs) => unknown)(...args);
+        await (handler as any)(current, ...args);
       } catch (e) {
-        error = e; // next hook sees the thrown error, not the original
+        current = e;
       }
     }
-    throw error;
+    throw current;
+  }
+
+  putFailed(error: unknown, path: string, data: DiskData, options: PutOptions): Promise<never> {
+    return this.runFailed("put:failed", error, path, data, options);
+  }
+
+  getFailed(error: unknown, path: string): Promise<never> {
+    return this.runFailed("get:failed", error, path);
+  }
+
+  deleteFailed(error: unknown, href: string): Promise<never> {
+    return this.runFailed("delete:failed", error, href);
   }
 }

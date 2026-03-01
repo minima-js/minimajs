@@ -72,7 +72,7 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
     try {
       metadata = await this.driver.put(path, storingStream, options);
     } catch (error) {
-      return this.$hookManager.trigger.failed("put", error, path, storingStream, options);
+      return this.$hookManager.trigger.putFailed(error, path, storingStream, options);
     }
 
     // Merge symbol-keyed entries from options.metadata into the returned metadata.
@@ -92,7 +92,7 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
     try {
       result = await this.driver.get(path);
     } catch (error) {
-      return this.$hookManager.trigger.failed("get", error, path);
+      return this.$hookManager.trigger.getFailed(error, path);
     }
 
     if (!result) return null;
@@ -120,7 +120,7 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
     try {
       await this.driver.delete(href);
     } catch (error) {
-      return this.$hookManager.trigger.failed("delete", error, href);
+      return this.$hookManager.trigger.deleteFailed(error, href);
     }
     return this.$hookManager.trigger.deleted(href);
   }

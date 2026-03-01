@@ -38,9 +38,10 @@ export function createAzureBlobDriver(
   clientOrOptions: BlobServiceClient | AzureBlobDriverOptions,
   options?: AzureBlobBaseDriverOptions
 ): DiskDriver {
-  if (clientOrOptions instanceof BlobServiceClient) {
-    return new AzureBlobDriver(clientOrOptions, options!);
+  if (options !== undefined) {
+    return new AzureBlobDriver(clientOrOptions as BlobServiceClient, options);
   }
-  const client = BlobServiceClient.fromConnectionString(clientOrOptions.connectionString);
-  return new AzureBlobDriver(client, clientOrOptions);
+  const opts = clientOrOptions as AzureBlobDriverOptions;
+  const client = BlobServiceClient.fromConnectionString(opts.connectionString);
+  return new AzureBlobDriver(client, opts);
 }

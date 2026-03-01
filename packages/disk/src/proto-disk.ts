@@ -109,7 +109,7 @@ export class ProtoDisk implements Disk<DiskDriver> {
     try {
       metadata = await driver.put(href, storingStream, options);
     } catch (error) {
-      return this.$hookManager.trigger.failed("put", error, path, storingStream, options);
+      return this.$hookManager.trigger.putFailed(error, path, storingStream, options);
     }
 
     // Preserve plugin-private symbol metadata even when drivers only persist string keys.
@@ -129,7 +129,7 @@ export class ProtoDisk implements Disk<DiskDriver> {
     try {
       result = await driver.get(href);
     } catch (error) {
-      return this.$hookManager.trigger.failed("get", error, href);
+      return this.$hookManager.trigger.getFailed(error, href);
     }
 
     if (!result) return null;
@@ -159,7 +159,7 @@ export class ProtoDisk implements Disk<DiskDriver> {
     try {
       await driver.delete(href);
     } catch (error) {
-      return this.$hookManager.trigger.failed("delete", error, href);
+      return this.$hookManager.trigger.deleteFailed(error, href);
     }
     return this.$hookManager.trigger.deleted(href);
   }

@@ -1,17 +1,19 @@
 import { createHash } from "node:crypto";
-import type { Disk } from "../../types.js";
+import type { Disk, DiskData, PutOptions } from "../../types.js";
 
-export type PartitionStrategy = "date" | "hash";
-
-export interface PartitionOptions {
+export interface PartitionByDate {
   /** Partition strategy — 'date' organizes by time, 'hash' by content hash */
-  by: PartitionStrategy;
+  by: "date";
   /**
    * Date format string — only used when `by: 'date'`.
    * Supports common tokens: yyyy, MM, dd, HH, mm, ss.
    * @default 'yyyy/MM/dd'
    */
-  dateFormat?: string;
+  format?: string;
+}
+
+export interface PartitionByHash {
+  by: "hash";
   /**
    * Number of prefix levels — only used when `by: 'hash'`
    * @default 2
@@ -23,6 +25,10 @@ export interface PartitionOptions {
    */
   charsPerLevel?: number;
 }
+export type PartitionOptions = PartitionByDate | PartitionByHash;
+
+/** Custom prefix generator — receives the same args as the `put` hook */
+export type PartitionGenerator = (path: string, data: DiskData, opts: PutOptions) => string | Promise<string>;
 
 function formatDate(date: Date, format: string): string {
   const pad = (value: number) => value.toString().padStart(2, "0");
@@ -61,15 +67,26 @@ function buildHashPrefix(path: string, levels: number, charsPerLevel: number): s
  * await disk.put('avatar.jpg', data) // stored at ab/cd/avatar.jpg
  *
  * @example
- * // Custom date format — hourly buckets (requires date-fns for full token support)
- * const disk = createDisk({ driver }, partition({ by: 'date', dateFormat: 'yyyy/MM/dd/HH' }))
+ * // Custom generator — full control over the prefix
+ * const disk = createDisk({ driver }, partition((path) => `custom/${path.split('.').pop()}`))
+ * await disk.put('avatar.jpg', data) // stored at custom/jpg/avatar.jpg
  */
-export function partition(options: PartitionOptions) {
-  const { by, dateFormat = "yyyy/MM/dd", levels = 2, charsPerLevel = 2 } = options;
+export function partition(options: PartitionOptions | PartitionGenerator) {
+  let getPrefix: PartitionGenerator = (path) => buildHashPrefix(path, 2, 2);
+
+  if (typeof options === "function") {
+    getPrefix = options;
+  } else if (options.by === "date") {
+    const { format: dateFormat = "yyyy/MM/dd" } = options;
+    getPrefix = () => formatDate(new Date(), dateFormat);
+  } else {
+    const { levels = 2, charsPerLevel = 2 } = options;
+    getPrefix = (path) => buildHashPrefix(path, levels, charsPerLevel);
+  }
 
   return (disk: Disk) => {
-    disk.hook("put", (path, data, opts) => {
-      const prefix = by === "date" ? formatDate(new Date(), dateFormat) : buildHashPrefix(path, levels, charsPerLevel);
+    disk.hook("put", async (path, data, opts) => {
+      const prefix = await getPrefix(path, data, opts);
       const lastSlash = path.lastIndexOf("/");
       const dir = lastSlash >= 0 ? path.slice(0, lastSlash + 1) : "";
       const filename = lastSlash >= 0 ? path.slice(lastSlash + 1) : path;

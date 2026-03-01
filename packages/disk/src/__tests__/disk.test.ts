@@ -9,7 +9,7 @@ import { createMemoryDriver } from "../adapters/memory.js";
 let rootDir: string;
 
 beforeEach(async () => {
-  rootDir = await mkdtemp(join(tmpdir(), "minimajs-disk-"));
+  rootDir = `file://${await mkdtemp(join(tmpdir(), "minimajs-disk-"))}/`;
 });
 
 afterEach(async () => {
@@ -25,7 +25,7 @@ describe("disk fs driver", () => {
     const blob = new Blob(["hello world"], { type: "text/plain" });
     const stored = await disk.put("uploads/hello.txt", blob, { type: "text/plain" });
 
-    expect(stored.href).toBe(`file://${rootDir}/uploads/hello.txt`);
+    expect(stored.href).toBe(`${rootDir}uploads/hello.txt`);
     expect(stored.type.startsWith("text/plain")).toBeTruthy();
 
     const result = await disk.get("uploads/hello.txt");

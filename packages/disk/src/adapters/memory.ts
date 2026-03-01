@@ -1,3 +1,4 @@
+import { DiskFileNotFoundError } from "../errors.js";
 import type { DiskDriver, DriverCapabilities, PutOptions, UrlOptions, ListOptions, FileMetadata } from "../types.js";
 
 interface StoredFile {
@@ -109,9 +110,7 @@ class MemoryDriver implements DiskDriver {
 
   async copy(from: string, to: string): Promise<void> {
     const stored = this.storage.get(from);
-    if (!stored) {
-      throw new Error(`File not found: ${from}`);
-    }
+    if (!stored) throw new DiskFileNotFoundError(from);
 
     // Copy with new lastModified
     this.storage.set(to, {
@@ -122,9 +121,7 @@ class MemoryDriver implements DiskDriver {
 
   async move(from: string, to: string): Promise<void> {
     const stored = this.storage.get(from);
-    if (!stored) {
-      throw new Error(`File not found: ${from}`);
-    }
+    if (!stored) throw new DiskFileNotFoundError(from);
 
     this.storage.delete(from);
     this.storage.set(to, stored);
