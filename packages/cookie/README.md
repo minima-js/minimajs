@@ -244,7 +244,7 @@ app.post("/logout", () => {
 
 ## Links
 
-- [Documentation](https://minima-js.github.io/packages/cookie)
+- [Documentation](https://minimajs.com/packages/cookie)
 - [GitHub](https://github.com/minima-js/minimajs)
 - [npm](https://www.npmjs.com/package/@minimajs/cookie)
 

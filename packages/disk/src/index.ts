@@ -1,17 +1,33 @@
-import { FsDriver, createFsDriver } from "./adapters/fs.js";
-import { type CreateDiskOptions, StandardDisk } from "./disk.js";
+import { FsDriver } from "./adapters/fs.js";
+import { createFsDriver } from "./adapters/index.js";
+import { StandardDisk } from "./standard-disk.js";
 import { ProtoDisk } from "./proto-disk.js";
 import type { DiskDriver, Disk, ProtoDiskOptions } from "./types.js";
+import type { DiskHooks } from "./hooks/types.js";
+import { tmpdir } from "node:os";
 
 // Core types and utilities
 export * from "./types.js";
 export * from "./file.js";
-export * from "./helpers.js";
+export * from "./symbols.js";
+export * from "./errors.js";
+export * from "./hooks/manager.js";
+
+// Errors
 export * from "./errors.js";
 
 // Disk implementations
-export * from "./disk.js";
+export * from "./standard-disk.js";
 export * from "./proto-disk.js";
+
+// Plugins
+export interface CreateDiskOptions<TDriver extends DiskDriver = DiskDriver> {
+  driver?: TDriver;
+  hooks?: Partial<DiskHooks>;
+}
+
+/** A plugin is a function that receives a Disk and registers hooks on it */
+export type DiskPlugin = (disk: Disk) => void;
 
 /**
  * Create a Disk instance with web-native File APIs for any storage provider
@@ -41,6 +57,14 @@ export * from "./proto-disk.js";
  * // Default filesystem driver (uses current working directory)
  * const disk = createDisk();
  *
+ * // With plugins — passed as rest arguments, applied in order
+ * const disk = createDisk(
+ *   { driver: createFsDriver({ root: './uploads' }) },
+ *   compression(),
+ *   atomicWrite(),
+ *   encrypt({ password: process.env.SECRET })
+ * );
+ *
  * // Web-native File API - works everywhere
  * await disk.put('avatar.jpg', imageBuffer);
  * const file = await disk.get('avatar.jpg');
@@ -52,9 +76,14 @@ export * from "./proto-disk.js";
  * await disk.put(uploadedFile); // Auto-generates unique filename
  * ```
  */
-export function createDisk<TDriver extends DiskDriver = FsDriver>(options: CreateDiskOptions<TDriver> = {}): Disk<TDriver> {
-  const driver = (options.driver ?? createFsDriver({ root: process.cwd() })) as TDriver;
-  return new StandardDisk(driver);
+export function createDisk<TDriver extends DiskDriver = FsDriver>(
+  options: CreateDiskOptions<TDriver> = {},
+  ...plugins: DiskPlugin[]
+): Disk<TDriver> {
+  const driver = (options.driver ?? createFsDriver()) as TDriver;
+  const disk = new StandardDisk(driver, { hooks: options.hooks });
+  for (const plugin of plugins) plugin(disk);
+  return disk;
 }
 
 /**
@@ -108,6 +137,35 @@ export function createDisk<TDriver extends DiskDriver = FsDriver>(options: Creat
  * const blob = await file.blob(); // Standard File.blob()
  * ```
  */
-export function createProtoDisk(options: ProtoDiskOptions) {
-  return new ProtoDisk(options);
+export function createProtoDisk(options: ProtoDiskOptions, ...plugins: DiskPlugin[]) {
+  const disk = new ProtoDisk(options);
+  for (const plugin of plugins) plugin(disk);
+  return disk;
+}
+
+/**
+ * Create a temporary disk backed by the OS temp directory.
+ *
+ * Useful for short-lived file operations (e.g., processing uploads before
+ * moving them to permanent storage). Files are stored under `os.tmpdir()`
+ * and are not automatically cleaned up — delete them when done.
+ *
+ * @param plugins - Optional disk plugins to apply (e.g., compression, encryption)
+ * @returns A `StandardDisk` instance rooted at the system temp directory
+ *
+ * @example
+ * ```typescript
+ * import { createTempDisk } from "@minimajs/disk";
+ *
+ * const tmp = createTempDisk();
+ *
+ * const file = await tmp.put("upload.jpg", imageStream);
+ * // process file...
+ * await tmp.delete(file);
+ * ```
+ */
+export function createTempDisk(...plugins: DiskPlugin[]) {
+  const disk = new StandardDisk(new FsDriver({ root: "file://" + tmpdir() + "/" }), {});
+  for (const plugin of plugins) plugin(disk);
+  return disk;
 }

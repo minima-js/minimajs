@@ -1,26 +1,35 @@
+import type { DiskHooks } from "./hooks/types.js";
 import type { DiskFile } from "./file.js";
+import type { FSWatcher } from "chokidar";
 
 /**
  * Data types accepted for upload at Disk level (will be converted to streams)
  */
-export type DiskData = ReadableStream | Blob | ArrayBufferView | ArrayBuffer | FormData | string | File;
+export type DiskData = ReadableStream | Blob | ArrayBufferView | ArrayBuffer | string | File;
 
 /**
  * Source for copy/move operations - string key or DiskFile
  */
-export type FileSource = string | DiskFile;
+export type FileSource = string | File;
 
 /**
  * Options for putting/storing a file
  * Extends FilePropertyBag to stay web-native
  */
 export interface PutOptions extends FilePropertyBag {
-  /** Custom metadata to store with the file */
-  metadata?: Record<string, string>;
+  /**
+   * Metadata to store with the file.
+   * String-keyed entries are persisted by the driver.
+   * Symbol-keyed entries are in-memory only — plugins use them to pass
+   * private state through the hook pipeline without hitting the driver.
+   */
+  metadata?: DiskFile["metadata"];
   /** Cache-Control header value */
   cacheControl?: string;
+  signal?: AbortSignal;
+  /** Total byte size of the data — enables percentage in progress plugins */
+  size?: number;
 }
-
 /**
  * Options for generating signed/public URLs
  */
@@ -41,6 +50,7 @@ export interface ListOptions {
   cursor?: string;
   /** Include files in subdirectories */
   recursive?: boolean;
+  signal?: AbortSignal;
 }
 
 /**
@@ -52,7 +62,7 @@ export interface FileMetadata extends FilePropertyBag {
   href: string;
   size: number;
   /** Custom metadata to store with the file */
-  metadata?: Record<string, string>;
+  metadata?: DiskFile["metadata"];
 }
 
 /**
@@ -63,9 +73,26 @@ export interface FileMetadata extends FilePropertyBag {
  * - s3://bucket-name/path/to/file
  * - https://storage.example.com/path/to/file
  */
+/**
+ * Capability declarations for a driver.
+ * Every driver should implement this. An absent field or absent `capabilities`
+ * object is treated as `false` — the feature is not supported.
+ */
+export interface DriverCapabilities {
+  /**
+   * Whether the driver persists and returns string-keyed metadata from PutOptions.
+   * - `true`  — metadata round-trips through put → get
+   * - `false` or absent — metadata is not supported / silently dropped
+   */
+  metadata?: boolean;
+}
+
 export interface DiskDriver {
   /** Driver name (e.g., 'fs', 's3', 'azure') */
   readonly name: string;
+
+  /** Optional capability declarations — see {@link DriverCapabilities} */
+  readonly capabilities?: DriverCapabilities;
 
   /**
    * Store data from a ReadableStream
@@ -117,17 +144,25 @@ export interface DiskDriver {
   move(from: string, to: string): Promise<void>;
 
   /**
-   * List files with optional prefix
-   * @param prefix - Filter by href prefix
+   * List files under a prefix href.
+   * @param prefix - Absolute href prefix ending with `/`, or `""` to list everything.
    * @param options - Pagination options
    */
-  list(prefix?: string, options?: ListOptions): AsyncIterable<FileMetadata>;
+  list(prefix: string, options?: ListOptions): AsyncIterable<FileMetadata>;
 
   /**
    * Get file metadata without content
    * @param href - Absolute URL/URI with protocol
    */
-  getMetadata(href: string): Promise<FileMetadata | null>;
+  metadata(href: string): Promise<FileMetadata | null>;
+
+  /**
+   * Watch files for changes (optional - driver-specific)
+   * @param pattern - Pattern to watch
+   * @param options - Watch options
+   * @returns FSWatcher instance from chokidar or undefined if not supported
+   */
+  watch?(pattern: string, options?: WatchOptions): FSWatcher | Promise<FSWatcher>;
 }
 
 /**
@@ -151,13 +186,55 @@ export interface Disk<TDriver extends DiskDriver = DiskDriver> extends AsyncIter
    */
   get(key: string): Promise<DiskFile | null>;
 
-  delete(key: string): Promise<void>;
+  delete(file: File): Promise<string>;
+  delete(key: string): Promise<string>;
   exists(key: string): Promise<boolean>;
   url(key: string, options?: UrlOptions): Promise<string>;
-  copy(from: FileSource, to: string): Promise<DiskFile>;
-  move(from: FileSource, to: string): Promise<DiskFile>;
+  copy(from: File, to?: string): Promise<DiskFile>;
+  copy(from: string, to: string): Promise<DiskFile>;
+  move(from: File, to?: string): Promise<DiskFile>;
+  move(from: string, to: string): Promise<DiskFile>;
   list(prefix?: string, options?: ListOptions): AsyncIterable<DiskFile>;
-  getMetadata(key: string): Promise<FileMetadata | null>;
+  metadata(key: string): Promise<FileMetadata | null>;
+
+  /**
+   * Register a hook (for use by plugins)
+   */
+  hook<K extends keyof DiskHooks>(event: K, handler: DiskHooks[K]): () => void;
+
+  /**
+   * Watch files matching a pattern for changes
+   * @throws Error if driver does not support watching
+   */
+  watch(pattern: string, options?: WatchOptions): FSWatcher | Promise<FSWatcher>;
+}
+
+/**
+ * Watch options
+ */
+export interface WatchOptions {
+  /** Watch subdirectories recursively (default: true) */
+  recursive?: boolean;
+  /** Ignore initial add events (default: true) */
+  ignoreInitial?: boolean;
+  /** Additional chokidar options */
+  chokidar?: any;
+}
+
+/**
+ * Storage information
+ */
+export interface StorageInfo {
+  /** Total storage capacity in bytes (null if unlimited) */
+  total: number | null;
+  /** Used storage in bytes */
+  used: number;
+  /** Available storage in bytes (null if unlimited) */
+  available: number | null;
+  /** Free storage in bytes (null if unlimited) */
+  free: number | null;
+  /** Number of files */
+  files?: number;
 }
 
 /**
@@ -177,4 +254,6 @@ export interface ProtoDiskOptions {
   defaultProtocol?: string;
   /** Base path for resolving relative paths */
   basePath?: string;
+  /** Initial hooks to register */
+  hooks?: Partial<DiskHooks>;
 }

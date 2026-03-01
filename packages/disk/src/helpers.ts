@@ -1,8 +1,21 @@
-import { basename } from "node:path";
+import { basename, extname } from "node:path";
 import { randomUUID } from "node:crypto";
-import type { DiskData, FileSource, PutOptions } from "./types.js";
+import type { Disk, DiskDriver, DiskData, FileMetadata, FileSource, PutOptions } from "./types.js";
+import { kDisk } from "./symbols.js";
 import { DiskFile } from "./file.js";
 import { lookup as lookupMimeType } from "mime-types";
+import { DiskReadError } from "./errors.js";
+import type { HookTrigger } from "./hooks/trigger.js";
+
+/** Retrieve the originating Disk from any File (undefined if not set) */
+export function getDisk<TDriver extends DiskDriver = DiskDriver>(file: File): Disk<TDriver> | undefined {
+  return (file as any)[kDisk] as Disk<TDriver> | undefined;
+}
+
+/** Attach a Disk reference to a file — called internally by StandardDisk */
+export function setDisk(file: File, disk: Disk): void {
+  (file as any)[kDisk] = disk;
+}
 
 export function isBlob(value: unknown): value is Blob {
   return typeof Blob !== "undefined" && value instanceof Blob;
@@ -17,10 +30,15 @@ export function isDiskFile(value: unknown): value is DiskFile {
 }
 
 /**
- * Resolve key from string or DiskFile
+ * Resolve a path/key from a FileSource.
+ * - `DiskFile` → `.href` (storage identifier)
+ * - `File` → `.name`
+ * - `string` → returned as-is
  */
 export function resolveKey(from: FileSource): string {
-  return typeof from === "string" ? from : from.href;
+  if (typeof from === "string") return from;
+  if (from instanceof DiskFile) return from.href;
+  return from.name;
 }
 
 export function isArrayBuffer(value: unknown): value is ArrayBuffer {
@@ -75,35 +93,8 @@ export function resolveContentType(data: DiskData, options?: PutOptions): string
   return undefined;
 }
 
-/**
- * Resolve size from data
- */
-export function resolveSize(data: DiskData): number | undefined {
-  if (isBlob(data)) return data.size;
-  if (isArrayBuffer(data)) return data.byteLength;
-  if (isArrayBufferView(data)) return data.byteLength;
-  if (typeof data === "string") return Buffer.byteLength(data);
-  return undefined;
-}
-
-/**
- * Sanitize path segments to prevent directory traversal
- */
-export function sanitizeKey(key: string): string {
-  const segments = key
-    .replace(/\\/g, "/")
-    .split("/")
-    .map((segment) => segment.trim())
-    .filter((segment) => segment && segment !== "." && segment !== "..");
-  return segments.join("/");
-}
-
-export function sanitizeFilename(name: string): string {
-  return basename(name).replace(/\s+/g, "-");
-}
-
 export function randomName(base: string): string {
-  return `${randomUUID()}-${sanitizeFilename(base)}`;
+  return `${randomUUID()}-${extname(base)}`;
 }
 
 /**
@@ -114,7 +105,17 @@ export function getMimeType(pathOrKey: string): string | undefined {
   return result || undefined;
 }
 
-export async function stream2uint8array(stream: ReadableStream<Uint8Array>): Promise<Uint8Array<ArrayBuffer>> {
+export function text2stream(text: string): ReadableStream<Uint8Array> {
+  const encoded = new TextEncoder().encode(text);
+  return new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoded);
+      controller.close();
+    },
+  });
+}
+
+export async function stream2bytes(stream: ReadableStream<Uint8Array>): Promise<Uint8Array<ArrayBuffer>> {
   const reader = stream.getReader();
   let buffer = new Uint8Array(64 * 1024); // 64KB initial size
   let length = 0;
@@ -163,5 +164,46 @@ export function async2stream(streamPromise: Promise<ReadableStream>): ReadableSt
         controller.error(error);
       }
     },
+  });
+}
+
+export function createDiskFile(
+  filename: string,
+  metadata: FileMetadata,
+  factory: (file: DiskFile) => Promise<ReadableStream<Uint8Array>>
+) {
+  let file: DiskFile;
+  // eslint-disable-next-line prefer-const
+  file = new DiskFile(filename, {
+    href: metadata.href,
+    size: metadata.size,
+    type: metadata.type || getMimeType(metadata.href),
+    lastModified: metadata.lastModified,
+    metadata: metadata.metadata,
+    stream: () => factory(file),
+  });
+  return file;
+}
+
+/**
+ * Copies symbol-keyed entries from `src` into `dest`.
+ * Used to propagate plugin-private state through the put pipeline without
+ * requiring drivers to preserve symbol keys.
+ */
+export function ensureMetadataSymbols(
+  src: Record<string | symbol, unknown>,
+  dest: Record<string | symbol, unknown> | undefined
+): void {
+  dest ??= {};
+  for (const sym of Object.getOwnPropertySymbols(src)) {
+    dest[sym] = src[sym];
+  }
+}
+
+export async function fileFromMetadata(driver: DiskDriver, trigger: HookTrigger, metadata: FileMetadata): Promise<DiskFile> {
+  return trigger.file(basename(metadata.href), metadata, async (file) => {
+    const result = await driver.get(metadata.href);
+    if (!result) throw new DiskReadError(metadata.href);
+    return trigger.streaming(result[0], file);
   });
 }

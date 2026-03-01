@@ -4,7 +4,7 @@
   "description": "High-performance HTTP framework built for node/bun with context-aware request handling and zero boilerplate",
   "type": "module",
   "license": "MIT",
-  "homepage": "https://minima-js.github.io/",
+  "homepage": "https://minimajs.com",
   "repository": {
     "type": "github",
     "directory": "packages/server",

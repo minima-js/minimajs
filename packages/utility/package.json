@@ -2,6 +2,11 @@
   "name": "@minimajs/utility",
   "version": "0.0.1",
   "type": "module",
+  "repository": {
+    "type": "github",
+    "directory": "packages/utility",
+    "url": "https://github.com/minima-js/minimajs"
+  },
   "private": true,
   "exports": "./lib/index.js",
   "devDependencies": {

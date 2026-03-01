@@ -4,6 +4,11 @@
   "description": "Type-safe cookie management for Minima.js",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "github",
+    "directory": "packages/cookie",
+    "url": "https://github.com/minima-js/minimajs"
+  },
   "exports": {
     ".": "./lib/index.js"
   },

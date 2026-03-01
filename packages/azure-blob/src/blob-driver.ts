@@ -1,6 +1,6 @@
 import { BlobServiceClient } from "@azure/storage-blob";
 import { Readable } from "node:stream";
-import type { DiskDriver, PutOptions, ListOptions, FileMetadata } from "@minimajs/disk";
+import type { DiskDriver, DriverCapabilities, PutOptions, ListOptions, FileMetadata } from "@minimajs/disk";
 import utils from "node:util";
 export interface AzureBlobBaseDriverOptions {
   container?: string;
@@ -38,6 +38,7 @@ export interface AzureBlobBaseDriverOptions {
  */
 export class AzureBlobDriver implements DiskDriver {
   readonly name = "azure-blob";
+  readonly capabilities: DriverCapabilities = { metadata: true };
   private readonly options: AzureBlobBaseDriverOptions;
   private readonly endpoint: string;
 
@@ -118,7 +119,7 @@ export class AzureBlobDriver implements DiskDriver {
         blobContentType: putOptions.type,
         blobCacheControl: putOptions?.cacheControl,
       },
-      metadata: putOptions?.metadata,
+      metadata: putOptions?.metadata as Record<string, string>,
     });
 
     const properties = await blobClient.getProperties();
@@ -212,7 +213,7 @@ export class AzureBlobDriver implements DiskDriver {
     await this.delete(from);
   }
 
-  async *list(prefixHref?: string, listOptions?: ListOptions): AsyncIterable<FileMetadata> {
+  async *list(prefixHref: string, listOptions?: ListOptions): AsyncIterable<FileMetadata> {
     let container: string;
     let prefix: string | undefined;
 
@@ -248,7 +249,7 @@ export class AzureBlobDriver implements DiskDriver {
     }
   }
 
-  async getMetadata(href: string): Promise<FileMetadata | null> {
+  async metadata(href: string): Promise<FileMetadata | null> {
     const { container, blob } = this.hrefToBlob(href);
     const containerClient = this.client.getContainerClient(container);
     const blobClient = containerClient.getBlockBlobClient(blob);
@@ -268,6 +269,35 @@ export class AzureBlobDriver implements DiskDriver {
       }
       throw error;
     }
+  }
+
+  async updateMetadata(href: string, updates: { type?: string; metadata?: Record<string, string> }): Promise<FileMetadata> {
+    const { container, blob } = this.hrefToBlob(href);
+    const containerClient = this.client.getContainerClient(container);
+    const blobClient = containerClient.getBlockBlobClient(blob);
+
+    const current = await blobClient.getProperties();
+
+    await Promise.all([
+      updates.metadata !== undefined ? blobClient.setMetadata(updates.metadata) : undefined,
+      updates.type !== undefined
+        ? blobClient.setHTTPHeaders({
+            blobContentType: updates.type,
+            blobCacheControl: current.cacheControl,
+            blobContentEncoding: current.contentEncoding,
+            blobContentLanguage: current.contentLanguage,
+            blobContentDisposition: current.contentDisposition,
+          })
+        : undefined,
+    ]);
+
+    return {
+      href: this.blobToHref(container, blob),
+      size: current.contentLength ?? 0,
+      type: updates.type ?? current.contentType,
+      lastModified: current.lastModified?.getTime() || Date.now(),
+      metadata: updates.metadata ?? current.metadata,
+    };
   }
 
   [utils.inspect.custom]() {

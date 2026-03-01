@@ -1,9 +1,9 @@
 {
   "name": "@minimajs/azure-blob",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "private": true,
-  "description": "Azure Blob Storage driver for @minimajs/disk—use web-native File APIs instead of Azure SDK",
+  "description": "Azure Blob Storage driver for @minimajs/disk — use web-native File APIs instead of Azure SDK",
   "main": "./lib/index.js",
   "exports": {
     ".": "./lib/index.js"
@@ -17,7 +17,8 @@
   },
   "devDependencies": {
     "@minimajs/disk": "workspace:*",
-    "@types/node": "^25.0.3"
+    "@types/node": "^25.0.3",
+    "@jest/globals": "^30.2.0"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.29.1"
@@ -36,6 +37,12 @@
   ],
   "author": "Adil <adil.sudo@gmail.com>",
   "license": "MIT",
+  "homepage": "https://minimajs.com/packages/disk/azure-blob",
+  "repository": {
+    "type": "github",
+    "directory": "packages/azure-blob",
+    "url": "https://github.com/minima-js/minimajs"
+  },
   "files": [
     "lib"
   ]

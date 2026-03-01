@@ -5,10 +5,11 @@ Local filesystem storage driver for Node.js. Store files on disk with optional p
 ## Features
 
 - 💾 **Local Storage** - Store files on local or network filesystem
-- 🔒 **Directory Traversal Protection** - Automatic path sanitization
+- 🔒 **Directory Traversal Protection** - Paths validated against root, throws `DiskAccessError` on violation
 - 🌐 **Public URLs** - Generate public URLs for CDN/web server access
 - 📁 **Automatic Directory Creation** - Creates subdirectories as needed
-- 🚀 **Fast** - Direct filesystem I/O
+- 📎 **Sidecar Metadata** - Optional per-file metadata stored in companion files
+- 🚀 **Fast** - Direct filesystem I/O with streaming
 
 ## Installation
 
@@ -27,7 +28,7 @@ import { createDisk, createFsDriver } from "@minimajs/disk";
 
 const disk = createDisk({
   driver: createFsDriver({
-    root: "/var/uploads",
+    root: "file:///var/uploads/",
   }),
 });
 
@@ -54,7 +55,7 @@ import { createDisk, createFsDriver } from "@minimajs/disk";
 
 const disk = createDisk({
   driver: createFsDriver({
-    root: "/var/www/uploads",
+    root: "file:///var/www/uploads/",
     publicUrl: "https://cdn.example.com/uploads",
   }),
 });
@@ -74,14 +75,13 @@ import { createDisk, createFsDriver } from "@minimajs/disk";
 
 const disk = createDisk({
   driver: createFsDriver({
-    root: "/var/uploads",
+    root: "file:///var/uploads/",
     publicUrl: "http://localhost:3000/files",
   }),
 });
 
 const app = express();
 
-// File upload endpoint
 app.post("/upload", async (req, res) => {
   const file = await disk.put(`uploads/${req.file.name}`, req.file.data);
   res.json({
@@ -90,7 +90,6 @@ app.post("/upload", async (req, res) => {
   });
 });
 
-// Serve files
 app.use("/files", express.static("/var/uploads"));
 
 app.listen(3000);
@@ -101,17 +100,96 @@ app.listen(3000);
 ```typescript
 interface FsDriverOptions {
   /**
-   * Root directory for file storage
-   * All file paths are relative to this directory
+   * Root directory as a `file://` URL — must end with a trailing slash.
+   * @example "file:///var/storage/"
    */
   root: string;
 
   /**
-   * Base URL for generating public URLs
-   * Optional - required if calling disk.url()
+   * Base URL for generating public URLs.
+   * Required if calling disk.url()
    */
   publicUrl?: string;
+
+  /** File permission mode (default: 0o644) */
+  fileMode?: number;
+
+  /** Directory permission mode (default: 0o755) */
+  dirMode?: number;
+
+  /** Follow symbolic links (default: false) */
+  followSymlinks?: boolean;
+
+  /**
+   * Store custom metadata in sidecar files.
+   * Pass `true` to enable with defaults, or an options object to customize
+   * the file extension and serialization format.
+   * @default false
+   */
+  sidecarMetadata?: boolean | SidecarMetadataOptions;
 }
+```
+
+### The `root` URL
+
+The `root` option must be a `file://` URL **with a trailing slash**. This is intentionally strict:
+
+- The trailing slash tells the driver that `root` is a directory base, not a file prefix.
+- Without it, URL resolution becomes ambiguous. For example, two drivers with roots
+  `file:///business-a/` and `file:///business-b/` share no overlap — but `file:///business`
+  (no slash) would incorrectly treat both as within itself.
+
+```typescript
+// ✅ Correct
+createFsDriver({ root: "file:///var/storage/" });
+
+// ❌ Throws DiskConfigError — missing trailing slash
+createFsDriver({ root: "file:///var/storage" });
+
+// ❌ Throws DiskConfigError — not a file:// URL
+createFsDriver({ root: "/var/storage/" });
+```
+
+To convert a plain path to a `file://` URL:
+
+```typescript
+import { pathToFileURL } from "node:url";
+
+const root = pathToFileURL("/var/storage").href + "/";
+// → "file:///var/storage/"
+```
+
+### Sidecar Metadata
+
+Enable per-file metadata stored in companion sidecar files:
+
+```typescript
+// Enable with defaults (.metadata.json extension, JSON serialization)
+createFsDriver({
+  root: "file:///var/storage/",
+  sidecarMetadata: true,
+});
+
+// Customize extension and serialization
+createFsDriver({
+  root: "file:///var/storage/",
+  sidecarMetadata: {
+    extension: ".meta",
+    serializer: {
+      serialize: (data) => JSON.stringify(data),
+      deserialize: (raw) => JSON.parse(raw),
+    },
+  },
+});
+```
+
+With sidecar metadata enabled, putting a file with metadata:
+
+```typescript
+await disk.put("report.pdf", pdfData, {
+  metadata: { userId: "123", department: "sales" },
+});
+// Creates: report.pdf + report.pdf.metadata.json
 ```
 
 ### Example Configurations
@@ -119,19 +197,19 @@ interface FsDriverOptions {
 ```typescript
 // Development
 createFsDriver({
-  root: "/tmp/uploads",
+  root: "file:///tmp/uploads/",
   publicUrl: "http://localhost:3000/uploads",
 });
 
 // Production with CDN
 createFsDriver({
-  root: "/var/www/storage",
+  root: "file:///var/www/storage/",
   publicUrl: "https://cdn.example.com",
 });
 
 // Network share
 createFsDriver({
-  root: "/mnt/nfs/shared",
+  root: "file:///mnt/nfs/shared/",
   publicUrl: "https://files.example.com",
 });
 ```
@@ -140,14 +218,20 @@ createFsDriver({
 
 ### Directory Traversal Protection
 
-The filesystem driver automatically sanitizes paths to prevent directory traversal attacks:
+All hrefs are resolved in URL space against the root and validated for containment.
+Any path that resolves outside the root throws a `DiskAccessError`:
 
 ```typescript
-// Malicious path attempt
-await disk.put("../../../etc/passwd", "malicious");
+import { DiskAccessError } from "@minimajs/disk";
 
-// Sanitized to safe path
-// Actually saves to: /var/uploads/etc/passwd
+try {
+  await disk.put("../../../etc/passwd", "malicious");
+} catch (error) {
+  if (error instanceof DiskAccessError) {
+    console.log(error.message);
+    // Access denied: "../../../etc/passwd" resolves outside the root directory
+  }
+}
 ```
 
 ### Permissions
@@ -155,10 +239,7 @@ await disk.put("../../../etc/passwd", "malicious");
 Ensure the Node.js process has appropriate permissions:
 
 ```bash
-# Set ownership
 sudo chown -R nodejs:nodejs /var/uploads
-
-# Set permissions (read/write for owner, read for group)
 sudo chmod -R 750 /var/uploads
 ```
 
@@ -196,7 +277,7 @@ All standard [Disk operations](./index.md#api-reference) are supported:
 - `move(from, to)` - Move/rename files
 - `list(prefix?, options?)` - List files
 - `url(path, options?)` - Generate public URLs
-- `getMetadata(path)` - Get metadata
+- `metadata(path)` - Get file metadata
 
 ## Examples
 
@@ -218,7 +299,7 @@ await disk.put("documents/report.pdf", pdfData, {
 ```typescript
 // List all images
 for await (const file of disk.list("images/")) {
-  console.log(file.name, file.size, file.type);
+  console.log(file.href, file.size);
 }
 
 // List with limit
@@ -230,10 +311,7 @@ for await (const file of disk.list("images/", { limit: 10 })) {
 ### Copy and Move
 
 ```typescript
-// Copy file
 await disk.copy("images/avatar.jpg", "backups/avatar.jpg");
-
-// Move/rename file
 await disk.move("temp/upload.jpg", "images/avatar.jpg");
 ```
 
@@ -242,10 +320,7 @@ await disk.move("temp/upload.jpg", "images/avatar.jpg");
 ```typescript
 const file = await disk.get("video.mp4");
 if (file) {
-  const stream = file.stream();
-
-  // Pipe to response
-  const reader = stream.getReader();
+  const reader = file.stream().getReader();
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
@@ -254,52 +329,61 @@ if (file) {
 }
 ```
 
+## Error Handling
+
+```typescript
+import { DiskFileNotFoundError, DiskWriteError, DiskAccessError, DiskConfigError } from "@minimajs/disk";
+
+// Invalid root configuration
+try {
+  createFsDriver({ root: "/var/storage" }); // plain path, not file://
+} catch (error) {
+  if (error instanceof DiskConfigError) {
+    console.log(error.message);
+    // FsDriver root must be a file:// URL ending with "/"
+  }
+}
+
+// Path traversal attempt
+try {
+  await disk.get("../../etc/passwd");
+} catch (error) {
+  if (error instanceof DiskAccessError) {
+    console.log(error.href); // "../../etc/passwd"
+  }
+}
+
+// File not found
+const file = await disk.get("missing.txt");
+if (!file) {
+  console.log("File does not exist");
+}
+```
+
 ## Performance Considerations
 
 ### Large Files
 
-For large files, use streaming to avoid loading entire file into memory:
+The driver streams files directly — no buffering in memory:
 
 ```typescript
-// Bad: Loads entire file into memory
+// Stream the file (memory-efficient)
 const file = await disk.get("large-video.mp4");
-const buffer = await file.arrayBuffer(); // May cause OOM
-
-// Good: Stream the file
-const file = await disk.get("large-video.mp4");
-const stream = file.stream();
-// Process stream in chunks
+if (file) {
+  // Pipe stream directly to HTTP response, another writer, etc.
+  await file.stream().pipeTo(writableStream);
+}
 ```
 
 ### Concurrent Operations
 
-The filesystem driver handles concurrent operations safely:
-
 ```typescript
-// Safe - concurrent writes to different files
-await Promise.all([disk.put("file1.txt", data1), disk.put("file2.txt", data2), disk.put("file3.txt", data3)]);
-```
-
-## Error Handling
-
-```typescript
-import { DiskFileNotFoundError, DiskWriteError, DiskReadError } from "@minimajs/disk";
-
-try {
-  await disk.get("missing.txt");
-} catch (error) {
-  if (error instanceof DiskFileNotFoundError) {
-    console.log("File not found");
-  }
-}
-
-try {
-  await disk.put("readonly/file.txt", data);
-} catch (error) {
-  if (error instanceof DiskWriteError) {
-    console.log("Permission denied or disk full");
-  }
-}
+// Safe — concurrent writes to different files
+await Promise.all([
+  disk.put("file1.txt", data1),
+  disk.put("file2.txt", data2),
+  disk.put("file3.txt", data3),
+]);
 ```
 
 ## Comparison

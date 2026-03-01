@@ -1,4 +1,5 @@
-import type { DiskDriver, PutOptions, UrlOptions, ListOptions, FileMetadata } from "../types.js";
+import { DiskFileNotFoundError } from "../errors.js";
+import type { DiskDriver, DriverCapabilities, PutOptions, UrlOptions, ListOptions, FileMetadata } from "../types.js";
 
 interface StoredFile {
   data: Buffer;
@@ -18,6 +19,7 @@ export interface MemoryDriverOptions {
  */
 class MemoryDriver implements DiskDriver {
   readonly name = "memory";
+  readonly capabilities: DriverCapabilities = { metadata: true };
   private readonly storage = new Map<string, StoredFile>();
   private readonly publicUrl?: string;
 
@@ -108,9 +110,7 @@ class MemoryDriver implements DiskDriver {
 
   async copy(from: string, to: string): Promise<void> {
     const stored = this.storage.get(from);
-    if (!stored) {
-      throw new Error(`File not found: ${from}`);
-    }
+    if (!stored) throw new DiskFileNotFoundError(from);
 
     // Copy with new lastModified
     this.storage.set(to, {
@@ -121,9 +121,7 @@ class MemoryDriver implements DiskDriver {
 
   async move(from: string, to: string): Promise<void> {
     const stored = this.storage.get(from);
-    if (!stored) {
-      throw new Error(`File not found: ${from}`);
-    }
+    if (!stored) throw new DiskFileNotFoundError(from);
 
     this.storage.delete(from);
     this.storage.set(to, stored);
@@ -149,7 +147,7 @@ class MemoryDriver implements DiskDriver {
     }
   }
 
-  async getMetadata(href: string): Promise<FileMetadata | null> {
+  async metadata(href: string): Promise<FileMetadata | null> {
     const stored = this.storage.get(href);
     if (!stored) return null;
 

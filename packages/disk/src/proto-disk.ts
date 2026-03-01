@@ -8,13 +8,17 @@ import type {
   FileSource,
   ProtoDiskOptions,
   FileMetadata,
+  WatchOptions,
 } from "./types.js";
 import { DiskFile } from "./file.js";
-import { toReadableStream, getMimeType } from "./helpers.js";
+import { fileFromMetadata, getDisk, ensureMetadataSymbols } from "./helpers.js";
 import { DiskReadError, DiskFileNotFoundError, DiskMetadataError, DiskConfigError } from "./errors.js";
 import { pathToFileURL } from "node:url";
-import { randomUUID } from "node:crypto";
-import { extname, basename } from "node:path";
+import { basename } from "node:path";
+import { inspect } from "node:util";
+import { HookManager } from "./hooks/manager.js";
+import { type DiskHooks } from "./hooks/types.js";
+import type { FSWatcher } from "chokidar";
 
 /**
  * Proto disk implementation that routes operations to different drivers
@@ -22,17 +26,19 @@ import { extname, basename } from "node:path";
  */
 export class ProtoDisk implements Disk<DiskDriver> {
   readonly driver: DiskDriver;
+  private readonly $hookManager: HookManager;
   private readonly protocols: Record<string, DiskDriver>;
   private readonly defaultProtocol: string;
   private readonly basePath: string;
   private readonly sortedPrefixes: string[];
 
   constructor(options: ProtoDiskOptions) {
-    const { protocols, defaultProtocol = "file://", basePath = process.cwd() } = options;
+    const { protocols, defaultProtocol = "file://", basePath = process.cwd(), hooks } = options;
 
     this.protocols = protocols;
     this.defaultProtocol = defaultProtocol;
     this.basePath = basePath;
+    this.$hookManager = new HookManager(this, hooks);
 
     // Sort prefixes by length (descending) for longest-match-first routing
     this.sortedPrefixes = Object.keys(protocols).sort((a, b) => b.length - a.length);
@@ -46,18 +52,23 @@ export class ProtoDisk implements Disk<DiskDriver> {
   }
 
   /**
+   * Hook registration method (for use by plugins)
+   */
+  hook<K extends keyof DiskHooks>(event: K, handler: NonNullable<DiskHooks[K]>): () => void {
+    this.$hookManager.add(event, handler);
+    return () => this.$hookManager.remove(event, handler);
+  }
+
+  /**
    * Get driver for a given href based on longest matching prefix
    */
   public getDriver(href: string): DiskDriver {
-    // Find the longest matching prefix
     for (const prefix of this.sortedPrefixes) {
       if (href.startsWith(prefix)) {
         const driver = this.protocols[prefix];
         if (driver) return driver;
       }
     }
-
-    // No match found
     throw new Error(`No driver registered for href: ${href}\nAvailable prefixes: ${this.sortedPrefixes.join(", ")}`);
   }
 
@@ -65,269 +76,217 @@ export class ProtoDisk implements Disk<DiskDriver> {
    * Convert user-provided path to absolute href with protocol
    */
   private toHref(path: string): string {
-    // If already has protocol, use as-is
     if (path.includes("://")) return path;
 
-    // For relative paths, use default protocol
     if (this.defaultProtocol === "file://") {
       return pathToFileURL(path.startsWith("/") ? path : `${this.basePath}/${path}`).href;
     }
 
-    // For other protocols, prepend protocol and basePath
     const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
     return `${this.defaultProtocol}${this.basePath ? `${this.basePath}/` : ""}${normalizedPath}`;
   }
 
-  // Overload: put with File auto-generates path
   async put(data: File, putOptions?: PutOptions): Promise<DiskFile>;
   async put(path: string, data: DiskData, putOptions?: PutOptions): Promise<DiskFile>;
   async put(pathOrData: string | File, dataOrOptions?: DiskData | PutOptions, putOptions?: PutOptions): Promise<DiskFile> {
-    // Check if first argument is a File - auto-generate filename
     if (pathOrData instanceof File) {
-      const ext = extname(pathOrData.name);
-      const generatedPath = `${randomUUID()}${ext}`;
       const mergedOptions: PutOptions = (dataOrOptions as PutOptions) ?? {};
       mergedOptions.type ??= pathOrData.type;
-      return this.put(generatedPath, pathOrData, mergedOptions);
+      return this.put(pathOrData.name, pathOrData, mergedOptions);
     }
 
-    // Standard usage: path + data
-    const path = pathOrData as string;
-    const data = dataOrOptions as DiskData;
-    const options = { ...putOptions };
+    const [path, stream, options] = await this.$hookManager.trigger.put(
+      pathOrData as string,
+      dataOrOptions as DiskData,
+      putOptions ?? {}
+    );
 
     const href = this.toHref(path);
     const driver = this.getDriver(href);
+    const storingStream = await this.$hookManager.trigger.storing(path, stream, options);
 
-    // Convert data to ReadableStream
-    const stream = toReadableStream(data);
-
-    // Resolve content type from Blob or file extension
-    if (!options.type) {
-      if (data instanceof Blob) {
-        options.type = data.type;
-      } else {
-        // Extract MIME type from file path extension
-        options.type = getMimeType(path);
-      }
+    let metadata;
+    try {
+      metadata = await driver.put(href, storingStream, options);
+    } catch (error) {
+      return this.$hookManager.trigger.putFailed(error, path, storingStream, options);
     }
 
-    // Call driver with stream
-    const metadata = await driver.put(href, stream, options);
+    // Preserve plugin-private symbol metadata even when drivers only persist string keys.
+    if (options.metadata) {
+      ensureMetadataSymbols(options.metadata, metadata.metadata);
+    }
 
-    // Create DiskFile from metadata
-    const filename = basename(path);
-    return new DiskFile(filename, {
-      href: metadata.href,
-      size: metadata.size,
-      type: metadata.type,
-      lastModified: metadata.lastModified,
-      metadata: metadata.metadata,
-      stream: async () => {
-        const fileDriver = this.getDriver(metadata.href);
-        const result = await fileDriver.get(metadata.href);
-        if (!result) throw new DiskReadError(metadata.href);
-        return result[0];
-      },
-    });
+    const diskFile = await fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata);
+    return this.$hookManager.trigger.stored(diskFile);
   }
 
   async get(path: string): Promise<DiskFile | null> {
-    const href = this.toHref(path);
+    const href = this.toHref(await this.$hookManager.trigger.get(path));
     const driver = this.getDriver(href);
-    const result = await driver.get(href);
+
+    let result;
+    try {
+      result = await driver.get(href);
+    } catch (error) {
+      return this.$hookManager.trigger.getFailed(error, href);
+    }
+
     if (!result) return null;
 
     const [stream, metadata] = result;
-
-    // Track if the first stream has been consumed
-    let firstStreamUsed = false;
+    let cachedStream: ReadableStream<Uint8Array> | null = stream;
 
     const filename = basename(path);
-    return new DiskFile(filename, {
-      href: metadata.href,
-      size: metadata.size,
-      type: metadata.type || getMimeType(metadata.href),
-      lastModified: metadata.lastModified,
-      metadata: metadata.metadata,
-      stream: async () => {
-        // First call: use the already-fetched stream
-        if (!firstStreamUsed) {
-          firstStreamUsed = true;
-          return stream;
-        }
-        // Subsequent calls: re-fetch from storage
-        const fileDriver = this.getDriver(metadata.href);
-        const result = await fileDriver.get(metadata.href);
-        if (!result) throw new DiskReadError(metadata.href);
-        return result[0];
-      },
+    const diskFile = await this.$hookManager.trigger.file(filename, metadata, async (file) => {
+      if (cachedStream) {
+        const s = cachedStream;
+        cachedStream = null;
+        return this.$hookManager.trigger.streaming(s, file);
+      }
+      const fileDriver = this.getDriver(metadata.href);
+      const fetched = await fileDriver.get(metadata.href);
+      if (!fetched) throw new DiskReadError(metadata.href);
+      return this.$hookManager.trigger.streaming(fetched[0], file);
     });
+
+    return this.$hookManager.trigger.retrieved(diskFile);
   }
 
-  async delete(path: string): Promise<void> {
-    const href = this.toHref(path);
+  async delete(source: FileSource): Promise<string> {
+    const href = this.toHref(await this.$hookManager.trigger.delete(source));
     const driver = this.getDriver(href);
-    await driver.delete(href);
+    try {
+      await driver.delete(href);
+    } catch (error) {
+      return this.$hookManager.trigger.deleteFailed(error, href);
+    }
+    return this.$hookManager.trigger.deleted(href);
   }
 
   async exists(path: string): Promise<boolean> {
-    const href = this.toHref(path);
+    const href = this.toHref(await this.$hookManager.trigger.exists(path));
     const driver = this.getDriver(href);
-    return driver.exists(href);
+    const exists = await driver.exists(href);
+    return this.$hookManager.trigger.checked(exists, href);
   }
 
   async url(path: string, urlOptions?: UrlOptions): Promise<string> {
     const href = this.toHref(path);
     const driver = this.getDriver(href);
-    return driver.url(href, urlOptions);
+    const url = await driver.url(href, urlOptions);
+    return this.$hookManager.trigger.url(href, url, urlOptions);
   }
 
-  async copy(from: FileSource, to: string): Promise<DiskFile> {
-    const fromHref = typeof from === "string" ? this.toHref(from) : from.href;
-    const toHrefResolved = this.toHref(to);
+  async copy(from: File, to?: string): Promise<DiskFile>;
+  async copy(from: FileSource, to: string): Promise<DiskFile>;
+  async copy(from: FileSource | File, to?: string): Promise<DiskFile> {
+    if (from instanceof DiskFile) {
+      if ((getDisk(from) as unknown) === this) {
+        if (!to) throw new Error(`Explicit target path required when copying within the same disk`);
+        return this.copy(from.href, to);
+      }
+      return this.put(to ?? from.name, from);
+    }
+    if (from instanceof File) {
+      return this.put(to ?? from.name, from);
+    }
+    const [$from, $to] = await this.$hookManager.trigger.copy(from, to!);
 
-    const sourceDriver = this.getDriver(fromHref);
+    const fromHrefResolved = this.toHref($from);
+    const toHrefResolved = this.toHref($to);
+
+    const sourceDriver = this.getDriver(fromHrefResolved);
     const destDriver = this.getDriver(toHrefResolved);
 
-    // Same driver: use native copy (faster - e.g., S3-to-S3 server-side copy)
-    if (sourceDriver === destDriver) {
-      await sourceDriver.copy(fromHref, toHrefResolved);
+    let diskFile: DiskFile;
 
-      // Get metadata of the newly copied file
-      const metadata = await destDriver.getMetadata(toHrefResolved);
+    if (sourceDriver === destDriver) {
+      await sourceDriver.copy(fromHrefResolved, toHrefResolved);
+      const metadata = await destDriver.metadata(toHrefResolved);
       if (!metadata) throw new DiskMetadataError(toHrefResolved, "Failed to get metadata for copied file");
 
-      const filename = basename(to);
-      return new DiskFile(filename, {
-        href: metadata.href,
-        size: metadata.size,
-        type: metadata.type || getMimeType(metadata.href),
-        lastModified: metadata.lastModified,
-        metadata: metadata.metadata,
-        stream: async () => {
-          const fileDriver = this.getDriver(metadata.href);
-          const result = await fileDriver.get(metadata.href);
-          if (!result) throw new DiskReadError(metadata.href);
-          return result[0];
-        },
+      diskFile = await fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata);
+    } else {
+      // Different drivers: stream data between them
+      const result = await sourceDriver.get(fromHrefResolved);
+      if (!result) throw new DiskFileNotFoundError(fromHrefResolved);
+
+      const [srcStream, sourceMetadata] = result;
+      const metadata = await destDriver.put(toHrefResolved, srcStream, {
+        type: sourceMetadata.type,
+        lastModified: sourceMetadata.lastModified,
+        metadata: sourceMetadata.metadata,
       });
+
+      diskFile = await fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata);
     }
 
-    // Different drivers: stream data between them
-    const result = await sourceDriver.get(fromHref);
-    if (!result) throw new DiskFileNotFoundError(fromHref);
-
-    const [stream, sourceMetadata] = result;
-
-    // Copy to destination with source metadata
-    const metadata = await destDriver.put(toHrefResolved, stream, {
-      type: sourceMetadata.type,
-      lastModified: sourceMetadata.lastModified,
-      metadata: sourceMetadata.metadata,
-    });
-
-    const filename = basename(to);
-    return new DiskFile(filename, {
-      href: metadata.href,
-      size: metadata.size,
-      type: metadata.type || getMimeType(metadata.href),
-      lastModified: metadata.lastModified,
-      metadata: metadata.metadata,
-      stream: async () => {
-        const fileDriver = this.getDriver(metadata.href);
-        const result = await fileDriver.get(metadata.href);
-        if (!result) throw new DiskReadError(metadata.href);
-        return result[0];
-      },
-    });
+    return this.$hookManager.trigger.copied($from, $to, diskFile);
   }
 
-  async move(from: FileSource, to: string): Promise<DiskFile> {
-    const fromHref = typeof from === "string" ? this.toHref(from) : from.href;
-    const toHrefResolved = this.toHref(to);
+  async move(from: File, to?: string): Promise<DiskFile>;
+  async move(from: FileSource, to: string): Promise<DiskFile>;
+  async move(from: FileSource | File, to?: string): Promise<DiskFile> {
+    if (from instanceof DiskFile) {
+      const sourceDisk = getDisk(from);
+      if ((sourceDisk as unknown) === this) {
+        if (!to) throw new Error(`Explicit target path required when moving within the same disk`);
+        return this.move(from.href, to);
+      }
+      const copied = await this.put(to ?? from.name, from);
+      if (sourceDisk) {
+        await sourceDisk.delete(from.href);
+      }
+      return copied;
+    }
+    if (from instanceof File) {
+      return this.put(to ?? from.name, from);
+    }
+    const [$from, $to] = await this.$hookManager.trigger.move(from, to!);
 
-    const sourceDriver = this.getDriver(fromHref);
+    const fromHrefResolved = this.toHref($from);
+    const toHrefResolved = this.toHref($to);
+
+    const sourceDriver = this.getDriver(fromHrefResolved);
     const destDriver = this.getDriver(toHrefResolved);
 
-    // Same driver: use native move (faster)
-    if (sourceDriver === destDriver) {
-      await sourceDriver.move(fromHref, toHrefResolved);
+    let diskFile: DiskFile;
 
-      // Get metadata of the newly moved file
-      const metadata = await destDriver.getMetadata(toHrefResolved);
+    if (sourceDriver === destDriver) {
+      await sourceDriver.move(fromHrefResolved, toHrefResolved);
+      const metadata = await destDriver.metadata(toHrefResolved);
       if (!metadata) throw new DiskMetadataError(toHrefResolved, "Failed to get metadata for moved file");
 
-      const filename = basename(to);
-      return new DiskFile(filename, {
-        href: metadata.href,
-        size: metadata.size,
-        type: metadata.type || getMimeType(metadata.href),
-        lastModified: metadata.lastModified,
-        metadata: metadata.metadata,
-        stream: async () => {
-          const fileDriver = this.getDriver(metadata.href);
-          const result = await fileDriver.get(metadata.href);
-          if (!result) throw new DiskReadError(metadata.href);
-          return result[0];
-        },
+      diskFile = await fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata);
+    } else {
+      // Different drivers: copy then delete
+      const result = await sourceDriver.get(fromHrefResolved);
+      if (!result) throw new DiskFileNotFoundError(fromHrefResolved);
+
+      const [srcStream, sourceMetadata] = result;
+      const metadata = await destDriver.put(toHrefResolved, srcStream, {
+        type: sourceMetadata.type,
+        lastModified: sourceMetadata.lastModified,
+        metadata: sourceMetadata.metadata,
       });
+
+      await sourceDriver.delete(fromHrefResolved);
+
+      diskFile = await fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata);
     }
 
-    // Different drivers: copy then delete
-    const result = await sourceDriver.get(fromHref);
-    if (!result) throw new DiskFileNotFoundError(fromHref);
-
-    const [stream, sourceMetadata] = result;
-
-    // Copy to destination
-    const metadata = await destDriver.put(toHrefResolved, stream, {
-      type: sourceMetadata.type,
-      lastModified: sourceMetadata.lastModified,
-      metadata: sourceMetadata.metadata,
-    });
-
-    // Delete source
-    await sourceDriver.delete(fromHref);
-
-    const filename = basename(to);
-    return new DiskFile(filename, {
-      href: metadata.href,
-      size: metadata.size,
-      type: metadata.type || getMimeType(metadata.href),
-      lastModified: metadata.lastModified,
-      metadata: metadata.metadata,
-      stream: async () => {
-        const fileDriver = this.getDriver(metadata.href);
-        const result = await fileDriver.get(metadata.href);
-        if (!result) throw new DiskReadError(metadata.href);
-        return result[0];
-      },
-    });
+    return this.$hookManager.trigger.moved($from, $to, diskFile);
   }
 
   async *list(prefix?: string, listOptions?: ListOptions): AsyncIterable<DiskFile> {
-    const prefixHref = prefix ? this.toHref(prefix) : undefined;
+    const [$prefix, $options] = await this.$hookManager.trigger.list(prefix, listOptions);
+    const prefixHref = $prefix ? this.toHref($prefix) : undefined;
 
-    // If prefix has protocol, list only from that driver
     if (prefixHref) {
       const driver = this.getDriver(prefixHref);
-
-      for await (const metadata of driver.list(prefixHref, listOptions)) {
-        const filename = basename(metadata.href);
-        yield new DiskFile(filename, {
-          href: metadata.href,
-          size: metadata.size,
-          type: metadata.type || getMimeType(metadata.href),
-          lastModified: metadata.lastModified,
-          metadata: metadata.metadata,
-          stream: async () => {
-            const fileDriver = this.getDriver(metadata.href);
-            const result = await fileDriver.get(metadata.href);
-            if (!result) throw new DiskReadError(metadata.href);
-            return result[0];
-          },
-        });
+      for await (const metadata of driver.list(prefixHref, $options)) {
+        yield fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata);
       }
       return;
     }
@@ -335,37 +294,43 @@ export class ProtoDisk implements Disk<DiskDriver> {
     // No prefix: list from all drivers
     for (const [_protocol, driver] of Object.entries(this.protocols)) {
       try {
-        for await (const metadata of driver.list(undefined, listOptions)) {
-          const filename = basename(metadata.href);
-          yield new DiskFile(filename, {
-            href: metadata.href,
-            size: metadata.size,
-            type: metadata.type || getMimeType(metadata.href),
-            lastModified: metadata.lastModified,
-            metadata: metadata.metadata,
-            stream: async () => {
-              const fileDriver = this.getDriver(metadata.href);
-              const result = await fileDriver.get(metadata.href);
-              if (!result) throw new DiskReadError(metadata.href);
-              return result[0];
-            },
-          });
+        for await (const metadata of driver.list("", $options)) {
+          yield fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata);
         }
       } catch (_error) {
         // Skip drivers that don't support listing without prefix
-        // Silent failure - not all drivers may support global listing
       }
     }
   }
 
-  // Make ProtoDisk iterable - allows `for await (const file of disk)`
   async *[Symbol.asyncIterator](): AsyncIterableIterator<DiskFile> {
     yield* this.list();
   }
 
-  async getMetadata(path: string): Promise<FileMetadata | null> {
+  async metadata(path: string): Promise<FileMetadata | null> {
     const href = this.toHref(path);
     const driver = this.getDriver(href);
-    return driver.getMetadata(href);
+    return driver.metadata(href);
+  }
+
+  watch(pattern: string, options?: WatchOptions): FSWatcher | Promise<FSWatcher> {
+    if (!this.driver.watch) {
+      throw new Error(`Driver "${this.driver.name}" does not support file watching`);
+    }
+    return this.driver.watch(pattern, options);
+  }
+
+  [inspect.custom]() {
+    const hooks = this.$hookManager.getRegisteredEvents();
+    return {
+      protocols: Object.keys(this.protocols),
+      defaultProtocol: this.defaultProtocol,
+      hooks: hooks.length > 0 ? hooks : undefined,
+      [Symbol.toStringTag]: `ProtoDisk`,
+    };
+  }
+
+  get [Symbol.toStringTag]() {
+    return `ProtoDisk`;
   }
 }

@@ -10,7 +10,7 @@ import {
   type ServerSideEncryption,
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
-import type { DiskDriver, FileMetadata, PutOptions, ListOptions } from "@minimajs/disk";
+import type { DiskDriver, DriverCapabilities, FileMetadata, PutOptions, ListOptions } from "@minimajs/disk";
 import { Readable } from "node:stream";
 import { inspect } from "node:util";
 
@@ -64,6 +64,7 @@ export interface S3BaseDriverOptions {
  */
 export class S3Driver implements DiskDriver {
   readonly name = "s3";
+  readonly capabilities: DriverCapabilities = { metadata: true };
 
   private readonly bucket?: string;
   private readonly prefix: string;
@@ -71,6 +72,7 @@ export class S3Driver implements DiskDriver {
   private readonly storageClass?: StorageClass;
   private readonly serverSideEncryption?: ServerSideEncryption;
   private readonly publicUrl?: string;
+  private region?: string;
 
   constructor(
     public readonly client: S3Client,
@@ -93,7 +95,7 @@ export class S3Driver implements DiskDriver {
    * - https://cdn.example.com/key (when public URL is configured)
    * - key (when bucket is in constructor)
    */
-  private hrefToKey(href: string): { bucket: string; key: string } {
+  private hrefToKey(href: string, { allowEmptyKey = false } = {}): { bucket: string; key: string } {
     // Handle public URL - convert back to S3 key
     if (this.publicUrl && href.startsWith(this.publicUrl)) {
       if (!this.bucket) {
@@ -117,7 +119,7 @@ export class S3Driver implements DiskDriver {
         const bucket = url.hostname;
         const key = url.pathname.slice(1);
 
-        if (!key) {
+        if (!key && !allowEmptyKey) {
           throw new Error("S3 key cannot be empty");
         }
 
@@ -173,9 +175,6 @@ export class S3Driver implements DiskDriver {
   async put(href: string, stream: ReadableStream<Uint8Array>, putOptions: PutOptions): Promise<FileMetadata> {
     const { bucket, key } = this.hrefToKey(href);
     const fullKey = this.buildKey(key);
-    // Convert ReadableStream to Node.js Readable
-    const nodeStream = Readable.fromWeb(stream);
-
     // Prepare metadata
     const metadata: Record<string, string> = {};
     if (putOptions.metadata) {
@@ -187,7 +186,7 @@ export class S3Driver implements DiskDriver {
       params: {
         Bucket: bucket,
         Key: fullKey,
-        Body: nodeStream,
+        Body: stream,
         ContentType: putOptions.type,
         Metadata: metadata,
         ACL: this.acl,
@@ -208,7 +207,7 @@ export class S3Driver implements DiskDriver {
     return {
       href: this.keyToHref(bucket, fullKey),
       size: head.ContentLength || 0,
-      type: head.ContentType || "application/octet-stream",
+      type: head.ContentType,
       lastModified: head.LastModified?.getTime() || Date.now(),
       metadata: head.Metadata,
     };
@@ -291,8 +290,8 @@ export class S3Driver implements DiskDriver {
       return `${this.publicUrl}/${fullKey}`;
     }
 
-    // Get region from client config
-    const region = await this.client.config.region();
+    // Get region from client config (cached after first call — may do file I/O on first resolve)
+    this.region ??= await this.client.config.region();
 
     // If custom endpoint is configured, use it
     if (this.client.config.endpoint) {
@@ -309,14 +308,14 @@ export class S3Driver implements DiskDriver {
     }
 
     // Determine the AWS partition suffix based on region
-    const partitionSuffix = this.getPartitionSuffix(region);
+    const partitionSuffix = this.getPartitionSuffix(this.region);
 
     // Default AWS S3 URL with correct partition
     if (this.client.config.forcePathStyle) {
-      return `https://s3.${region}.${partitionSuffix}/${bucket}/${fullKey}`;
+      return `https://s3.${this.region}.${partitionSuffix}/${bucket}/${fullKey}`;
     }
 
-    return `https://${bucket}.s3.${region}.${partitionSuffix}/${fullKey}`;
+    return `https://${bucket}.s3.${this.region}.${partitionSuffix}/${fullKey}`;
   }
 
   async copy(from: string, to: string): Promise<void> {
@@ -348,7 +347,7 @@ export class S3Driver implements DiskDriver {
     let keyPrefix = this.prefix;
 
     if (prefixHref) {
-      const extracted = this.hrefToKey(prefixHref);
+      const extracted = this.hrefToKey(prefixHref, { allowEmptyKey: true });
       bucket = extracted.bucket;
       keyPrefix = this.buildKey(extracted.key);
     } else {
@@ -359,6 +358,7 @@ export class S3Driver implements DiskDriver {
       throw new Error("Bucket must be specified either in constructor or in list prefix href");
     }
 
+    const PAGE_SIZE = 50;
     let continuationToken: string | undefined;
     let itemsYielded = 0;
     const limit = listOptions?.limit;
@@ -368,7 +368,7 @@ export class S3Driver implements DiskDriver {
         Bucket: bucket,
         Prefix: keyPrefix,
         ContinuationToken: continuationToken,
-        MaxKeys: limit ? Math.min(1000, limit - itemsYielded) : 1000,
+        MaxKeys: limit ? Math.min(PAGE_SIZE, limit - itemsYielded) : PAGE_SIZE,
         Delimiter: listOptions.recursive ? undefined : "/",
       });
 
@@ -397,7 +397,7 @@ export class S3Driver implements DiskDriver {
     } while (continuationToken);
   }
 
-  async getMetadata(href: string): Promise<FileMetadata | null> {
+  async metadata(href: string): Promise<FileMetadata | null> {
     const { bucket, key } = this.hrefToKey(href);
     const fullKey = this.buildKey(key);
     try {

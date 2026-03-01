@@ -3,7 +3,7 @@ layout: home
 
 hero:
   name: "Minima.js"
-  text: Thoughtfully Designed for Modern Runtimes
+  text: Javascript Backend Framework, Thoughtfully Designed for Modern Runtimes
   tagline: |
     Most frameworks optimize features.
     Minima.js optimizes how it feels to work every day.

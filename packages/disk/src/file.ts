@@ -1,6 +1,7 @@
 import { inspect } from "node:util";
-import { stream2uint8array, async2stream } from "./helpers.js";
+import { stream2bytes, async2stream } from "./helpers.js";
 
+export type StreamFactory = (file: DiskFile) => ReadableStream<Uint8Array> | Promise<ReadableStream<Uint8Array>>;
 /**
  * Symbol to identify disk-managed files
  * Custom drivers can use this to mark their File instances
@@ -9,25 +10,29 @@ import { stream2uint8array, async2stream } from "./helpers.js";
 export interface DiskFileInit extends FilePropertyBag {
   /** Absolute URL/URI with protocol (e.g., file:///path, s3://bucket/key) */
   href: string;
-  size?: number;
-  metadata?: Record<string, string>;
-  stream: () => ReadableStream | Promise<ReadableStream>;
+  size: number;
+  metadata?: DiskFile["metadata"];
+  stream: StreamFactory;
 }
 
 export class DiskFile extends File {
-  #buffer: Uint8Array<ArrayBuffer> | null = null;
+  #bytes: Uint8Array<ArrayBuffer> | null = null;
   #size: number;
   /** Absolute URL/URI with protocol identifying this file */
   readonly href: string;
-  readonly metadata?: Record<string, string>;
-  #streamFactory: () => ReadableStream | Promise<ReadableStream>;
+  readonly metadata: Record<string, string> & Record<symbol, unknown> = {};
+  #streamFactory: StreamFactory;
 
   constructor(filename: string, { href, size, metadata, stream, ...propertyBag }: DiskFileInit) {
     super([], filename, propertyBag);
     this.href = href;
-    this.metadata = metadata;
-    this.#size = size ?? 0;
+
+    // metadata from DiskFileInit is string-based and stored in driver
+    this.#size = size;
     this.#streamFactory = stream;
+    if (metadata) {
+      this.metadata = metadata;
+    }
   }
 
   get size() {
@@ -35,7 +40,7 @@ export class DiskFile extends File {
   }
 
   stream(): ReadableStream {
-    const result = this.#streamFactory();
+    const result = this.#streamFactory(this);
     // If async, wrap it in a ReadableStream
     if (result instanceof Promise) {
       return async2stream(result);
@@ -53,13 +58,10 @@ export class DiskFile extends File {
   }
 
   async bytes(): Promise<Uint8Array<ArrayBuffer>> {
-    if (!this.#buffer) {
-      this.#buffer = await stream2uint8array(this.stream());
-      if (this.#size === 0) {
-        this.#size = this.#buffer.byteLength;
-      }
+    if (!this.#bytes) {
+      this.#bytes = await stream2bytes(this.stream());
     }
-    return this.#buffer;
+    return this.#bytes;
   }
 
   // Custom inspect for console.log() in Node.js/Bun - match native File format
