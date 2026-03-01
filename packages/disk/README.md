@@ -6,10 +6,13 @@ Use the same API for filesystem, S3, Azure Blob, memory, or custom drivers.
 
 `@minimajs/disk` is a standalone package and does not require the Minima.js framework.
 
+`@minimajs/disk` introduces a fully web-native, API-compatible disk library.
+
 ## Why use it
 
 - One storage API across providers
 - Works with `File`, `Blob`, and `ReadableStream`
+- Returns Web `File`-compatible objects (`DiskFile` extends `File`)
 - No provider SDK lock-in at call-site
 - Type-safe return values (`DiskFile`)
 - Optional plugins (`storeAs`, `partition`, `atomicWrite`, `compression`, `encryption`, and more)
@@ -144,7 +147,7 @@ for await (const file of disk.list("uploads/")) {
 `get()`, `put()`, `copy()`, and `move()` return `DiskFile`, which extends the Web `File` API.
 
 ```ts
-const file = await disk.get("document.pdf");
+const file = await disk.get("document.pdf"); // File instance
 if (!file) return;
 
 file.name;
