@@ -89,6 +89,11 @@ export function createMockS3Client(responses: MockS3Responses = {}, config: Mock
     send: sendFn,
     config: {
       region: jest.fn(async () => config.region ?? "us-east-1"),
+      endpointProvider: jest.fn(async () => ({
+        protocol: "https:",
+        hostname: "s3.us-east-1.amazonaws.com",
+        path: "/",
+      })),
       endpoint: config.endpoint,
       forcePathStyle: config.forcePathStyle ?? false,
     },
