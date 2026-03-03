@@ -346,16 +346,6 @@ if (file) {
 ```typescript
 import { DiskFileNotFoundError, DiskWriteError, DiskAccessError, DiskConfigError } from "@minimajs/disk";
 
-// Invalid root configuration
-try {
-  createFsDriver({ root: "/var/storage" }); // plain path, not file://
-} catch (error) {
-  if (error instanceof DiskConfigError) {
-    console.log(error.message);
-    // FsDriver root must be a file:// URL ending with "/"
-  }
-}
-
 // Path traversal attempt
 try {
   await disk.get("../../etc/passwd");
@@ -391,11 +381,7 @@ if (file) {
 
 ```typescript
 // Safe — concurrent writes to different files
-await Promise.all([
-  disk.put("file1.txt", data1),
-  disk.put("file2.txt", data2),
-  disk.put("file3.txt", data3),
-]);
+await Promise.all([disk.put("file1.txt", data1), disk.put("file2.txt", data2), disk.put("file3.txt", data3)]);
 ```
 
 ## Comparison
@@ -433,5 +419,4 @@ await Promise.all([
 - [Main Documentation](./index.md)
 - [AWS S3 Driver](./aws-s3.md)
 - [Protocol Disk](./protocol-disk.md)
-- [Examples](./examples.md)
-- [Decision Guide](./decision-guide.md)
+- [Plugins](./plugins.md)

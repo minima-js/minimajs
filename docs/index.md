@@ -3,10 +3,10 @@ layout: home
 
 hero:
   name: "Minima.js"
-  text: Javascript Backend Framework, Thoughtfully Designed for Modern Runtimes
+  text: Backend Framework for Bun and Node.js
   tagline: |
-    Most frameworks optimize features.
-    Minima.js optimizes how it feels to work every day.
+    Build APIs with Web standards, file-based modules,
+    and context-aware helpers that reduce boilerplate.
   image:
     src: /logo.svg
     alt: Minima.js
@@ -15,41 +15,46 @@ hero:
       text: Get Started
       link: /getting-started
     - theme: alt
-      text: View on GitHub
-      link: https://github.com/minima-js/minimajs
+      text: Introduction
+      link: /intro
 
 features:
   - icon:
       src: /icon-globe.svg
-    title: Web Standards, Pure ESM, Zero Abstractions
-    details: "Built on Web APIs you already know—Request, Response, File, Blob, URL. No proprietary abstractions. Your code stays portable and future-proof."
-
-  - icon:
-      src: /icon-lightning.svg
-    title: Built from Scratch for Modern Runtimes
-    details: "Not a legacy port. Designed ground-up for Bun and Node.js with native APIs, zero compatibility layers, zero historical baggage."
+    title: Web Standards First
+    details: "Use Request, Response, File, Blob, URL, and ReadableStream directly. Less framework-specific code, easier portability."
 
   - icon:
       src: /icon-bun.svg
-    title: 100% Bun-Native Compatible
-    details: First-class Bun support with dedicated imports. Full Node.js compatibility. Same code, different runtime.
+    title: Runtime-Native
+    details: "Use Bun or Node by changing one import path. No legacy compatibility layer."
 
   - icon:
       src: /icon-function.svg
-    title: File-Based Modules with True Isolation
-    details: "Create users/module.ts, it auto-loads as /users/*. Each module is encapsulated—plugins only affect that module and its children. No sibling interference."
+    title: File-Based Modules
+    details: "Your folder structure becomes your route structure. Create module files and they are auto-discovered."
 
   - icon:
       src: /icon-context.svg
-    title: Write Code That Reads Naturally
-    details: "Call body() from anywhere. No req.body drilling. No context passing. Access request data like it's global—because it is (safely)."
+    title: Context Helpers
+    details: "Access params, headers, body, and search params anywhere in request scope without passing req/res through every function."
+
+  - icon:
+      src: /icon-lightning.svg
+    title: Scoped Plugins and Hooks
+    details: "Apply behavior per module or globally with predictable inheritance and isolation."
 
   - icon:
       src: /icon-typescript.svg
-    title: TypeScript works with you
-    details: |
-      APIs are designed for inference, so types flow naturally from usage. You write logic.
+    title: TypeScript by Default
+    details: "APIs are designed for inference, so you spend less time on annotations and more on logic."
 ---
+
+## Start Here
+
+- New to Minima.js: read [Introduction](/intro)
+- Ready to run code: follow [Getting Started](/getting-started)
+- Want a full app walkthrough: open [Task Board Tutorial](/tutorials/task-board-api/)
 
 ## How It Feels to Build
 
@@ -132,7 +137,11 @@ export const routes: Routes = {
 - `POST /api/users/create` → Creates user
 - `GET /api/posts/latest` → `{"posts":[]}`
 
----
+<br />
+<p style="font-size: 1.35rem; line-height: 1.35; margin: 0 0 1rem;">
+Most frameworks optimize features.<br>
+Minima.js optimizes how it feels to work every day.
+</p>
 
 ## Handle File Uploads with Native File API
 
@@ -167,14 +176,12 @@ export const routes: Routes = {
 
 **What you get:**
 
-- ✅ Native `File` instances (Web Standards API)
-- ✅ `multipart.file()` reads entire file into memory
-- ✅ `File` works as Response automatically
-- ✅ Use `@minimajs/multipart/schema` Zod guards your uploads, disk handles the weight
+- Native `File` instances (Web Standards API)
+- `multipart.file()` reads entire file into memory
+- `File` works as Response automatically
+- Use `@minimajs/multipart/schema` Zod guards your uploads, disk handles the weight
 
 [See multipart documentation →](/packages/multipart/)
-
----
 
 ## True Module Encapsulation
 
@@ -259,57 +266,22 @@ export const routes: Routes = {
 ✅ Users logging hook DOES NOT run (isolated)
 ```
 
-### REST API with Auth
+## Build Next
 
-```
-src/
-├── module.ts           # Global auth, body parsing, CORS
-├── auth/
-│   └── module.ts       # POST /auth/login (public)
-└── users/
-    └── module.ts       # GET/POST /users/* (protected)
-```
+Choose the path that matches what you need right now:
 
-<div class="VPFeatures" style="--vp-features-gap: 2rem; --vp-features-max-items-per-row: 1;">
-  <div class="container">
-    <div class="items">
-      <div class="item grid-1">
-        <div class="VPLink no-arrow" href="#">
-          <article class="VPFeature">
-            <h2 class="title">Why Minima.js?</h2>
-            <p class="details">
-             Minima.js is a backend framework built for modern JavaScript runtimes. It removes the friction you’ve learned to tolerate—slow feedback, noisy types, hidden lifecycles, and tangled modules—so building APIs and services feels fast, clear, and predictable again.
-            </p>
-            <div style="height: 1rem;"></div>
-            <a href="/getting-started" class="VPButton" role="button" style="background-color: var(--vp-c-brand-1); color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.25rem;">
-              Get Started →
-            </a>
-          </article>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+- Learn architecture deeply: [Core Concepts](/core-concepts/architecture)
+- Build a complete API: [Task Board Tutorial](/tutorials/task-board-api/)
+- Add auth quickly: [JWT Authentication](/cookbook/jwt-authentication)
+- Work with uploads: [Multipart Package](/packages/multipart/)
+- Explore all packages: [Packages](/packages/auth)
 
-<div style="height: 2rem;"></div>
+## Community
 
-<div class="VPFeatures" style="--vp-features-gap: 2rem; --vp-features-max-items-per-row: 1;">
-  <div class="container">
-    <div class="items">
-      <div class="item grid-1">
-        <div class="VPLink no-arrow" href="#">
-          <article class="VPFeature">
-            <h2 class="title">Join the Community</h2>
-            <p class="details">
-              Open source and community-driven. Report bugs, request features, or contribute code. We'd love your feedback.
-            </p>
-            <div style="height: 1rem;"></div>
-            <a href="https://github.com/minima-js/minimajs" class="VPButton" role="button" style="background-color: var(--vp-c-brand-1); color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 0.25rem;">
-              GitHub →
-            </a>
-          </article>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+Minima.js is open-source and community-driven.
+
+- GitHub: [minima-js/minimajs](https://github.com/minima-js/minimajs)
+- Report bugs or request features: [Open an issue](https://github.com/minima-js/minimajs/issues)
+- Contribute docs or code: [Contribution opportunities](https://github.com/minima-js/minimajs/pulls)
+
+If you are evaluating frameworks right now, start with [Getting Started](/getting-started) and build one real route module before deciding.

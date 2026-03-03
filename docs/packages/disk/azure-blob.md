@@ -61,8 +61,8 @@ await disk.put("avatars/photo.jpg", imageBuffer);
 const retrieved = await disk.get("avatars/photo.jpg");
 if (retrieved) {
   const buffer = await retrieved.arrayBuffer(); // Standard File.arrayBuffer()
-  const text = await retrieved.text();          // Standard File.text()
-  const stream = retrieved.stream();            // Standard File.stream()
+  const text = await retrieved.text(); // Standard File.text()
+  const stream = retrieved.stream(); // Standard File.stream()
 }
 
 // Delete file
@@ -185,7 +185,7 @@ await disk.put("documents/report.pdf", pdfBuffer, {
 
 // Retrieve with metadata
 const file = await disk.get("documents/report.pdf");
-console.log(file.type);     // "application/pdf"
+console.log(file.type); // "application/pdf"
 console.log(file.metadata); // { author: "Jane Doe", ... }
 ```
 
@@ -258,17 +258,10 @@ return new Response(file.stream(), {
 
 ```typescript
 // Upload multiple files in parallel
-await Promise.all([
-  disk.put("file1.txt", "Data 1"),
-  disk.put("file2.txt", "Data 2"),
-  disk.put("file3.txt", "Data 3"),
-]);
+await Promise.all([disk.put("file1.txt", "Data 1"), disk.put("file2.txt", "Data 2"), disk.put("file3.txt", "Data 3")]);
 
 // Download multiple files in parallel
-const [file1, file2] = await Promise.all([
-  disk.get("file1.txt"),
-  disk.get("file2.txt"),
-]);
+const [file1, file2] = await Promise.all([disk.get("file1.txt"), disk.get("file2.txt")]);
 ```
 
 ## Azure Credentials
@@ -378,7 +371,6 @@ try {
 - [AWS S3 Driver](./aws-s3.md) - Amazon S3 storage
 - [Protocol Disk](./protocol-disk.md) - Multi-cloud routing
 - [Filesystem Driver](./filesystem.md) - Local filesystem storage
-- [Decision Guide](./decision-guide.md) - Driver and plugin selection
 
 ## Key Benefits
 

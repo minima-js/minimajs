@@ -7,23 +7,11 @@
 - 🌐 **Web-Native APIs** - Use File, Blob, ReadableStream instead of AWS SDK methods
 - ✅ **Streaming Uploads** - Efficient streaming uploads to S3
 - ✅ **Streaming Downloads** - Direct streaming from S3 without buffering
-- ✅ **CloudFront Integration** - Configure CDN URLs for public file serving
 - ✅ **Metadata Support** - Store and retrieve custom metadata
 - ✅ **Server-Side Copy** - Fast native S3 copy operations
 - ✅ **List Operations** - Paginated file listing with prefix support
-- ✅ **Storage Classes** - Support for all S3 tiers (Standard, IA, Glacier)
 - ✅ **Encryption** - AES256 and KMS encryption support
-- ✅ **ACL Support** - Control file access permissions
 - ✅ **Minimal Dependencies** - Only requires @aws-sdk/client-s3
-
-## Best Fit
-
-Choose the S3 driver when you need:
-
-- durable storage across deployments and regions
-- large-scale object storage with lifecycle policies
-- CDN-backed delivery (CloudFront or custom public URL)
-- IAM, KMS, and compliance-oriented controls
 
 ## Installation
 
@@ -584,7 +572,6 @@ const disk = createDisk({
 - [ProtoDisk](./protocol-disk.md) - Multi-cloud routing
 - [Azure Blob Driver](./azure-blob.md) - Azure Blob Storage
 - [Filesystem Driver](./filesystem.md) - Local filesystem storage
-- [Decision Guide](./decision-guide.md) - Driver and plugin selection
 
 ## Key Benefits
 

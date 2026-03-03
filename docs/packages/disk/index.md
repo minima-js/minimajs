@@ -13,24 +13,6 @@ Universal file storage abstraction for Node.js and Bun. Write once, store anywhe
 - 🔒 **Type Safe** - Full TypeScript support
 - 🧩 **Plugins** - `storeAs`, `partition`, `atomicWrite`, `checksum`, `uploadProgress`, `downloadProgress`, `compression`, `encryption` and more
 - 🌍 **Web Standards** - Works with `File`, `Blob`, and `ReadableStream` natively
-- 📎 **File Integrity** - `put(file)` preserves the original filename by default
-- 🧪 **Testing** - Memory driver for fast unit tests
-
-## Why @minimajs/disk
-
-Use `@minimajs/disk` when you want one file API that can start locally and scale to cloud storage without rewrites.
-
-- Keep application code stable while swapping drivers.
-- Standardize on web-native `File`/`Blob`/`ReadableStream` APIs across environments.
-- Add behavior (naming, partitioning, integrity, encryption, progress) through plugins instead of app-level glue code.
-- Route between many backends with `createProtoDisk` when your architecture evolves.
-
-## Adoption Path
-
-1. Start with `createDisk()` (default local driver) during development.
-2. Add `storeAs`/`partition` plugins for naming and layout discipline.
-3. Move to S3 or Azure by changing only the driver.
-4. Introduce `createProtoDisk` if you need multi-bucket, multi-region, or multi-provider routing.
 
 ## Installation
 
@@ -68,10 +50,7 @@ const tempDisk = createTempDisk();
 await tempDisk.put("preview.txt", "temporary data");
 
 // Encrypted S3 storage
-const s3Disk = createDisk(
-  { driver: createS3Driver({}) },
-  encryption({ password: "abc" }),
-);
+const s3Disk = createDisk({ driver: createS3Driver({}) }, encryption({ password: "abc" }));
 
 const report = new File(["abc file data"], "abc.txt", { type: "text/plain" });
 const encryptedFile = await s3Disk.put(report); // encrypted before upload
@@ -79,19 +58,13 @@ encryptedFile.href; // s3://bucket/abc.txt
 encryptedFile.type; // text/plain
 
 // Date-partitioned local filesystem storage
-const fsDisk = createDisk(
-  { driver: createFsDriver({ root: `file://${process.cwd()}/` }) },
-  partition({ by: "date" }),
-);
+const fsDisk = createDisk({ driver: createFsDriver({ root: `file://${process.cwd()}/` }) }, partition({ by: "date" }));
 
 const partitionedFile = await fsDisk.put(new File(["abc"], "abc.txt"));
 partitionedFile.href; // file://${process.cwd()}/2026/03/01/abc.txt
 
 // Azure Blob storage with UUID filenames
-const azureDisk = createDisk(
-  { driver: createAzureBlobDriver({}) },
-  storeAs("uuid"),
-);
+const azureDisk = createDisk({ driver: createAzureBlobDriver({}) }, storeAs("uuid"));
 
 const publicFile = await azureDisk.put(new File(["abc"], "abc.txt"));
 publicFile.href; // https://container.../f47ac10b-58cc-4372-a567-0e02b2c3d479.txt
@@ -105,6 +78,25 @@ if (movie) {
   await movie.bytes(); // Uint8Array<ArrayBuffer>
   movie.size; // file size in bytes
 }
+```
+
+### Multi-Plugin Pipeline
+
+```typescript
+import { createDisk } from "@minimajs/disk";
+import { createFsDriver } from "@minimajs/disk/adapters";
+import { storeAs, partition, compression, encryption, checksum } from "@minimajs/disk/plugins";
+
+const disk = createDisk(
+  { driver: createFsDriver({ root: "file:///var/uploads/" }) },
+  storeAs("uuid-original"),
+  partition({ by: "date", format: "yyyy/MM/dd" }),
+  compression({ algorithm: "gzip" }),
+  encryption({ password: process.env.DISK_ENCRYPTION_PASSWORD! }),
+  checksum()
+);
+const hello = new File(["hello"], "report.txt", { type: "text/plain" });
+await disk.put(hello);
 ```
 
 ### Filesystem Storage
@@ -191,12 +183,12 @@ All `get()`, `put()`, `copy()`, and `move()` operations return a `DiskFile` inst
 const file = await disk.put("document.pdf", pdfData);
 
 // File properties
-file.href;         // Storage identifier (e.g., "s3://bucket/document.pdf")
-file.name;         // Filename (e.g., "document.pdf")
-file.size;         // File size in bytes
-file.type;         // MIME type (e.g., "application/pdf")
+file.href; // Storage identifier (e.g., "s3://bucket/document.pdf")
+file.name; // Filename (e.g., "document.pdf")
+file.size; // File size in bytes
+file.type; // MIME type (e.g., "application/pdf")
 file.lastModified; // Timestamp
-file.metadata;     // Custom metadata
+file.metadata; // Custom metadata
 
 // Read file content
 const buffer = await file.arrayBuffer();
@@ -212,7 +204,6 @@ Each file has an `href` that uniquely identifies it within the storage system:
 - **Filesystem**: `file:///var/uploads/avatar.jpg`
 - **S3**: `s3://bucket/path/to/file.jpg`
 - **Azure**: `https://account.blob.core.windows.net/container/file.jpg`
-- **Memory**: `/path/to/file.jpg`
 
 ## API Reference
 
@@ -242,7 +233,7 @@ const file = await disk.put("uploads/photo.jpg", imageData, {
 
 #### `put(file, options?)`
 
-Store a `File` object directly. The file is stored under **its original name** (`file.name`) — the filename is preserved as-is (file integrity).
+Store a `File` object directly. The file is stored under **its original name** (`file.name`) — the filename is preserved as-is.
 
 ```typescript
 // Stored under the file's original name
@@ -322,16 +313,13 @@ await disk.delete(uploadedFile);
 Get public URL for a file.
 
 ```typescript
-const url = await disk.url("uploads/photo.jpg", {
-  expiresIn: 3600, // 1 hour (for signed URLs)
-});
+const url = await disk.url("uploads/photo.jpg");
 ```
 
 **Parameters:**
 
 - `path: string` - File path
 - `options?: UrlOptions`
-  - `expiresIn?: number` - Expiration time in seconds (for signed URLs)
 
 **Returns:** `Promise<string>`
 
@@ -441,18 +429,19 @@ const disk = createDisk({ driver }, storeAs("uuid"));
 const disk = createDisk({ driver }, storeAs("uuid-original"));
 
 // Custom generator — full control (sync or async)
-const disk = createDisk({ driver }, storeAs(file =>
-  `${new Date().getFullYear()}/${randomUUID()}${extname(file.name)}`
-));
+const disk = createDisk(
+  { driver },
+  storeAs((file) => `${new Date().getFullYear()}/${randomUUID()}${extname(file.name)}`)
+);
 ```
 
 When the name is changed, the original filename is saved in `file.metadata.originalName`.
 
-| Strategy | Example output |
-|---|---|
-| `"uuid"` (default) | `550e8400-….jpg` |
-| `"uuid-original"` | `550e8400-…-photo.jpg` |
-| `(file) => string` | whatever you return |
+| Strategy           | Example output         |
+| ------------------ | ---------------------- |
+| `"uuid"` (default) | `550e8400-….jpg`       |
+| `"uuid-original"`  | `550e8400-…-photo.jpg` |
+| `(file) => string` | whatever you return    |
 
 **Only applies when `data instanceof File`.** Calls with a plain path are unaffected.
 
@@ -460,12 +449,12 @@ When the name is changed, the original filename is saved in `file.metadata.origi
 
 ## Drivers
 
-| Driver | Package | Use Case |
-|---|---|---|
-| Filesystem | `@minimajs/disk` | Local / development |
-| Memory | `@minimajs/disk` | Testing |
-| AWS S3 | `@minimajs/aws-s3` | Production |
-| Azure Blob | `@minimajs/azure-blob` | Production |
+| Driver     | Package                | Use Case            |
+| ---------- | ---------------------- | ------------------- |
+| Filesystem | `@minimajs/disk`       | Local / development |
+| Memory     | `@minimajs/disk`       | Testing             |
+| AWS S3     | `@minimajs/aws-s3`     | Production          |
+| Azure Blob | `@minimajs/azure-blob` | Production          |
 
 - **[Filesystem Driver](./filesystem.md)** - Local file storage
 - **[AWS S3 Driver](./aws-s3.md)** - Amazon S3 storage
@@ -526,5 +515,3 @@ try {
 
 - [Plugins](./plugins.md)
 - [Protocol Disk](./protocol-disk.md)
-- [Examples](./examples.md)
-- [Decision Guide](./decision-guide.md)

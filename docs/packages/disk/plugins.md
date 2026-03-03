@@ -4,16 +4,16 @@ Plugins extend `@minimajs/disk` by hooking into file operation lifecycle events.
 
 ## Quick Reference
 
-| Plugin | Import | What it does |
-|---|---|---|
-| [`storeAs`](#storeas) | `@minimajs/disk/plugins` | Rename files on upload (UUID, UUID+original, custom) |
-| [`partition`](#partition) | `@minimajs/disk/plugins` | Organize files into subdirectories (date, hash, or custom) |
-| [`atomicWrite`](#atomicwrite) | `@minimajs/disk/plugins` | Safe writes via temp-file-then-rename |
-| [`checksum`](#checksum) | `@minimajs/disk/plugins` | Write + verify SHA-256 sidecar files |
-| [`compression`](#compression) | `@minimajs/disk/plugins` | Transparent gzip/deflate compression |
-| [`encryption`](#encryption) | `@minimajs/disk/plugins` | Transparent AES-256-GCM encryption |
-| [`uploadProgress`](#uploadprogress) | `@minimajs/disk/plugins` | Track upload byte progress |
-| [`downloadProgress`](#downloadprogress) | `@minimajs/disk/plugins` | Track download byte progress |
+| Plugin                                  | Import                   | What it does                                               |
+| --------------------------------------- | ------------------------ | ---------------------------------------------------------- |
+| [`storeAs`](#storeas)                   | `@minimajs/disk/plugins` | Rename files on upload (UUID, UUID+original, custom)       |
+| [`partition`](#partition)               | `@minimajs/disk/plugins` | Organize files into subdirectories (date, hash, or custom) |
+| [`atomicWrite`](#atomicwrite)           | `@minimajs/disk/plugins` | Safe writes via temp-file-then-rename                      |
+| [`checksum`](#checksum)                 | `@minimajs/disk/plugins` | Write + verify SHA-256 sidecar files                       |
+| [`compression`](#compression)           | `@minimajs/disk/plugins` | Transparent gzip/deflate compression                       |
+| [`encryption`](#encryption)             | `@minimajs/disk/plugins` | Transparent AES-256-GCM encryption                         |
+| [`uploadProgress`](#uploadprogress)     | `@minimajs/disk/plugins` | Track upload byte progress                                 |
+| [`downloadProgress`](#downloadprogress) | `@minimajs/disk/plugins` | Track download byte progress                               |
 
 ## Usage
 
@@ -99,17 +99,21 @@ import { extname } from "node:path";
 import { randomUUID } from "node:crypto";
 
 // Year-based directory prefix
-const disk = createDisk({ driver }, storeAs(file =>
-  `${new Date().getFullYear()}/${randomUUID()}${extname(file.name)}`
-));
+const disk = createDisk(
+  { driver },
+  storeAs((file) => `${new Date().getFullYear()}/${randomUUID()}${extname(file.name)}`)
+);
 
 // Async — content hash as filename
-const disk = createDisk({ driver }, storeAs(async file => {
-  const buf = await file.arrayBuffer();
-  const hash = await crypto.subtle.digest("SHA-256", buf);
-  const hex = Buffer.from(hash).toString("hex");
-  return `${hex}${extname(file.name)}`;
-}));
+const disk = createDisk(
+  { driver },
+  storeAs(async (file) => {
+    const buf = await file.arrayBuffer();
+    const hash = await crypto.subtle.digest("SHA-256", buf);
+    const hex = Buffer.from(hash).toString("hex");
+    return `${hex}${extname(file.name)}`;
+  })
+);
 ```
 
 ### Metadata
@@ -118,8 +122,8 @@ When the name is changed, the original filename is automatically saved in `file.
 
 ```typescript
 const uploaded = await disk.put(new File(["…"], "photo.jpg"));
-console.log(uploaded.name);                   // "550e8400-….jpg"
-console.log(uploaded.metadata.originalName);  // "photo.jpg"
+console.log(uploaded.name); // "550e8400-….jpg"
+console.log(uploaded.metadata.originalName); // "photo.jpg"
 ```
 
 ### Notes
@@ -187,9 +191,7 @@ await disk.put("photo.jpg", data);
 // Content-type based routing (async)
 const disk = createDisk(
   { driver },
-  partition(async (_path, _data, opts) =>
-    opts.type?.startsWith("image/") ? "images" : "files"
-  )
+  partition(async (_path, _data, opts) => (opts.type?.startsWith("image/") ? "images" : "files"))
 );
 ```
 
@@ -198,8 +200,8 @@ const disk = createDisk(
 ```typescript
 // Built-in strategies
 type PartitionOptions =
-  | { by: "date"; format?: string }   // format default: "yyyy/MM/dd"
-  | { by: "hash"; levels?: number; charsPerLevel?: number } // defaults: 2, 2
+  | { by: "date"; format?: string } // format default: "yyyy/MM/dd"
+  | { by: "hash"; levels?: number; charsPerLevel?: number }; // defaults: 2, 2
 
 // Custom generator
 type PartitionGenerator = (path: string, data: DiskData, opts: PutOptions) => string | Promise<string>;
@@ -241,10 +243,10 @@ const disk = createDisk({ driver }, atomicWrite({ tempPrefix: ".staging/" }));
 
 The plugin registers a `put:failed` hook that ensures the temp file is always removed on failure — no orphaned `.tmp/` files, regardless of what went wrong:
 
-| Failure scenario | What happens |
-|---|---|
+| Failure scenario                                     | What happens                                                         |
+| ---------------------------------------------------- | -------------------------------------------------------------------- |
 | `driver.put` throws (network error, disk full, etc.) | `put:failed` hook deletes the temp file, original path never touched |
-| Rename (`move`) to final path fails | `stored` hook catches the error, deletes the temp file, re-throws |
+| Rename (`move`) to final path fails                  | `stored` hook catches the error, deletes the temp file, re-throws    |
 
 ```typescript
 // If this throws for any reason, ".tmp/<uuid>" is cleaned up automatically
@@ -324,7 +326,7 @@ import { compression } from "@minimajs/disk/plugins";
 ```typescript
 const disk = createDisk({ driver }, compression());
 
-await disk.put("large.json", bigData);  // stored compressed
+await disk.put("large.json", bigData); // stored compressed
 const file = await disk.get("large.json"); // transparently decompressed
 ```
 
@@ -344,10 +346,10 @@ const disk = createDisk({ driver }, compression({ algorithm: "deflate-raw" }));
 
 ### Driver metadata support
 
-| `driver.capabilities.metadata` | Behavior |
-|---|---|
-| `true` | Algorithm is stored per-file in metadata. Mixed compressed/uncompressed files are safe. |
-| `false` / unset | Algorithm is NOT stored. Every file read through this disk is assumed to be compressed. Do not mix compressed and uncompressed files. |
+| `driver.capabilities.metadata` | Behavior                                                                                                                              |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `true`                         | Algorithm is stored per-file in metadata. Mixed compressed/uncompressed files are safe.                                               |
+| `false` / unset                | Algorithm is NOT stored. Every file read through this disk is assumed to be compressed. Do not mix compressed and uncompressed files. |
 
 ```typescript
 // S3 driver supports metadata — safe to mix
@@ -373,22 +375,19 @@ import { encryption } from "@minimajs/disk/plugins";
 ```
 
 ```typescript
-const disk = createDisk(
-  { driver },
-  encryption({ password: process.env.SECRET! })
-);
+const disk = createDisk({ driver }, encryption({ password: process.env.SECRET! }));
 
 await disk.put("secret.txt", "sensitive data"); // stored encrypted
-const file = await disk.get("secret.txt");      // automatically decrypted
-const text = await file.text();                 // "sensitive data"
+const file = await disk.get("secret.txt"); // automatically decrypted
+const text = await file.text(); // "sensitive data"
 ```
 
 ### Options
 
 ```typescript
 interface EncryptionOptions {
-  password: string;    // required — encryption/decryption key
-  algorithm?: string;  // default: "aes-256-gcm"
+  password: string; // required — encryption/decryption key
+  algorithm?: string; // default: "aes-256-gcm"
 }
 ```
 
@@ -449,9 +448,9 @@ await disk.put("video.mp4", stream, { size: file.size });
 
 ```typescript
 interface UploadProgress {
-  loaded: number;       // bytes transferred so far
-  total?: number;       // total bytes (only available when size is passed in PutOptions)
-  percentage?: number;  // 0–100, only available when total is known
+  loaded: number; // bytes transferred so far
+  total?: number; // total bytes (only available when size is passed in PutOptions)
+  percentage?: number; // 0–100, only available when total is known
 }
 ```
 
@@ -491,17 +490,17 @@ await file.arrayBuffer(); // progress fires as bytes are read
 
 ```typescript
 interface DownloadProgress {
-  loaded: number;       // bytes read so far
-  total?: number;       // total bytes from file.size (available when driver returns size)
-  percentage?: number;  // 0–100, only available when total is known
+  loaded: number; // bytes read so far
+  total?: number; // total bytes from file.size (available when driver returns size)
+  percentage?: number; // 0–100, only available when total is known
 }
 ```
 
 ### Difference from `uploadProgress`
 
-| | `uploadProgress` | `downloadProgress` |
-|---|---|---|
-| Hook | `storing` | `streaming` |
+|                | `uploadProgress`                     | `downloadProgress`                               |
+| -------------- | ------------------------------------ | ------------------------------------------------ |
+| Hook           | `storing`                            | `streaming`                                      |
 | `total` source | `options.size` — caller must pass it | `file.size` — from driver metadata automatically |
 
 ### Notes
@@ -530,11 +529,7 @@ const disk = createDisk(
 
 ```typescript
 // Development: filesystem with atomic writes and integrity checks
-const disk = createDisk(
-  { driver: createFsDriver({ root: "./storage" }) },
-  atomicWrite(),
-  checksum()
-);
+const disk = createDisk({ driver: createFsDriver({ root: "./storage" }) }, atomicWrite(), checksum());
 ```
 
 ```typescript
@@ -594,28 +589,28 @@ const disk = createDisk({ driver }, logger("[uploads]"));
 
 ### Available hooks
 
-| Hook | When it fires | What you can return |
-|---|---|---|
-| `put` | Before a file is stored | Modified `[path, data, options]` tuple |
-| `storing` | Just before data reaches the driver | Modified `ReadableStream` |
-| `stored` | After a file is successfully stored | Modified `DiskFile` |
-| `get` | Before a file is retrieved | Modified path string |
-| `streaming` | When the file stream is opened | Modified `ReadableStream` |
-| `retrieved` | After `get` returns a file | Modified `DiskFile` |
-| `delete` | Before a file is deleted | Modified `FileSource` |
-| `deleted` | After a file is deleted | Modified href string |
-| `copy` | Before a copy operation | Modified `[from, to]` tuple |
-| `copied` | After a copy operation | Modified `DiskFile` |
-| `move` | Before a move operation | Modified `[from, to]` tuple |
-| `moved` | After a move operation | Modified `DiskFile` |
-| `exists` | Before an existence check | Modified path string |
-| `checked` | After an existence check | Modified boolean |
-| `list` | Before listing files | Modified `[prefix, options]` tuple |
-| `url` | After a URL is generated | Modified URL string |
-| `file` | When a `DiskFile` is constructed | Modified `DiskFile` |
-| `put:failed` | When `driver.put` throws | Must re-throw (sync or async) |
-| `get:failed` | When `driver.get` throws | Must re-throw (sync or async) |
-| `delete:failed` | When `driver.delete` throws | Must re-throw (sync or async) |
+| Hook            | When it fires                       | What you can return                    |
+| --------------- | ----------------------------------- | -------------------------------------- |
+| `put`           | Before a file is stored             | Modified `[path, data, options]` tuple |
+| `storing`       | Just before data reaches the driver | Modified `ReadableStream`              |
+| `stored`        | After a file is successfully stored | Modified `DiskFile`                    |
+| `get`           | Before a file is retrieved          | Modified path string                   |
+| `streaming`     | When the file stream is opened      | Modified `ReadableStream`              |
+| `retrieved`     | After `get` returns a file          | Modified `DiskFile`                    |
+| `delete`        | Before a file is deleted            | Modified `FileSource`                  |
+| `deleted`       | After a file is deleted             | Modified href string                   |
+| `copy`          | Before a copy operation             | Modified `[from, to]` tuple            |
+| `copied`        | After a copy operation              | Modified `DiskFile`                    |
+| `move`          | Before a move operation             | Modified `[from, to]` tuple            |
+| `moved`         | After a move operation              | Modified `DiskFile`                    |
+| `exists`        | Before an existence check           | Modified path string                   |
+| `checked`       | After an existence check            | Modified boolean                       |
+| `list`          | Before listing files                | Modified `[prefix, options]` tuple     |
+| `url`           | After a URL is generated            | Modified URL string                    |
+| `file`          | When a `DiskFile` is constructed    | Modified `DiskFile`                    |
+| `put:failed`    | When `driver.put` throws            | Must re-throw (sync or async)          |
+| `get:failed`    | When `driver.get` throws            | Must re-throw (sync or async)          |
+| `delete:failed` | When `driver.delete` throws         | Must re-throw (sync or async)          |
 
 ## See Also
 
@@ -623,5 +618,3 @@ const disk = createDisk({ driver }, logger("[uploads]"));
 - [Filesystem Driver](./filesystem.md)
 - [AWS S3 Driver](./aws-s3.md)
 - [Azure Blob Driver](./azure-blob.md)
-- [Examples](./examples.md)
-- [Decision Guide](./decision-guide.md)

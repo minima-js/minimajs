@@ -224,6 +224,5 @@ const text2 = await new Response(stream2).text(); // "Hello World"
 ## See Also
 
 - [Main Documentation](./index.md)
-- [Testing Strategies](./examples.md#testing-strategies)
+- [Guides: Testing](/guides/testing)
 - [Filesystem Driver](./filesystem.md)
-- [Decision Guide](./decision-guide.md)

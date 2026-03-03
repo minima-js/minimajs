@@ -352,5 +352,4 @@ await disk.put("uploads/file.txt", data);
 - [Main Documentation](./index.md)
 - [AWS S3 Driver](./aws-s3.md)
 - [Filesystem Driver](./filesystem.md)
-- [Examples](./examples.md)
-- [Decision Guide](./decision-guide.md)
+- [Plugins](./plugins.md)
