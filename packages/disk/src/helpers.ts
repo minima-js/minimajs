@@ -202,7 +202,7 @@ export function ensureMetadataSymbols(
 
 export async function fileFromMetadata(driver: DiskDriver, trigger: HookTrigger, metadata: FileMetadata): Promise<DiskFile> {
   return trigger.file(basename(metadata.href), metadata, async (file) => {
-    const result = await driver.get(metadata.href);
+    const result = await driver.get(metadata.href, {});
     if (!result) throw new DiskReadError(metadata.href);
     return trigger.streaming(result[0], file);
   });

@@ -75,7 +75,7 @@ export async function* files(options: MultipartOptions = {}) {
  */
 export function fields<T extends Record<string, string | string[]>>() {
   const values: any = {};
-  const [bb] = raw.busboy({
+  const bb = raw.busboy({
     limits: { files: 0 },
   });
   bb.on("field", (name, value) => {

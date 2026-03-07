@@ -391,6 +391,7 @@ All modules accept `MultipartOptions`:
 
 ```typescript
 interface MultipartOptions {
+  signal?: AbortSignal; // Cancel parsing
   limits?: {
     fieldNameSize?: number; // Max field name size (100 bytes)
     fieldSize?: number; // Max field value size (1MB)
@@ -413,6 +414,21 @@ const avatar = await multipart.file("avatar", {
   },
 });
 ```
+
+### Cancellation
+
+Pass an `AbortSignal` to stop parsing early. When aborted, an `AbortError` is emitted on the underlying stream so iterators and promises reject cleanly.
+
+```typescript
+const ac = new AbortController();
+setTimeout(() => ac.abort(), 5000); // 5s timeout
+
+for await (const file of raw.files({ signal: ac.signal })) {
+  await helpers.save(file, "./uploads");
+}
+```
+
+Works with any `options`-accepting API: `multipart.*`, `streaming.*`, `raw.*`.
 
 ## Complete Example
 

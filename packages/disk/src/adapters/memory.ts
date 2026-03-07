@@ -70,7 +70,8 @@ class MemoryDriver implements DiskDriver {
     };
   }
 
-  async get(href: string): Promise<[ReadableStream<Uint8Array>, FileMetadata] | null> {
+  async get(href: string, options: { signal?: AbortSignal }): Promise<[ReadableStream<Uint8Array>, FileMetadata] | null> {
+    options.signal?.throwIfAborted();
     const stored = this.storage.get(href);
     if (!stored) return null;
 
@@ -92,11 +93,13 @@ class MemoryDriver implements DiskDriver {
     return [stream, metadata];
   }
 
-  async delete(href: string): Promise<void> {
+  async delete(href: string, options: { signal?: AbortSignal }): Promise<void> {
+    options.signal?.throwIfAborted();
     this.storage.delete(href);
   }
 
-  async exists(href: string): Promise<boolean> {
+  async exists(href: string, options: { signal?: AbortSignal }): Promise<boolean> {
+    options.signal?.throwIfAborted();
     return this.storage.has(href);
   }
 
@@ -108,7 +111,8 @@ class MemoryDriver implements DiskDriver {
     return `${this.publicUrl.replace(/\/$/, "")}/${href.replace(/^\//, "")}`;
   }
 
-  async copy(from: string, to: string): Promise<void> {
+  async copy(from: string, to: string, options: { signal?: AbortSignal }): Promise<void> {
+    options.signal?.throwIfAborted();
     const stored = this.storage.get(from);
     if (!stored) throw new DiskFileNotFoundError(from);
 
@@ -119,7 +123,8 @@ class MemoryDriver implements DiskDriver {
     });
   }
 
-  async move(from: string, to: string): Promise<void> {
+  async move(from: string, to: string, options: { signal?: AbortSignal }): Promise<void> {
+    options.signal?.throwIfAborted();
     const stored = this.storage.get(from);
     if (!stored) throw new DiskFileNotFoundError(from);
 
@@ -127,12 +132,13 @@ class MemoryDriver implements DiskDriver {
     this.storage.set(to, stored);
   }
 
-  async *list(prefix?: string, listOptions?: ListOptions): AsyncIterable<FileMetadata> {
+  async *list(prefix?: string, listOptions: ListOptions = {}): AsyncIterable<FileMetadata> {
     const limit = listOptions?.limit;
     let count = 0;
 
     for (const [href, stored] of this.storage.entries()) {
       if (limit !== undefined && count >= limit) break;
+      listOptions.signal?.throwIfAborted();
       if (prefix && !href.startsWith(prefix)) continue;
 
       yield {
@@ -147,7 +153,8 @@ class MemoryDriver implements DiskDriver {
     }
   }
 
-  async metadata(href: string): Promise<FileMetadata | null> {
+  async metadata(href: string, options: { signal?: AbortSignal }): Promise<FileMetadata | null> {
+    options.signal?.throwIfAborted();
     const stored = this.storage.get(href);
     if (!stored) return null;
 

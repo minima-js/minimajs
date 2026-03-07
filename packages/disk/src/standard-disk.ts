@@ -85,12 +85,12 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
     return this.$hookManager.trigger.stored(diskFile);
   }
 
-  async get(origPath: string): Promise<DiskFile | null> {
+  async get(origPath: string, options: { signal?: AbortSignal } = {}): Promise<DiskFile | null> {
     const path = await this.$hookManager.trigger.get(origPath);
 
     let result;
     try {
-      result = await this.driver.get(path);
+      result = await this.driver.get(path, options);
     } catch (error) {
       return this.$hookManager.trigger.getFailed(error, path);
     }
@@ -107,7 +107,7 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
         cachedStream = null;
         return this.$hookManager.trigger.streaming(s, file);
       }
-      const fetched = await this.driver.get(metadata.href);
+      const fetched = await this.driver.get(metadata.href, options);
       if (!fetched) throw new DiskReadError(metadata.href);
       return this.$hookManager.trigger.streaming(fetched[0], file);
     });
@@ -115,78 +115,78 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
     return this.$hookManager.trigger.retrieved(diskFile);
   }
 
-  async delete(source: FileSource): Promise<string> {
+  async delete(source: FileSource, options: { signal?: AbortSignal } = {}): Promise<string> {
     const href = await this.$hookManager.trigger.delete(source);
     try {
-      await this.driver.delete(href);
+      await this.driver.delete(href, options);
     } catch (error) {
       return this.$hookManager.trigger.deleteFailed(error, href);
     }
     return this.$hookManager.trigger.deleted(href);
   }
 
-  async exists(path: string): Promise<boolean> {
+  async exists(path: string, options: { signal?: AbortSignal } = {}): Promise<boolean> {
     path = await this.$hookManager.trigger.exists(path);
-    const exists = await this.driver.exists(path);
+    const exists = await this.driver.exists(path, options);
     return this.$hookManager.trigger.checked(exists, path);
   }
 
-  async url(path: string, urlOptions?: UrlOptions): Promise<string> {
+  async url(path: string, urlOptions: UrlOptions = {}): Promise<string> {
     const url = await this.driver.url(path, urlOptions);
     return this.$hookManager.trigger.url(path, url, urlOptions);
   }
 
-  async copy(from: File, to?: string): Promise<DiskFile>;
-  async copy(from: string, to: string): Promise<DiskFile>;
-  async copy(from: FileSource | File, to?: string): Promise<DiskFile> {
+  async copy(from: File, to?: string, options?: { signal?: AbortSignal }): Promise<DiskFile>;
+  async copy(from: string, to: string, options?: { signal?: AbortSignal }): Promise<DiskFile>;
+  async copy(from: FileSource | File, to?: string, options: { signal?: AbortSignal } = {}): Promise<DiskFile> {
     if (from instanceof File) {
       const sourceDisk = getDisk(from);
       const isSameDisk = sourceDisk === this;
 
       if (isSameDisk) {
         if (!to) throw new Error(`Explicit target path required when copying within the same disk`);
-        return this.copy((from as DiskFile).href, to);
+        return this.copy((from as DiskFile).href, to, options);
       }
 
       // Different disk or plain File — stream transfer, default to from.name
       const targetKey = to ?? from.name;
-      return this.put(targetKey, from);
+      return this.put(targetKey, from, options.signal ? { signal: options.signal } : undefined);
     }
 
     // String source — same disk native copy
     const [$from, $to] = await this.$hookManager.trigger.copy(from, to!);
-    await this.driver.copy($from, $to);
-    const metadata = await this.driver.metadata($to);
+    await this.driver.copy($from, $to, options);
+    const metadata = await this.driver.metadata($to, options);
     if (!metadata) throw new DiskMetadataError($to, "Failed to get metadata for copied file");
     const diskFile = await fileFromMetadata(this.driver, this.$hookManager.trigger, metadata);
     return this.$hookManager.trigger.copied($from, $to, diskFile);
   }
 
-  async move(from: File, to?: string): Promise<DiskFile>;
-  async move(from: string, to: string): Promise<DiskFile>;
-  async move(from: FileSource | File, to?: string): Promise<DiskFile> {
+  async move(from: File, to?: string, options?: { signal?: AbortSignal }): Promise<DiskFile>;
+  async move(from: string, to: string, options?: { signal?: AbortSignal }): Promise<DiskFile>;
+  async move(from: FileSource | File, to?: string, options: { signal?: AbortSignal } = {}): Promise<DiskFile> {
     if (from instanceof File) {
       const sourceDisk = getDisk(from);
       const isSameDisk = sourceDisk === this;
 
       if (isSameDisk) {
         if (!to) throw new Error(`Explicit target path required when moving within the same disk`);
-        return this.move((from as DiskFile).href, to);
+        return this.move((from as DiskFile).href, to, options);
       }
 
       // Cross-disk: stream to this disk, then delete from source
       const targetKey = to ?? from.name;
-      const copied = await this.put(targetKey, from);
+      const copied = await this.put(targetKey, from, options.signal ? { signal: options.signal } : undefined);
       if (sourceDisk && from instanceof DiskFile) {
-        await sourceDisk.delete(from.href);
+        await sourceDisk.delete(from.href, options);
       }
       return copied;
     }
 
     // String source — same disk native move
     const [$from, $to] = await this.$hookManager.trigger.move(from, to!);
-    await this.driver.move($from, $to);
-    const metadata = await this.driver.metadata($to);
+    await this.driver.move($from, $to, options);
+    const metadata = await this.driver.metadata($to, options);
     if (!metadata) throw new DiskMetadataError($to, "Failed to get metadata for moved file");
     const diskFile = await fileFromMetadata(this.driver, this.$hookManager.trigger, metadata);
     return this.$hookManager.trigger.moved($from, $to, diskFile);
@@ -204,8 +204,8 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
     yield* this.list(undefined, { recursive: true });
   }
 
-  async metadata(path: string): Promise<FileMetadata | null> {
-    return this.driver.metadata(path);
+  async metadata(path: string, options: { signal?: AbortSignal } = {}): Promise<FileMetadata | null> {
+    return this.driver.metadata(path, options);
   }
 
   watch(pattern: string, options?: WatchOptions): FSWatcher | Promise<FSWatcher> {

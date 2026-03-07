@@ -133,13 +133,16 @@ export class AzureBlobDriver implements DiskDriver {
     };
   }
 
-  async get(href: string): Promise<[ReadableStream<Uint8Array>, FileMetadata] | null> {
+  async get(href: string, options: { signal?: AbortSignal }): Promise<[ReadableStream<Uint8Array>, FileMetadata] | null> {
     const { container, blob } = this.hrefToBlob(href);
     const containerClient = this.client.getContainerClient(container);
     const blobClient = containerClient.getBlockBlobClient(blob);
 
     try {
-      const [properties, downloadResponse] = await Promise.all([blobClient.getProperties(), blobClient.download()]);
+      const [properties, downloadResponse] = await Promise.all([
+        blobClient.getProperties({ abortSignal: options.signal }),
+        blobClient.download(0, undefined, { abortSignal: options.signal }),
+      ]);
 
       const nodeStream = downloadResponse.readableStreamBody;
       if (!nodeStream) {
@@ -166,18 +169,18 @@ export class AzureBlobDriver implements DiskDriver {
     }
   }
 
-  async delete(href: string): Promise<void> {
+  async delete(href: string, options: { signal?: AbortSignal }): Promise<void> {
     const { container, blob } = this.hrefToBlob(href);
     const containerClient = this.client.getContainerClient(container);
     const blobClient = containerClient.getBlockBlobClient(blob);
-    await blobClient.deleteIfExists();
+    await blobClient.deleteIfExists({ abortSignal: options.signal });
   }
 
-  async exists(href: string): Promise<boolean> {
+  async exists(href: string, options: { signal?: AbortSignal }): Promise<boolean> {
     const { container, blob } = this.hrefToBlob(href);
     const containerClient = this.client.getContainerClient(container);
     const blobClient = containerClient.getBlockBlobClient(blob);
-    return blobClient.exists();
+    return blobClient.exists({ abortSignal: options.signal });
   }
 
   async url(href: string): Promise<string> {
@@ -194,7 +197,7 @@ export class AzureBlobDriver implements DiskDriver {
     return blobClient.url;
   }
 
-  async copy(from: string, to: string): Promise<void> {
+  async copy(from: string, to: string, options: { signal?: AbortSignal }): Promise<void> {
     const { container: fromContainer, blob: fromBlob } = this.hrefToBlob(from);
     const { container: toContainer, blob: toBlob } = this.hrefToBlob(to);
 
@@ -204,13 +207,13 @@ export class AzureBlobDriver implements DiskDriver {
     const destClient = this.client.getContainerClient(toContainer);
     const destBlobClient = destClient.getBlockBlobClient(toBlob);
 
-    const poller = await destBlobClient.beginCopyFromURL(sourceBlobClient.url);
+    const poller = await destBlobClient.beginCopyFromURL(sourceBlobClient.url, { abortSignal: options.signal });
     await poller.pollUntilDone();
   }
 
-  async move(from: string, to: string): Promise<void> {
-    await this.copy(from, to);
-    await this.delete(from);
+  async move(from: string, to: string, options: { signal?: AbortSignal }): Promise<void> {
+    await this.copy(from, to, options);
+    await this.delete(from, options);
   }
 
   async *list(prefixHref: string, listOptions?: ListOptions): AsyncIterable<FileMetadata> {
@@ -238,6 +241,7 @@ export class AzureBlobDriver implements DiskDriver {
 
     for await (const blob of iterator) {
       if (limit !== undefined && count >= limit) break;
+      listOptions?.signal?.throwIfAborted();
 
       yield {
         href: this.blobToHref(container, blob.name),
@@ -249,13 +253,13 @@ export class AzureBlobDriver implements DiskDriver {
     }
   }
 
-  async metadata(href: string): Promise<FileMetadata | null> {
+  async metadata(href: string, options: { signal?: AbortSignal }): Promise<FileMetadata | null> {
     const { container, blob } = this.hrefToBlob(href);
     const containerClient = this.client.getContainerClient(container);
     const blobClient = containerClient.getBlockBlobClient(blob);
 
     try {
-      const properties = await blobClient.getProperties();
+      const properties = await blobClient.getProperties({ abortSignal: options.signal });
       return {
         href: this.blobToHref(container, blob),
         size: properties.contentLength ?? 0,

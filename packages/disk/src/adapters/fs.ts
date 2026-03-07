@@ -159,7 +159,7 @@ export class FsDriver implements DiskDriver {
     const nodeReadable = Readable.fromWeb(stream);
     const writeStream = createWriteStream(fileUrl, { mode: this.fileMode });
 
-    await pipeline(nodeReadable, writeStream);
+    await pipeline(nodeReadable, writeStream, { signal: putOptions.signal });
 
     const stats = await stat(fileUrl);
 
@@ -177,7 +177,8 @@ export class FsDriver implements DiskDriver {
     };
   }
 
-  async get(href: string): Promise<[ReadableStream<Uint8Array>, FileMetadata] | null> {
+  async get(href: string, options: { signal?: AbortSignal }): Promise<[ReadableStream<Uint8Array>, FileMetadata] | null> {
+    options.signal?.throwIfAborted();
     const fileUrl = this.resolveURL(href);
 
     try {
@@ -197,7 +198,8 @@ export class FsDriver implements DiskDriver {
     }
   }
 
-  async delete(href: string): Promise<void> {
+  async delete(href: string, options: { signal?: AbortSignal }): Promise<void> {
+    options.signal?.throwIfAborted();
     const fileUrl = this.resolveURL(href);
 
     await rm(fileUrl, { force: true });
@@ -207,7 +209,8 @@ export class FsDriver implements DiskDriver {
     }
   }
 
-  async exists(href: string): Promise<boolean> {
+  async exists(href: string, options: { signal?: AbortSignal }): Promise<boolean> {
+    options?.signal?.throwIfAborted();
     const fileUrl = this.resolveURL(href);
 
     try {
@@ -227,7 +230,8 @@ export class FsDriver implements DiskDriver {
     return `${this.publicUrl.replace(/\/$/, "")}/${relativePath}`;
   }
 
-  async copy(from: string, to: string): Promise<void> {
+  async copy(from: string, to: string, options: { signal?: AbortSignal }): Promise<void> {
+    options?.signal?.throwIfAborted();
     const srcUrl = this.resolveURL(from);
     const destUrl = this.resolveURL(to);
 
@@ -244,7 +248,8 @@ export class FsDriver implements DiskDriver {
     }
   }
 
-  async move(from: string, to: string): Promise<void> {
+  async move(from: string, to: string, options: { signal?: AbortSignal }): Promise<void> {
+    options.signal?.throwIfAborted();
     const srcUrl = this.resolveURL(from);
     const destUrl = this.resolveURL(to);
 
@@ -260,7 +265,7 @@ export class FsDriver implements DiskDriver {
     }
   }
 
-  async *list(prefix: string, listOptions?: ListOptions): AsyncIterable<FileMetadata> {
+  async *list(prefix: string, listOptions: ListOptions): AsyncIterable<FileMetadata> {
     const searchUrl = new URL(prefix, this.root);
     this.assertWithinRoot(searchUrl, prefix);
 
@@ -280,6 +285,7 @@ export class FsDriver implements DiskDriver {
 
       for (const entry of entries) {
         if (limit !== undefined && count >= limit) return;
+        listOptions.signal?.throwIfAborted();
 
         if (this.sidecar.enabled && entry.name.endsWith(this.sidecar.extension)) continue;
         if (entry.name === ".tmp") continue;
@@ -322,7 +328,8 @@ export class FsDriver implements DiskDriver {
     yield* walkDir(searchUrl);
   }
 
-  async metadata(href: string): Promise<FileMetadata | null> {
+  async metadata(href: string, options: { signal?: AbortSignal }): Promise<FileMetadata | null> {
+    options.signal?.throwIfAborted();
     const fileUrl = this.resolveURL(href);
 
     try {

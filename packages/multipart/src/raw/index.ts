@@ -25,7 +25,12 @@ export const RAW_FIELD = Symbol("minimajs.multipart.raw-field");
 export async function file(name: string, options: MultipartOptions = {}): Promise<MultipartRawFile | null> {
   return new Promise<MultipartRawFile | null>((resolve, reject) => {
     const { limits } = options;
-    const [bb, stop] = busboy({ ...options, limits: { ...limits, fields: 0 } });
+    const ac = new AbortController();
+    const bb = busboy({
+      ...options,
+      limits: { ...limits, fields: 0 },
+      signal: AbortSignal.any([options.signal!, ac.signal].filter(Boolean)),
+    });
     bb.on("file", (fieldname, stream, filename, transferEncoding, mimeType) => {
       if (fieldname !== name) {
         pipeline(stream, stream2void()).catch(() => {});
@@ -39,7 +44,7 @@ export async function file(name: string, options: MultipartOptions = {}): Promis
         mimeType,
         [RAW_FILE]: true,
       });
-      stream.on("end", stop);
+      stream.on("end", () => ac.abort());
     });
     bb.on("error", (err) => {
       reject(err);
@@ -66,7 +71,7 @@ export async function file(name: string, options: MultipartOptions = {}): Promis
  */
 export async function firstFile(options: MultipartOptions = {}): Promise<MultipartRawFile | null> {
   return new Promise<MultipartRawFile | null>((resolve, reject) => {
-    const [bb] = busboy({ ...options, limits: { ...options.limits, files: 1, fields: 0 } });
+    const bb = busboy({ ...options, limits: { ...options.limits, files: 1, fields: 0 } });
     bb.on("file", (fieldname, stream, filename, transferEncoding, mimeType) => {
       resolve({
         fieldname,
@@ -89,7 +94,9 @@ export async function firstFile(options: MultipartOptions = {}): Promise<Multipa
 export function files(options: MultipartOptions = {}): AsyncGenerator<MultipartRawFile> {
   const [stream, iterator] = createAsyncIterator<MultipartRawFile>();
   const { limits } = options;
-  const [bb, stop] = busboy({ ...options, limits: { ...limits, fields: 0 } });
+  const ac = new AbortController();
+  const signal = options.signal ? AbortSignal.any([options.signal, ac.signal]) : ac.signal;
+  const bb = busboy({ ...options, limits: { ...limits, fields: 0 }, signal });
 
   bb.on("file", (fieldname, fStream, filename, transferEncoding, mimeType) => {
     stream.write({ fieldname, stream: fStream, filename, transferEncoding, mimeType, [RAW_FILE]: true });
@@ -100,7 +107,7 @@ export function files(options: MultipartOptions = {}): AsyncGenerator<MultipartR
   bb.on("finish", () => stream.end());
 
   stream.on("error", () => {
-    stop();
+    ac.abort();
   });
 
   return iterator as AsyncGenerator<MultipartRawFile>;
@@ -124,7 +131,9 @@ export function files(options: MultipartOptions = {}): AsyncGenerator<MultipartR
  */
 export function body<T = MultipartRawResult>(options: MultipartOptions = {}): AsyncGenerator<T> {
   const [stream, iterator] = createAsyncIterator<MultipartRawResult>();
-  const [bb, stop] = busboy(options);
+  const ac = new AbortController();
+  const signal = options.signal ? AbortSignal.any([options.signal, ac.signal]) : ac.signal;
+  const bb = busboy({ ...options, signal });
 
   bb.on("field", (fieldname, value, fieldnameTruncated, valueTruncated, transferEncoding, mimeType) => {
     stream.write({ [RAW_FIELD]: true, fieldname, value, fieldnameTruncated, valueTruncated, transferEncoding, mimeType });
@@ -139,7 +148,7 @@ export function body<T = MultipartRawResult>(options: MultipartOptions = {}): As
   bb.on("finish", () => stream.end());
 
   stream.on("error", () => {
-    stop();
+    ac.abort();
   });
   return iterator as AsyncGenerator<T>;
 }
