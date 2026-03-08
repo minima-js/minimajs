@@ -27,7 +27,8 @@ class MemoryDriver implements DiskDriver {
     this.publicUrl = options.publicUrl;
   }
 
-  async put(href: string, stream: ReadableStream<Uint8Array>, putOptions?: PutOptions): Promise<FileMetadata> {
+  async put(href: string, stream: ReadableStream<Uint8Array>, putOptions: PutOptions): Promise<FileMetadata> {
+    putOptions.signal?.throwIfAborted();
     // Read stream into buffer
     const reader = stream.getReader();
     const chunks: Uint8Array[] = [];
@@ -58,7 +59,7 @@ class MemoryDriver implements DiskDriver {
       data: buffer,
       type,
       lastModified: now,
-      metadata: putOptions?.metadata,
+      metadata: putOptions.metadata,
     });
 
     return {
@@ -66,7 +67,7 @@ class MemoryDriver implements DiskDriver {
       size: buffer.length,
       type,
       lastModified: now,
-      metadata: putOptions?.metadata,
+      metadata: putOptions.metadata,
     };
   }
 

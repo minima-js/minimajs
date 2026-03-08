@@ -2,6 +2,51 @@ import { EOL } from "node:os";
 import { type App } from "../../interfaces/index.js";
 import { hook } from "../../hooks/index.js";
 import { setTimeout as sleep } from "node:timers/promises";
+import type { RouteConfig } from "../../interfaces/route.js";
+import { kModuleName } from "../../symbols.js";
+
+/**
+ * Returns a formatted string grouping routes by module name, using a tree structure.
+ *
+ * @example
+ * ```
+ * (root)
+ * └── GET    /health
+ *
+ * users
+ * ├── GET    /users
+ * ├── POST   /users
+ * └── GET    /users/:id
+ * ```
+ */
+export function prettyPrintByModule(app: App): string {
+  const rawRoutes = (app.router as any).routes as Array<{
+    method: string;
+    path: string;
+    store: RouteConfig<any>;
+  }>;
+
+  const groups = new Map<string, Array<{ method: string; path: string }>>();
+
+  for (const { method, path, store } of rawRoutes) {
+    const name = (store.app.container[kModuleName] as string | undefined) ?? "(root)";
+    if (!groups.has(name)) groups.set(name, []);
+    groups.get(name)!.push({ method, path });
+  }
+
+  const lines: string[] = [];
+  for (const [name, routes] of groups) {
+    lines.push(name);
+    for (let i = 0; i < routes.length; i++) {
+      const { method, path } = routes[i];
+      const isLast = i === routes.length - 1;
+      lines.push(`${isLast ? "└──" : "├──"} ${method.padEnd(7)} ${path}`);
+    }
+    lines.push("");
+  }
+
+  return lines.join(EOL).trimEnd();
+}
 
 export interface RouteLoggerOptions {
   enabled?: boolean;
@@ -9,6 +54,8 @@ export interface RouteLoggerOptions {
   logger?: (message: string) => void;
   /** Whether to print routes with common prefix removed for cleaner output. Defaults to false */
   commonPrefix?: boolean;
+  /** Group routes by module name instead of path hierarchy. Defaults to false */
+  groupByModule?: boolean;
   delay?: number; // logs are async, if route list is long, this might override other logs, causing delay can prevent overlapping.
 }
 const kRouteLogger = Symbol();

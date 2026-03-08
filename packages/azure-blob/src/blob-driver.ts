@@ -1,7 +1,7 @@
 import { BlobServiceClient } from "@azure/storage-blob";
 import { Readable } from "node:stream";
 import type { DiskDriver, DriverCapabilities, PutOptions, ListOptions, FileMetadata } from "@minimajs/disk";
-import utils from "node:util";
+import { inspect } from "node:util";
 export interface AzureBlobBaseDriverOptions {
   container?: string;
   /** Public URL for serving files (e.g., CDN URL) */
@@ -110,6 +110,7 @@ export class AzureBlobDriver implements DiskDriver {
   }
 
   async put(href: string, stream: ReadableStream<Uint8Array>, putOptions: PutOptions): Promise<FileMetadata> {
+    putOptions.signal?.throwIfAborted();
     const { container, blob } = this.hrefToBlob(href);
     const containerClient = this.client.getContainerClient(container);
     const blobClient = containerClient.getBlockBlobClient(blob);
@@ -135,6 +136,7 @@ export class AzureBlobDriver implements DiskDriver {
   }
 
   async get(href: string, options: { signal?: AbortSignal }): Promise<[ReadableStream<Uint8Array>, FileMetadata] | null> {
+    options.signal?.throwIfAborted();
     const { container, blob } = this.hrefToBlob(href);
     const containerClient = this.client.getContainerClient(container);
     const blobClient = containerClient.getBlockBlobClient(blob);
@@ -171,6 +173,7 @@ export class AzureBlobDriver implements DiskDriver {
   }
 
   async delete(href: string, options: { signal?: AbortSignal }): Promise<void> {
+    options.signal?.throwIfAborted();
     const { container, blob } = this.hrefToBlob(href);
     const containerClient = this.client.getContainerClient(container);
     const blobClient = containerClient.getBlockBlobClient(blob);
@@ -178,6 +181,7 @@ export class AzureBlobDriver implements DiskDriver {
   }
 
   async exists(href: string, options: { signal?: AbortSignal }): Promise<boolean> {
+    options.signal?.throwIfAborted();
     const { container, blob } = this.hrefToBlob(href);
     const containerClient = this.client.getContainerClient(container);
     const blobClient = containerClient.getBlockBlobClient(blob);
@@ -199,6 +203,7 @@ export class AzureBlobDriver implements DiskDriver {
   }
 
   async copy(from: string, to: string, options: { signal?: AbortSignal }): Promise<void> {
+    options.signal?.throwIfAborted();
     const { container: fromContainer, blob: fromBlob } = this.hrefToBlob(from);
     const { container: toContainer, blob: toBlob } = this.hrefToBlob(to);
 
@@ -213,6 +218,7 @@ export class AzureBlobDriver implements DiskDriver {
   }
 
   async move(from: string, to: string, options: { signal?: AbortSignal }): Promise<void> {
+    options.signal?.throwIfAborted();
     await this.copy(from, to, options);
     await this.delete(from, options);
   }
@@ -256,6 +262,7 @@ export class AzureBlobDriver implements DiskDriver {
   }
 
   async metadata(href: string, options: { signal?: AbortSignal }): Promise<FileMetadata | null> {
+    options.signal?.throwIfAborted();
     const { container, blob } = this.hrefToBlob(href);
     const containerClient = this.client.getContainerClient(container);
     const blobClient = containerClient.getBlockBlobClient(blob);
@@ -282,6 +289,7 @@ export class AzureBlobDriver implements DiskDriver {
     updates: { type?: string; metadata?: Record<string, string> },
     options: { signal?: AbortSignal } = {}
   ): Promise<FileMetadata> {
+    options.signal?.throwIfAborted();
     const { container, blob } = this.hrefToBlob(href);
     const containerClient = this.client.getContainerClient(container);
     const blobClient = containerClient.getBlockBlobClient(blob);
@@ -289,9 +297,7 @@ export class AzureBlobDriver implements DiskDriver {
     const current = await blobClient.getProperties({ abortSignal: options.signal });
 
     await Promise.all([
-      updates.metadata !== undefined
-        ? blobClient.setMetadata(updates.metadata, { abortSignal: options.signal })
-        : undefined,
+      updates.metadata !== undefined ? blobClient.setMetadata(updates.metadata, { abortSignal: options.signal }) : undefined,
       updates.type !== undefined
         ? blobClient.setHTTPHeaders(
             {
@@ -315,7 +321,7 @@ export class AzureBlobDriver implements DiskDriver {
     };
   }
 
-  [utils.inspect.custom]() {
+  [inspect.custom]() {
     const options = {
       container: this.options.container,
       account: this.client.accountName,

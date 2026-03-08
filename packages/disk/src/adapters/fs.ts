@@ -162,6 +162,7 @@ export class FsDriver implements DiskDriver {
   }
 
   async put(href: string, stream: ReadableStream<Uint8Array>, putOptions: PutOptions): Promise<FileMetadata> {
+    putOptions.signal?.throwIfAborted();
     const fileUrl = this.resolveURL(href);
 
     await mkdir(new URL(".", fileUrl), { recursive: true, mode: this.dirMode });

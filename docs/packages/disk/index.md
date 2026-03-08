@@ -130,6 +130,25 @@ const bytes = await file.bytes();
 const stream = file.stream(); // ReadableStream
 ```
 
+#### Limitation: wrapping in Blob or File
+
+`DiskFile` extends `File` and its content is streamed lazily. Wrapping it in `new Blob([diskFile])` or `new File([diskFile], ...)` produces an **empty blob** — the Blob constructor reads internal parts that are not populated for streamed files.
+
+```typescript
+// ❌ Wrong — results in an empty Blob
+const blob = new Blob([diskFile]);
+
+// ✅ Correct — buffer first, then wrap
+const bytes = await diskFile.bytes();
+const blob = new Blob([bytes], { type: diskFile.type });
+
+// ✅ Correct — pass DiskFile directly where File/Blob is accepted
+// (fetch body, FormData, disk.put — all call .stream() internally and work fine)
+formData.append("file", diskFile);
+await fetch(url, { body: diskFile });
+await disk.put("copy.jpg", diskFile);
+```
+
 ### Storage Identifiers (href)
 
 Each file has an `href` that uniquely identifies it within the storage system:

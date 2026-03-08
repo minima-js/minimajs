@@ -173,6 +173,7 @@ export class S3Driver implements DiskDriver {
   }
 
   async put(href: string, stream: ReadableStream<Uint8Array>, putOptions: PutOptions): Promise<FileMetadata> {
+    putOptions.signal?.throwIfAborted();
     const { bucket, key } = this.hrefToKey(href);
     const fullKey = this.buildKey(key);
     // Prepare metadata
@@ -218,6 +219,7 @@ export class S3Driver implements DiskDriver {
   }
 
   async get(href: string, options: { signal?: AbortSignal }): Promise<[ReadableStream<Uint8Array>, FileMetadata] | null> {
+    options.signal?.throwIfAborted();
     const { bucket, key } = this.hrefToKey(href);
     const fullKey = this.buildKey(key);
 
@@ -254,6 +256,7 @@ export class S3Driver implements DiskDriver {
   }
 
   async delete(href: string, options: { signal?: AbortSignal }): Promise<void> {
+    options.signal?.throwIfAborted();
     const { bucket, key } = this.hrefToKey(href);
     const fullKey = this.buildKey(key);
 
@@ -266,6 +269,7 @@ export class S3Driver implements DiskDriver {
   }
 
   async exists(href: string, options: { signal?: AbortSignal }): Promise<boolean> {
+    options.signal?.throwIfAborted();
     const { bucket, key } = this.hrefToKey(href);
     const fullKey = this.buildKey(key);
 
@@ -323,6 +327,7 @@ export class S3Driver implements DiskDriver {
   }
 
   async copy(from: string, to: string, options: { signal?: AbortSignal }): Promise<void> {
+    options.signal?.throwIfAborted();
     const { bucket: fromBucket, key: fromKey } = this.hrefToKey(from);
     const { bucket: toBucket, key: toKey } = this.hrefToKey(to);
     const fullFromKey = this.buildKey(fromKey);
@@ -341,6 +346,7 @@ export class S3Driver implements DiskDriver {
   }
 
   async move(from: string, to: string, options: { signal?: AbortSignal }): Promise<void> {
+    options.signal?.throwIfAborted();
     // Copy then delete
     await this.copy(from, to, options);
     await this.delete(from, options);
@@ -403,6 +409,7 @@ export class S3Driver implements DiskDriver {
   }
 
   async metadata(href: string, options: { signal?: AbortSignal }): Promise<FileMetadata | null> {
+    options.signal?.throwIfAborted();
     const { bucket, key } = this.hrefToKey(href);
     const fullKey = this.buildKey(key);
     try {
