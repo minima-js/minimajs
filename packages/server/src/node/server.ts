@@ -72,12 +72,16 @@ export class NodeServerAdapter implements ServerAdapter<NodeServer> {
     requestHandler: RequestHandler<NodeServer>
   ): Promise<ListenResult<NodeServer>> {
     async function onRequest(req: IncomingMessage, res: ServerResponse) {
-      const request = toWebRequest(req);
+      // Abort when the client closes the connection (covers mid-response disconnect)
+      const ac = new AbortController();
+      res.on("close", () => ac.abort());
+      // Combine request + response-close signals so request.signal() covers the full lifecycle
+      const request = toWebRequest(req, { signal: ac.signal });
       const response = await requestHandler(srv, request, {
         incomingMessage: req,
         serverResponse: res,
       });
-      await fromWebResponse(response, res);
+      await fromWebResponse(response, res, { signal: ac.signal });
     }
 
     const hostname = opts.host || "0.0.0.0";

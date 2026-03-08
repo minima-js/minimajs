@@ -126,14 +126,24 @@ export class FsDriver implements DiskDriver {
     return new URL(`${fileUrl.href}${this.sidecar.extension}`);
   }
 
-  private async saveMetadata(fileUrl: URL, metadata: Record<string, any>): Promise<void> {
-    await writeFile(this.sidecarUrl(fileUrl), this.sidecar.serializer.serialize(metadata), "utf-8");
+  private async saveMetadata(
+    fileUrl: URL,
+    metadata: Record<string, any>,
+    options: { signal?: AbortSignal } = {}
+  ): Promise<void> {
+    await writeFile(this.sidecarUrl(fileUrl), this.sidecar.serializer.serialize(metadata), {
+      encoding: "utf-8",
+      signal: options.signal,
+    });
   }
 
-  private async loadMetadata(fileUrl: URL): Promise<Record<string, any> | undefined> {
+  private async loadMetadata(
+    fileUrl: URL,
+    options: { signal?: AbortSignal } = {}
+  ): Promise<Record<string, any> | undefined> {
     if (!this.sidecar.enabled) return;
     try {
-      const content = await readFile(this.sidecarUrl(fileUrl), "utf-8");
+      const content = await readFile(this.sidecarUrl(fileUrl), { encoding: "utf-8", signal: options.signal });
       return this.sidecar.serializer.deserialize(content);
     } catch {
       return undefined;
@@ -164,7 +174,7 @@ export class FsDriver implements DiskDriver {
     const stats = await stat(fileUrl);
 
     if (this.sidecar.enabled && putOptions.metadata) {
-      await this.saveMetadata(fileUrl, putOptions.metadata);
+      await this.saveMetadata(fileUrl, putOptions.metadata, { signal: putOptions.signal });
     }
 
     const metadata: Record<string, any> = { ...putOptions.metadata };
@@ -190,7 +200,7 @@ export class FsDriver implements DiskDriver {
           href: fileUrl.href,
           size: stats.size,
           lastModified: stats.mtime.getTime(),
-          metadata: await this.loadMetadata(fileUrl),
+          metadata: await this.loadMetadata(fileUrl, options),
         },
       ];
     } catch {
@@ -301,7 +311,7 @@ export class FsDriver implements DiskDriver {
                 href: childUrl.href,
                 size: stats.size,
                 lastModified: stats.mtime.getTime(),
-                metadata: await this.loadMetadata(childUrl),
+                metadata: await this.loadMetadata(childUrl, { signal: listOptions.signal }),
               };
               count++;
             } else if (stats.isDirectory() && recursive) {
@@ -316,7 +326,7 @@ export class FsDriver implements DiskDriver {
             href: childUrl.href,
             size: stats.size,
             lastModified: stats.mtime.getTime(),
-            metadata: await this.loadMetadata(childUrl),
+            metadata: await this.loadMetadata(childUrl, { signal: listOptions.signal }),
           };
           count++;
         } else if (entry.isDirectory() && recursive) {
@@ -334,7 +344,7 @@ export class FsDriver implements DiskDriver {
 
     try {
       const stats = await stat(fileUrl);
-      const sidecarMeta = this.sidecar.enabled ? await this.loadMetadata(fileUrl) : undefined;
+      const sidecarMeta = this.sidecar.enabled ? await this.loadMetadata(fileUrl, options) : undefined;
 
       return {
         href: fileUrl.href,

@@ -115,12 +115,21 @@ export function text2stream(text: string): ReadableStream<Uint8Array> {
   });
 }
 
-export async function stream2bytes(stream: ReadableStream<Uint8Array>): Promise<Uint8Array<ArrayBuffer>> {
+export interface Stream2BytesOptions {
+  signal?: AbortSignal;
+}
+
+export async function stream2bytes(
+  stream: ReadableStream<Uint8Array>,
+  options: Stream2BytesOptions = {}
+): Promise<Uint8Array<ArrayBuffer>> {
+  const { signal } = options;
   const reader = stream.getReader();
   let buffer = new Uint8Array(64 * 1024); // 64KB initial size
   let length = 0;
 
   while (true) {
+    signal?.throwIfAborted();
     const { done, value } = await reader.read();
     if (done) break;
 
@@ -200,9 +209,14 @@ export function ensureMetadataSymbols(
   }
 }
 
-export async function fileFromMetadata(driver: DiskDriver, trigger: HookTrigger, metadata: FileMetadata): Promise<DiskFile> {
+export async function fileFromMetadata(
+  driver: DiskDriver,
+  trigger: HookTrigger,
+  metadata: FileMetadata,
+  options: { signal?: AbortSignal } = {}
+): Promise<DiskFile> {
   return trigger.file(basename(metadata.href), metadata, async (file) => {
-    const result = await driver.get(metadata.href, {});
+    const result = await driver.get(metadata.href, options);
     if (!result) throw new DiskReadError(metadata.href);
     return trigger.streaming(result[0], file);
   });

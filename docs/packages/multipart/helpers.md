@@ -198,6 +198,7 @@ Reads a Node.js Readable stream into a `Uint8Array` with optional size limit.
 
 - `stream` - Node.js Readable stream
 - `options.fileSize` - Maximum allowed size in bytes (default: Infinity)
+- `options.signal` - AbortSignal to cancel the read
 
 **Returns:** `Promise<Uint8Array>`
 
@@ -211,9 +212,10 @@ const stream = Readable.from(["Hello", " ", "World"]);
 const bytes = await helpers.stream2bytes(stream);
 console.log(new TextDecoder().decode(bytes)); // "Hello World"
 
-// With size limit
+// With size limit and cancellation
 const limited = await helpers.stream2bytes(stream, {
   fileSize: 1024 * 1024, // 1MB max
+  signal: request.signal(),
 });
 ```
 
@@ -260,6 +262,7 @@ Converts a raw multipart file stream into a Web API `File` by buffering the enti
 
 - `raw` - Raw multipart file
 - `options.fileSize` - Maximum file size in bytes
+- `options.signal` - AbortSignal to cancel buffering
 
 **Returns:** `Promise<File>`
 
@@ -267,7 +270,10 @@ Converts a raw multipart file stream into a Web API `File` by buffering the enti
 import { raw, helpers } from "@minimajs/multipart";
 
 const rawFile = await raw.file("avatar");
-const file = await helpers.raw2file(rawFile, { fileSize: 5 * 1024 * 1024 });
+const file = await helpers.raw2file(rawFile, {
+  fileSize: 5 * 1024 * 1024,
+  signal: request.signal(),
+});
 console.log(file.name, file.size, file.type);
 ```
 

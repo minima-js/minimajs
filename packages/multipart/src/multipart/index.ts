@@ -19,7 +19,7 @@ import * as raw from "../raw/index.js";
 export async function file(name: string, options: MultipartOptions = {}) {
   const field = await raw.file(name, options);
   if (!field) return null;
-  return raw2file(field, options.limits ?? {});
+  return raw2file(field, { ...options.limits, signal: options.signal });
 }
 
 /**
@@ -38,7 +38,7 @@ export async function file(name: string, options: MultipartOptions = {}) {
 export async function firstFile(options: MultipartOptions = {}): Promise<[field: string, file: File] | null> {
   const field = await raw.firstFile(options);
   if (!field) return null;
-  return [field.fieldname, await raw2file(field, options.limits ?? {})];
+  return [field.fieldname, await raw2file(field, { ...options.limits, signal: options.signal })];
 }
 
 /**
@@ -57,7 +57,7 @@ export async function firstFile(options: MultipartOptions = {}): Promise<[field:
 export async function* files(options: MultipartOptions = {}) {
   const { limits = {} } = options;
   for await (const field of raw.files({ ...options, limits: { ...limits, fields: 0 } })) {
-    yield [field.fieldname, await raw2file(field, limits)] as const;
+    yield [field.fieldname, await raw2file(field, { ...limits, signal: options.signal })] as const;
   }
 }
 
@@ -111,7 +111,7 @@ export function fields<T extends Record<string, string | string[]>>() {
 export async function* body(options: MultipartOptions = {}): AsyncGenerator<[field: string, value: string | File]> {
   for await (const field of raw.body(options)) {
     if (isRawFile(field)) {
-      yield [field.fieldname, await raw2file(field, { fileSize: options.limits?.fileSize ?? Infinity })];
+      yield [field.fieldname, await raw2file(field, { fileSize: options.limits?.fileSize ?? Infinity, signal: options.signal })];
       continue;
     }
     yield [field.fieldname, field.value];

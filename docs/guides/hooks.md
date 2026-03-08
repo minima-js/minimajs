@@ -59,6 +59,11 @@ export const meta = {
 - [`defer`](#defercallback) - Execute after response is sent
 - [`onError`](/guides/error-handling#request-scoped-error-handler-onerror) - Request-specific error handling
 
+### Advanced
+
+- [`hook.factory`](#hookfactory) - Direct access to the hook store for runtime add/remove
+- [`hook.once`](#hookonce) - Register a hook that fires only once, then removes itself
+
 ### Other Topics
 
 - [Hook Execution Order](#hook-execution-order) - FIFO and LIFO patterns with scope inheritance
@@ -212,10 +217,12 @@ After the handler → backward (Child → Parent).
 
 ### Defining Hooks
 
-There are two primary ways to define request hooks:
+There are three primary ways to define request hooks:
 
 - **`hook(name, handler)`**: Registers a single hook handler.
+- **`hook.once(name, handler)`**: Registers a handler that fires **once**, then removes itself.
 - **`hook.define({ ... })`**: Registers multiple hooks in a single, organized object.
+- **`hook.factory(fn)`**: Direct access to the hook store — add or remove handlers at runtime.
 
 Here’s how to define multiple hooks at once:
 
@@ -766,6 +773,109 @@ await app.listen({ port: 3000 });
 
 ---
 
+## `hook.factory`
+
+`hook.factory` gives you direct access to the raw hook store, letting you **add or remove handlers at runtime** without going through the standard `hook()` wrapper.
+
+```typescript
+import { hook } from "@minimajs/server";
+
+hook.factory((hookStore, app) => {
+  hookStore.ready.add(onReady);
+  hookStore.close.add(onClose);
+});
+```
+
+### Removing hooks at runtime
+
+Because `hookStore[name]` is a plain `Set`, you can call `.delete(fn)` at any point to unregister a handler:
+
+```typescript
+import { hook } from "@minimajs/server";
+
+export const meta = {
+  plugins: [
+    hook.factory((hookStore) => {
+      function onRequest(ctx) {
+        console.log("request:", ctx.request.url);
+      }
+
+      hookStore.request.add(onRequest);
+
+      // Remove after 60 seconds
+      setTimeout(() => {
+        hookStore.request.delete(onRequest);
+      }, 60_000);
+    }),
+  ],
+};
+```
+
+### Conditional registration
+
+```typescript
+import { hook } from "@minimajs/server";
+
+export const meta = {
+  plugins: [
+    hook.factory((hookStore, app) => {
+      if (process.env.NODE_ENV === "development") {
+        hookStore.request.add(function devLogger(ctx) {
+          console.log(`[dev] ${ctx.request.method} ${ctx.request.url}`);
+        });
+      }
+    }),
+  ],
+};
+```
+
+> `hook.factory` is the escape hatch — use it when `hook()`, `hook.once()`, or `hook.define()` don't provide enough control. The callback receives the same `HookStore` object that all other hook APIs write to.
+
+---
+
+## `hook.once`
+
+`hook.once` registers a hook that fires exactly once. After the first invocation the handler automatically removes itself from the hook store, so it never runs again.
+
+Accepts the same hook names as `hook()` and returns a plugin — use it anywhere you'd use a regular hook.
+
+```typescript
+import { hook } from "@minimajs/server";
+
+export const meta = {
+  plugins: [
+    // Log only the very first request that hits this module
+    hook.once("request", ({ request }) => {
+      console.log("First request received:", request.url);
+    }),
+  ],
+};
+```
+
+**Common use cases:**
+
+- One-time initialization triggered by the first request
+- Record-once metrics or flags
+- Emit a single event after the first occurrence of a lifecycle event
+
+```typescript
+import { hook } from "@minimajs/server";
+
+// Notify monitoring on the first error, then stop
+export const meta = {
+  plugins: [
+    hook.once("error", (err) => {
+      alerting.notify("First error after deploy", { error: err });
+      // Does not affect error propagation - other error hooks still run
+    }),
+  ],
+};
+```
+
+> `hook.once` supports all hook names: `request`, `transform`, `send`, `error`, `timeout`, `close`, `listen`, `ready`, `register`.
+
+---
+
 ## Best Practices
 
 - **Use `meta.plugins`** in module files instead of `app.register()` for better organization
@@ -776,6 +886,8 @@ await app.listen({ port: 3000 });
 - **Use `response()` helper** to create responses that preserve context headers set by plugins
 - **Register hooks in the appropriate scope** to ensure proper FIFO/LIFO ordering based on hook type
 - **Use `hook.define`** to organize multiple related hooks together
+- **Use `hook.once`** when a hook should only fire one time (first request, first error, etc.)
+- **Use `hook.factory`** only when you need to remove hooks at runtime or conditionally register based on app state
 
 ---
 

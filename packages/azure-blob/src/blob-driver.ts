@@ -120,9 +120,10 @@ export class AzureBlobDriver implements DiskDriver {
         blobCacheControl: putOptions?.cacheControl,
       },
       metadata: putOptions?.metadata as Record<string, string>,
+      abortSignal: putOptions.signal,
     });
 
-    const properties = await blobClient.getProperties();
+    const properties = await blobClient.getProperties({ abortSignal: putOptions.signal });
 
     return {
       href: this.blobToHref(container, blob),
@@ -234,6 +235,7 @@ export class AzureBlobDriver implements DiskDriver {
     const containerClient = this.client.getContainerClient(container);
     const iterator = containerClient.listBlobsFlat({
       prefix: prefix ?? undefined,
+      abortSignal: listOptions?.signal,
     });
 
     let count = 0;
@@ -275,23 +277,32 @@ export class AzureBlobDriver implements DiskDriver {
     }
   }
 
-  async updateMetadata(href: string, updates: { type?: string; metadata?: Record<string, string> }): Promise<FileMetadata> {
+  async updateMetadata(
+    href: string,
+    updates: { type?: string; metadata?: Record<string, string> },
+    options: { signal?: AbortSignal } = {}
+  ): Promise<FileMetadata> {
     const { container, blob } = this.hrefToBlob(href);
     const containerClient = this.client.getContainerClient(container);
     const blobClient = containerClient.getBlockBlobClient(blob);
 
-    const current = await blobClient.getProperties();
+    const current = await blobClient.getProperties({ abortSignal: options.signal });
 
     await Promise.all([
-      updates.metadata !== undefined ? blobClient.setMetadata(updates.metadata) : undefined,
+      updates.metadata !== undefined
+        ? blobClient.setMetadata(updates.metadata, { abortSignal: options.signal })
+        : undefined,
       updates.type !== undefined
-        ? blobClient.setHTTPHeaders({
-            blobContentType: updates.type,
-            blobCacheControl: current.cacheControl,
-            blobContentEncoding: current.contentEncoding,
-            blobContentLanguage: current.contentLanguage,
-            blobContentDisposition: current.contentDisposition,
-          })
+        ? blobClient.setHTTPHeaders(
+            {
+              blobContentType: updates.type,
+              blobCacheControl: current.cacheControl,
+              blobContentEncoding: current.contentEncoding,
+              blobContentLanguage: current.contentLanguage,
+              blobContentDisposition: current.contentDisposition,
+            },
+            { abortSignal: options.signal }
+          )
         : undefined,
     ]);
 

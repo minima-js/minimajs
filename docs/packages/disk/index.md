@@ -162,6 +162,7 @@ const file = await disk.put("uploads/photo.jpg", imageData, {
   - `type?: string` - MIME type
   - `metadata?: Record<string, string>` - Custom metadata
   - `lastModified?: Date` - Last modified date
+  - `signal?: AbortSignal` - Cancel the upload
 
 **Returns:** `Promise<DiskFile>`
 
@@ -189,7 +190,7 @@ To generate unique or structured names automatically, use the [`storeAs`](./plug
 
 **Returns:** `Promise<DiskFile>`
 
-#### `get(path)`
+#### `get(path, options?)`
 
 Retrieve a file.
 
@@ -203,10 +204,11 @@ if (file) {
 **Parameters:**
 
 - `path: string` - File path
+- `options?: { signal?: AbortSignal }` - Pass an `AbortSignal` to cancel the operation
 
 **Returns:** `Promise<DiskFile | null>`
 
-#### `exists(path)`
+#### `exists(path, options?)`
 
 Check if a file exists.
 
@@ -217,10 +219,11 @@ const exists = await disk.exists("uploads/photo.jpg");
 **Parameters:**
 
 - `path: string` - File path
+- `options?: { signal?: AbortSignal }`
 
 **Returns:** `Promise<boolean>`
 
-#### `delete(source)`
+#### `delete(source, options?)`
 
 Delete a file by path, `File`, or `DiskFile`.
 
@@ -239,6 +242,7 @@ await disk.delete(uploadedFile);
 **Parameters:**
 
 - `source: string | File` - File path, `File`, or `DiskFile`
+- `options?: { signal?: AbortSignal }`
 
 **Returns:** `Promise<string>` — the resolved href of the deleted file
 
@@ -260,7 +264,7 @@ const url = await disk.url("uploads/photo.jpg", {
 
 **Returns:** `Promise<string>`
 
-#### `copy(from, to)`
+#### `copy(from, to, options?)`
 
 Copy a file.
 
@@ -277,10 +281,11 @@ await disk.copy(file, "backups/photo.jpg");
 
 - `from: string | File` - Source file path, `File`, or `DiskFile`
 - `to: string` - Destination path
+- `options?: { signal?: AbortSignal }`
 
 **Returns:** `Promise<DiskFile>`
 
-#### `move(from, to)`
+#### `move(from, to, options?)`
 
 Move/rename a file.
 
@@ -292,6 +297,7 @@ await disk.move("uploads/photo.jpg", "archive/photo.jpg");
 
 - `from: string | File` - Source file path, `File`, or `DiskFile`
 - `to: string` - Destination path
+- `options?: { signal?: AbortSignal }`
 
 **Returns:** `Promise<DiskFile>`
 
@@ -315,10 +321,11 @@ for await (const file of disk.list("uploads/", { limit: 10 })) {
 - `prefix?: string` - Filter by prefix (optional)
 - `options?: ListOptions`
   - `limit?: number` - Maximum number of files to return
+  - `signal?: AbortSignal` - Cancel the listing mid-iteration
 
 **Returns:** `AsyncIterable<DiskFile>`
 
-#### `metadata(path)`
+#### `metadata(path, options?)`
 
 Get file metadata without downloading content.
 
@@ -332,8 +339,60 @@ if (metadata) {
 **Parameters:**
 
 - `path: string` - File path
+- `options?: { signal?: AbortSignal }`
 
 **Returns:** `Promise<FileMetadata | null>`
+
+## Cancellation
+
+All disk operations accept an optional `signal` option. Pass an `AbortSignal` to cancel long-running operations when the caller is no longer interested — for example when an HTTP client disconnects.
+
+```typescript
+import { request } from "@minimajs/server";
+import { disk } from "../disk.js";
+
+// Cancel disk I/O if the HTTP client disconnects
+async function serveFile() {
+  const signal = request.signal();
+  return disk.get("uploads/video.mp4", { signal });
+}
+```
+
+**Combining with a timeout:**
+
+```typescript
+const ac = new AbortController();
+const timer = setTimeout(() => ac.abort(new Error("Timeout")), 10_000);
+
+try {
+  const file = await disk.get("uploads/large.zip", { signal: ac.signal });
+  return file;
+} finally {
+  clearTimeout(timer);
+}
+```
+
+**Cancelling list iteration:**
+
+```typescript
+const signal = request.signal();
+
+for await (const file of disk.list("uploads/", { signal })) {
+  await process(file);
+}
+```
+
+When a signal aborts, the operation throws a `DOMException` with `name: "AbortError"` (or whatever reason was passed to `controller.abort(reason)`). Check for it with:
+
+```typescript
+try {
+  await disk.get("file.txt", { signal });
+} catch (err) {
+  if (err instanceof DOMException && err.name === "AbortError") {
+    // Cancelled — client disconnected or timeout
+  }
+}
+```
 
 ## Plugins
 
@@ -406,13 +465,13 @@ import type { DiskDriver, FileMetadata, PutOptions, ListOptions, UrlOptions } fr
 
 class CustomDriver implements DiskDriver {
   async put(href: string, stream: ReadableStream, options?: PutOptions): Promise<FileMetadata> { … }
-  async get(href: string): Promise<[ReadableStream, FileMetadata] | null> { … }
-  async delete(href: string): Promise<void> { … }
-  async exists(href: string): Promise<boolean> { … }
-  async copy(from: string, to: string): Promise<void> { … }
-  async move(from: string, to: string): Promise<void> { … }
+  async get(href: string, options: { signal?: AbortSignal }): Promise<[ReadableStream, FileMetadata] | null> { … }
+  async delete(href: string, options: { signal?: AbortSignal }): Promise<void> { … }
+  async exists(href: string, options: { signal?: AbortSignal }): Promise<boolean> { … }
+  async copy(from: string, to: string, options: { signal?: AbortSignal }): Promise<void> { … }
+  async move(from: string, to: string, options: { signal?: AbortSignal }): Promise<void> { … }
   async *list(prefix?: string, options?: ListOptions): AsyncIterable<FileMetadata> { … }
-  async metadata(href: string): Promise<FileMetadata | null> { … }
+  async metadata(href: string, options: { signal?: AbortSignal }): Promise<FileMetadata | null> { … }
   async url(href: string, options?: UrlOptions): Promise<string> { … }
 }
 ```

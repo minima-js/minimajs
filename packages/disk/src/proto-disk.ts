@@ -117,7 +117,9 @@ export class ProtoDisk implements Disk<DiskDriver> {
       ensureMetadataSymbols(options.metadata, metadata.metadata);
     }
 
-    const diskFile = await fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata);
+    const diskFile = await fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata, {
+      signal: options.signal,
+    });
     return this.$hookManager.trigger.stored(diskFile);
   }
 
@@ -145,7 +147,7 @@ export class ProtoDisk implements Disk<DiskDriver> {
         return this.$hookManager.trigger.streaming(s, file);
       }
       const fileDriver = this.getDriver(metadata.href);
-      const fetched = await fileDriver.get(metadata.href, {});
+      const fetched = await fileDriver.get(metadata.href, options);
       if (!fetched) throw new DiskReadError(metadata.href);
       return this.$hookManager.trigger.streaming(fetched[0], file);
     });
@@ -206,7 +208,7 @@ export class ProtoDisk implements Disk<DiskDriver> {
       const metadata = await destDriver.metadata(toHrefResolved, options);
       if (!metadata) throw new DiskMetadataError(toHrefResolved, "Failed to get metadata for copied file");
 
-      diskFile = await fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata);
+      diskFile = await fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata, options);
     } else {
       // Different drivers: stream data between them
       const result = await sourceDriver.get(fromHrefResolved, options);
@@ -258,7 +260,7 @@ export class ProtoDisk implements Disk<DiskDriver> {
       const metadata = await destDriver.metadata(toHrefResolved, options);
       if (!metadata) throw new DiskMetadataError(toHrefResolved, "Failed to get metadata for moved file");
 
-      diskFile = await fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata);
+      diskFile = await fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata, options);
     } else {
       // Different drivers: copy then delete
       const result = await sourceDriver.get(fromHrefResolved, options);
@@ -273,7 +275,7 @@ export class ProtoDisk implements Disk<DiskDriver> {
 
       await sourceDriver.delete(fromHrefResolved, options);
 
-      diskFile = await fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata);
+      diskFile = await fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata, options);
     }
 
     return this.$hookManager.trigger.moved($from, $to, diskFile);
@@ -286,7 +288,7 @@ export class ProtoDisk implements Disk<DiskDriver> {
     if (prefixHref) {
       const driver = this.getDriver(prefixHref);
       for await (const metadata of driver.list(prefixHref, $options)) {
-        yield fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata);
+        yield fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata, { signal: $options?.signal });
       }
       return;
     }
@@ -295,7 +297,7 @@ export class ProtoDisk implements Disk<DiskDriver> {
     for (const [_protocol, driver] of Object.entries(this.protocols)) {
       try {
         for await (const metadata of driver.list("", $options)) {
-          yield fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata);
+          yield fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata, { signal: $options?.signal });
         }
       } catch (_error) {
         // Skip drivers that don't support listing without prefix

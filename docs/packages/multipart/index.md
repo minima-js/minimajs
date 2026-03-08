@@ -419,6 +419,18 @@ const avatar = await multipart.file("avatar", {
 
 Pass an `AbortSignal` to stop parsing early. When aborted, an `AbortError` is emitted on the underlying stream so iterators and promises reject cleanly.
 
+For `multipart.*` functions (`file`, `firstFile`, `files`, `body`), the signal covers the **entire operation** — both stream parsing and the final file buffering step.
+
+```typescript
+import { request } from "@minimajs/server";
+import { multipart } from "@minimajs/multipart";
+
+// Cancels both parsing and buffering if client disconnects
+const file = await multipart.file("avatar", { signal: request.signal() });
+```
+
+With a timeout:
+
 ```typescript
 const ac = new AbortController();
 setTimeout(() => ac.abort(), 5000); // 5s timeout

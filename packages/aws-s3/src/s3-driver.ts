@@ -181,8 +181,12 @@ export class S3Driver implements DiskDriver {
       Object.assign(metadata, putOptions.metadata);
     }
 
+    const ac = new AbortController();
+    putOptions.signal?.addEventListener("abort", () => ac.abort(putOptions.signal!.reason), { once: true });
+
     await new Upload({
       client: this.client,
+      abortController: ac,
       params: {
         Bucket: bucket,
         Key: fullKey,
@@ -202,7 +206,7 @@ export class S3Driver implements DiskDriver {
       Key: fullKey,
     });
 
-    const head = await this.client.send(headCommand);
+    const head = await this.client.send(headCommand, { abortSignal: putOptions.signal });
 
     return {
       href: this.keyToHref(bucket, fullKey),
@@ -372,7 +376,7 @@ export class S3Driver implements DiskDriver {
         Delimiter: listOptions.recursive ? undefined : "/",
       });
 
-      const response = await this.client.send(command);
+      const response = await this.client.send(command, { abortSignal: listOptions.signal });
 
       if (response.Contents) {
         for (const item of response.Contents) {

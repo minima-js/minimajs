@@ -18,7 +18,14 @@ export function toWebHeaders(nodeHeaders: IncomingMessage["headers"]): Headers {
   return headers;
 }
 
-export function toWebRequest(req: IncomingMessage, domain: string = "http://localhost"): Request {
+export interface ToWebRequestOptions {
+  domain?: string;
+  signal?: AbortSignal;
+}
+
+export function toWebRequest(req: IncomingMessage, options: ToWebRequestOptions = {}): Request {
+  const { signal } = options;
+  let { domain = "http://localhost" } = options;
   const { headers } = req;
   if (headers.host) {
     domain = `http://${headers.host}`;
@@ -33,18 +40,30 @@ export function toWebRequest(req: IncomingMessage, domain: string = "http://loca
     }
   });
 
+  // Combine request signal with any external signal (e.g. response-close)
+  // so that request.signal() fires on client disconnect at any point in the lifecycle
+  const combined = signal ? AbortSignal.any([controller.signal, signal]) : controller.signal;
+
   const request = new Request(url, {
     method: req.method,
     headers: toWebHeaders(req.headers),
     body: req.method !== "GET" && req.method !== "HEAD" ? req : undefined,
-    signal: controller.signal,
+    signal: combined,
     duplex: "half",
   });
 
   return request;
 }
 
-export async function fromWebResponse(webResponse: Response, nodeResponse: ServerResponse): Promise<void> {
+export interface FromWebResponseOptions {
+  signal?: AbortSignal;
+}
+
+export async function fromWebResponse(
+  webResponse: Response,
+  nodeResponse: ServerResponse,
+  options: FromWebResponseOptions = {}
+): Promise<void> {
   nodeResponse.statusCode = webResponse.status;
   nodeResponse.setHeaders(webResponse.headers);
   if (!webResponse.body) {
@@ -53,8 +72,10 @@ export async function fromWebResponse(webResponse: Response, nodeResponse: Serve
   }
 
   try {
-    await pipeline(Readable.fromWeb(webResponse.body), nodeResponse);
+    await pipeline(Readable.fromWeb(webResponse.body), nodeResponse, { signal: options.signal });
   } catch (err) {
+    // Client disconnected mid-stream — nothing to do, response is already gone
+    if (options.signal?.aborted) return;
     if (!nodeResponse.headersSent) {
       nodeResponse.statusCode = 500;
     }

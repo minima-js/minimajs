@@ -8,6 +8,8 @@ export interface SnapshotOptions {
   path?: string;
   /** Prefix for the snapshot file on the destination disk (default: 'snapshots/') */
   prefix?: string;
+  /** AbortSignal to cancel the snapshot operation */
+  signal?: AbortSignal;
 }
 
 export interface RestoreOptions {
@@ -15,6 +17,8 @@ export interface RestoreOptions {
   targetPath?: string;
   /** Overwrite existing files (default: false) */
   overwrite?: boolean;
+  /** AbortSignal to cancel the restore operation */
+  signal?: AbortSignal;
 }
 
 /**
@@ -34,7 +38,9 @@ export interface RestoreOptions {
  * const snapshotId = await snapshot(localDisk, secureDisk)
  */
 export async function snapshot(src: Disk, dest: Disk, options: SnapshotOptions = {}): Promise<string> {
-  const { path: sourcePath, prefix = "snapshots/" } = options;
+  const { path: sourcePath, prefix = "snapshots/", signal } = options;
+  signal?.throwIfAborted();
+
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   const snapshotFile = `${prefix}${(sourcePath || "all").replace(/[/*]/g, "_")}_${timestamp}.zip`;
 
@@ -52,12 +58,17 @@ export async function snapshot(src: Disk, dest: Disk, options: SnapshotOptions =
     if (final) passThrough.end();
   };
 
+  // Abort the passthrough stream when signal fires
+  signal?.addEventListener("abort", () => passThrough.destroy(signal.reason ?? new DOMException("Aborted", "AbortError")), {
+    once: true,
+  });
+
   // Start the put concurrently — consumes the stream as zip chunks flow in
   const putPromise = dest.put(snapshotFile, webStream, { type: "application/zip" });
 
   const listPrefix = sourcePath?.replace(/\/$/, "") || undefined;
-  for await (const file of src.list(listPrefix)) {
-    const srcFile = await src.get(file.href);
+  for await (const file of src.list(listPrefix, { signal })) {
+    const srcFile = await src.get(file.href, { signal });
     if (!srcFile) continue;
 
     const entry = new ZipDeflate(file.href, { level: 6 });
@@ -65,6 +76,7 @@ export async function snapshot(src: Disk, dest: Disk, options: SnapshotOptions =
 
     const reader = srcFile.stream().getReader();
     while (true) {
+      signal?.throwIfAborted();
       const { done, value } = await reader.read();
       if (done) {
         entry.push(new Uint8Array(0), true);
@@ -100,9 +112,10 @@ export async function restore(
   dest: Disk = src,
   options: RestoreOptions = {}
 ): Promise<void> {
-  const { overwrite = false, targetPath } = options;
+  const { overwrite = false, targetPath, signal } = options;
+  signal?.throwIfAborted();
 
-  const file = await src.get(snapshotFile);
+  const file = await src.get(snapshotFile, { signal });
   if (!file) throw new Error(`Snapshot not found: ${snapshotFile}`);
 
   const entryPromises: Promise<unknown>[] = [];
@@ -117,7 +130,7 @@ export async function restore(
 
     const putPromise = overwrite
       ? dest.put(restorePath, webStream)
-      : dest.exists(restorePath).then((exists) => {
+      : dest.exists(restorePath, { signal }).then((exists) => {
           if (exists) {
             passThrough.end();
             return;
@@ -142,6 +155,7 @@ export async function restore(
 
   const reader = file.stream().getReader();
   while (true) {
+    signal?.throwIfAborted();
     const { done, value } = await reader.read();
     if (done) {
       unzip.push(new Uint8Array(0), true);

@@ -81,7 +81,7 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
       ensureMetadataSymbols(options.metadata, metadata.metadata);
     }
 
-    const diskFile = await fileFromMetadata(this.driver, this.$hookManager.trigger, metadata);
+    const diskFile = await fileFromMetadata(this.driver, this.$hookManager.trigger, metadata, { signal: options.signal });
     return this.$hookManager.trigger.stored(diskFile);
   }
 
@@ -158,7 +158,7 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
     await this.driver.copy($from, $to, options);
     const metadata = await this.driver.metadata($to, options);
     if (!metadata) throw new DiskMetadataError($to, "Failed to get metadata for copied file");
-    const diskFile = await fileFromMetadata(this.driver, this.$hookManager.trigger, metadata);
+    const diskFile = await fileFromMetadata(this.driver, this.$hookManager.trigger, metadata, options);
     return this.$hookManager.trigger.copied($from, $to, diskFile);
   }
 
@@ -188,7 +188,7 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
     await this.driver.move($from, $to, options);
     const metadata = await this.driver.metadata($to, options);
     if (!metadata) throw new DiskMetadataError($to, "Failed to get metadata for moved file");
-    const diskFile = await fileFromMetadata(this.driver, this.$hookManager.trigger, metadata);
+    const diskFile = await fileFromMetadata(this.driver, this.$hookManager.trigger, metadata, options);
     return this.$hookManager.trigger.moved($from, $to, diskFile);
   }
 
@@ -196,7 +196,7 @@ export class StandardDisk<TDriver extends DiskDriver = DiskDriver> implements Di
     const [$prefix, $listOptions] = await this.$hookManager.trigger.list(prefix, listOptions);
 
     for await (const metadata of this.driver.list($prefix ?? "", $listOptions)) {
-      yield fileFromMetadata(this.driver, this.$hookManager.trigger, metadata);
+      yield fileFromMetadata(this.driver, this.$hookManager.trigger, metadata, { signal: $listOptions?.signal });
     }
   }
 
