@@ -41,7 +41,7 @@ import { createFsDriver } from "@minimajs/disk/adapters";
 
 const disk = createDisk({
   driver: createFsDriver({
-    root: "/var/uploads",
+    root: "file:///var/uploads/",
     publicUrl: "https://cdn.example.com",
   }),
 });
@@ -116,12 +116,12 @@ All `get()`, `put()`, `copy()`, and `move()` operations return a `DiskFile` inst
 const file = await disk.put("document.pdf", pdfData);
 
 // File properties
-file.href;         // Storage identifier (e.g., "s3://bucket/document.pdf")
-file.name;         // Filename (e.g., "document.pdf")
-file.size;         // File size in bytes
-file.type;         // MIME type (e.g., "application/pdf")
+file.href; // Storage identifier (e.g., "s3://bucket/document.pdf")
+file.name; // Filename (e.g., "document.pdf")
+file.size; // File size in bytes
+file.type; // MIME type (e.g., "application/pdf")
 file.lastModified; // Timestamp
-file.metadata;     // Custom metadata
+file.metadata; // Custom metadata
 
 // Read file content
 const buffer = await file.arrayBuffer();
@@ -443,18 +443,19 @@ const disk = createDisk({ driver }, storeAs("uuid"));
 const disk = createDisk({ driver }, storeAs("uuid-original"));
 
 // Custom generator — full control (sync or async)
-const disk = createDisk({ driver }, storeAs(file =>
-  `${new Date().getFullYear()}/${randomUUID()}${extname(file.name)}`
-));
+const disk = createDisk(
+  { driver },
+  storeAs((file) => `${new Date().getFullYear()}/${randomUUID()}${extname(file.name)}`)
+);
 ```
 
 When the name is changed, the original filename is saved in `file.metadata.originalName`.
 
-| Strategy | Example output |
-|---|---|
-| `"uuid"` (default) | `550e8400-….jpg` |
-| `"uuid-original"` | `550e8400-…-photo.jpg` |
-| `(file) => string` | whatever you return |
+| Strategy           | Example output         |
+| ------------------ | ---------------------- |
+| `"uuid"` (default) | `550e8400-….jpg`       |
+| `"uuid-original"`  | `550e8400-…-photo.jpg` |
+| `(file) => string` | whatever you return    |
 
 **Only applies when `data instanceof File`.** Calls with a plain path are unaffected.
 
@@ -462,12 +463,12 @@ When the name is changed, the original filename is saved in `file.metadata.origi
 
 ## Drivers
 
-| Driver | Package | Use Case |
-|---|---|---|
-| Filesystem | `@minimajs/disk` | Local / development |
-| Memory | `@minimajs/disk` | Testing |
-| AWS S3 | `@minimajs/aws-s3` | Production |
-| Azure Blob | `@minimajs/azure-blob` | Production |
+| Driver     | Package                | Use Case            |
+| ---------- | ---------------------- | ------------------- |
+| Filesystem | `@minimajs/disk`       | Local / development |
+| Memory     | `@minimajs/disk`       | Testing             |
+| AWS S3     | `@minimajs/aws-s3`     | Production          |
+| Azure Blob | `@minimajs/azure-blob` | Production          |
 
 - **[Filesystem Driver](./filesystem.md)** - Local file storage
 - **[AWS S3 Driver](./aws-s3.md)** - Amazon S3 storage

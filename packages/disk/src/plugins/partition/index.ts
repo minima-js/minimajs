@@ -2,43 +2,31 @@ import { createHash } from "node:crypto";
 import type { Disk, DiskData, PutOptions } from "../../types.js";
 
 export interface PartitionByDate {
-  /** Partition strategy — 'date' organizes by time, 'hash' by content hash */
-  by: "date";
-  /**
-   * Date format string — only used when `by: 'date'`.
-   * Supports common tokens: yyyy, MM, dd, HH, mm, ss.
-   * @default 'yyyy/MM/dd'
-   */
-  format?: string;
+  /** Partition by time — 'year' → yyyy, 'month' → yyyy/MM, 'date' → yyyy/MM/dd */
+  by: "year" | "month" | "date";
 }
 
 export interface PartitionByHash {
   by: "hash";
-  /**
-   * Number of prefix levels — only used when `by: 'hash'`
-   * @default 2
-   */
+  /** @default 2 */
   levels?: number;
-  /**
-   * Characters per level — only used when `by: 'hash'`
-   * @default 2
-   */
+  /** @default 2 */
   charsPerLevel?: number;
 }
+
 export type PartitionOptions = PartitionByDate | PartitionByHash;
 
 /** Custom prefix generator — receives the same args as the `put` hook */
 export type PartitionGenerator = (path: string, data: DiskData, opts: PutOptions) => string | Promise<string>;
 
-function formatDate(date: Date, format: string): string {
-  const pad = (value: number) => value.toString().padStart(2, "0");
-  return format
-    .replace(/yyyy/g, date.getFullYear().toString())
-    .replace(/MM/g, pad(date.getMonth() + 1))
-    .replace(/dd/g, pad(date.getDate()))
-    .replace(/HH/g, pad(date.getHours()))
-    .replace(/mm/g, pad(date.getMinutes()))
-    .replace(/ss/g, pad(date.getSeconds()));
+function datePrefix(by: PartitionByDate["by"]): string {
+  const d = new Date();
+  const y = d.getFullYear().toString();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  if (by === "year") return y;
+  if (by === "month") return `${y}/${m}`;
+  return `${y}/${m}/${day}`;
 }
 
 function buildHashPrefix(path: string, levels: number, charsPerLevel: number): string {
@@ -72,16 +60,16 @@ function buildHashPrefix(path: string, levels: number, charsPerLevel: number): s
  * await disk.put('avatar.jpg', data) // stored at custom/jpg/avatar.jpg
  */
 export function partition(options: PartitionOptions | PartitionGenerator) {
-  let getPrefix: PartitionGenerator = (path) => buildHashPrefix(path, 2, 2);
+  let getPrefix: PartitionGenerator;
 
   if (typeof options === "function") {
     getPrefix = options;
-  } else if (options.by === "date") {
-    const { format: dateFormat = "yyyy/MM/dd" } = options;
-    getPrefix = () => formatDate(new Date(), dateFormat);
-  } else {
+  } else if (options.by === "hash") {
     const { levels = 2, charsPerLevel = 2 } = options;
     getPrefix = (path) => buildHashPrefix(path, levels, charsPerLevel);
+  } else {
+    const { by } = options;
+    getPrefix = () => datePrefix(by);
   }
 
   return (disk: Disk) => {

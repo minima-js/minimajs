@@ -19,7 +19,7 @@ describe("S3Driver — href parsing", () => {
   test("parses s3://bucket/key href", async () => {
     const { driver, sendFn } = setup();
 
-    await driver.exists("s3://my-bucket/uploads/photo.jpg");
+    await driver.exists("s3://my-bucket/uploads/photo.jpg", {});
 
     const cmd: any = sendFn.mock.calls[0]![0];
     expect(cmd).toBeInstanceOf(HeadObjectCommand);
@@ -30,7 +30,7 @@ describe("S3Driver — href parsing", () => {
   test("uses bucket from constructor when href is a plain key", async () => {
     const { driver, sendFn } = setup({ bucket: "default-bucket" });
 
-    await driver.exists("some/key.txt");
+    await driver.exists("some/key.txt", {});
 
     const cmd: any = sendFn.mock.calls[0]![0];
     expect(cmd.input.Bucket).toBe("default-bucket");
@@ -40,7 +40,7 @@ describe("S3Driver — href parsing", () => {
   test("resolves publicUrl href back to s3 key", async () => {
     const { driver, sendFn } = setup({ bucket: "my-bucket", publicUrl: "https://cdn.example.com" });
 
-    await driver.exists("https://cdn.example.com/images/photo.jpg");
+    await driver.exists("https://cdn.example.com/images/photo.jpg", {});
 
     const cmd: any = sendFn.mock.calls[0]![0];
     expect(cmd.input.Bucket).toBe("my-bucket");
@@ -50,7 +50,7 @@ describe("S3Driver — href parsing", () => {
   test("applies prefix to plain key hrefs", async () => {
     const { driver, sendFn } = setup({ bucket: "my-bucket", prefix: "prod" });
 
-    await driver.exists("file.txt");
+    await driver.exists("file.txt", {});
 
     const cmd: any = sendFn.mock.calls[0]![0];
     expect(cmd.input.Key).toBe("prod/file.txt");
@@ -58,12 +58,12 @@ describe("S3Driver — href parsing", () => {
 
   test("throws when no bucket is configured and href is a plain key", async () => {
     const { driver } = setup({});
-    await expect(driver.exists("plain-key.txt")).rejects.toThrow(/Bucket must be specified/);
+    await expect(driver.exists("plain-key.txt", {})).rejects.toThrow(/Bucket must be specified/);
   });
 
   test("throws for empty S3 key in s3:// href", async () => {
     const { driver } = setup({});
-    await expect(driver.exists("s3://bucket/")).rejects.toThrow(/Invalid S3/);
+    await expect(driver.exists("s3://bucket/", {})).rejects.toThrow(/Invalid S3/);
   });
 });
 
@@ -135,7 +135,7 @@ describe("S3Driver — get", () => {
       }
     );
 
-    const result = await driver.get("s3://my-bucket/file.txt");
+    const result = await driver.get("s3://my-bucket/file.txt", {});
 
     expect(result).not.toBeNull();
     const [stream, meta] = result!;
@@ -149,7 +149,7 @@ describe("S3Driver — get", () => {
     err.name = "NoSuchKey";
 
     const { driver } = setup({ bucket: "my-bucket" }, { get: err });
-    expect(await driver.get("s3://my-bucket/missing.txt")).toBeNull();
+    expect(await driver.get("s3://my-bucket/missing.txt", {})).toBeNull();
   });
 
   test("returns null for 404 HTTP status", async () => {
@@ -157,7 +157,7 @@ describe("S3Driver — get", () => {
     err.$metadata = { httpStatusCode: 404 };
 
     const { driver } = setup({ bucket: "my-bucket" }, { get: err });
-    expect(await driver.get("s3://my-bucket/missing.txt")).toBeNull();
+    expect(await driver.get("s3://my-bucket/missing.txt", {})).toBeNull();
   });
 
   test("rethrows non-404 errors", async () => {
@@ -165,7 +165,7 @@ describe("S3Driver — get", () => {
     err.name = "InternalError";
 
     const { driver } = setup({ bucket: "my-bucket" }, { get: err });
-    await expect(driver.get("s3://my-bucket/file.txt")).rejects.toThrow("InternalError");
+    await expect(driver.get("s3://my-bucket/file.txt", {})).rejects.toThrow("InternalError");
   });
 });
 
@@ -176,7 +176,7 @@ describe("S3Driver — get", () => {
 describe("S3Driver — exists", () => {
   test("returns true when HeadObject succeeds", async () => {
     const { driver } = setup();
-    expect(await driver.exists("s3://my-bucket/file.txt")).toBe(true);
+    expect(await driver.exists("s3://my-bucket/file.txt", {})).toBe(true);
   });
 
   test("returns false for NotFound error", async () => {
@@ -184,7 +184,7 @@ describe("S3Driver — exists", () => {
     err.name = "NotFound";
 
     const { driver } = setup({ bucket: "my-bucket" }, { head: err });
-    expect(await driver.exists("s3://my-bucket/missing.txt")).toBe(false);
+    expect(await driver.exists("s3://my-bucket/missing.txt", {})).toBe(false);
   });
 
   test("returns false for 404 HTTP status", async () => {
@@ -192,7 +192,7 @@ describe("S3Driver — exists", () => {
     err.$metadata = { httpStatusCode: 404 };
 
     const { driver } = setup({ bucket: "my-bucket" }, { head: err });
-    expect(await driver.exists("s3://my-bucket/missing.txt")).toBe(false);
+    expect(await driver.exists("s3://my-bucket/missing.txt", {})).toBe(false);
   });
 
   test("rethrows non-404 errors from HeadObject", async () => {
@@ -200,7 +200,7 @@ describe("S3Driver — exists", () => {
     err.name = "AccessDenied";
 
     const { driver } = setup({ bucket: "my-bucket" }, { head: err });
-    await expect(driver.exists("s3://my-bucket/file.txt")).rejects.toThrow("AccessDenied");
+    await expect(driver.exists("s3://my-bucket/file.txt", {})).rejects.toThrow("AccessDenied");
   });
 });
 
@@ -212,7 +212,7 @@ describe("S3Driver — delete", () => {
   test("sends DeleteObjectCommand with correct bucket and key", async () => {
     const { driver, sendFn } = setup();
 
-    await driver.delete("s3://my-bucket/file.txt");
+    await driver.delete("s3://my-bucket/file.txt", {});
 
     const deleteCall = sendFn.mock.calls.find(([cmd]: any[]) => cmd instanceof DeleteObjectCommand);
     expect(deleteCall).toBeDefined();
@@ -230,7 +230,7 @@ describe("S3Driver — copy", () => {
   test("sends CopyObjectCommand with correct source and destination", async () => {
     const { driver, sendFn } = setup({});
 
-    await driver.copy("s3://bucket-a/source.txt", "s3://bucket-b/dest.txt");
+    await driver.copy("s3://bucket-a/source.txt", "s3://bucket-b/dest.txt", {});
 
     const copyCall = sendFn.mock.calls.find(([cmd]: any[]) => cmd instanceof CopyObjectCommand);
     expect(copyCall).toBeDefined();
@@ -243,7 +243,7 @@ describe("S3Driver — copy", () => {
   test("can copy within the same bucket", async () => {
     const { driver, sendFn } = setup({ bucket: "same-bucket" });
 
-    await driver.copy("s3://same-bucket/original.txt", "s3://same-bucket/copy.txt");
+    await driver.copy("s3://same-bucket/original.txt", "s3://same-bucket/copy.txt", {});
 
     const copyCall = sendFn.mock.calls.find(([cmd]: any[]) => cmd instanceof CopyObjectCommand);
     expect(copyCall).toBeDefined();
@@ -258,7 +258,7 @@ describe("S3Driver — move", () => {
   test("calls copy then delete", async () => {
     const { driver, sendFn } = setup({});
 
-    await driver.move("s3://bucket/source.txt", "s3://bucket/dest.txt");
+    await driver.move("s3://bucket/source.txt", "s3://bucket/dest.txt", {});
 
     const copyCall = sendFn.mock.calls.find(([cmd]: any[]) => cmd instanceof CopyObjectCommand);
     const deleteCall = sendFn.mock.calls.find(([cmd]: any[]) => cmd instanceof DeleteObjectCommand);
@@ -394,7 +394,7 @@ describe("S3Driver — metadata", () => {
       }
     );
 
-    const meta = await driver.metadata("s3://my-bucket/data.json");
+    const meta = await driver.metadata("s3://my-bucket/data.json", {});
 
     expect(meta).not.toBeNull();
     expect(meta!.href).toBe("s3://my-bucket/data.json");
@@ -408,7 +408,7 @@ describe("S3Driver — metadata", () => {
     err.name = "NotFound";
 
     const { driver } = setup({ bucket: "my-bucket" }, { head: err });
-    expect(await driver.metadata("s3://my-bucket/missing.json")).toBeNull();
+    expect(await driver.metadata("s3://my-bucket/missing.json", {})).toBeNull();
   });
 
   test("returns null for 404 HTTP status", async () => {
@@ -416,7 +416,7 @@ describe("S3Driver — metadata", () => {
     err.$metadata = { httpStatusCode: 404 };
 
     const { driver } = setup({ bucket: "my-bucket" }, { head: err });
-    expect(await driver.metadata("s3://my-bucket/missing.json")).toBeNull();
+    expect(await driver.metadata("s3://my-bucket/missing.json", {})).toBeNull();
   });
 });
 

@@ -27,7 +27,7 @@ import { createS3Driver } from "@minimajs/aws-s3";
 
 const disk = createProtocolDisk({
   protocols: {
-    "file://": createFsDriver({ root: "/var/uploads" }),
+    "file://": createFsDriver({ root: "file:///var/uploads/" }),
     "s3://": createS3Driver({ region: "us-east-1" }),
   },
   defaultProtocol: "file://",
