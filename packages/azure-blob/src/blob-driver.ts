@@ -1,7 +1,7 @@
 import { BlobServiceClient } from "@azure/storage-blob";
 import { Readable } from "node:stream";
 import type { DiskDriver, DriverCapabilities, PutOptions, ListOptions, FileMetadata } from "@minimajs/disk";
-import utils from "node:util";
+import { inspect } from "node:util";
 export interface AzureBlobBaseDriverOptions {
   container?: string;
   /** Public URL for serving files (e.g., CDN URL) */
@@ -110,6 +110,7 @@ export class AzureBlobDriver implements DiskDriver {
   }
 
   async put(href: string, stream: ReadableStream<Uint8Array>, putOptions: PutOptions): Promise<FileMetadata> {
+    putOptions.signal?.throwIfAborted();
     const { container, blob } = this.hrefToBlob(href);
     const containerClient = this.client.getContainerClient(container);
     const blobClient = containerClient.getBlockBlobClient(blob);
@@ -120,9 +121,10 @@ export class AzureBlobDriver implements DiskDriver {
         blobCacheControl: putOptions?.cacheControl,
       },
       metadata: putOptions?.metadata as Record<string, string>,
+      abortSignal: putOptions.signal,
     });
 
-    const properties = await blobClient.getProperties();
+    const properties = await blobClient.getProperties({ abortSignal: putOptions.signal });
 
     return {
       href: this.blobToHref(container, blob),
@@ -133,13 +135,17 @@ export class AzureBlobDriver implements DiskDriver {
     };
   }
 
-  async get(href: string): Promise<[ReadableStream<Uint8Array>, FileMetadata] | null> {
+  async get(href: string, options: { signal?: AbortSignal }): Promise<[ReadableStream<Uint8Array>, FileMetadata] | null> {
+    options.signal?.throwIfAborted();
     const { container, blob } = this.hrefToBlob(href);
     const containerClient = this.client.getContainerClient(container);
     const blobClient = containerClient.getBlockBlobClient(blob);
 
     try {
-      const [properties, downloadResponse] = await Promise.all([blobClient.getProperties(), blobClient.download()]);
+      const [properties, downloadResponse] = await Promise.all([
+        blobClient.getProperties({ abortSignal: options.signal }),
+        blobClient.download(0, undefined, { abortSignal: options.signal }),
+      ]);
 
       const nodeStream = downloadResponse.readableStreamBody;
       if (!nodeStream) {
@@ -166,18 +172,20 @@ export class AzureBlobDriver implements DiskDriver {
     }
   }
 
-  async delete(href: string): Promise<void> {
+  async delete(href: string, options: { signal?: AbortSignal }): Promise<void> {
+    options.signal?.throwIfAborted();
     const { container, blob } = this.hrefToBlob(href);
     const containerClient = this.client.getContainerClient(container);
     const blobClient = containerClient.getBlockBlobClient(blob);
-    await blobClient.deleteIfExists();
+    await blobClient.deleteIfExists({ abortSignal: options.signal });
   }
 
-  async exists(href: string): Promise<boolean> {
+  async exists(href: string, options: { signal?: AbortSignal }): Promise<boolean> {
+    options.signal?.throwIfAborted();
     const { container, blob } = this.hrefToBlob(href);
     const containerClient = this.client.getContainerClient(container);
     const blobClient = containerClient.getBlockBlobClient(blob);
-    return blobClient.exists();
+    return blobClient.exists({ abortSignal: options.signal });
   }
 
   async url(href: string): Promise<string> {
@@ -194,7 +202,8 @@ export class AzureBlobDriver implements DiskDriver {
     return blobClient.url;
   }
 
-  async copy(from: string, to: string): Promise<void> {
+  async copy(from: string, to: string, options: { signal?: AbortSignal }): Promise<void> {
+    options.signal?.throwIfAborted();
     const { container: fromContainer, blob: fromBlob } = this.hrefToBlob(from);
     const { container: toContainer, blob: toBlob } = this.hrefToBlob(to);
 
@@ -204,13 +213,14 @@ export class AzureBlobDriver implements DiskDriver {
     const destClient = this.client.getContainerClient(toContainer);
     const destBlobClient = destClient.getBlockBlobClient(toBlob);
 
-    const poller = await destBlobClient.beginCopyFromURL(sourceBlobClient.url);
+    const poller = await destBlobClient.beginCopyFromURL(sourceBlobClient.url, { abortSignal: options.signal });
     await poller.pollUntilDone();
   }
 
-  async move(from: string, to: string): Promise<void> {
-    await this.copy(from, to);
-    await this.delete(from);
+  async move(from: string, to: string, options: { signal?: AbortSignal }): Promise<void> {
+    options.signal?.throwIfAborted();
+    await this.copy(from, to, options);
+    await this.delete(from, options);
   }
 
   async *list(prefixHref: string, listOptions?: ListOptions): AsyncIterable<FileMetadata> {
@@ -231,6 +241,7 @@ export class AzureBlobDriver implements DiskDriver {
     const containerClient = this.client.getContainerClient(container);
     const iterator = containerClient.listBlobsFlat({
       prefix: prefix ?? undefined,
+      abortSignal: listOptions?.signal,
     });
 
     let count = 0;
@@ -238,6 +249,7 @@ export class AzureBlobDriver implements DiskDriver {
 
     for await (const blob of iterator) {
       if (limit !== undefined && count >= limit) break;
+      listOptions?.signal?.throwIfAborted();
 
       yield {
         href: this.blobToHref(container, blob.name),
@@ -249,13 +261,14 @@ export class AzureBlobDriver implements DiskDriver {
     }
   }
 
-  async metadata(href: string): Promise<FileMetadata | null> {
+  async metadata(href: string, options: { signal?: AbortSignal }): Promise<FileMetadata | null> {
+    options.signal?.throwIfAborted();
     const { container, blob } = this.hrefToBlob(href);
     const containerClient = this.client.getContainerClient(container);
     const blobClient = containerClient.getBlockBlobClient(blob);
 
     try {
-      const properties = await blobClient.getProperties();
+      const properties = await blobClient.getProperties({ abortSignal: options.signal });
       return {
         href: this.blobToHref(container, blob),
         size: properties.contentLength ?? 0,
@@ -271,23 +284,31 @@ export class AzureBlobDriver implements DiskDriver {
     }
   }
 
-  async updateMetadata(href: string, updates: { type?: string; metadata?: Record<string, string> }): Promise<FileMetadata> {
+  async updateMetadata(
+    href: string,
+    updates: { type?: string; metadata?: Record<string, string> },
+    options: { signal?: AbortSignal } = {}
+  ): Promise<FileMetadata> {
+    options.signal?.throwIfAborted();
     const { container, blob } = this.hrefToBlob(href);
     const containerClient = this.client.getContainerClient(container);
     const blobClient = containerClient.getBlockBlobClient(blob);
 
-    const current = await blobClient.getProperties();
+    const current = await blobClient.getProperties({ abortSignal: options.signal });
 
     await Promise.all([
-      updates.metadata !== undefined ? blobClient.setMetadata(updates.metadata) : undefined,
+      updates.metadata !== undefined ? blobClient.setMetadata(updates.metadata, { abortSignal: options.signal }) : undefined,
       updates.type !== undefined
-        ? blobClient.setHTTPHeaders({
-            blobContentType: updates.type,
-            blobCacheControl: current.cacheControl,
-            blobContentEncoding: current.contentEncoding,
-            blobContentLanguage: current.contentLanguage,
-            blobContentDisposition: current.contentDisposition,
-          })
+        ? blobClient.setHTTPHeaders(
+            {
+              blobContentType: updates.type,
+              blobCacheControl: current.cacheControl,
+              blobContentEncoding: current.contentEncoding,
+              blobContentLanguage: current.contentLanguage,
+              blobContentDisposition: current.contentDisposition,
+            },
+            { abortSignal: options.signal }
+          )
         : undefined,
     ]);
 
@@ -300,7 +321,7 @@ export class AzureBlobDriver implements DiskDriver {
     };
   }
 
-  [utils.inspect.custom]() {
+  [inspect.custom]() {
     const options = {
       container: this.options.container,
       account: this.client.accountName,

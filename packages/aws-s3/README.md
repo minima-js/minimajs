@@ -4,6 +4,9 @@ AWS S3 driver for `@minimajs/disk`.
 
 Use the Disk API (`put`, `get`, `list`, `copy`, `move`, `url`) with S3-backed storage.
 
+Built on `@minimajs/disk`, a fully web-native, API-compatible disk library.
+All file-returning operations are Web `File`-compatible (`DiskFile` extends `File`).
+
 ## Installation
 
 ```bash

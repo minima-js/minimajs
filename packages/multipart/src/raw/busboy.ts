@@ -11,6 +11,7 @@ function toBusBoyHeaders(headers: Headers): BusboyHeaders {
 }
 
 export function busboy(opt: MultipartOptions) {
+  const { signal, ...busboyOpt } = opt;
   const { request, incomingMessage } = context<any>();
   let bb: Busboy;
   let stream: Readable | undefined = incomingMessage;
@@ -23,22 +24,22 @@ export function busboy(opt: MultipartOptions) {
 
   function stop() {
     stream!.unpipe(bb);
-    bb.destroy();
-    // console.log("voding!!!");
-    // stream?.pipe(stream2void());
+    bb.destroy(signal?.reason ?? new DOMException("Aborted", "AbortError"));
     stream!.resume();
   }
 
   try {
     const headers = toBusBoyHeaders(request.headers);
     bb = new Busboy({
-      ...opt,
+      ...busboyOpt,
       headers,
     });
 
     stream.pipe(bb);
 
-    return [bb, stop] as const;
+    signal?.addEventListener("abort", stop, { once: true });
+
+    return bb;
   } catch (err) {
     if (abort.is(err)) throw err;
     if (err instanceof Error) {

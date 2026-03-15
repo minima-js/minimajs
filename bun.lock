@@ -51,7 +51,7 @@
     },
     "packages/aws-s3": {
       "name": "@minimajs/aws-s3",
-      "version": "0.0.0",
+      "version": "0.0.1",
       "dependencies": {
         "@aws-sdk/client-s3": "^3.992.0",
         "@aws-sdk/lib-storage": "^3.992.0",
@@ -68,7 +68,7 @@
     },
     "packages/azure-blob": {
       "name": "@minimajs/azure-blob",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "dependencies": {
         "@azure/storage-blob": "^12.29.1",
       },
@@ -99,7 +99,7 @@
     },
     "packages/disk": {
       "name": "@minimajs/disk",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "dependencies": {
         "mime-types": "^3.0.2",
       },

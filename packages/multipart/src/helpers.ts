@@ -133,17 +133,20 @@ export function drain(file: MultipartRawFile) {
 export interface Stream2BytesOptions {
   /** Maximum allowed file size in bytes. */
   fileSize?: number;
+  /** AbortSignal to cancel the read. */
+  signal?: AbortSignal;
 }
 
 /** Reads a stream into a Uint8Array with optional size limit. */
 export async function stream2bytes(
   stream: Readable,
-  { fileSize = Infinity }: Stream2BytesOptions = {}
+  { fileSize = Infinity, signal }: Stream2BytesOptions = {}
 ): Promise<Uint8Array<ArrayBuffer>> {
   let buffer = new Uint8Array(64 * 1024); // 64KB
   let length = 0;
 
   for await (const chunk of stream) {
+    signal?.throwIfAborted();
     // normalize chunk
     const uint8 = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk);
 

@@ -1,5 +1,12 @@
 import { describe, test, expect } from "@jest/globals";
-import { applyRoutePrefix, applyRouteMetadata, getAppRouteDescriptors, result2route } from "./route.js";
+import {
+  applyRoutePrefix,
+  applyRouteMetadata,
+  getAppRouteDescriptors,
+  result2route,
+  handler,
+  getHandlerDescriptors,
+} from "./route.js";
 import type { RouteFindResult, RouteConfig, RouteMetaDescriptor, RouteMetadata } from "../interfaces/route.js";
 import { kAppDescriptor } from "../symbols.js";
 import type { App, Container } from "../interfaces/index.js";
@@ -184,6 +191,25 @@ describe("internal/route", () => {
       expect(route.params).toEqual({});
       expect(route.methods).toEqual(["POST"]);
       expect(route.path).toBe("/users");
+    });
+
+    describe("handler", () => {
+      test("returns the callback as-is when no descriptors", () => {
+        const cb = () => "ok";
+        expect(handler(cb)).toBe(cb);
+        expect(getHandlerDescriptors(cb)).toEqual([]);
+      });
+
+      test("attaches descriptors to the callback", () => {
+        const cb = () => "ok";
+        const d1: RouteMetaDescriptor = [Symbol("k"), "v"];
+        const d2: RouteMetaDescriptor = (r) => {
+          r.metadata;
+        };
+        const result = handler(d1, d2, cb);
+        expect(result).toBe(cb);
+        expect(getHandlerDescriptors(result)).toEqual([d1, d2]);
+      });
     });
 
     test("should handle multiple methods", () => {

@@ -1,5 +1,5 @@
 import type { App } from "@minimajs/server";
-import { kModuleName, kModulesChain } from "@minimajs/server/symbols";
+import { kIsRoot, kModuleName, kModulesChain, kRouteMeta } from "@minimajs/server/symbols";
 
 export function capitalize(str: string): string {
   if (!str) return str;
@@ -8,12 +8,13 @@ export function capitalize(str: string): string {
 
 export function getDefaultTags(app: App): string[] {
   const modules = app.container[kModulesChain];
-  const start = modules[1]?.container[kModuleName] === "root" ? 2 : 1;
+  const routeMeta = modules[1]?.container[kRouteMeta] as any;
+  const start = routeMeta?.[kIsRoot] ? 2 : 1;
   return [
     modules
       .slice(start)
       .map((x) => capitalize(x.container[kModuleName] as string))
-      .join(" "),
+      .join(" / "),
   ];
 }
 

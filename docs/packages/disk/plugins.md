@@ -143,24 +143,17 @@ import { partition } from "@minimajs/disk/plugins";
 
 ### Date-based
 
-Groups files by upload date. Requires `date-fns` to be installed (`bun add date-fns`). Uses date-fns format tokens.
+Groups files by upload date using built-in `Date` methods — no extra dependencies.
 
 ```typescript
-// Default: yyyy/MM/dd
+// Daily buckets: 2024/01/15/avatar.jpg
 const disk = createDisk({ driver }, partition({ by: "date" }));
 
-await disk.put("avatar.jpg", data);
-// stored at: "2024/01/15/avatar.jpg"
-```
+// Monthly buckets: 2024/01/avatar.jpg
+const disk = createDisk({ driver }, partition({ by: "month" }));
 
-```typescript
-// Monthly buckets
-const disk = createDisk({ driver }, partition({ by: "date", format: "yyyy/MM" }));
-// stored at: "2024/01/avatar.jpg"
-
-// Hourly buckets
-const disk = createDisk({ driver }, partition({ by: "date", format: "yyyy/MM/dd/HH" }));
-// stored at: "2024/01/15/14/avatar.jpg"
+// Yearly buckets: 2024/avatar.jpg
+const disk = createDisk({ driver }, partition({ by: "year" }));
 ```
 
 ### Hash-based
@@ -193,15 +186,22 @@ const disk = createDisk(
   { driver },
   partition(async (_path, _data, opts) => (opts.type?.startsWith("image/") ? "images" : "files"))
 );
+
+// Custom date format (hourly buckets)
+const disk = createDisk(
+  { driver },
+  partition(() => {
+    const d = new Date();
+    return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}/${String(d.getHours()).padStart(2, "0")}`;
+  })
+);
 ```
 
 ### Options
 
 ```typescript
 // Built-in strategies
-type PartitionOptions =
-  | { by: "date"; format?: string } // format default: "yyyy/MM/dd"
-  | { by: "hash"; levels?: number; charsPerLevel?: number }; // defaults: 2, 2
+type PartitionOptions = { by: "year" | "month" | "date" } | { by: "hash"; levels?: number; charsPerLevel?: number }; // defaults: 2, 2
 
 // Custom generator
 type PartitionGenerator = (path: string, data: DiskData, opts: PutOptions) => string | Promise<string>;
@@ -210,6 +210,7 @@ type PartitionGenerator = (path: string, data: DiskData, opts: PutOptions) => st
 ### Notes
 
 - Files stored under a partitioned path must be accessed using the full path (e.g., `disk.get("2024/01/15/avatar.jpg")`).
+- For formats beyond `year`/`month`/`date` (e.g. hourly), use a custom generator.
 - Combine with `storeAs` to both rename and partition.
 
 ---

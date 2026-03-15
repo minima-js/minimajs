@@ -1,6 +1,7 @@
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import type { ImportedModule } from "./types.js";
+import { kIsRoot } from "../../symbols.js";
 
 /**
  * Try to import a module, trying different extensions
@@ -16,7 +17,8 @@ export async function importModule(modulePath: string, isRoot = false): Promise<
   }
 
   if (isRoot) {
-    module.meta.name ??= "root";
+    module.meta.name ??= "(root)";
+    module.meta[kIsRoot] = true;
   } else {
     const moduleName = path.basename(dir);
     module.meta.name ??= moduleName;

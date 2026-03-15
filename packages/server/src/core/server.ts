@@ -14,6 +14,7 @@ import { createBoot, wrapPlugin } from "../internal/boot.js";
 import type { AddressInfo, ServerAdapter, ListenOptions } from "../interfaces/server.js";
 import type { Container, RequestHandlerContext } from "../interfaces/index.js";
 import { createRootContainer } from "../internal/container.js";
+import { kModuleName } from "../symbols.js";
 
 export interface ServerOptions {
   prefix: string;
@@ -180,5 +181,10 @@ export class Server<S> implements App<S> {
         resolve();
       })
     );
+  }
+
+  get [Symbol.toStringTag]() {
+    const name = this.container[kModuleName] as string | undefined;
+    return name ? `Server(${name})` : "Server";
   }
 }

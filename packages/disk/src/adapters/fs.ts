@@ -126,14 +126,24 @@ export class FsDriver implements DiskDriver {
     return new URL(`${fileUrl.href}${this.sidecar.extension}`);
   }
 
-  private async saveMetadata(fileUrl: URL, metadata: Record<string, any>): Promise<void> {
-    await writeFile(this.sidecarUrl(fileUrl), this.sidecar.serializer.serialize(metadata), "utf-8");
+  private async saveMetadata(
+    fileUrl: URL,
+    metadata: Record<string, any>,
+    options: { signal?: AbortSignal } = {}
+  ): Promise<void> {
+    await writeFile(this.sidecarUrl(fileUrl), this.sidecar.serializer.serialize(metadata), {
+      encoding: "utf-8",
+      signal: options.signal,
+    });
   }
 
-  private async loadMetadata(fileUrl: URL): Promise<Record<string, any> | undefined> {
+  private async loadMetadata(
+    fileUrl: URL,
+    options: { signal?: AbortSignal } = {}
+  ): Promise<Record<string, any> | undefined> {
     if (!this.sidecar.enabled) return;
     try {
-      const content = await readFile(this.sidecarUrl(fileUrl), "utf-8");
+      const content = await readFile(this.sidecarUrl(fileUrl), { encoding: "utf-8", signal: options.signal });
       return this.sidecar.serializer.deserialize(content);
     } catch {
       return undefined;
@@ -152,6 +162,7 @@ export class FsDriver implements DiskDriver {
   }
 
   async put(href: string, stream: ReadableStream<Uint8Array>, putOptions: PutOptions): Promise<FileMetadata> {
+    putOptions.signal?.throwIfAborted();
     const fileUrl = this.resolveURL(href);
 
     await mkdir(new URL(".", fileUrl), { recursive: true, mode: this.dirMode });
@@ -159,12 +170,12 @@ export class FsDriver implements DiskDriver {
     const nodeReadable = Readable.fromWeb(stream);
     const writeStream = createWriteStream(fileUrl, { mode: this.fileMode });
 
-    await pipeline(nodeReadable, writeStream);
+    await pipeline(nodeReadable, writeStream, { signal: putOptions.signal });
 
     const stats = await stat(fileUrl);
 
     if (this.sidecar.enabled && putOptions.metadata) {
-      await this.saveMetadata(fileUrl, putOptions.metadata);
+      await this.saveMetadata(fileUrl, putOptions.metadata, { signal: putOptions.signal });
     }
 
     const metadata: Record<string, any> = { ...putOptions.metadata };
@@ -177,7 +188,8 @@ export class FsDriver implements DiskDriver {
     };
   }
 
-  async get(href: string): Promise<[ReadableStream<Uint8Array>, FileMetadata] | null> {
+  async get(href: string, options: { signal?: AbortSignal }): Promise<[ReadableStream<Uint8Array>, FileMetadata] | null> {
+    options.signal?.throwIfAborted();
     const fileUrl = this.resolveURL(href);
 
     try {
@@ -189,7 +201,7 @@ export class FsDriver implements DiskDriver {
           href: fileUrl.href,
           size: stats.size,
           lastModified: stats.mtime.getTime(),
-          metadata: await this.loadMetadata(fileUrl),
+          metadata: await this.loadMetadata(fileUrl, options),
         },
       ];
     } catch {
@@ -197,7 +209,8 @@ export class FsDriver implements DiskDriver {
     }
   }
 
-  async delete(href: string): Promise<void> {
+  async delete(href: string, options: { signal?: AbortSignal }): Promise<void> {
+    options.signal?.throwIfAborted();
     const fileUrl = this.resolveURL(href);
 
     await rm(fileUrl, { force: true });
@@ -207,7 +220,8 @@ export class FsDriver implements DiskDriver {
     }
   }
 
-  async exists(href: string): Promise<boolean> {
+  async exists(href: string, options: { signal?: AbortSignal }): Promise<boolean> {
+    options?.signal?.throwIfAborted();
     const fileUrl = this.resolveURL(href);
 
     try {
@@ -227,7 +241,8 @@ export class FsDriver implements DiskDriver {
     return `${this.publicUrl.replace(/\/$/, "")}/${relativePath}`;
   }
 
-  async copy(from: string, to: string): Promise<void> {
+  async copy(from: string, to: string, options: { signal?: AbortSignal }): Promise<void> {
+    options?.signal?.throwIfAborted();
     const srcUrl = this.resolveURL(from);
     const destUrl = this.resolveURL(to);
 
@@ -244,7 +259,8 @@ export class FsDriver implements DiskDriver {
     }
   }
 
-  async move(from: string, to: string): Promise<void> {
+  async move(from: string, to: string, options: { signal?: AbortSignal }): Promise<void> {
+    options.signal?.throwIfAborted();
     const srcUrl = this.resolveURL(from);
     const destUrl = this.resolveURL(to);
 
@@ -260,7 +276,7 @@ export class FsDriver implements DiskDriver {
     }
   }
 
-  async *list(prefix: string, listOptions?: ListOptions): AsyncIterable<FileMetadata> {
+  async *list(prefix: string, listOptions: ListOptions): AsyncIterable<FileMetadata> {
     const searchUrl = new URL(prefix, this.root);
     this.assertWithinRoot(searchUrl, prefix);
 
@@ -280,6 +296,7 @@ export class FsDriver implements DiskDriver {
 
       for (const entry of entries) {
         if (limit !== undefined && count >= limit) return;
+        listOptions.signal?.throwIfAborted();
 
         if (this.sidecar.enabled && entry.name.endsWith(this.sidecar.extension)) continue;
         if (entry.name === ".tmp") continue;
@@ -295,7 +312,7 @@ export class FsDriver implements DiskDriver {
                 href: childUrl.href,
                 size: stats.size,
                 lastModified: stats.mtime.getTime(),
-                metadata: await this.loadMetadata(childUrl),
+                metadata: await this.loadMetadata(childUrl, { signal: listOptions.signal }),
               };
               count++;
             } else if (stats.isDirectory() && recursive) {
@@ -310,7 +327,7 @@ export class FsDriver implements DiskDriver {
             href: childUrl.href,
             size: stats.size,
             lastModified: stats.mtime.getTime(),
-            metadata: await this.loadMetadata(childUrl),
+            metadata: await this.loadMetadata(childUrl, { signal: listOptions.signal }),
           };
           count++;
         } else if (entry.isDirectory() && recursive) {
@@ -322,12 +339,13 @@ export class FsDriver implements DiskDriver {
     yield* walkDir(searchUrl);
   }
 
-  async metadata(href: string): Promise<FileMetadata | null> {
+  async metadata(href: string, options: { signal?: AbortSignal }): Promise<FileMetadata | null> {
+    options.signal?.throwIfAborted();
     const fileUrl = this.resolveURL(href);
 
     try {
       const stats = await stat(fileUrl);
-      const sidecarMeta = this.sidecar.enabled ? await this.loadMetadata(fileUrl) : undefined;
+      const sidecarMeta = this.sidecar.enabled ? await this.loadMetadata(fileUrl, options) : undefined;
 
       return {
         href: fileUrl.href,

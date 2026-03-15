@@ -173,6 +173,7 @@ export class S3Driver implements DiskDriver {
   }
 
   async put(href: string, stream: ReadableStream<Uint8Array>, putOptions: PutOptions): Promise<FileMetadata> {
+    putOptions.signal?.throwIfAborted();
     const { bucket, key } = this.hrefToKey(href);
     const fullKey = this.buildKey(key);
     // Prepare metadata
@@ -181,8 +182,12 @@ export class S3Driver implements DiskDriver {
       Object.assign(metadata, putOptions.metadata);
     }
 
+    const ac = new AbortController();
+    putOptions.signal?.addEventListener("abort", () => ac.abort(putOptions.signal!.reason), { once: true });
+
     await new Upload({
       client: this.client,
+      abortController: ac,
       params: {
         Bucket: bucket,
         Key: fullKey,
@@ -202,7 +207,7 @@ export class S3Driver implements DiskDriver {
       Key: fullKey,
     });
 
-    const head = await this.client.send(headCommand);
+    const head = await this.client.send(headCommand, { abortSignal: putOptions.signal });
 
     return {
       href: this.keyToHref(bucket, fullKey),
@@ -213,7 +218,8 @@ export class S3Driver implements DiskDriver {
     };
   }
 
-  async get(href: string): Promise<[ReadableStream<Uint8Array>, FileMetadata] | null> {
+  async get(href: string, options: { signal?: AbortSignal }): Promise<[ReadableStream<Uint8Array>, FileMetadata] | null> {
+    options.signal?.throwIfAborted();
     const { bucket, key } = this.hrefToKey(href);
     const fullKey = this.buildKey(key);
 
@@ -223,7 +229,7 @@ export class S3Driver implements DiskDriver {
         Key: fullKey,
       });
 
-      const response = await this.client.send(command);
+      const response = await this.client.send(command, { abortSignal: options.signal });
 
       if (!response.Body) {
         return null;
@@ -249,7 +255,8 @@ export class S3Driver implements DiskDriver {
     }
   }
 
-  async delete(href: string): Promise<void> {
+  async delete(href: string, options: { signal?: AbortSignal }): Promise<void> {
+    options.signal?.throwIfAborted();
     const { bucket, key } = this.hrefToKey(href);
     const fullKey = this.buildKey(key);
 
@@ -258,10 +265,11 @@ export class S3Driver implements DiskDriver {
       Key: fullKey,
     });
 
-    await this.client.send(command);
+    await this.client.send(command, { abortSignal: options.signal });
   }
 
-  async exists(href: string): Promise<boolean> {
+  async exists(href: string, options: { signal?: AbortSignal }): Promise<boolean> {
+    options.signal?.throwIfAborted();
     const { bucket, key } = this.hrefToKey(href);
     const fullKey = this.buildKey(key);
 
@@ -271,7 +279,7 @@ export class S3Driver implements DiskDriver {
         Key: fullKey,
       });
 
-      await this.client.send(command);
+      await this.client.send(command, { abortSignal: options.signal });
       return true;
     } catch (error: any) {
       if (error.name === "NotFound" || error.$metadata?.httpStatusCode === 404) {
@@ -318,7 +326,8 @@ export class S3Driver implements DiskDriver {
     return `https://${bucket}.s3.${this.region}.${partitionSuffix}/${fullKey}`;
   }
 
-  async copy(from: string, to: string): Promise<void> {
+  async copy(from: string, to: string, options: { signal?: AbortSignal }): Promise<void> {
+    options.signal?.throwIfAborted();
     const { bucket: fromBucket, key: fromKey } = this.hrefToKey(from);
     const { bucket: toBucket, key: toKey } = this.hrefToKey(to);
     const fullFromKey = this.buildKey(fromKey);
@@ -333,13 +342,14 @@ export class S3Driver implements DiskDriver {
       ServerSideEncryption: this.serverSideEncryption,
     });
 
-    await this.client.send(command);
+    await this.client.send(command, { abortSignal: options.signal });
   }
 
-  async move(from: string, to: string): Promise<void> {
+  async move(from: string, to: string, options: { signal?: AbortSignal }): Promise<void> {
+    options.signal?.throwIfAborted();
     // Copy then delete
-    await this.copy(from, to);
-    await this.delete(from);
+    await this.copy(from, to, options);
+    await this.delete(from, options);
   }
 
   async *list(prefixHref: string, listOptions: ListOptions): AsyncIterable<FileMetadata> {
@@ -372,10 +382,11 @@ export class S3Driver implements DiskDriver {
         Delimiter: listOptions.recursive ? undefined : "/",
       });
 
-      const response = await this.client.send(command);
+      const response = await this.client.send(command, { abortSignal: listOptions.signal });
 
       if (response.Contents) {
         for (const item of response.Contents) {
+          listOptions.signal?.throwIfAborted();
           if (!item.Key) continue;
 
           // We'd need HeadObject for accurate type, but that's expensive
@@ -397,7 +408,8 @@ export class S3Driver implements DiskDriver {
     } while (continuationToken);
   }
 
-  async metadata(href: string): Promise<FileMetadata | null> {
+  async metadata(href: string, options: { signal?: AbortSignal }): Promise<FileMetadata | null> {
+    options.signal?.throwIfAborted();
     const { bucket, key } = this.hrefToKey(href);
     const fullKey = this.buildKey(key);
     try {
@@ -405,7 +417,7 @@ export class S3Driver implements DiskDriver {
         Bucket: bucket,
         Key: fullKey,
       });
-      const response = await this.client.send(command);
+      const response = await this.client.send(command, { abortSignal: options.signal });
       return {
         href: this.keyToHref(bucket, fullKey),
         size: response.ContentLength || 0,

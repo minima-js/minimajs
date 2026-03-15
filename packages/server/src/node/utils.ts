@@ -18,7 +18,12 @@ export function toWebHeaders(nodeHeaders: IncomingMessage["headers"]): Headers {
   return headers;
 }
 
-export function toWebRequest(req: IncomingMessage, domain: string = "http://localhost"): Request {
+export interface ToWebRequestOptions {
+  domain?: string;
+}
+
+export function toWebRequest(req: IncomingMessage, options: ToWebRequestOptions = {}): Request {
+  let { domain = "http://localhost" } = options;
   const { headers } = req;
   if (headers.host) {
     domain = `http://${headers.host}`;

@@ -18,6 +18,7 @@ The request and response objects are globally accessible anywhere from request c
 - [`request()`](#request) - Get native Request object
 - [`request.url()`](#requesturl) - Get URL object
 - [`request.ip()`](#requestip) - Get client IP address
+- [`request.signal()`](#requestsignal) - Get the request's AbortSignal
 - [`headers()`](#headers) - Get request headers
 - [`searchParams()`](#searchparams) - Get query string parameters
 - [`params()`](#params) - Get route parameters
@@ -126,6 +127,76 @@ export const routes: Routes = {
   "GET /": getIP,
 };
 ```
+
+### `request.signal()`
+
+Returns the [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) tied to the full request-response lifecycle. The signal aborts automatically when the client disconnects — whether during request reading or mid-response streaming.
+
+Use it to cancel long-running work (disk I/O, database queries, external HTTP calls) when the client is no longer waiting.
+
+> **Runtime coverage**
+> - **Bun** — signal fires on disconnect at any point natively.
+> - **Node.js** — signal covers both phases: client disconnect before the request body is consumed, and client disconnect while the response is being streamed.
+
+```ts
+import { request } from "@minimajs/server";
+import type { Routes } from "@minimajs/server";
+
+async function downloadFile() {
+  const signal = request.signal();
+
+  // Automatically cancelled if the client disconnects
+  const response = await fetch("https://api.example.com/large-file", { signal });
+  return response.arrayBuffer();
+}
+
+export const routes: Routes = {
+  "GET /download": downloadFile,
+};
+```
+
+**With disk operations:**
+
+```ts
+import { request } from "@minimajs/server";
+import { disk } from "../disk.js";
+import type { Routes } from "@minimajs/server";
+
+async function getVideo() {
+  const signal = request.signal();
+  // Cancelled if client disconnects before or during streaming
+  return disk.get("videos/movie.mp4", { signal });
+}
+
+export const routes: Routes = {
+  "GET /video": getVideo,
+};
+```
+
+**With multipart uploads:**
+
+```ts
+import { request } from "@minimajs/server";
+import { multipart } from "@minimajs/multipart";
+import { disk } from "../disk.js";
+import type { Routes } from "@minimajs/server";
+
+async function uploadAvatar() {
+  const signal = request.signal();
+
+  // Signal cancels both stream parsing and file buffering
+  const file = await multipart.file("avatar", { signal });
+  if (!file) return { error: "No file" };
+
+  return disk.put(file, { signal });
+}
+
+export const routes: Routes = {
+  "POST /upload": uploadAvatar,
+};
+```
+
+---
 
 ## Headers
 
