@@ -288,7 +288,9 @@ export class ProtoDisk implements Disk<DiskDriver> {
     if (prefixHref) {
       const driver = this.getDriver(prefixHref);
       for await (const metadata of driver.list(prefixHref, $options)) {
-        yield fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata, { signal: $options?.signal });
+        yield fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata, {
+          signal: $options?.signal,
+        });
       }
       return;
     }
@@ -297,7 +299,9 @@ export class ProtoDisk implements Disk<DiskDriver> {
     for (const [_protocol, driver] of Object.entries(this.protocols)) {
       try {
         for await (const metadata of driver.list("", $options)) {
-          yield fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata, { signal: $options?.signal });
+          yield fileFromMetadata(this.getDriver(metadata.href), this.$hookManager.trigger, metadata, {
+            signal: $options?.signal,
+          });
         }
       } catch (_error) {
         // Skip drivers that don't support listing without prefix

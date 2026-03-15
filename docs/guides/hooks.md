@@ -217,7 +217,7 @@ After the handler → backward (Child → Parent).
 
 ### Defining Hooks
 
-There are three primary ways to define request hooks:
+There are 4 primary ways to define request hooks:
 
 - **`hook(name, handler)`**: Registers a single hook handler.
 - **`hook.once(name, handler)`**: Registers a handler that fires **once**, then removes itself.

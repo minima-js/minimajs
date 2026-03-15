@@ -111,7 +111,10 @@ export function fields<T extends Record<string, string | string[]>>() {
 export async function* body(options: MultipartOptions = {}): AsyncGenerator<[field: string, value: string | File]> {
   for await (const field of raw.body(options)) {
     if (isRawFile(field)) {
-      yield [field.fieldname, await raw2file(field, { fileSize: options.limits?.fileSize ?? Infinity, signal: options.signal })];
+      yield [
+        field.fieldname,
+        await raw2file(field, { fileSize: options.limits?.fileSize ?? Infinity, signal: options.signal }),
+      ];
       continue;
     }
     yield [field.fieldname, field.value];
