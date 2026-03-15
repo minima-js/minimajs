@@ -108,40 +108,43 @@ export interface DiskDriver {
    * @param href - Absolute URL/URI with protocol
    * @returns Tuple of [stream, metadata] or null if not found
    */
-  get(href: string): Promise<[file: ReadableStream<Uint8Array>, property: FileMetadata] | null>;
+  get(
+    href: string,
+    options: { signal?: AbortSignal }
+  ): Promise<[file: ReadableStream<Uint8Array>, property: FileMetadata] | null>;
 
   /**
    * Delete file by href
    * @param href - Absolute URL/URI with protocol
    */
-  delete(href: string): Promise<void>;
+  delete(href: string, options: { signal?: AbortSignal }): Promise<void>;
 
   /**
    * Check if file exists
    * @param href - Absolute URL/URI with protocol
    */
-  exists(href: string): Promise<boolean>;
+  exists(href: string, options: { signal?: AbortSignal }): Promise<boolean>;
 
   /**
    * Generate a URL for the file
    * @param href - Absolute URL/URI with protocol
    * @param options - URL options (expiration, download disposition)
    */
-  url(href: string, options?: UrlOptions): Promise<string>;
+  url(href: string, options: UrlOptions): Promise<string>;
 
   /**
    * Copy a file to a new location
    * @param from - Source absolute URL/URI
    * @param to - Destination absolute URL/URI
    */
-  copy(from: string, to: string): Promise<void>;
+  copy(from: string, to: string, options: { signal?: AbortSignal }): Promise<void>;
 
   /**
    * Move a file to a new location
    * @param from - Source absolute URL/URI
    * @param to - Destination absolute URL/URI
    */
-  move(from: string, to: string): Promise<void>;
+  move(from: string, to: string, options: { signal?: AbortSignal }): Promise<void>;
 
   /**
    * List files under a prefix href.
@@ -154,7 +157,7 @@ export interface DiskDriver {
    * Get file metadata without content
    * @param href - Absolute URL/URI with protocol
    */
-  metadata(href: string): Promise<FileMetadata | null>;
+  metadata(href: string, options: { signal?: AbortSignal }): Promise<FileMetadata | null>;
 
   /**
    * Watch files for changes (optional - driver-specific)
@@ -184,18 +187,18 @@ export interface Disk<TDriver extends DiskDriver = DiskDriver> extends AsyncIter
    * Retrieve file by key
    * Converts driver's ReadableStream into a DiskFile
    */
-  get(key: string): Promise<DiskFile | null>;
+  get(key: string, options?: { signal?: AbortSignal }): Promise<DiskFile | null>;
 
-  delete(file: File): Promise<string>;
-  delete(key: string): Promise<string>;
-  exists(key: string): Promise<boolean>;
+  delete(file: File, options?: { signal?: AbortSignal }): Promise<string>;
+  delete(key: string, options?: { signal?: AbortSignal }): Promise<string>;
+  exists(key: string, options?: { signal?: AbortSignal }): Promise<boolean>;
   url(key: string, options?: UrlOptions): Promise<string>;
-  copy(from: File, to?: string): Promise<DiskFile>;
-  copy(from: string, to: string): Promise<DiskFile>;
-  move(from: File, to?: string): Promise<DiskFile>;
-  move(from: string, to: string): Promise<DiskFile>;
+  copy(from: File, to?: string, options?: { signal?: AbortSignal }): Promise<DiskFile>;
+  copy(from: string, to: string, options?: { signal?: AbortSignal }): Promise<DiskFile>;
+  move(from: File, to?: string, options?: { signal?: AbortSignal }): Promise<DiskFile>;
+  move(from: string, to: string, options?: { signal?: AbortSignal }): Promise<DiskFile>;
   list(prefix?: string, options?: ListOptions): AsyncIterable<DiskFile>;
-  metadata(key: string): Promise<FileMetadata | null>;
+  metadata(key: string, options?: { signal?: AbortSignal }): Promise<FileMetadata | null>;
 
   /**
    * Register a hook (for use by plugins)

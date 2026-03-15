@@ -61,7 +61,7 @@ export function checksum(options: ChecksumOptions = {}) {
     // Wrap the stream with an incremental hash verifier. Reads the sidecar
     // directly via driver so other plugins don't see it.
     disk.hook("streaming", async (stream, file) => {
-      const result = await disk.driver.get(`${file.href}${extension}`);
+      const result = await disk.driver.get(`${file.href}${extension}`, {});
       if (!result) return;
 
       const [sidecarStream] = result;
@@ -106,7 +106,7 @@ export function checksum(options: ChecksumOptions = {}) {
     // Delete the sidecar when the original file is deleted.
     disk.hook("deleted", async (path) => {
       if (path.endsWith(extension)) return;
-      await disk.driver.delete(`${path}${extension}`).catch(() => {});
+      await disk.driver.delete(`${path}${extension}`, {}).catch(() => {});
     });
   };
 }

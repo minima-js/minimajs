@@ -186,6 +186,50 @@ describe("plugins/proxy", () => {
     expect(await res.text()).toBe("null");
   });
 
+  test("should extract IP from custom header", async () => {
+    app.register(proxy({ ip: { header: "x-real-client-ip" }, host: false, proto: false }));
+    app.get("/ip", (ctx) => ctx.locals[kIpAddr] || "null");
+
+    const res = await app.handle(new Request("http://localhost/ip", { headers: { "x-real-client-ip": "10.0.0.1" } }));
+    expect(await res.text()).toBe("10.0.0.1");
+  });
+
+  test("should extract IP from X-Real-IP when no XFF", async () => {
+    app.register(proxy({ host: false, proto: false }));
+    app.get("/ip", (ctx) => ctx.locals[kIpAddr] || "null");
+
+    const res = await app.handle(new Request("http://localhost/ip", { headers: { "x-real-ip": "10.0.0.2" } }));
+    expect(await res.text()).toBe("10.0.0.2");
+  });
+
+  test("should fallback past XFF when all entries are empty", async () => {
+    app.register(proxy({ host: false, proto: false }));
+    app.adapter.remoteAddr = () => ({ hostname: "10.0.0.3" }) as any;
+    app.get("/ip", (ctx) => ctx.locals[kIpAddr] || "null");
+
+    const res = await app.handle(new Request("http://localhost/ip", { headers: { "x-forwarded-for": " , , " } }));
+    // XFF entries are empty after trim+filter, so falls back to x-real-ip then socket
+    expect(await res.text()).toBe("10.0.0.3");
+  });
+
+  test("should use last IP strategy from XFF", async () => {
+    app.register(proxy({ ip: { strategy: "last" }, host: false, proto: false }));
+    app.get("/ip", (ctx) => ctx.locals[kIpAddr] || "null");
+
+    const res = await app.handle(
+      new Request("http://localhost/ip", { headers: { "x-forwarded-for": "1.1.1.1, 2.2.2.2, 3.3.3.3" } })
+    );
+    expect(await res.text()).toBe("3.3.3.3");
+  });
+
+  test("should fallback host to Host header when no forwarded-host", async () => {
+    app.register(proxy({ ip: false, proto: false }));
+    app.get("/host", (ctx) => ctx.$metadata.host);
+
+    const res = await app.handle(new Request("http://localhost/host", { headers: { host: "example.com" } }));
+    expect(await res.text()).toBe("example.com");
+  });
+
   test("should handle null/undefined extractor results", async () => {
     app.adapter.remoteAddr = () =>
       ({

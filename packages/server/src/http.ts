@@ -295,6 +295,19 @@ export namespace request {
     const ctx = context();
     return ctx.serverAdapter.remoteAddr(ctx);
   }
+
+  /**
+   * Returns the AbortSignal tied to this request's lifecycle.
+   * Aborts when the client disconnects.
+   *
+   * @example
+   * ```ts
+   * const file = await disk.get('video.mp4', { signal: request.signal() });
+   * ```
+   */
+  export function signal(): AbortSignal {
+    return request().signal;
+  }
 }
 
 // ============================================================================

@@ -115,5 +115,49 @@ describe("trust", () => {
       expect(validator(mockCtx("10.0.5.5"))).toBe(true);
       expect(validator(mockCtx("192.168.2.1"))).toBe(false);
     });
+
+    test("CIDR /0 matches any IP", () => {
+      const validator = createTrustValidator(["0.0.0.0/0"]);
+      expect(validator(mockCtx("1.2.3.4"))).toBe(true);
+      expect(validator(mockCtx("255.255.255.255"))).toBe(true);
+    });
+
+    test("CIDR /32 matches only the exact host", () => {
+      const validator = createTrustValidator(["10.0.0.1/32"]);
+      expect(validator(mockCtx("10.0.0.1"))).toBe(true);
+      expect(validator(mockCtx("10.0.0.2"))).toBe(false);
+    });
+
+    test("CIDR with out-of-range prefix is ignored", () => {
+      const validator = createTrustValidator(["10.0.0.1/999"]);
+      expect(validator(mockCtx("10.0.0.1"))).toBe(false);
+    });
+
+    test("all-invalid entries yield a never-trusting validator", () => {
+      const validator = createTrustValidator(["not-an-ip/24", "also-bad/16"]);
+      expect(validator(mockCtx("1.2.3.4"))).toBe(false);
+    });
+
+    test("non-parseable remote address does not match CIDR", () => {
+      const validator = createTrustValidator(["192.168.0.0/16"]);
+      expect(validator(mockCtx("not-an-ip"))).toBe(false);
+    });
+
+    test("CIDR with invalid IPv6 base (multiple ::) is silently ignored", () => {
+      const validator = createTrustValidator(["2001::db8::1/64"]);
+      expect(validator(mockCtx("2001:db8::1"))).toBe(false);
+    });
+
+    test("IPv6 too many groups without :: is invalid", () => {
+      // 9 groups, no ::, can't be valid
+      const validator = createTrustValidator(["1:2:3:4:5:6:7:8:9"]);
+      expect(validator(mockCtx("1:2:3:4:5:6:7:8"))).toBe(false);
+    });
+
+    test("IPv6 with embedded IPv4 in CIDR", () => {
+      // ::192.168.1.0/112 covers ::192.168.1.0 to ::192.168.1.255
+      const validator = createTrustValidator(["::192.168.1.1"]);
+      expect(validator(mockCtx("::192.168.1.1"))).toBe(true);
+    });
   });
 });

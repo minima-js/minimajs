@@ -4,6 +4,7 @@ import type { Plugin, PluginSync } from "../../plugin.js";
 import type { Module } from "../../plugin.js";
 
 export interface Meta<S = any> {
+  [key: symbol]: unknown;
   name?: string;
   prefix?: string;
   plugins?: (Plugin<S> | PluginSync<S>)[];

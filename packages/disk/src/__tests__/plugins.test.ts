@@ -196,7 +196,7 @@ describe("partition plugin — date strategy", () => {
 
   test("supports custom format", async () => {
     const driver = createMemoryDriver();
-    const disk = createDisk({ driver }, partition({ by: "date", format: "yyyy/MM" }));
+    const disk = createDisk({ driver }, partition({ by: "month" }));
 
     await disk.put("log.txt", "log");
 
@@ -220,7 +220,7 @@ describe("checksum plugin", () => {
     const stored = await disk.put("data.json", '{"value":1}');
 
     // Sidecar should exist directly in the driver
-    const sidecar = (await driver.get(`${stored.href}.sha256`))!;
+    const sidecar = (await driver.get(`${stored.href}.sha256`, {}))!;
     expect(sidecar).toBeTruthy();
 
     const [stream] = sidecar;
@@ -269,11 +269,11 @@ describe("checksum plugin", () => {
     const stored = await disk.put("to-delete.txt", "bye");
     const sidecarKey = `${stored.href}.sha256`;
 
-    expect(await driver.exists(sidecarKey)).toBeTruthy();
+    expect(await driver.exists(sidecarKey, {})).toBeTruthy();
 
     await disk.delete("to-delete.txt");
 
-    expect(await driver.exists(sidecarKey)).toBe(false);
+    expect(await driver.exists(sidecarKey, {})).toBe(false);
   });
 
   test("supports custom algorithm and extension", async () => {
@@ -282,7 +282,7 @@ describe("checksum plugin", () => {
 
     const stored = await disk.put("file.bin", "some bytes");
 
-    const sidecar = (await driver.get(`${stored.href}.md5`))!;
+    const sidecar = (await driver.get(`${stored.href}.md5`, {}))!;
     expect(sidecar).toBeTruthy();
 
     const [stream] = sidecar;
@@ -466,7 +466,7 @@ describe("compression plugin", () => {
 
     await disk.put("data.txt", "hello compression");
 
-    const raw = await driver.get("data.txt");
+    const raw = await driver.get("data.txt", {});
     expect(raw).toBeTruthy();
     const [stream] = raw!;
     const chunks: Uint8Array[] = [];
@@ -486,7 +486,7 @@ describe("compression plugin", () => {
 
     await disk.put("meta.txt", "content");
 
-    const metadata = await driver.metadata("meta.txt");
+    const metadata = await driver.metadata("meta.txt", {});
     expect(metadata?.metadata?.["x-compression"]).toBe("gzip");
   });
 
@@ -549,7 +549,7 @@ describe("encryption plugin", () => {
 
     await disk.put("encrypted.txt", "plaintext content");
 
-    const raw = await driver.get("encrypted.txt");
+    const raw = await driver.get("encrypted.txt", {});
     expect(raw).toBeTruthy();
     const [stream] = raw!;
     const chunks: Uint8Array[] = [];
@@ -569,7 +569,7 @@ describe("encryption plugin", () => {
 
     await disk.put("flagged.txt", "data");
 
-    const metadata = await driver.metadata("flagged.txt");
+    const metadata = await driver.metadata("flagged.txt", {});
     expect(metadata?.metadata?.["x-minimajs-encrypt"]).toBeTruthy();
   });
 

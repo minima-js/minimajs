@@ -45,6 +45,25 @@ export namespace hook {
     });
   }
 
+  export function once<S>(name: "request", callback: OnRequestHook<S>): PluginSync<S>;
+  export function once<S>(name: "transform", callback: OnTransformHook<S>): PluginSync<S>;
+  export function once<S>(name: "send", callback: OnSendHook<S>): PluginSync<S>;
+  export function once<S>(name: "error", callback: OnErrorHook<S>): PluginSync<S>;
+  export function once<S>(name: "timeout", callback: OnTimeoutHook<S>): PluginSync<S>;
+  export function once<S>(name: "close", callback: OnCloseHook): PluginSync<S>;
+  export function once<S>(name: "listen", callback: OnListenHook): PluginSync<S>;
+  export function once<S>(name: "ready", callback: OnReadyHook<S>): PluginSync<S>;
+  export function once<S>(name: "register", callback: OnRegisterHook): PluginSync<S>;
+  export function once<S>(name: LifecycleHook, callback: GenericHookCallback): PluginSync<S> {
+    return factory<S>(function hookOnceHandler(hooks) {
+      function wrapper(...args: any[]) {
+        hooks[name].delete(wrapper as GenericHookCallback);
+        return (callback as any)(...args);
+      }
+      hooks[name].add(wrapper as GenericHookCallback);
+    });
+  }
+
   /**
    * Creates a plugin that sets up resources on ready and tears them down on close
    */

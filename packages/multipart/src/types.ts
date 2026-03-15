@@ -1,7 +1,7 @@
 import type { BusboyConfig, BusboyFileStream } from "@fastify/busboy";
 import type { RAW_FIELD, RAW_FILE } from "./raw/index.js";
 
-export type MultipartOptions = Omit<BusboyConfig, "headers">;
+export type MultipartOptions = Omit<BusboyConfig, "headers"> & { signal?: AbortSignal };
 
 export interface MultipartRawFile {
   fieldname: string;

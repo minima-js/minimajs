@@ -18,7 +18,7 @@ describe("AzureBlobDriver — href parsing", () => {
   test("parses Azure standard endpoint URL", async () => {
     const { driver, getContainerClient, containerMap } = setup("path/to/file.txt");
 
-    await driver.exists(`${ENDPOINT}uploads/path/to/file.txt`);
+    await driver.exists(`${ENDPOINT}uploads/path/to/file.txt`, {});
 
     expect((getContainerClient as any).mock.calls[0]![0]).toBe("uploads");
     expect((containerMap.get("uploads")!.getBlockBlobClient as any).mock.calls[0]![0]).toBe("path/to/file.txt");
@@ -29,7 +29,7 @@ describe("AzureBlobDriver — href parsing", () => {
     const getContainerClient = (client as any).getContainerClient;
     const driver = new AzureBlobDriver(client, { container: "my-container" });
 
-    await driver.exists("some/blob.txt");
+    await driver.exists("some/blob.txt", {});
 
     expect(getContainerClient.mock.calls[0]![0]).toBe("my-container");
   });
@@ -41,7 +41,7 @@ describe("AzureBlobDriver — href parsing", () => {
     const { client } = createMockAzureClient(containerMap);
     const driver = new AzureBlobDriver(client, { container: "my-container", publicUrl: "https://cdn.azureedge.net" });
 
-    await driver.exists("https://cdn.azureedge.net/images/photo.jpg");
+    await driver.exists("https://cdn.azureedge.net/images/photo.jpg", {});
 
     expect((containerMap.get("my-container")!.getBlockBlobClient as any).mock.calls[0]![0]).toBe("images/photo.jpg");
   });
@@ -49,7 +49,7 @@ describe("AzureBlobDriver — href parsing", () => {
   test("throws when no container is configured and href is a plain key", async () => {
     const { client } = createMockAzureClient();
     const driver = new AzureBlobDriver(client, {});
-    await expect(driver.exists("plain-key.txt")).rejects.toThrow(/Container must be specified/);
+    await expect(driver.exists("plain-key.txt", {})).rejects.toThrow(/Container must be specified/);
   });
 });
 
@@ -101,7 +101,7 @@ describe("AzureBlobDriver — get", () => {
   test("returns stream and metadata for an existing blob", async () => {
     const { driver } = setup("file.txt", "file content", { contentLength: 12 });
 
-    const result = await driver.get("file.txt");
+    const result = await driver.get("file.txt", {});
 
     expect(result).toBeTruthy();
     const [stream, meta] = result!;
@@ -116,7 +116,7 @@ describe("AzureBlobDriver — get", () => {
     (blobClient.getProperties as any).mockRejectedValueOnce(err);
     (blobClient.download as any).mockRejectedValueOnce(err);
 
-    expect(await driver.get("missing.txt")).toBe(null);
+    expect(await driver.get("missing.txt", {})).toBe(null);
   });
 
   test("rethrows non-404 errors", async () => {
@@ -124,7 +124,7 @@ describe("AzureBlobDriver — get", () => {
     const err: any = Object.assign(new Error("InternalServerError"), { statusCode: 500 });
     (blobClient.getProperties as any).mockRejectedValueOnce(err);
 
-    await expect(driver.get("file.txt")).rejects.toThrow("InternalServerError");
+    await expect(driver.get("file.txt", {})).rejects.toThrow("InternalServerError");
   });
 });
 
@@ -136,13 +136,13 @@ describe("AzureBlobDriver — exists", () => {
   test("returns true when blob exists", async () => {
     const { driver, blobClient } = setup("file.txt");
     (blobClient.exists as any).mockResolvedValueOnce(true);
-    expect(await driver.exists("file.txt")).toBe(true);
+    expect(await driver.exists("file.txt", {})).toBe(true);
   });
 
   test("returns false when blob does not exist", async () => {
     const { driver, blobClient } = setup("missing.txt");
     (blobClient.exists as any).mockResolvedValueOnce(false);
-    expect(await driver.exists("missing.txt")).toBe(false);
+    expect(await driver.exists("missing.txt", {})).toBe(false);
   });
 });
 
@@ -153,7 +153,7 @@ describe("AzureBlobDriver — exists", () => {
 describe("AzureBlobDriver — delete", () => {
   test("calls deleteIfExists on the blob client", async () => {
     const { driver, blobClient } = setup("to-delete.txt");
-    await driver.delete("to-delete.txt");
+    await driver.delete("to-delete.txt", {});
     expect((blobClient.deleteIfExists as any).mock.calls.length).toBeGreaterThan(0);
   });
 });
@@ -173,7 +173,7 @@ describe("AzureBlobDriver — copy", () => {
     const { client } = createMockAzureClient(new Map([["uploads", createMockContainerClient(blobs)]]));
     const driver = new AzureBlobDriver(client, { container: "uploads" });
 
-    await driver.copy("source.txt", "dest.txt");
+    await driver.copy("source.txt", "dest.txt", {});
 
     const copyCall = (destBlobClient.beginCopyFromURL as any).mock.calls[0];
     expect(copyCall).toBeTruthy();
@@ -196,7 +196,7 @@ describe("AzureBlobDriver — move", () => {
     const { client } = createMockAzureClient(new Map([["uploads", createMockContainerClient(blobs)]]));
     const driver = new AzureBlobDriver(client, { container: "uploads" });
 
-    await driver.move("source.txt", "dest.txt");
+    await driver.move("source.txt", "dest.txt", {});
 
     expect((destBlobClient.beginCopyFromURL as any).mock.calls.length).toBeGreaterThan(0);
     expect((sourceBlobClient.deleteIfExists as any).mock.calls.length).toBeGreaterThan(0);
@@ -267,7 +267,7 @@ describe("AzureBlobDriver — metadata", () => {
       metadata: { tag: "production" },
     });
 
-    const meta = await driver.metadata("data.bin");
+    const meta = await driver.metadata("data.bin", {});
 
     expect(meta).toBeTruthy();
     expect(meta!.href).toContain("data.bin");
@@ -280,7 +280,7 @@ describe("AzureBlobDriver — metadata", () => {
     const { driver, blobClient } = setup("missing.bin");
     const err: any = Object.assign(new Error("BlobNotFound"), { statusCode: 404 });
     (blobClient.getProperties as any).mockRejectedValueOnce(err);
-    expect(await driver.metadata("missing.bin")).toBe(null);
+    expect(await driver.metadata("missing.bin", {})).toBe(null);
   });
 });
 
@@ -361,7 +361,7 @@ describe("createAzureBlobDriver factory", () => {
 describe("AzureBlobDriver — blobToHref", () => {
   test("constructed href includes endpoint + container + blob", async () => {
     const { driver } = setup("path/to/file.txt", "data", { contentLength: 4 }, { container: "mycontainer" });
-    const meta = await driver.metadata("path/to/file.txt");
+    const meta = await driver.metadata("path/to/file.txt", {});
 
     expect(meta).toBeTruthy();
     expect(meta!.href).toMatch(new RegExp(`^${ENDPOINT}`));

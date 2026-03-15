@@ -1,3 +1,4 @@
+import { inspect } from "node:util";
 import type { Container } from "../interfaces/app.js";
 import type { App } from "../interfaces/index.js";
 import { createHooksStore } from "../hooks/store.js";
@@ -20,6 +21,14 @@ export function createRootContainer<S>(server: App<S>) {
     [kHooks]: createHooksStore(),
     [kAppDescriptor]: [],
     [kModulesChain]: [server],
+    [inspect.custom]() {
+      const result: Record<string, unknown> = {};
+      for (const sym of Object.getOwnPropertySymbols(this)) {
+        if (sym === inspect.custom) continue;
+        result[sym.description ?? String(sym)] = (this as any)[sym];
+      }
+      return result;
+    },
   } satisfies Container<S>;
 }
 

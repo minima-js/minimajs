@@ -39,6 +39,10 @@ export class DiskFile extends File {
     return this.#size;
   }
 
+  slice(): Blob {
+    throw new Error("DiskFile does not support slice(). Call .bytes() first to buffer the file, then slice the result.");
+  }
+
   stream(): ReadableStream {
     const result = this.#streamFactory(this);
     // If async, wrap it in a ReadableStream
