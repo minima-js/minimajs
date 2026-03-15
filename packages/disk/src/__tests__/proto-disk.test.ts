@@ -31,10 +31,10 @@ describe("ProtoDisk - Prefix-Based Routing", () => {
       expect(file).not.toBeNull();
 
       // Verify it's in bucket2 driver, not bucket1
-      const fromBucket2 = await bucket2Driver.get("s3://bucket-2/file.txt");
+      const fromBucket2 = await bucket2Driver.get("s3://bucket-2/file.txt", {});
       expect(fromBucket2).not.toBeNull();
 
-      const fromBucket1 = await bucket1Driver.get("s3://bucket-2/file.txt");
+      const fromBucket1 = await bucket1Driver.get("s3://bucket-2/file.txt", {});
       expect(fromBucket1).toBeNull();
     });
 
@@ -52,7 +52,7 @@ describe("ProtoDisk - Prefix-Based Routing", () => {
       expect(file).not.toBeNull();
 
       // Verify it's in bucket1 driver
-      const fromBucket1 = await bucket1Driver.get("s3://bucket-1/file.txt");
+      const fromBucket1 = await bucket1Driver.get("s3://bucket-1/file.txt", {});
       expect(fromBucket1).not.toBeNull();
     });
   });
@@ -70,14 +70,14 @@ describe("ProtoDisk - Prefix-Based Routing", () => {
       await disk.put("s3://videos-bucket/clip.mp4", "video data");
 
       // Verify routing
-      const image = await bucket1Driver.get("s3://images-bucket/photo.jpg");
+      const image = await bucket1Driver.get("s3://images-bucket/photo.jpg", {});
       expect(image).not.toBeNull();
 
-      const video = await bucket2Driver.get("s3://videos-bucket/clip.mp4");
+      const video = await bucket2Driver.get("s3://videos-bucket/clip.mp4", {});
       expect(video).not.toBeNull();
 
       // Cross-check they're isolated
-      const imageInBucket2 = await bucket2Driver.get("s3://images-bucket/photo.jpg");
+      const imageInBucket2 = await bucket2Driver.get("s3://images-bucket/photo.jpg", {});
       expect(imageInBucket2).toBeNull();
     });
   });
@@ -94,10 +94,10 @@ describe("ProtoDisk - Prefix-Based Routing", () => {
       await disk.put("https://cdn1.example.com/logo.png", "logo data");
       await disk.put("https://cdn2.example.com/banner.png", "banner data");
 
-      const logo = await bucket1Driver.get("https://cdn1.example.com/logo.png");
+      const logo = await bucket1Driver.get("https://cdn1.example.com/logo.png", {});
       expect(logo).not.toBeNull();
 
-      const banner = await bucket2Driver.get("https://cdn2.example.com/banner.png");
+      const banner = await bucket2Driver.get("https://cdn2.example.com/banner.png", {});
       expect(banner).not.toBeNull();
     });
   });
@@ -118,10 +118,10 @@ describe("ProtoDisk - Prefix-Based Routing", () => {
       await disk.copy("s3://bucket-1/source.txt", "s3://bucket-2/copied.txt");
 
       // Verify both exist
-      const source = await bucket1Driver.get("s3://bucket-1/source.txt");
+      const source = await bucket1Driver.get("s3://bucket-1/source.txt", {});
       expect(source).not.toBeNull();
 
-      const copied = await bucket2Driver.get("s3://bucket-2/copied.txt");
+      const copied = await bucket2Driver.get("s3://bucket-2/copied.txt", {});
       expect(copied).not.toBeNull();
 
       if (copied) {
@@ -145,11 +145,11 @@ describe("ProtoDisk - Prefix-Based Routing", () => {
       await disk.move("s3://bucket-1/source.txt", "s3://bucket-2/moved.txt");
 
       // Source should be deleted
-      const source = await bucket1Driver.get("s3://bucket-1/source.txt");
+      const source = await bucket1Driver.get("s3://bucket-1/source.txt", {});
       expect(source).toBeNull();
 
       // Destination should exist
-      const moved = await bucket2Driver.get("s3://bucket-2/moved.txt");
+      const moved = await bucket2Driver.get("s3://bucket-2/moved.txt", {});
       expect(moved).not.toBeNull();
     });
 
@@ -190,7 +190,7 @@ describe("ProtoDisk - Prefix-Based Routing", () => {
       await disk.copy("s3://bucket-1/source.txt", "s3://bucket-1/dest.txt");
 
       // Should use native driver copy (not get + put)
-      expect(copySpy).toHaveBeenCalledWith("s3://bucket-1/source.txt", "s3://bucket-1/dest.txt");
+      expect(copySpy).toHaveBeenCalledWith("s3://bucket-1/source.txt", "s3://bucket-1/dest.txt", {});
     });
 
     it("should use native driver move for same prefix", async () => {
@@ -206,7 +206,7 @@ describe("ProtoDisk - Prefix-Based Routing", () => {
       await disk.move("s3://bucket-1/source.txt", "s3://bucket-1/dest.txt");
 
       // Should use native driver move (not get + put + delete)
-      expect(moveSpy).toHaveBeenCalledWith("s3://bucket-1/source.txt", "s3://bucket-1/dest.txt");
+      expect(moveSpy).toHaveBeenCalledWith("s3://bucket-1/source.txt", "s3://bucket-1/dest.txt", {});
     });
   });
 

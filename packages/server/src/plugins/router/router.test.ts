@@ -24,7 +24,7 @@ describe("routeLogger", () => {
   test("should log routes with default options using app.log.info", async () => {
     const spy = jest.spyOn(app.log, "info").mockImplementation(() => {});
 
-    app.register(routeLogger());
+    app.register(routeLogger({ groupBy: "path" }));
     await app.ready();
 
     const printedRoutes = EOL + app.router.prettyPrint({ commonPrefix: false });
@@ -35,7 +35,7 @@ describe("routeLogger", () => {
 
   test("should use custom logger when provided", async () => {
     const mockLogger = jest.fn();
-    app.register(routeLogger({ logger: mockLogger }));
+    app.register(routeLogger({ logger: mockLogger, groupBy: "path" }));
     await app.ready();
 
     const printedRoutes = app.router.prettyPrint({ commonPrefix: false });
@@ -48,6 +48,7 @@ describe("routeLogger", () => {
     app.register(
       routeLogger({
         logger: mockLogger,
+        groupBy: "path",
       })
     );
     await app.ready();

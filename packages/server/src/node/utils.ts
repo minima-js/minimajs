@@ -20,11 +20,9 @@ export function toWebHeaders(nodeHeaders: IncomingMessage["headers"]): Headers {
 
 export interface ToWebRequestOptions {
   domain?: string;
-  signal?: AbortSignal;
 }
 
 export function toWebRequest(req: IncomingMessage, options: ToWebRequestOptions = {}): Request {
-  const { signal } = options;
   let { domain = "http://localhost" } = options;
   const { headers } = req;
   if (headers.host) {
@@ -40,30 +38,18 @@ export function toWebRequest(req: IncomingMessage, options: ToWebRequestOptions 
     }
   });
 
-  // Combine request signal with any external signal (e.g. response-close)
-  // so that request.signal() fires on client disconnect at any point in the lifecycle
-  const combined = signal ? AbortSignal.any([controller.signal, signal]) : controller.signal;
-
   const request = new Request(url, {
     method: req.method,
     headers: toWebHeaders(req.headers),
     body: req.method !== "GET" && req.method !== "HEAD" ? req : undefined,
-    signal: combined,
+    signal: controller.signal,
     duplex: "half",
   });
 
   return request;
 }
 
-export interface FromWebResponseOptions {
-  signal?: AbortSignal;
-}
-
-export async function fromWebResponse(
-  webResponse: Response,
-  nodeResponse: ServerResponse,
-  options: FromWebResponseOptions = {}
-): Promise<void> {
+export async function fromWebResponse(webResponse: Response, nodeResponse: ServerResponse): Promise<void> {
   nodeResponse.statusCode = webResponse.status;
   nodeResponse.setHeaders(webResponse.headers);
   if (!webResponse.body) {
@@ -72,10 +58,8 @@ export async function fromWebResponse(
   }
 
   try {
-    await pipeline(Readable.fromWeb(webResponse.body), nodeResponse, { signal: options.signal });
+    await pipeline(Readable.fromWeb(webResponse.body), nodeResponse);
   } catch (err) {
-    // Client disconnected mid-stream — nothing to do, response is already gone
-    if (options.signal?.aborted) return;
     if (!nodeResponse.headersSent) {
       nodeResponse.statusCode = 500;
     }
