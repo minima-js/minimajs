@@ -6,8 +6,9 @@ import { Server } from "../../core/server.js";
 import type { ServerAdapter } from "../../interfaces/server.js";
 import Router from "find-my-way";
 import { createLogger } from "../../logger.js";
+import { TEST_MODULES_DIR } from "../../__tests__/modules/index.js";
 
-const TEST_BASE_DIR = path.join(import.meta.dir, "__test-glob-modules");
+const TEST_BASE_DIR = TEST_MODULES_DIR;
 let TEST_DIR: string;
 
 const mockAdapter: ServerAdapter<any> = {

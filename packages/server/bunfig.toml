@@ -14,5 +14,6 @@ coveragePathIgnorePatterns = [
   "src/interceptor.ts",
   "src/__tests__/helpers/**",
   "src/__tests__/fixtures/**",
+  "src/__tests__/modules/**",
   "src/mock/**",
 ]

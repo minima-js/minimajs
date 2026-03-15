@@ -1,7 +1,6 @@
 import Router, { type HTTPMethod, type HTTPVersion } from "find-my-way";
 import { type Avvio } from "avvio";
 import { type Logger } from "pino";
-import { inspect } from "node:util";
 import type { App, Handler } from "../interfaces/app.js";
 import type { Plugin, Registerable, PluginOptions, PluginSync, Module, RegisterOptions } from "../plugin.js";
 import { applyRouteMetadata, applyRoutePrefix } from "../internal/route.js";
@@ -182,15 +181,6 @@ export class Server<S> implements App<S> {
         resolve();
       })
     );
-  }
-
-  [inspect.custom]() {
-    const name = this.container[kModuleName] as string | undefined;
-    return {
-      prefix: this.prefix,
-      module: name ?? "(root)",
-      [Symbol.toStringTag]: this[Symbol.toStringTag],
-    };
   }
 
   get [Symbol.toStringTag]() {

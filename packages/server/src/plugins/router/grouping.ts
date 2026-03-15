@@ -23,7 +23,8 @@ function renderEntries(routes: Map<string, string[]>, children: ModuleNode[], in
     const childIndent = indent + (isLast ? "    " : "│   ");
 
     if (item.type === "route") {
-      lines.push(`${indent}${connector} ${item.methods.join(",")} ${item.path}`);
+      const methods = item.methods.length > 1 ? `[${item.methods.join(", ")}]` : item.methods[0];
+      lines.push(`${indent}${connector} ${methods} ${item.path}`);
     } else {
       lines.push(`${indent}${connector} ${item.node.name}`);
       lines.push(...renderEntries(item.node.routes, item.node.children, childIndent));
@@ -85,6 +86,13 @@ export function prettyPrintByModule(app: App): string {
 
   const rootApp = rawRoutes[0]!.store.app.container[kModulesChain][0] as App;
   const rootNode = getNode(rootApp);
+
+  // If root has no direct routes, render each child module as its own top-level section
+  if (rootNode.routes.size === 0) {
+    return rootNode.children
+      .map((child) => [child.name, ...renderEntries(child.routes, child.children, "")].join(EOL))
+      .join(EOL);
+  }
 
   return [rootNode.name, ...renderEntries(rootNode.routes, rootNode.children, "")].join(EOL);
 }

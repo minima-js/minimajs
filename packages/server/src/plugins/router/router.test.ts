@@ -27,7 +27,7 @@ describe("routeLogger", () => {
     app.register(routeLogger({ groupBy: "path" }));
     await app.ready();
 
-    const printedRoutes = EOL + app.router.prettyPrint({ commonPrefix: false });
+    const printedRoutes = EOL + app.router.prettyPrint({ commonPrefix: false }) + EOL;
     expect(spy).toHaveBeenCalledWith(printedRoutes);
 
     spy.mockRestore();
@@ -60,10 +60,16 @@ describe("routeLogger", () => {
   test("should log routes only when app is ready", async () => {
     const mockLogger = jest.fn();
     app.register(routeLogger({ logger: mockLogger }));
-    // Should not have been called yet
     expect(mockLogger).not.toHaveBeenCalled();
     await app.ready();
-    // Should be called after ready
     expect(mockLogger).toHaveBeenCalledTimes(1);
+  });
+
+  test("enabled: false removes previously registered route logger", async () => {
+    const mockLogger = jest.fn();
+    app.register(routeLogger({ logger: mockLogger }));
+    app.register(routeLogger({ enabled: false }));
+    await app.ready();
+    expect(mockLogger).not.toHaveBeenCalled();
   });
 });

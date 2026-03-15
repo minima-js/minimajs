@@ -43,7 +43,7 @@ export function routeLogger({ enabled, delay = 1, groupBy = "module", logger }: 
   }
 
   function onReady(app: App) {
-    logger ??= (routes) => app.log.info(EOL + routes);
+    logger ??= (routes) => app.log.info(EOL + routes + EOL);
     if (groupBy === "module") {
       logger(prettyPrintByModule(app));
     } else {

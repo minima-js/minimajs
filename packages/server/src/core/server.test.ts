@@ -292,6 +292,20 @@ describe("Core Server", () => {
     });
   });
 
+  describe("toStringTag", () => {
+    test("is 'Server' for root, 'Server(name)' for named module", async () => {
+      app = createApp();
+      expect(app[Symbol.toStringTag]).toBe("Server");
+
+      let childTag: string | undefined;
+      app.register(async function myModule(instance: any) {
+        childTag = instance[Symbol.toStringTag];
+      });
+      await app.ready();
+      expect(childTag).toBe("Server(myModule)");
+    });
+  });
+
   describe("Response State", () => {
     beforeEach(() => {
       app = createApp();
