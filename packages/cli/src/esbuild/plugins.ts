@@ -9,21 +9,13 @@ import { yellow } from "../utils/colors.js";
 import { log } from "../utils/logging.js";
 
 export async function buildPlugins(config: Config, filename: string): Promise<Plugin[]> {
-  const { outdir, ext: outExtension } = config;
+  const { outdir } = config;
   const plugins: Plugin[] = [];
-
-  // Add polyfill plugins
-  for (const name of config.polyfills) {
-    if (name === "cjs") {
-      const { cjs } = await import("../plugins/cjs-polyfill.js");
-      plugins.push(cjs());
-    }
-  }
 
   plugins.push(nodeExternalsPlugin({ allowList: config.external?.include }));
 
   if (config.watch) {
-    if (!config.ignoreTypes) plugins.push(tsCheckPlugin());
+    if (!config.ignoreTypes) plugins.push(tsCheckPlugin(config.tsconfig));
     plugins.push(progress({ dist: outdir, clear: config.reset }));
   }
 
@@ -33,11 +25,11 @@ export async function buildPlugins(config: Config, filename: string): Promise<Pl
 
   if (config.run) {
     if (config.run === true) {
-      config.run = getOutputFilename(filename, outdir, outExtension);
+      config.run = getOutputFilename(filename, outdir, ".js");
     }
     const nodeOptions = [...config.nodeOptions];
     config.import.forEach((x) => {
-      const fname = getOutputFilename(x, outdir, outExtension);
+      const fname = getOutputFilename(x, outdir, ".js");
       nodeOptions.push("--import", fname);
     });
     plugins.push(

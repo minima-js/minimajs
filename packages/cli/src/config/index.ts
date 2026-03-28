@@ -1,4 +1,4 @@
-import { dirname, extname, join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { Config } from "./types.js";
 import { defaults } from "./defaults.js";
@@ -23,18 +23,13 @@ export async function loadConfig(cliOption: CliOption = {}): Promise<Config> {
     }
   }
 
-  const { main, engines, type } = packageInfo;
+  const { main, engines } = packageInfo;
   if (main) {
-    config.ext ??= extname(main);
     config.outdir ??= dirname(resolve(main));
   }
 
   if (engines?.node) {
     config.target ??= getTarget(engines.node);
-  }
-
-  if (type === "module") {
-    config.format ??= "esm";
   }
 
   const { grace, ...cliOverrides } = cliOption;

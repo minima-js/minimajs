@@ -1,6 +1,4 @@
-import type { Format, Loader } from "esbuild";
-
-export type Polyfill = "cjs";
+import type { Loader } from "esbuild";
 
 export interface BaseConfig {
   run: boolean | string;
@@ -15,10 +13,6 @@ export interface BaseConfig {
   killSignal: NodeJS.Signals;
   import: string[];
   outdir: string;
-  format: Format;
-  ext: string;
-  polyfills: Polyfill[];
-  inject: string[];
   loader: Record<string, Loader>;
   target?: string;
   envFile?: string;

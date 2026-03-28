@@ -15,16 +15,18 @@ minimajs is a TypeScript-first, ESM-only HTTP framework for Node.js and Bun. Its
 
 ```typescript
 // Bun
-import { createApp } from "@minimajs/server/bun";
+import { createApp, logger } from "@minimajs/server/bun";
 // Node.js
-import { createApp } from "@minimajs/server/node";
+import { createApp, logger } from "@minimajs/server/node";
 
 const app = createApp();
 app.get("/", () => ({ message: "Hello" }));
-await app.listen({ port: 3000 });
+const addr = await app.listen({ port: 3000 });
+logger.info("App started %s", addr);
 ```
 
 `createApp(options?)` options:
+
 - `prefix` — URL prefix for all routes
 - `logger` — Pino logger instance, or `false` to disable
 - `moduleDiscovery: false` — disable file-based module discovery (useful in tests)
@@ -48,6 +50,7 @@ src/
 ```
 
 A module file can export:
+
 - `routes` — declarative route map
 - `meta` — prefix + plugins scoped to this module
 - `default function(app)` — programmatic registration
@@ -57,7 +60,9 @@ A module file can export:
 import type { Meta, Routes } from "@minimajs/server";
 
 export const meta: Meta = {
-  plugins: [/* scoped plugins */],
+  plugins: [
+    /* scoped plugins */
+  ],
 };
 
 export const routes: Routes = {
@@ -91,19 +96,26 @@ All imported from `@minimajs/server`. Call from any function within a request.
 
 ```typescript
 import {
-  body, params, headers, searchParams,
-  request, response,
-  abort, redirect,
-  defer, onError,
-  context, createContext,
+  body,
+  params,
+  headers,
+  searchParams,
+  request,
+  response,
+  abort,
+  redirect,
+  defer,
+  onError,
+  context,
+  createContext,
 } from "@minimajs/server";
 
 // Request body (parsed JSON by default)
 const data = body<{ name: string }>();
 
 // Route params
-const id = params.get("id");                     // throws 404 if missing
-const maybeId = params.optional("id");           // undefined if missing
+const id = params.get("id"); // throws 404 if missing
+const maybeId = params.optional("id"); // undefined if missing
 const all = params<{ id: string }>();
 
 // Query string
@@ -119,16 +131,18 @@ headers.set("x-request-id", "abc123");
 headers.set({ "x-foo": "bar", "x-baz": "qux" });
 
 // Response
-response({ id: 1 });                             // set body
-response.status(201);                            // set status code
+response({ id: 1 }); // set body
+response.status(201); // set status code
 // Returning from handler also sets body:
-function getUser() { return { id: 1, name: "Alice" }; }
+function getUser() {
+  return { id: 1, name: "Alice" };
+}
 
 // Request object (Web API Request)
 const req = request();
-const url = request.url();                       // URL object
-const signal = request.signal();                 // AbortSignal (client disconnect)
-const ip = request.ip();                         // client IP (needs proxy plugin)
+const url = request.url(); // URL object
+const signal = request.signal(); // AbortSignal (client disconnect)
+const ip = request.ip(); // client IP (needs proxy plugin)
 
 // Run after response is sent
 defer(() => analytics.track("request"));
@@ -144,12 +158,12 @@ onError((err) => logger.error(err));
 ```typescript
 import { abort, redirect } from "@minimajs/server";
 
-abort("Not found", 404);             // throw HttpError
-abort.notFound("User not found");    // 404 shorthand
-abort.is(err);                       // type guard
-abort.rethrow(err);                  // re-throw if HttpError
-redirect("/login");                  // 302
-redirect("/new-path", true);         // 301
+abort("Not found", 404); // throw HttpError
+abort.notFound("User not found"); // 404 shorthand
+abort.is(err); // type guard
+abort.rethrow(err); // re-throw if HttpError
+redirect("/login"); // 302
+redirect("/new-path", true); // 301
 ```
 
 **Override error response shape globally** (do this at app startup):
@@ -167,7 +181,7 @@ HttpError.toJSON = (err) => ({
 ValidationError.toJSON = (err) => ({
   success: false,
   error: "Validation failed",
-  issues: err.issues?.map(i => ({ field: i.path.join("."), message: i.message })),
+  issues: err.issues?.map((i) => ({ field: i.path.join("."), message: i.message })),
 });
 ```
 
@@ -175,17 +189,17 @@ ValidationError.toJSON = (err) => ({
 
 ## Package selection guide
 
-| Need | Package | Key import |
-|------|---------|-----------|
-| Validate request body/params/query | `@minimajs/schema` | `createBody`, `createParams`, `createSearchParams` |
-| Authenticate users | `@minimajs/auth` | `createAuth` |
-| File uploads | `@minimajs/multipart` | `multipart`, `createMultipart` |
-| File storage (FS/S3/Azure) | `@minimajs/disk` | `createDisk`, `createProtoDisk` |
-| OpenAPI docs | `@minimajs/openapi` | `openapi`, `describe`, `schema` |
-| Cookies | `@minimajs/cookie` | `cookies` |
-| CORS | `@minimajs/server` | `cors` (built-in plugin) |
-| Graceful shutdown | `@minimajs/server` | `shutdown` (built-in plugin) |
-| Proxy/IP extraction | `@minimajs/server` | `proxy` (built-in plugin) |
+| Need                               | Package               | Key import                                         |
+| ---------------------------------- | --------------------- | -------------------------------------------------- |
+| Validate request body/params/query | `@minimajs/schema`    | `createBody`, `createParams`, `createSearchParams` |
+| Authenticate users                 | `@minimajs/auth`      | `createAuth`                                       |
+| File uploads                       | `@minimajs/multipart` | `multipart`, `createMultipart`                     |
+| File storage (FS/S3/Azure)         | `@minimajs/disk`      | `createDisk`, `createProtoDisk`                    |
+| OpenAPI docs                       | `@minimajs/openapi`   | `openapi`, `describe`, `schema`                    |
+| Cookies                            | `@minimajs/cookie`    | `cookies`                                          |
+| CORS                               | `@minimajs/server`    | `cors` (built-in plugin)                           |
+| Graceful shutdown                  | `@minimajs/server`    | `shutdown` (built-in plugin)                       |
+| Proxy/IP extraction                | `@minimajs/server`    | `proxy` (built-in plugin)                          |
 
 ---
 
@@ -203,14 +217,10 @@ const getBody = createBody(z.object({ name: z.string(), email: z.string().email(
 const UserResponse = createResponse(z.object({ id: z.string(), name: z.string() }));
 
 export const routes: Routes = {
-  "POST /": handler(
-    describe({ summary: "Create user", tags: ["Users"] }),
-    schema(getBody, UserResponse),
-    async () => {
-      const { name, email } = getBody();
-      return { id: crypto.randomUUID(), name };
-    }
-  ),
+  "POST /": handler(describe({ summary: "Create user", tags: ["Users"] }), schema(getBody, UserResponse), async () => {
+    const { name, email } = getBody();
+    return { id: crypto.randomUUID(), name };
+  }),
 };
 ```
 
@@ -249,7 +259,10 @@ import { z } from "zod";
 
 const upload = createMultipart({
   name: z.string().min(1),
-  avatar: z.file().max(5 * 1024 * 1024).mime(["image/jpeg", "image/png"]),
+  avatar: z
+    .file()
+    .max(5 * 1024 * 1024)
+    .mime(["image/jpeg", "image/png"]),
 });
 
 export const routes: Routes = {
@@ -270,11 +283,7 @@ import { openapi } from "@minimajs/openapi";
 
 export const meta: Meta = {
   prefix: "/api",
-  plugins: [
-    cors({ origin: "*" }),
-    shutdown(),
-    openapi({ info: { title: "My API", version: "1.0.0" } }),
-  ],
+  plugins: [cors({ origin: "*" }), shutdown(), openapi({ info: { title: "My API", version: "1.0.0" } })],
 };
 ```
 
@@ -287,9 +296,11 @@ const [getRequestId, setRequestId] = createContext<string>();
 
 export const requestIdPlugin = plugin.sync((app) => {
   app.register(hook("request", () => setRequestId(crypto.randomUUID())));
-  app.register(hook("send", (res, ctx) => {
-    ctx.responseState.headers.set("x-request-id", getRequestId() ?? "");
-  }));
+  app.register(
+    hook("send", (res, ctx) => {
+      ctx.responseState.headers.set("x-request-id", getRequestId() ?? "");
+    })
+  );
 });
 
 export { getRequestId }; // callable from anywhere in request scope

@@ -10,6 +10,7 @@
     "directory": "packages/cli",
     "url": "https://github.com/minima-js/minimajs"
   },
+  "main": "./bin/cli.js",
   "bin": {
     "minimajs": "./bin/cli.js",
     "mjs": "./bin/cli.js"
@@ -18,7 +19,7 @@
     ".": "./bin/cli.js"
   },
   "scripts": {
-    "build": "bun build ./src/index.ts --outfile ./bin/cli.js --target node --format esm --banner '#!/usr/bin/env node' --external esbuild --external typescript --external esbuild-node-externals --external execa --external dotenv --external dotenv-expand --external ora --external chalk --external pretty-ms --external pretty-bytes --external semver --external citty && tsc -p ./tsconfig.build.json --emitDeclarationOnly --noEmit false",
+    "build": "bun build ./src/index.ts --outfile ./bin/cli.js --target node --format esm --banner '#!/usr/bin/env node' --external esbuild --external typescript && chmod +x ./bin/cli.js",
     "dev": "tsc -w --preserveWatchOutput --noEmit",
     "clean": "rimraf -g '*.tsbuildinfo' lib bin"
   },

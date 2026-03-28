@@ -1,13 +1,24 @@
 import type { Plugin } from "esbuild";
-import { tsc } from "./tsc.js";
-import { strip } from "./stripper.js";
+import { startWatchTypeChecker } from "./checker.js";
+import { formatDiagnostic } from "./checker.js";
 
-export function tsCheckPlugin(): Plugin {
+export function tsCheckPlugin(tsconfig: string): Plugin {
   return {
     name: "ts-check",
-    async setup() {
-      const subprocess = tsc({ watch: true });
-      subprocess.pipe(strip()).pipe(process.stderr);
+    setup(build) {
+      let stop: (() => void) | undefined;
+      build.onStart(() => {
+        stop?.();
+        stop = startWatchTypeChecker(tsconfig, {
+          onClear() {
+            // tsc cleared — new check cycle starting, nothing to show yet
+          },
+          onDiagnostic(d) {
+            process.stderr.write(formatDiagnostic(d) + "\n");
+          },
+        });
+      });
+      build.onDispose(() => stop?.());
     },
   };
 }

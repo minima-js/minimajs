@@ -5,7 +5,7 @@ import { isCurrentPath } from "../utils/path.js";
 import { buildPlugins } from "./plugins.js";
 
 export async function buildEsbuildConfig(filename: string, config: Config): Promise<BuildOptions> {
-  const { outdir, ext: outExtension, format, inject, loader } = config;
+  const { outdir, loader } = config;
   if (isCurrentPath(outdir)) config.clean = false;
   if (config.clean) clean(outdir);
   const plugins = await buildPlugins(config, filename);
@@ -13,10 +13,10 @@ export async function buildEsbuildConfig(filename: string, config: Config): Prom
   const buildConfig: BuildOptions = {
     entryPoints,
     bundle: true,
-    inject,
     platform: "node",
-    outExtension: { ".js": outExtension },
-    format,
+    format: "esm",
+    splitting: true,
+    outExtension: { ".js": ".js" },
     outdir,
     minify: config.minify,
     sourcemap: config.sourcemap,
@@ -28,6 +28,5 @@ export async function buildEsbuildConfig(filename: string, config: Config): Prom
   if (config.target) {
     buildConfig.target = config.target;
   }
-  if (format === "esm") buildConfig.splitting = true;
   return buildConfig;
 }
