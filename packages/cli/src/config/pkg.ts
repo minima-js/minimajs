@@ -1,7 +1,6 @@
 import { join } from "node:path";
 import { loadJSON } from "../utils/fs.js";
 import { ensureCase } from "../utils/index.js";
-import semver from "semver";
 
 export interface PkgInfo {
   name?: string;
@@ -25,9 +24,11 @@ export function loadPkg(): PkgInfo {
 }
 
 export function getTarget(node: string, prefix = "node"): string {
-  const version = semver.coerce(node);
-  if (!version) {
-    throw new Error(`Invalid node version selected (${node})`);
+  // Extract first major.minor.patch triplet from a version range like ">=18.0.0" or "18"
+  const match = node.match(/(\d+)(?:\.(\d+))?(?:\.(\d+))?/);
+  if (!match) {
+    throw new Error(`Invalid node version: ${node}`);
   }
-  return `${prefix}${version.version}`;
+  const version = `${match[1]}.${match[2] ?? "0"}.${match[3] ?? "0"}`;
+  return `${prefix}${version}`;
 }

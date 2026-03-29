@@ -1,0 +1,5414 @@
+{
+  "inputs": {
+    "src/index.ts": {
+      "bytes": 36,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/command.ts",
+          "kind": "import-statement",
+          "original": "./command.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/command.ts": {
+      "bytes": 958,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/citty@0.2.1/node_modules/citty/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "citty"
+        },
+        {
+          "path": "node:fs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:url",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/creator/command.ts",
+          "kind": "import-statement",
+          "original": "./creator/command.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/compiler/command.ts",
+          "kind": "import-statement",
+          "original": "./compiler/command.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/generator/command.ts",
+          "kind": "import-statement",
+          "original": "./generator/command.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/creator/command.ts": {
+      "bytes": 1122,
+      "imports": [
+        {
+          "path": "citty",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/creator/index.ts",
+          "kind": "import-statement",
+          "original": "./index.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/citty@0.2.1/node_modules/citty/dist/index.mjs": {
+      "bytes": 12265,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/citty@0.2.1/node_modules/citty/dist/_chunks/libs/scule.mjs",
+          "kind": "import-statement",
+          "original": "./_chunks/libs/scule.mjs"
+        },
+        {
+          "path": "node:util",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/compiler/command.ts": {
+      "bytes": 3077,
+      "imports": [
+        {
+          "path": "citty",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/compiler/index.ts",
+          "kind": "import-statement",
+          "original": "./index.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/generator/command.ts": {
+      "bytes": 808,
+      "imports": [
+        {
+          "path": "citty",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/generator/index.ts",
+          "kind": "import-statement",
+          "original": "./index.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/creator/index.ts": {
+      "bytes": 3880,
+      "imports": [
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:fs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:child_process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/ora@8.2.0/node_modules/ora/index.js",
+          "kind": "import-statement",
+          "original": "ora"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/utils/colors.ts",
+          "kind": "import-statement",
+          "original": "../utils/colors.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/templates/project.ts",
+          "kind": "import-statement",
+          "original": "../templates/project.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/generator/index.ts": {
+      "bytes": 997,
+      "imports": [
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:fs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/templates/module.ts",
+          "kind": "import-statement",
+          "original": "../templates/module.js"
+        },
+        {
+          "path": "../utils/colors.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/citty@0.2.1/node_modules/citty/dist/_chunks/libs/scule.mjs": {
+      "bytes": 1787,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "src/compiler/index.ts": {
+      "bytes": 2454,
+      "imports": [
+        {
+          "path": "node:child_process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:fs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/esbuild/index.ts",
+          "kind": "import-statement",
+          "original": "../esbuild/index.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/config/pkg.ts",
+          "kind": "import-statement",
+          "original": "../config/pkg.js"
+        },
+        {
+          "path": "../utils/colors.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/utils/env.ts",
+          "kind": "import-statement",
+          "original": "../utils/env.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/utils/colors.ts": {
+      "bytes": 222,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/chalk@5.6.2/node_modules/chalk/source/index.js",
+          "kind": "import-statement",
+          "original": "chalk"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/ora@8.2.0/node_modules/ora/index.js": {
+      "bytes": 9672,
+      "imports": [
+        {
+          "path": "node:process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "chalk",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/cli-cursor@5.0.0/node_modules/cli-cursor/index.js",
+          "kind": "import-statement",
+          "original": "cli-cursor"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/cli-spinners@2.9.2/node_modules/cli-spinners/index.js",
+          "kind": "import-statement",
+          "original": "cli-spinners"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/log-symbols@6.0.0/node_modules/log-symbols/index.js",
+          "kind": "import-statement",
+          "original": "log-symbols"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/strip-ansi@7.2.0/node_modules/strip-ansi/index.js",
+          "kind": "import-statement",
+          "original": "strip-ansi"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/string-width@7.2.0/node_modules/string-width/index.js",
+          "kind": "import-statement",
+          "original": "string-width"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/is-interactive@2.0.0/node_modules/is-interactive/index.js",
+          "kind": "import-statement",
+          "original": "is-interactive"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/is-unicode-supported@2.1.0/node_modules/is-unicode-supported/index.js",
+          "kind": "import-statement",
+          "original": "is-unicode-supported"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/stdin-discarder@0.2.2/node_modules/stdin-discarder/index.js",
+          "kind": "import-statement",
+          "original": "stdin-discarder"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/cli-spinners@2.9.2/node_modules/cli-spinners/index.js",
+          "kind": "import-statement",
+          "original": "cli-spinners"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/templates/project.ts": {
+      "bytes": 1299,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "src/templates/module.ts": {
+      "bytes": 346,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "src/utils/env.ts": {
+      "bytes": 864,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/dotenv@17.3.1/node_modules/dotenv/lib/main.js",
+          "kind": "import-statement",
+          "original": "dotenv"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/dotenv-expand@12.0.3/node_modules/dotenv-expand/lib/main.js",
+          "kind": "import-statement",
+          "original": "dotenv-expand"
+        },
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/config/pkg.ts": {
+      "bytes": 804,
+      "imports": [
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/utils/fs.ts",
+          "kind": "import-statement",
+          "original": "../utils/fs.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/utils/index.ts",
+          "kind": "import-statement",
+          "original": "../utils/index.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/index.js",
+          "kind": "import-statement",
+          "original": "semver"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/esbuild/index.ts": {
+      "bytes": 926,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/config/index.ts",
+          "kind": "import-statement",
+          "original": "../config/index.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/config/entry.ts",
+          "kind": "import-statement",
+          "original": "../config/entry.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/utils/error-handler.ts",
+          "kind": "import-statement",
+          "original": "../utils/error-handler.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/esbuild/build.ts",
+          "kind": "import-statement",
+          "original": "./build.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/esbuild/builder.ts",
+          "kind": "import-statement",
+          "original": "./builder.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/esbuild/watch.ts",
+          "kind": "import-statement",
+          "original": "./watch.js"
+        },
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/chalk@5.6.2/node_modules/chalk/source/index.js": {
+      "bytes": 5902,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/chalk@5.6.2/node_modules/chalk/source/vendor/ansi-styles/index.js",
+          "kind": "import-statement",
+          "original": "#ansi-styles"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/chalk@5.6.2/node_modules/chalk/source/vendor/supports-color/index.js",
+          "kind": "import-statement",
+          "original": "#supports-color"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/chalk@5.6.2/node_modules/chalk/source/utilities.js",
+          "kind": "import-statement",
+          "original": "./utilities.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/chalk@5.6.2/node_modules/chalk/source/vendor/ansi-styles/index.js",
+          "kind": "import-statement",
+          "original": "./vendor/ansi-styles/index.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/cli-cursor@5.0.0/node_modules/cli-cursor/index.js": {
+      "bytes": 694,
+      "imports": [
+        {
+          "path": "node:process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/restore-cursor@5.1.0/node_modules/restore-cursor/index.js",
+          "kind": "import-statement",
+          "original": "restore-cursor"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/string-width@7.2.0/node_modules/string-width/index.js": {
+      "bytes": 2231,
+      "imports": [
+        {
+          "path": "strip-ansi",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/get-east-asian-width@1.5.0/node_modules/get-east-asian-width/index.js",
+          "kind": "import-statement",
+          "original": "get-east-asian-width"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/emoji-regex@10.6.0/node_modules/emoji-regex/index.js",
+          "kind": "import-statement",
+          "original": "emoji-regex"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/is-interactive@2.0.0/node_modules/is-interactive/index.js": {
+      "bytes": 181,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/stdin-discarder@0.2.2/node_modules/stdin-discarder/index.js": {
+      "bytes": 1073,
+      "imports": [
+        {
+          "path": "node:process",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/log-symbols@6.0.0/node_modules/log-symbols/index.js": {
+      "bytes": 435,
+      "imports": [
+        {
+          "path": "chalk",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/is-unicode-supported@1.3.0/node_modules/is-unicode-supported/index.js",
+          "kind": "import-statement",
+          "original": "is-unicode-supported"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/is-unicode-supported@2.1.0/node_modules/is-unicode-supported/index.js": {
+      "bytes": 657,
+      "imports": [
+        {
+          "path": "node:process",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/cli-spinners@2.9.2/node_modules/cli-spinners/index.js": {
+      "bytes": 406,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/cli-spinners@2.9.2/node_modules/cli-spinners/spinners.json",
+          "kind": "require-call",
+          "original": "./spinners.json",
+          "with": { "type": "json" }
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/strip-ansi@7.2.0/node_modules/strip-ansi/index.js": {
+      "bytes": 626,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/ansi-regex@6.2.2/node_modules/ansi-regex/index.js",
+          "kind": "import-statement",
+          "original": "ansi-regex"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/dotenv-expand@12.0.3/node_modules/dotenv-expand/lib/main.js": {
+      "bytes": 2594,
+      "imports": [
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/dotenv@17.3.1/node_modules/dotenv/lib/main.js": {
+      "bytes": 12544,
+      "imports": [
+        {
+          "path": "fs",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "path",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "os",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "crypto",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/dotenv@17.3.1/node_modules/dotenv/package.json",
+          "kind": "require-call",
+          "original": "../package.json"
+        }
+      ],
+      "format": "cjs"
+    },
+    "src/esbuild/watch.ts": {
+      "bytes": 207,
+      "imports": [
+        {
+          "path": "esbuild",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/esbuild/builder.ts": {
+      "bytes": 1327,
+      "imports": [
+        {
+          "path": "../utils/fs.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/utils/path.ts",
+          "kind": "import-statement",
+          "original": "../utils/path.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/esbuild/plugins.ts",
+          "kind": "import-statement",
+          "original": "./plugins.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/config/entry.ts": {
+      "bytes": 914,
+      "imports": [
+        {
+          "path": "node:fs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:fs/promises",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/config/index.ts": {
+      "bytes": 1260,
+      "imports": [
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:url",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/config/defaults.ts",
+          "kind": "import-statement",
+          "original": "./defaults.js"
+        },
+        {
+          "path": "./pkg.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/esbuild/build.ts": {
+      "bytes": 2021,
+      "imports": [
+        {
+          "path": "node:os",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "esbuild",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "ora",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../utils/colors.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../utils/path.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../utils/logging.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/utils/utils.ts",
+          "kind": "import-statement",
+          "original": "../utils/utils.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/plugins/typescript/checker.ts",
+          "kind": "import-statement",
+          "original": "../plugins/typescript/checker.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/utils/error-handler.ts": {
+      "bytes": 228,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/utils/logging.ts",
+          "kind": "import-statement",
+          "original": "./logging.js"
+        },
+        {
+          "path": "./colors.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/index.js": {
+      "bytes": 2630,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/internal/re.js",
+          "kind": "require-call",
+          "original": "./internal/re"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/internal/constants.js",
+          "kind": "require-call",
+          "original": "./internal/constants"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/classes/semver.js",
+          "kind": "require-call",
+          "original": "./classes/semver"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/internal/identifiers.js",
+          "kind": "require-call",
+          "original": "./internal/identifiers"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/parse.js",
+          "kind": "require-call",
+          "original": "./functions/parse"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/valid.js",
+          "kind": "require-call",
+          "original": "./functions/valid"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/clean.js",
+          "kind": "require-call",
+          "original": "./functions/clean"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/inc.js",
+          "kind": "require-call",
+          "original": "./functions/inc"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/diff.js",
+          "kind": "require-call",
+          "original": "./functions/diff"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/major.js",
+          "kind": "require-call",
+          "original": "./functions/major"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/minor.js",
+          "kind": "require-call",
+          "original": "./functions/minor"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/patch.js",
+          "kind": "require-call",
+          "original": "./functions/patch"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/prerelease.js",
+          "kind": "require-call",
+          "original": "./functions/prerelease"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/compare.js",
+          "kind": "require-call",
+          "original": "./functions/compare"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/rcompare.js",
+          "kind": "require-call",
+          "original": "./functions/rcompare"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/compare-loose.js",
+          "kind": "require-call",
+          "original": "./functions/compare-loose"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/compare-build.js",
+          "kind": "require-call",
+          "original": "./functions/compare-build"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/sort.js",
+          "kind": "require-call",
+          "original": "./functions/sort"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/rsort.js",
+          "kind": "require-call",
+          "original": "./functions/rsort"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/gt.js",
+          "kind": "require-call",
+          "original": "./functions/gt"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/lt.js",
+          "kind": "require-call",
+          "original": "./functions/lt"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/eq.js",
+          "kind": "require-call",
+          "original": "./functions/eq"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/neq.js",
+          "kind": "require-call",
+          "original": "./functions/neq"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/gte.js",
+          "kind": "require-call",
+          "original": "./functions/gte"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/lte.js",
+          "kind": "require-call",
+          "original": "./functions/lte"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/cmp.js",
+          "kind": "require-call",
+          "original": "./functions/cmp"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/coerce.js",
+          "kind": "require-call",
+          "original": "./functions/coerce"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/classes/comparator.js",
+          "kind": "require-call",
+          "original": "./classes/comparator"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/classes/range.js",
+          "kind": "require-call",
+          "original": "./classes/range"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/functions/satisfies.js",
+          "kind": "require-call",
+          "original": "./functions/satisfies"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/to-comparators.js",
+          "kind": "require-call",
+          "original": "./ranges/to-comparators"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/max-satisfying.js",
+          "kind": "require-call",
+          "original": "./ranges/max-satisfying"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/min-satisfying.js",
+          "kind": "require-call",
+          "original": "./ranges/min-satisfying"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/min-version.js",
+          "kind": "require-call",
+          "original": "./ranges/min-version"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/valid.js",
+          "kind": "require-call",
+          "original": "./ranges/valid"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/outside.js",
+          "kind": "require-call",
+          "original": "./ranges/outside"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/gtr.js",
+          "kind": "require-call",
+          "original": "./ranges/gtr"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/ltr.js",
+          "kind": "require-call",
+          "original": "./ranges/ltr"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/intersects.js",
+          "kind": "require-call",
+          "original": "./ranges/intersects"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/simplify.js",
+          "kind": "require-call",
+          "original": "./ranges/simplify"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/subset.js",
+          "kind": "require-call",
+          "original": "./ranges/subset"
+        }
+      ],
+      "format": "cjs"
+    },
+    "src/utils/fs.ts": {
+      "bytes": 622,
+      "imports": [
+        {
+          "path": "node:fs",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/utils/index.ts": {
+      "bytes": 64,
+      "imports": [
+        {
+          "path": "./utils.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./error-handler.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/chalk@5.6.2/node_modules/chalk/source/vendor/ansi-styles/index.js": {
+      "bytes": 5256,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/chalk@5.6.2/node_modules/chalk/source/utilities.js": {
+      "bytes": 997,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/chalk@5.6.2/node_modules/chalk/source/vendor/supports-color/index.js": {
+      "bytes": 3965,
+      "imports": [
+        {
+          "path": "node:process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:os",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:tty",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/cli-spinners@2.9.2/node_modules/cli-spinners/spinners.json": {
+      "bytes": 26268,
+      "imports": [
+      ],
+      "format": "json"
+    },
+    "../../node_modules/.bun/restore-cursor@5.1.0/node_modules/restore-cursor/index.js": {
+      "bytes": 386,
+      "imports": [
+        {
+          "path": "node:process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/onetime@7.0.0/node_modules/onetime/index.js",
+          "kind": "import-statement",
+          "original": "onetime"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/signal-exit@4.1.0/node_modules/signal-exit/dist/mjs/index.js",
+          "kind": "import-statement",
+          "original": "signal-exit"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/ansi-regex@6.2.2/node_modules/ansi-regex/index.js": {
+      "bytes": 590,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/is-unicode-supported@1.3.0/node_modules/is-unicode-supported/index.js": {
+      "bytes": 651,
+      "imports": [
+        {
+          "path": "node:process",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/emoji-regex@10.6.0/node_modules/emoji-regex/index.js": {
+      "bytes": 14183,
+      "imports": [
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/get-east-asian-width@1.5.0/node_modules/get-east-asian-width/index.js": {
+      "bytes": 730,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/get-east-asian-width@1.5.0/node_modules/get-east-asian-width/lookup.js",
+          "kind": "import-statement",
+          "original": "./lookup.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/get-east-asian-width@1.5.0/node_modules/get-east-asian-width/lookup.js",
+          "kind": "import-statement",
+          "original": "./lookup.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/config/defaults.ts": {
+      "bytes": 394,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/dotenv@17.3.1/node_modules/dotenv/package.json": {
+      "bytes": 1716,
+      "imports": [
+      ]
+    },
+    "src/esbuild/plugins.ts": {
+      "bytes": 1340,
+      "imports": [
+        {
+          "path": "../utils/path.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/plugins/progress.ts",
+          "kind": "import-statement",
+          "original": "../plugins/progress.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/plugins/run/index.ts",
+          "kind": "import-statement",
+          "original": "../plugins/run/index.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/plugins/typescript/index.ts",
+          "kind": "import-statement",
+          "original": "../plugins/typescript/index.js"
+        },
+        {
+          "path": "../utils/colors.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../utils/logging.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/utils/path.ts": {
+      "bytes": 693,
+      "imports": [
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/utils/logging.ts": {
+      "bytes": 1129,
+      "imports": [
+        {
+          "path": "node:process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "./colors.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/pretty-ms@9.3.0/node_modules/pretty-ms/index.js",
+          "kind": "import-statement",
+          "original": "pretty-ms"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/pretty-bytes@6.1.1/node_modules/pretty-bytes/index.js",
+          "kind": "import-statement",
+          "original": "pretty-bytes"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/plugins/typescript/checker.ts": {
+      "bytes": 2344,
+      "imports": [
+        {
+          "path": "node:worker_threads",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:url",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "../../utils/colors.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/utils/utils.ts": {
+      "bytes": 1133,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/intersects.js": {
+      "bytes": 224,
+      "imports": [
+        {
+          "path": "../classes/range",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/patch.js": {
+      "bytes": 136,
+      "imports": [
+        {
+          "path": "../classes/semver",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/classes/range.js": {
+      "bytes": 14977,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/internal/lrucache.js",
+          "kind": "require-call",
+          "original": "../internal/lrucache"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/internal/parse-options.js",
+          "kind": "require-call",
+          "original": "../internal/parse-options"
+        },
+        {
+          "path": "./comparator",
+          "kind": "require-call"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/semver@7.7.4/node_modules/semver/internal/debug.js",
+          "kind": "require-call",
+          "original": "../internal/debug"
+        },
+        {
+          "path": "./semver",
+          "kind": "require-call"
+        },
+        {
+          "path": "../internal/re",
+          "kind": "require-call"
+        },
+        {
+          "path": "../internal/constants",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/inc.js": {
+      "bytes": 478,
+      "imports": [
+        {
+          "path": "../classes/semver",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/neq.js": {
+      "bytes": 128,
+      "imports": [
+        {
+          "path": "./compare",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/outside.js": {
+      "bytes": 2204,
+      "imports": [
+        {
+          "path": "../classes/semver",
+          "kind": "require-call"
+        },
+        {
+          "path": "../classes/comparator",
+          "kind": "require-call"
+        },
+        {
+          "path": "../classes/range",
+          "kind": "require-call"
+        },
+        {
+          "path": "../functions/satisfies",
+          "kind": "require-call"
+        },
+        {
+          "path": "../functions/gt",
+          "kind": "require-call"
+        },
+        {
+          "path": "../functions/lt",
+          "kind": "require-call"
+        },
+        {
+          "path": "../functions/lte",
+          "kind": "require-call"
+        },
+        {
+          "path": "../functions/gte",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/diff.js": {
+      "bytes": 1423,
+      "imports": [
+        {
+          "path": "./parse.js",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/ltr.js": {
+      "bytes": 227,
+      "imports": [
+        {
+          "path": "./outside",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/internal/re.js": {
+      "bytes": 8138,
+      "imports": [
+        {
+          "path": "./constants",
+          "kind": "require-call"
+        },
+        {
+          "path": "./debug",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/min-version.js": {
+      "bytes": 1514,
+      "imports": [
+        {
+          "path": "../classes/semver",
+          "kind": "require-call"
+        },
+        {
+          "path": "../classes/range",
+          "kind": "require-call"
+        },
+        {
+          "path": "../functions/gt",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/rcompare.js": {
+      "bytes": 132,
+      "imports": [
+        {
+          "path": "./compare",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/rsort.js": {
+      "bytes": 163,
+      "imports": [
+        {
+          "path": "./compare-build",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/eq.js": {
+      "bytes": 126,
+      "imports": [
+        {
+          "path": "./compare",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/simplify.js": {
+      "bytes": 1355,
+      "imports": [
+        {
+          "path": "../functions/satisfies.js",
+          "kind": "require-call"
+        },
+        {
+          "path": "../functions/compare.js",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/parse.js": {
+      "bytes": 331,
+      "imports": [
+        {
+          "path": "../classes/semver",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/valid.js": {
+      "bytes": 176,
+      "imports": [
+        {
+          "path": "./parse",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/coerce.js": {
+      "bytes": 2004,
+      "imports": [
+        {
+          "path": "../classes/semver",
+          "kind": "require-call"
+        },
+        {
+          "path": "./parse",
+          "kind": "require-call"
+        },
+        {
+          "path": "../internal/re",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/gtr.js": {
+      "bytes": 231,
+      "imports": [
+        {
+          "path": "./outside",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/classes/semver.js": {
+      "bytes": 9480,
+      "imports": [
+        {
+          "path": "../internal/debug",
+          "kind": "require-call"
+        },
+        {
+          "path": "../internal/constants",
+          "kind": "require-call"
+        },
+        {
+          "path": "../internal/re",
+          "kind": "require-call"
+        },
+        {
+          "path": "../internal/parse-options",
+          "kind": "require-call"
+        },
+        {
+          "path": "../internal/identifiers",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/compare.js": {
+      "bytes": 170,
+      "imports": [
+        {
+          "path": "../classes/semver",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/compare-loose.js": {
+      "bytes": 132,
+      "imports": [
+        {
+          "path": "./compare",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/compare-build.js": {
+      "bytes": 281,
+      "imports": [
+        {
+          "path": "../classes/semver",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/lt.js": {
+      "bytes": 124,
+      "imports": [
+        {
+          "path": "./compare",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/subset.js": {
+      "bytes": 7524,
+      "imports": [
+        {
+          "path": "../classes/range.js",
+          "kind": "require-call"
+        },
+        {
+          "path": "../classes/comparator.js",
+          "kind": "require-call"
+        },
+        {
+          "path": "../functions/satisfies.js",
+          "kind": "require-call"
+        },
+        {
+          "path": "../functions/compare.js",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/minor.js": {
+      "bytes": 136,
+      "imports": [
+        {
+          "path": "../classes/semver",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/lte.js": {
+      "bytes": 127,
+      "imports": [
+        {
+          "path": "./compare",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/internal/identifiers.js": {
+      "bytes": 525,
+      "imports": [
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/clean.js": {
+      "bytes": 205,
+      "imports": [
+        {
+          "path": "./parse",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/sort.js": {
+      "bytes": 161,
+      "imports": [
+        {
+          "path": "./compare-build",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/internal/constants.js": {
+      "bytes": 873,
+      "imports": [
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/major.js": {
+      "bytes": 136,
+      "imports": [
+        {
+          "path": "../classes/semver",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/gte.js": {
+      "bytes": 127,
+      "imports": [
+        {
+          "path": "./compare",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/to-comparators.js": {
+      "bytes": 282,
+      "imports": [
+        {
+          "path": "../classes/range",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/max-satisfying.js": {
+      "bytes": 593,
+      "imports": [
+        {
+          "path": "../classes/semver",
+          "kind": "require-call"
+        },
+        {
+          "path": "../classes/range",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/gt.js": {
+      "bytes": 124,
+      "imports": [
+        {
+          "path": "./compare",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/classes/comparator.js": {
+      "bytes": 3631,
+      "imports": [
+        {
+          "path": "../internal/parse-options",
+          "kind": "require-call"
+        },
+        {
+          "path": "../internal/re",
+          "kind": "require-call"
+        },
+        {
+          "path": "../functions/cmp",
+          "kind": "require-call"
+        },
+        {
+          "path": "../internal/debug",
+          "kind": "require-call"
+        },
+        {
+          "path": "./semver",
+          "kind": "require-call"
+        },
+        {
+          "path": "./range",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/min-satisfying.js": {
+      "bytes": 591,
+      "imports": [
+        {
+          "path": "../classes/semver",
+          "kind": "require-call"
+        },
+        {
+          "path": "../classes/range",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/valid.js": {
+      "bytes": 326,
+      "imports": [
+        {
+          "path": "../classes/range",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/prerelease.js": {
+      "bytes": 234,
+      "imports": [
+        {
+          "path": "./parse",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/cmp.js": {
+      "bytes": 961,
+      "imports": [
+        {
+          "path": "./eq",
+          "kind": "require-call"
+        },
+        {
+          "path": "./neq",
+          "kind": "require-call"
+        },
+        {
+          "path": "./gt",
+          "kind": "require-call"
+        },
+        {
+          "path": "./gte",
+          "kind": "require-call"
+        },
+        {
+          "path": "./lt",
+          "kind": "require-call"
+        },
+        {
+          "path": "./lte",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/satisfies.js": {
+      "bytes": 247,
+      "imports": [
+        {
+          "path": "../classes/range",
+          "kind": "require-call"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/signal-exit@4.1.0/node_modules/signal-exit/dist/mjs/index.js": {
+      "bytes": 9090,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/signal-exit@4.1.0/node_modules/signal-exit/dist/mjs/signals.js",
+          "kind": "import-statement",
+          "original": "./signals.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/onetime@7.0.0/node_modules/onetime/index.js": {
+      "bytes": 1033,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/mimic-function@5.0.1/node_modules/mimic-function/index.js",
+          "kind": "import-statement",
+          "original": "mimic-function"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/get-east-asian-width@1.5.0/node_modules/get-east-asian-width/lookup.js": {
+      "bytes": 2916,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/get-east-asian-width@1.5.0/node_modules/get-east-asian-width/lookup-data.js",
+          "kind": "import-statement",
+          "original": "./lookup-data.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/get-east-asian-width@1.5.0/node_modules/get-east-asian-width/utilities.js",
+          "kind": "import-statement",
+          "original": "./utilities.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/pretty-ms@9.3.0/node_modules/pretty-ms/index.js": {
+      "bytes": 4471,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/parse-ms@4.0.0/node_modules/parse-ms/index.js",
+          "kind": "import-statement",
+          "original": "parse-ms"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/pretty-bytes@6.1.1/node_modules/pretty-bytes/index.js": {
+      "bytes": 2539,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "src/plugins/run/index.ts": {
+      "bytes": 1750,
+      "imports": [
+        {
+          "path": "node:os",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/plugins/run/node-runner.ts",
+          "kind": "import-statement",
+          "original": "./node-runner.js"
+        },
+        {
+          "path": "../../utils/colors.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../../utils/logging.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../../utils/env.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/plugins/typescript/index.ts": {
+      "bytes": 680,
+      "imports": [
+        {
+          "path": "./checker.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./checker.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/plugins/progress.ts": {
+      "bytes": 1299,
+      "imports": [
+        {
+          "path": "ora",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../utils/colors.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../utils/path.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/packages/cli/src/utils/screen.ts",
+          "kind": "import-statement",
+          "original": "../utils/screen.js"
+        },
+        {
+          "path": "../utils/logging.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../utils/utils.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/internal/lrucache.js": {
+      "bytes": 802,
+      "imports": [
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/internal/debug.js": {
+      "bytes": 240,
+      "imports": [
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/semver@7.7.4/node_modules/semver/internal/parse-options.js": {
+      "bytes": 338,
+      "imports": [
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/mimic-function@5.0.1/node_modules/mimic-function/index.js": {
+      "bytes": 3038,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/signal-exit@4.1.0/node_modules/signal-exit/dist/mjs/signals.js": {
+      "bytes": 1438,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/get-east-asian-width@1.5.0/node_modules/get-east-asian-width/lookup-data.js": {
+      "bytes": 4421,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/get-east-asian-width@1.5.0/node_modules/get-east-asian-width/utilities.js": {
+      "bytes": 650,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/parse-ms@4.0.0/node_modules/parse-ms/index.js": {
+      "bytes": 1159,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "src/plugins/run/node-runner.ts": {
+      "bytes": 823,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/index.js",
+          "kind": "import-statement",
+          "original": "execa"
+        }
+      ],
+      "format": "esm"
+    },
+    "src/utils/screen.ts": {
+      "bytes": 196,
+      "imports": [
+        {
+          "path": "./logging.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/index.js": {
+      "bytes": 979,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/create.js",
+          "kind": "import-statement",
+          "original": "./lib/methods/create.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/command.js",
+          "kind": "import-statement",
+          "original": "./lib/methods/command.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/node.js",
+          "kind": "import-statement",
+          "original": "./lib/methods/node.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/script.js",
+          "kind": "import-statement",
+          "original": "./lib/methods/script.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/methods.js",
+          "kind": "import-statement",
+          "original": "./lib/ipc/methods.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/command.js",
+          "kind": "import-statement",
+          "original": "./lib/methods/command.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/return/final-error.js",
+          "kind": "import-statement",
+          "original": "./lib/return/final-error.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/methods.js": {
+      "bytes": 1272,
+      "imports": [
+        {
+          "path": "node:process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/send.js",
+          "kind": "import-statement",
+          "original": "./send.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/get-one.js",
+          "kind": "import-statement",
+          "original": "./get-one.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/get-each.js",
+          "kind": "import-statement",
+          "original": "./get-each.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/graceful.js",
+          "kind": "import-statement",
+          "original": "./graceful.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/command.js": {
+      "bytes": 1500,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/return/final-error.js": {
+      "bytes": 1538,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/create.js": {
+      "bytes": 2456,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/is-plain-obj@4.1.0/node_modules/is-plain-obj/index.js",
+          "kind": "import-statement",
+          "original": "is-plain-obj"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/parameters.js",
+          "kind": "import-statement",
+          "original": "./parameters.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/template.js",
+          "kind": "import-statement",
+          "original": "./template.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/main-sync.js",
+          "kind": "import-statement",
+          "original": "./main-sync.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/main-async.js",
+          "kind": "import-statement",
+          "original": "./main-async.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/bind.js",
+          "kind": "import-statement",
+          "original": "./bind.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/node.js": {
+      "bytes": 1648,
+      "imports": [
+        {
+          "path": "node:process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/file-url.js",
+          "kind": "import-statement",
+          "original": "../arguments/file-url.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/script.js": {
+      "bytes": 1015,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/bind.js": {
+      "bytes": 787,
+      "imports": [
+        {
+          "path": "is-plain-obj",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/specific.js",
+          "kind": "import-statement",
+          "original": "../arguments/specific.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/is-plain-obj@4.1.0/node_modules/is-plain-obj/index.js": {
+      "bytes": 344,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/parameters.js": {
+      "bytes": 1352,
+      "imports": [
+        {
+          "path": "is-plain-obj",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../arguments/file-url.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/template.js": {
+      "bytes": 4951,
+      "imports": [
+        {
+          "path": "node:child_process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "is-plain-obj",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/utils/uint-array.js",
+          "kind": "import-statement",
+          "original": "../utils/uint-array.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/main-async.js": {
+      "bytes": 5950,
+      "imports": [
+        {
+          "path": "node:events",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:child_process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/index.js",
+          "kind": "import-statement",
+          "original": "get-stream"
+        },
+        {
+          "path": "../arguments/command.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../arguments/options.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/fd-options.js",
+          "kind": "import-statement",
+          "original": "../arguments/fd-options.js"
+        },
+        {
+          "path": "../arguments/shell.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../ipc/methods.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../return/result.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../return/reject.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/return/early-error.js",
+          "kind": "import-statement",
+          "original": "../return/early-error.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/handle-async.js",
+          "kind": "import-statement",
+          "original": "../stdio/handle-async.js"
+        },
+        {
+          "path": "../io/strip-newline.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/output-async.js",
+          "kind": "import-statement",
+          "original": "../io/output-async.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/terminate/kill.js",
+          "kind": "import-statement",
+          "original": "../terminate/kill.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/terminate/cleanup.js",
+          "kind": "import-statement",
+          "original": "../terminate/cleanup.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/pipe/setup.js",
+          "kind": "import-statement",
+          "original": "../pipe/setup.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/resolve/all-async.js",
+          "kind": "import-statement",
+          "original": "../resolve/all-async.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/resolve/wait-subprocess.js",
+          "kind": "import-statement",
+          "original": "../resolve/wait-subprocess.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/convert/add.js",
+          "kind": "import-statement",
+          "original": "../convert/add.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/utils/deferred.js",
+          "kind": "import-statement",
+          "original": "../utils/deferred.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/promise.js",
+          "kind": "import-statement",
+          "original": "./promise.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/main-sync.js": {
+      "bytes": 4703,
+      "imports": [
+        {
+          "path": "node:child_process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/command.js",
+          "kind": "import-statement",
+          "original": "../arguments/command.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/options.js",
+          "kind": "import-statement",
+          "original": "../arguments/options.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/shell.js",
+          "kind": "import-statement",
+          "original": "../arguments/shell.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/return/result.js",
+          "kind": "import-statement",
+          "original": "../return/result.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/return/reject.js",
+          "kind": "import-statement",
+          "original": "../return/reject.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/handle-sync.js",
+          "kind": "import-statement",
+          "original": "../stdio/handle-sync.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/strip-newline.js",
+          "kind": "import-statement",
+          "original": "../io/strip-newline.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/input-sync.js",
+          "kind": "import-statement",
+          "original": "../io/input-sync.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/output-sync.js",
+          "kind": "import-statement",
+          "original": "../io/output-sync.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/max-buffer.js",
+          "kind": "import-statement",
+          "original": "../io/max-buffer.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/resolve/all-sync.js",
+          "kind": "import-statement",
+          "original": "../resolve/all-sync.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/resolve/exit-sync.js",
+          "kind": "import-statement",
+          "original": "../resolve/exit-sync.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/send.js": {
+      "bytes": 2379,
+      "imports": [
+        {
+          "path": "node:util",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/validation.js",
+          "kind": "import-statement",
+          "original": "./validation.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/outgoing.js",
+          "kind": "import-statement",
+          "original": "./outgoing.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/strict.js",
+          "kind": "import-statement",
+          "original": "./strict.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/graceful.js": {
+      "bytes": 1932,
+      "imports": [
+        {
+          "path": "node:timers/promises",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "./send.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./forward.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./validation.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/get-each.js": {
+      "bytes": 2258,
+      "imports": [
+        {
+          "path": "node:events",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "./validation.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./forward.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./reference.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/get-one.js": {
+      "bytes": 1926,
+      "imports": [
+        {
+          "path": "node:events",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "./validation.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/forward.js",
+          "kind": "import-statement",
+          "original": "./forward.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/reference.js",
+          "kind": "import-statement",
+          "original": "./reference.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/file-url.js": {
+      "bytes": 960,
+      "imports": [
+        {
+          "path": "node:url",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/specific.js": {
+      "bytes": 3751,
+      "imports": [
+        {
+          "path": "node:util",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "is-plain-obj",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/utils/standard-stream.js",
+          "kind": "import-statement",
+          "original": "../utils/standard-stream.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/utils/uint-array.js": {
+      "bytes": 2308,
+      "imports": [
+        {
+          "path": "node:string_decoder",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/outgoing.js": {
+      "bytes": 2299,
+      "imports": [
+        {
+          "path": "../utils/deferred.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../arguments/specific.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../arguments/fd-options.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./strict.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/strict.js": {
+      "bytes": 3318,
+      "imports": [
+        {
+          "path": "node:events",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "../utils/deferred.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/utils/max-listeners.js",
+          "kind": "import-statement",
+          "original": "../utils/max-listeners.js"
+        },
+        {
+          "path": "./send.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./validation.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./forward.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./outgoing.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/validation.js": {
+      "bytes": 5710,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/max-buffer.js": {
+      "bytes": 2894,
+      "imports": [
+        {
+          "path": "get-stream",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../utils/standard-stream.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../arguments/specific.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/resolve/all-sync.js": {
+      "bytes": 751,
+      "imports": [
+        {
+          "path": "../utils/uint-array.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../io/strip-newline.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/strip-newline.js": {
+      "bytes": 708,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/strip-final-newline@4.0.0/node_modules/strip-final-newline/index.js",
+          "kind": "import-statement",
+          "original": "strip-final-newline"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/command.js": {
+      "bytes": 777,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/start.js",
+          "kind": "import-statement",
+          "original": "../verbose/start.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/info.js",
+          "kind": "import-statement",
+          "original": "../verbose/info.js"
+        },
+        {
+          "path": "../return/duration.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/escape.js",
+          "kind": "import-statement",
+          "original": "./escape.js"
+        },
+        {
+          "path": "./specific.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/resolve/exit-sync.js": {
+      "bytes": 782,
+      "imports": [
+        {
+          "path": "../return/final-error.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../io/max-buffer.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/resolve/exit-async.js",
+          "kind": "import-statement",
+          "original": "./exit-async.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/return/reject.js": {
+      "bytes": 302,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/complete.js",
+          "kind": "import-statement",
+          "original": "../verbose/complete.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/return/result.js": {
+      "bytes": 3690,
+      "imports": [
+        {
+          "path": "../terminate/signal.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/return/duration.js",
+          "kind": "import-statement",
+          "original": "./duration.js"
+        },
+        {
+          "path": "./final-error.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/return/message.js",
+          "kind": "import-statement",
+          "original": "./message.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/output-sync.js": {
+      "bytes": 3902,
+      "imports": [
+        {
+          "path": "node:fs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/output.js",
+          "kind": "import-statement",
+          "original": "../verbose/output.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/generator.js",
+          "kind": "import-statement",
+          "original": "../transform/generator.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/split.js",
+          "kind": "import-statement",
+          "original": "../transform/split.js"
+        },
+        {
+          "path": "../utils/uint-array.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/type.js",
+          "kind": "import-statement",
+          "original": "../stdio/type.js"
+        },
+        {
+          "path": "./max-buffer.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/handle-sync.js": {
+      "bytes": 2015,
+      "imports": [
+        {
+          "path": "node:fs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "../utils/uint-array.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/handle.js",
+          "kind": "import-statement",
+          "original": "./handle.js"
+        },
+        {
+          "path": "./type.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/input-sync.js": {
+      "bytes": 1948,
+      "imports": [
+        {
+          "path": "../transform/generator.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../utils/uint-array.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../stdio/type.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/options.js": {
+      "bytes": 3062,
+      "imports": [
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/cross-spawn@7.0.6/node_modules/cross-spawn/index.js",
+          "kind": "import-statement",
+          "original": "cross-spawn"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/npm-run-path@6.0.0/node_modules/npm-run-path/index.js",
+          "kind": "import-statement",
+          "original": "npm-run-path"
+        },
+        {
+          "path": "../terminate/kill.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/terminate/signal.js",
+          "kind": "import-statement",
+          "original": "../terminate/signal.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/terminate/cancel.js",
+          "kind": "import-statement",
+          "original": "../terminate/cancel.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/terminate/graceful.js",
+          "kind": "import-statement",
+          "original": "../terminate/graceful.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/terminate/timeout.js",
+          "kind": "import-statement",
+          "original": "../terminate/timeout.js"
+        },
+        {
+          "path": "../methods/node.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/ipc-input.js",
+          "kind": "import-statement",
+          "original": "../ipc/ipc-input.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/encoding-option.js",
+          "kind": "import-statement",
+          "original": "./encoding-option.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/cwd.js",
+          "kind": "import-statement",
+          "original": "./cwd.js"
+        },
+        {
+          "path": "./file-url.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./specific.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/shell.js": {
+      "bytes": 926,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/utils/standard-stream.js": {
+      "bytes": 367,
+      "imports": [
+        {
+          "path": "node:process",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/terminate/cleanup.js": {
+      "bytes": 428,
+      "imports": [
+        {
+          "path": "node:events",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "signal-exit",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/resolve/wait-subprocess.js": {
+      "bytes": 4294,
+      "imports": [
+        {
+          "path": "node:events",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/is-stream@4.0.1/node_modules/is-stream/index.js",
+          "kind": "import-statement",
+          "original": "is-stream"
+        },
+        {
+          "path": "../terminate/timeout.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../terminate/cancel.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../terminate/graceful.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../utils/standard-stream.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../stdio/type.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/contents.js",
+          "kind": "import-statement",
+          "original": "../io/contents.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/buffer-messages.js",
+          "kind": "import-statement",
+          "original": "../ipc/buffer-messages.js"
+        },
+        {
+          "path": "../ipc/ipc-input.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./all-async.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./stdio.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./exit-async.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/resolve/wait-stream.js",
+          "kind": "import-statement",
+          "original": "./wait-stream.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/promise.js": {
+      "bytes": 580,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/index.js": {
+      "bytes": 289,
+      "imports": [
+        {
+          "path": "node:events",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:stream/promises",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/stream.js",
+          "kind": "import-statement",
+          "original": "./stream.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/exports.js",
+          "kind": "import-statement",
+          "original": "./exports.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/pipe/setup.js": {
+      "bytes": 2203,
+      "imports": [
+        {
+          "path": "is-plain-obj",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/pipe/pipe-arguments.js",
+          "kind": "import-statement",
+          "original": "./pipe-arguments.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/pipe/throw.js",
+          "kind": "import-statement",
+          "original": "./throw.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/pipe/sequence.js",
+          "kind": "import-statement",
+          "original": "./sequence.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/pipe/streaming.js",
+          "kind": "import-statement",
+          "original": "./streaming.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/pipe/abort.js",
+          "kind": "import-statement",
+          "original": "./abort.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/terminate/kill.js": {
+      "bytes": 2922,
+      "imports": [
+        {
+          "path": "node:timers/promises",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "../return/final-error.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./signal.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/convert/add.js": {
+      "bytes": 884,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/convert/concurrent.js",
+          "kind": "import-statement",
+          "original": "./concurrent.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/convert/readable.js",
+          "kind": "import-statement",
+          "original": "./readable.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/convert/writable.js",
+          "kind": "import-statement",
+          "original": "./writable.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/convert/duplex.js",
+          "kind": "import-statement",
+          "original": "./duplex.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/convert/iterable.js",
+          "kind": "import-statement",
+          "original": "./iterable.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/output-async.js": {
+      "bytes": 3027,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/@sindresorhus+merge-streams@4.0.0/node_modules/@sindresorhus/merge-streams/index.js",
+          "kind": "import-statement",
+          "original": "@sindresorhus/merge-streams"
+        },
+        {
+          "path": "../utils/standard-stream.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../utils/max-listeners.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../stdio/type.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/pipeline.js",
+          "kind": "import-statement",
+          "original": "./pipeline.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/handle-async.js": {
+      "bytes": 2228,
+      "imports": [
+        {
+          "path": "node:fs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:buffer",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:stream",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "../transform/generator.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./handle.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./type.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/utils/deferred.js": {
+      "bytes": 205,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/return/early-error.js": {
+      "bytes": 1747,
+      "imports": [
+        {
+          "path": "node:child_process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:stream",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "../stdio/handle.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./result.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./reject.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/fd-options.js": {
+      "bytes": 3971,
+      "imports": [
+        {
+          "path": "./specific.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/resolve/all-async.js": {
+      "bytes": 1713,
+      "imports": [
+        {
+          "path": "@sindresorhus/merge-streams",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/resolve/stdio.js",
+          "kind": "import-statement",
+          "original": "./stdio.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/forward.js": {
+      "bytes": 1927,
+      "imports": [
+        {
+          "path": "node:events",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/incoming.js",
+          "kind": "import-statement",
+          "original": "./incoming.js"
+        },
+        {
+          "path": "./reference.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/reference.js": {
+      "bytes": 1777,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/utils/max-listeners.js": {
+      "bytes": 549,
+      "imports": [
+        {
+          "path": "node:events",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/terminate/graceful.js": {
+      "bytes": 1941,
+      "imports": [
+        {
+          "path": "../utils/abort-signal.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../ipc/graceful.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./kill.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/terminate/timeout.js": {
+      "bytes": 848,
+      "imports": [
+        {
+          "path": "node:timers/promises",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "../return/final-error.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/npm-run-path@6.0.0/node_modules/npm-run-path/index.js": {
+      "bytes": 1470,
+      "imports": [
+        {
+          "path": "node:process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/path-key@4.0.0/node_modules/path-key/index.js",
+          "kind": "import-statement",
+          "original": "path-key"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/unicorn-magic@0.3.0/node_modules/unicorn-magic/node.js",
+          "kind": "import-statement",
+          "original": "unicorn-magic"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/terminate/signal.js": {
+      "bytes": 2507,
+      "imports": [
+        {
+          "path": "node:os",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/human-signals@8.0.1/node_modules/human-signals/build/src/main.js",
+          "kind": "import-statement",
+          "original": "human-signals"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/cross-spawn@7.0.6/node_modules/cross-spawn/index.js": {
+      "bytes": 1192,
+      "imports": [
+        {
+          "path": "child_process",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/cross-spawn@7.0.6/node_modules/cross-spawn/lib/parse.js",
+          "kind": "require-call",
+          "original": "./lib/parse"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/cross-spawn@7.0.6/node_modules/cross-spawn/lib/enoent.js",
+          "kind": "require-call",
+          "original": "./lib/enoent"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/encoding-option.js": {
+      "bytes": 1492,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/ipc-input.js": {
+      "bytes": 1081,
+      "imports": [
+        {
+          "path": "node:v8",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/cwd.js": {
+      "bytes": 1012,
+      "imports": [
+        {
+          "path": "node:fs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "./file-url.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/terminate/cancel.js": {
+      "bytes": 912,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/utils/abort-signal.js",
+          "kind": "import-statement",
+          "original": "../utils/abort-signal.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/type.js": {
+      "bytes": 6271,
+      "imports": [
+        {
+          "path": "is-stream",
+          "kind": "import-statement"
+        },
+        {
+          "path": "is-plain-obj",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../utils/uint-array.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/split.js": {
+      "bytes": 3318,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/output.js": {
+      "bytes": 2724,
+      "imports": [
+        {
+          "path": "../arguments/encoding-option.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../stdio/type.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./log.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./values.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/generator.js": {
+      "bytes": 3752,
+      "imports": [
+        {
+          "path": "node:stream",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "../stdio/type.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./split.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/validate.js",
+          "kind": "import-statement",
+          "original": "./validate.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/encoding-transform.js",
+          "kind": "import-statement",
+          "original": "./encoding-transform.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/run-async.js",
+          "kind": "import-statement",
+          "original": "./run-async.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/run-sync.js",
+          "kind": "import-statement",
+          "original": "./run-sync.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/return/message.js": {
+      "bytes": 4238,
+      "imports": [
+        {
+          "path": "node:util",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "strip-final-newline",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../utils/uint-array.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../arguments/cwd.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../arguments/escape.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../io/max-buffer.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../terminate/signal.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./final-error.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/return/duration.js": {
+      "bytes": 313,
+      "imports": [
+        {
+          "path": "node:process",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/handle.js": {
+      "bytes": 7405,
+      "imports": [
+        {
+          "path": "../utils/standard-stream.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/normalize.js",
+          "kind": "import-statement",
+          "original": "../transform/normalize.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/object-mode.js",
+          "kind": "import-statement",
+          "original": "../transform/object-mode.js"
+        },
+        {
+          "path": "./type.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/direction.js",
+          "kind": "import-statement",
+          "original": "./direction.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/stdio-option.js",
+          "kind": "import-statement",
+          "original": "./stdio-option.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/native.js",
+          "kind": "import-statement",
+          "original": "./native.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/input-option.js",
+          "kind": "import-statement",
+          "original": "./input-option.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/duplicate.js",
+          "kind": "import-statement",
+          "original": "./duplicate.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/complete.js": {
+      "bytes": 611,
+      "imports": [
+        {
+          "path": "pretty-ms",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/values.js",
+          "kind": "import-statement",
+          "original": "./values.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/log.js",
+          "kind": "import-statement",
+          "original": "./log.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/error.js",
+          "kind": "import-statement",
+          "original": "./error.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/strip-final-newline@4.0.0/node_modules/strip-final-newline/index.js": {
+      "bytes": 681,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/escape.js": {
+      "bytes": 3655,
+      "imports": [
+        {
+          "path": "node:process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:util",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/info.js": {
+      "bytes": 1511,
+      "imports": [
+        {
+          "path": "./values.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/start.js": {
+      "bytes": 335,
+      "imports": [
+        {
+          "path": "./values.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./log.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/resolve/exit-async.js": {
+      "bytes": 1867,
+      "imports": [
+        {
+          "path": "node:events",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "../return/final-error.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/pipeline.js": {
+      "bytes": 1319,
+      "imports": [
+        {
+          "path": "node:stream/promises",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "../utils/standard-stream.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/@sindresorhus+merge-streams@4.0.0/node_modules/@sindresorhus/merge-streams/index.js": {
+      "bytes": 6685,
+      "imports": [
+        {
+          "path": "node:events",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:stream",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:stream/promises",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/convert/readable.js": {
+      "bytes": 3946,
+      "imports": [
+        {
+          "path": "node:stream",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:util",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "../arguments/encoding-option.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../arguments/fd-options.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/iterate.js",
+          "kind": "import-statement",
+          "original": "../io/iterate.js"
+        },
+        {
+          "path": "../utils/deferred.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./concurrent.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/convert/shared.js",
+          "kind": "import-statement",
+          "original": "./shared.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/convert/duplex.js": {
+      "bytes": 2262,
+      "imports": [
+        {
+          "path": "node:stream",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:util",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "../arguments/encoding-option.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./readable.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./writable.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/convert/concurrent.js": {
+      "bytes": 1155,
+      "imports": [
+        {
+          "path": "../utils/deferred.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/convert/writable.js": {
+      "bytes": 3572,
+      "imports": [
+        {
+          "path": "node:stream",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:util",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "../arguments/fd-options.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./concurrent.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./shared.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/convert/iterable.js": {
+      "bytes": 951,
+      "imports": [
+        {
+          "path": "../arguments/encoding-option.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../arguments/fd-options.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../io/iterate.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/resolve/stdio.js": {
+      "bytes": 1279,
+      "imports": [
+        {
+          "path": "../io/contents.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./wait-stream.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/pipe/pipe-arguments.js": {
+      "bytes": 3317,
+      "imports": [
+        {
+          "path": "../methods/parameters.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../return/duration.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../arguments/fd-options.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../arguments/file-url.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/pipe/sequence.js": {
+      "bytes": 950,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/pipe/throw.js": {
+      "bytes": 1504,
+      "imports": [
+        {
+          "path": "../return/result.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../io/pipeline.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/pipe/streaming.js": {
+      "bytes": 2410,
+      "imports": [
+        {
+          "path": "node:stream/promises",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "@sindresorhus/merge-streams",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../utils/max-listeners.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../io/pipeline.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/pipe/abort.js": {
+      "bytes": 746,
+      "imports": [
+        {
+          "path": "node:util",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "./throw.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/incoming.js": {
+      "bytes": 3544,
+      "imports": [
+        {
+          "path": "node:events",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:timers/promises",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "./outgoing.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./reference.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./strict.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./graceful.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/exports.js": {
+      "bytes": 254,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/array.js",
+          "kind": "import-statement",
+          "original": "./array.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/array-buffer.js",
+          "kind": "import-statement",
+          "original": "./array-buffer.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/buffer.js",
+          "kind": "import-statement",
+          "original": "./buffer.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/string.js",
+          "kind": "import-statement",
+          "original": "./string.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/contents.js",
+          "kind": "import-statement",
+          "original": "./contents.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/stream.js": {
+      "bytes": 1945,
+      "imports": [
+        {
+          "path": "is-stream",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/@sec-ant+readable-stream@0.4.1/node_modules/@sec-ant/readable-stream/dist/ponyfill/index.js",
+          "kind": "import-statement",
+          "original": "@sec-ant/readable-stream/ponyfill"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/resolve/wait-stream.js": {
+      "bytes": 5084,
+      "imports": [
+        {
+          "path": "node:stream/promises",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/is-stream@4.0.1/node_modules/is-stream/index.js": {
+      "bytes": 1328,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/buffer-messages.js": {
+      "bytes": 1147,
+      "imports": [
+        {
+          "path": "../io/max-buffer.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/ipc.js",
+          "kind": "import-statement",
+          "original": "../verbose/ipc.js"
+        },
+        {
+          "path": "../arguments/specific.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./get-each.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/contents.js": {
+      "bytes": 3244,
+      "imports": [
+        {
+          "path": "node:timers/promises",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "get-stream",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../utils/uint-array.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../verbose/output.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./iterate.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./max-buffer.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./strip-newline.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/utils/abort-signal.js": {
+      "bytes": 303,
+      "imports": [
+        {
+          "path": "node:events",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/path-key@4.0.0/node_modules/path-key/index.js": {
+      "bytes": 263,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/unicorn-magic@0.3.0/node_modules/unicorn-magic/node.js": {
+      "bytes": 1251,
+      "imports": [
+        {
+          "path": "node:util",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:child_process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:path",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:url",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/unicorn-magic@0.3.0/node_modules/unicorn-magic/default.js",
+          "kind": "import-statement",
+          "original": "./default.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/human-signals@8.0.1/node_modules/human-signals/build/src/main.js": {
+      "bytes": 1208,
+      "imports": [
+        {
+          "path": "node:os",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/human-signals@8.0.1/node_modules/human-signals/build/src/realtime.js",
+          "kind": "import-statement",
+          "original": "./realtime.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/human-signals@8.0.1/node_modules/human-signals/build/src/signals.js",
+          "kind": "import-statement",
+          "original": "./signals.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/values.js": {
+      "bytes": 1649,
+      "imports": [
+        {
+          "path": "../arguments/specific.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/error.js": {
+      "bytes": 306,
+      "imports": [
+        {
+          "path": "./log.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/log.js": {
+      "bytes": 2033,
+      "imports": [
+        {
+          "path": "node:util",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "../arguments/escape.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/default.js",
+          "kind": "import-statement",
+          "original": "./default.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/custom.js",
+          "kind": "import-statement",
+          "original": "./custom.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/cross-spawn@7.0.6/node_modules/cross-spawn/lib/enoent.js": {
+      "bytes": 1471,
+      "imports": [
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/cross-spawn@7.0.6/node_modules/cross-spawn/lib/parse.js": {
+      "bytes": 3065,
+      "imports": [
+        {
+          "path": "path",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/cross-spawn@7.0.6/node_modules/cross-spawn/lib/util/resolveCommand.js",
+          "kind": "require-call",
+          "original": "./util/resolveCommand"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/cross-spawn@7.0.6/node_modules/cross-spawn/lib/util/escape.js",
+          "kind": "require-call",
+          "original": "./util/escape"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/cross-spawn@7.0.6/node_modules/cross-spawn/lib/util/readShebang.js",
+          "kind": "require-call",
+          "original": "./util/readShebang"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/run-async.js": {
+      "bytes": 1739,
+      "imports": [
+        {
+          "path": "node:util",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/validate.js": {
+      "bytes": 1711,
+      "imports": [
+        {
+          "path": "node:buffer",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "../utils/uint-array.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/run-sync.js": {
+      "bytes": 1355,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/encoding-transform.js": {
+      "bytes": 1624,
+      "imports": [
+        {
+          "path": "node:buffer",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:string_decoder",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "../utils/uint-array.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/input-option.js": {
+      "bytes": 1291,
+      "imports": [
+        {
+          "path": "is-stream",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../utils/uint-array.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./type.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/stdio-option.js": {
+      "bytes": 2297,
+      "imports": [
+        {
+          "path": "../utils/standard-stream.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/array.js",
+          "kind": "import-statement",
+          "original": "../ipc/array.js"
+        },
+        {
+          "path": "../verbose/values.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/direction.js": {
+      "bytes": 2862,
+      "imports": [
+        {
+          "path": "node:process",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "is-stream",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./type.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/duplicate.js": {
+      "bytes": 3975,
+      "imports": [
+        {
+          "path": "./type.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/object-mode.js": {
+      "bytes": 1881,
+      "imports": [
+        {
+          "path": "../stdio/type.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/normalize.js": {
+      "bytes": 3261,
+      "imports": [
+        {
+          "path": "is-plain-obj",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../arguments/encoding-option.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../stdio/type.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./object-mode.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/native.js": {
+      "bytes": 3771,
+      "imports": [
+        {
+          "path": "node:fs",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:tty",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "is-stream",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../utils/standard-stream.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../utils/uint-array.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../arguments/fd-options.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/convert/shared.js": {
+      "bytes": 1201,
+      "imports": [
+        {
+          "path": "node:stream/promises",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "../resolve/wait-stream.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/iterate.js": {
+      "bytes": 3692,
+      "imports": [
+        {
+          "path": "node:events",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "node:stream",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "../transform/encoding-transform.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../transform/split.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "../transform/run-sync.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/string.js": {
+      "bytes": 1162,
+      "imports": [
+        {
+          "path": "./contents.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/utils.js",
+          "kind": "import-statement",
+          "original": "./utils.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/array.js": {
+      "bytes": 733,
+      "imports": [
+        {
+          "path": "./contents.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./utils.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/array-buffer.js": {
+      "bytes": 3333,
+      "imports": [
+        {
+          "path": "./contents.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./utils.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/contents.js": {
+      "bytes": 2764,
+      "imports": [
+        {
+          "path": "./stream.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/@sec-ant+readable-stream@0.4.1/node_modules/@sec-ant/readable-stream/dist/ponyfill/index.js": {
+      "bytes": 175,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/@sec-ant+readable-stream@0.4.1/node_modules/@sec-ant/readable-stream/dist/ponyfill/asyncIterator.js",
+          "kind": "import-statement",
+          "original": "./asyncIterator.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/@sec-ant+readable-stream@0.4.1/node_modules/@sec-ant/readable-stream/dist/ponyfill/fromAnyIterable.js",
+          "kind": "import-statement",
+          "original": "./fromAnyIterable.js"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/ipc.js": {
+      "bytes": 458,
+      "imports": [
+        {
+          "path": "./log.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "./values.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/human-signals@8.0.1/node_modules/human-signals/build/src/realtime.js": {
+      "bytes": 352,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/human-signals@8.0.1/node_modules/human-signals/build/src/signals.js": {
+      "bytes": 601,
+      "imports": [
+        {
+          "path": "node:os",
+          "kind": "import-statement",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/human-signals@8.0.1/node_modules/human-signals/build/src/core.js",
+          "kind": "import-statement",
+          "original": "./core.js"
+        },
+        {
+          "path": "./realtime.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/custom.js": {
+      "bytes": 869,
+      "imports": [
+        {
+          "path": "./values.js",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/default.js": {
+      "bytes": 1406,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/figures@6.1.0/node_modules/figures/index.js",
+          "kind": "import-statement",
+          "original": "figures"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/yoctocolors@2.1.2/node_modules/yoctocolors/index.js",
+          "kind": "import-statement",
+          "original": "yoctocolors"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/cross-spawn@7.0.6/node_modules/cross-spawn/lib/util/resolveCommand.js": {
+      "bytes": 1557,
+      "imports": [
+        {
+          "path": "path",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/which@2.0.2/node_modules/which/which.js",
+          "kind": "require-call",
+          "original": "which"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/path-key@3.1.1/node_modules/path-key/index.js",
+          "kind": "require-call",
+          "original": "path-key"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/cross-spawn@7.0.6/node_modules/cross-spawn/lib/util/escape.js": {
+      "bytes": 1383,
+      "imports": [
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/cross-spawn@7.0.6/node_modules/cross-spawn/lib/util/readShebang.js": {
+      "bytes": 549,
+      "imports": [
+        {
+          "path": "fs",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/shebang-command@2.0.0/node_modules/shebang-command/index.js",
+          "kind": "require-call",
+          "original": "shebang-command"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/array.js": {
+      "bytes": 196,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/utils.js": {
+      "bytes": 343,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/@sec-ant+readable-stream@0.4.1/node_modules/@sec-ant/readable-stream/dist/ponyfill/asyncIterator.js": {
+      "bytes": 1725,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/@sec-ant+readable-stream@0.4.1/node_modules/@sec-ant/readable-stream/dist/ponyfill/fromAnyIterable.js": {
+      "bytes": 749,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/figures@6.1.0/node_modules/figures/index.js": {
+      "bytes": 7366,
+      "imports": [
+        {
+          "path": "is-unicode-supported",
+          "kind": "import-statement"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/human-signals@8.0.1/node_modules/human-signals/build/src/core.js": {
+      "bytes": 4126,
+      "imports": [
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/path-key@3.1.1/node_modules/path-key/index.js": {
+      "bytes": 415,
+      "imports": [
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/which@2.0.2/node_modules/which/which.js": {
+      "bytes": 3163,
+      "imports": [
+        {
+          "path": "path",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/isexe@2.0.0/node_modules/isexe/index.js",
+          "kind": "require-call",
+          "original": "isexe"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/shebang-command@2.0.0/node_modules/shebang-command/index.js": {
+      "bytes": 387,
+      "imports": [
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/shebang-regex@3.0.0/node_modules/shebang-regex/index.js",
+          "kind": "require-call",
+          "original": "shebang-regex"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/yoctocolors@2.1.2/node_modules/yoctocolors/base.js": {
+      "bytes": 3169,
+      "imports": [
+        {
+          "path": "node:tty",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "../../node_modules/.bun/isexe@2.0.0/node_modules/isexe/index.js": {
+      "bytes": 1192,
+      "imports": [
+        {
+          "path": "fs",
+          "kind": "require-call",
+          "external": true
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/isexe@2.0.0/node_modules/isexe/windows.js",
+          "kind": "require-call",
+          "original": "./windows.js"
+        },
+        {
+          "path": "/Users/md.adil/Projects/oss/minimajs/node_modules/.bun/isexe@2.0.0/node_modules/isexe/mode.js",
+          "kind": "require-call",
+          "original": "./mode.js"
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/shebang-regex@3.0.0/node_modules/shebang-regex/index.js": {
+      "bytes": 42,
+      "imports": [
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/isexe@2.0.0/node_modules/isexe/windows.js": {
+      "bytes": 890,
+      "imports": [
+        {
+          "path": "fs",
+          "kind": "require-call",
+          "external": true
+        }
+      ],
+      "format": "cjs"
+    },
+    "../../node_modules/.bun/isexe@2.0.0/node_modules/isexe/mode.js": {
+      "bytes": 909,
+      "imports": [
+        {
+          "path": "fs",
+          "kind": "require-call",
+          "external": true
+        }
+      ],
+      "format": "cjs"
+    }
+  },
+  "outputs": {
+    "./index.js": {
+      "bytes": 452668,
+      "inputs": {
+        "../../node_modules/.bun/citty@0.2.1/node_modules/citty/dist/_chunks/libs/scule.mjs": {
+          "bytesInOutput": 1850
+        },
+        "../../node_modules/.bun/citty@0.2.1/node_modules/citty/dist/index.mjs": {
+          "bytesInOutput": 12860
+        },
+        "../../node_modules/.bun/chalk@5.6.2/node_modules/chalk/source/vendor/ansi-styles/index.js": {
+          "bytesInOutput": 5016
+        },
+        "../../node_modules/.bun/chalk@5.6.2/node_modules/chalk/source/vendor/supports-color/index.js": {
+          "bytesInOutput": 3687
+        },
+        "../../node_modules/.bun/chalk@5.6.2/node_modules/chalk/source/utilities.js": {
+          "bytesInOutput": 935
+        },
+        "../../node_modules/.bun/chalk@5.6.2/node_modules/chalk/source/index.js": {
+          "bytesInOutput": 4551
+        },
+        "../../node_modules/.bun/mimic-function@5.0.1/node_modules/mimic-function/index.js": {
+          "bytesInOutput": 2074
+        },
+        "../../node_modules/.bun/onetime@7.0.0/node_modules/onetime/index.js": {
+          "bytesInOutput": 1021
+        },
+        "../../node_modules/.bun/signal-exit@4.1.0/node_modules/signal-exit/dist/mjs/signals.js": {
+          "bytesInOutput": 324
+        },
+        "../../node_modules/.bun/signal-exit@4.1.0/node_modules/signal-exit/dist/mjs/index.js": {
+          "bytesInOutput": 5310
+        },
+        "../../node_modules/.bun/restore-cursor@5.1.0/node_modules/restore-cursor/index.js": {
+          "bytesInOutput": 339
+        },
+        "../../node_modules/.bun/cli-cursor@5.0.0/node_modules/cli-cursor/index.js": {
+          "bytesInOutput": 681
+        },
+        "../../node_modules/.bun/cli-spinners@2.9.2/node_modules/cli-spinners/spinners.json": {
+          "bytesInOutput": 33201
+        },
+        "../../node_modules/.bun/cli-spinners@2.9.2/node_modules/cli-spinners/index.js": {
+          "bytesInOutput": 428
+        },
+        "../../node_modules/.bun/is-unicode-supported@1.3.0/node_modules/is-unicode-supported/index.js": {
+          "bytesInOutput": 547
+        },
+        "../../node_modules/.bun/log-symbols@6.0.0/node_modules/log-symbols/index.js": {
+          "bytesInOutput": 432
+        },
+        "../../node_modules/.bun/ansi-regex@6.2.2/node_modules/ansi-regex/index.js": {
+          "bytesInOutput": 343
+        },
+        "../../node_modules/.bun/strip-ansi@7.2.0/node_modules/strip-ansi/index.js": {
+          "bytesInOutput": 291
+        },
+        "../../node_modules/.bun/get-east-asian-width@1.5.0/node_modules/get-east-asian-width/lookup-data.js": {
+          "bytesInOutput": 4191
+        },
+        "../../node_modules/.bun/get-east-asian-width@1.5.0/node_modules/get-east-asian-width/utilities.js": {
+          "bytesInOutput": 378
+        },
+        "../../node_modules/.bun/get-east-asian-width@1.5.0/node_modules/get-east-asian-width/lookup.js": {
+          "bytesInOutput": 1769
+        },
+        "../../node_modules/.bun/get-east-asian-width@1.5.0/node_modules/get-east-asian-width/index.js": {
+          "bytesInOutput": 383
+        },
+        "../../node_modules/.bun/emoji-regex@10.6.0/node_modules/emoji-regex/index.js": {
+          "bytesInOutput": 14228
+        },
+        "../../node_modules/.bun/string-width@7.2.0/node_modules/string-width/index.js": {
+          "bytesInOutput": 1535
+        },
+        "../../node_modules/.bun/is-interactive@2.0.0/node_modules/is-interactive/index.js": {
+          "bytesInOutput": 160
+        },
+        "../../node_modules/.bun/is-unicode-supported@2.1.0/node_modules/is-unicode-supported/index.js": {
+          "bytesInOutput": 559
+        },
+        "../../node_modules/.bun/stdin-discarder@0.2.2/node_modules/stdin-discarder/index.js": {
+          "bytesInOutput": 1027
+        },
+        "../../node_modules/.bun/ora@8.2.0/node_modules/ora/index.js": {
+          "bytesInOutput": 8816
+        },
+        "src/utils/colors.ts": {
+          "bytesInOutput": 196
+        },
+        "src/templates/project.ts": {
+          "bytesInOutput": 1163
+        },
+        "src/creator/index.ts": {
+          "bytesInOutput": 2845
+        },
+        "src/creator/command.ts": {
+          "bytesInOutput": 915
+        },
+        "src/config/defaults.ts": {
+          "bytesInOutput": 325
+        },
+        "src/utils/fs.ts": {
+          "bytesInOutput": 389
+        },
+        "src/utils/utils.ts": {
+          "bytesInOutput": 583
+        },
+        "../../node_modules/.bun/parse-ms@4.0.0/node_modules/parse-ms/index.js": {
+          "bytesInOutput": 1168
+        },
+        "../../node_modules/.bun/pretty-ms@9.3.0/node_modules/pretty-ms/index.js": {
+          "bytesInOutput": 4356
+        },
+        "../../node_modules/.bun/pretty-bytes@6.1.1/node_modules/pretty-bytes/index.js": {
+          "bytesInOutput": 2284
+        },
+        "src/utils/logging.ts": {
+          "bytesInOutput": 748
+        },
+        "src/utils/error-handler.ts": {
+          "bytesInOutput": 131
+        },
+        "src/utils/index.ts": {
+          "bytesInOutput": 0
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/internal/constants.js": {
+          "bytesInOutput": 626
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/internal/debug.js": {
+          "bytesInOutput": 273
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/internal/re.js": {
+          "bytesInOutput": 5069
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/internal/parse-options.js": {
+          "bytesInOutput": 370
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/internal/identifiers.js": {
+          "bytesInOutput": 589
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/classes/semver.js": {
+          "bytesInOutput": 8405
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/parse.js": {
+          "bytesInOutput": 395
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/valid.js": {
+          "bytesInOutput": 230
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/clean.js": {
+          "bytesInOutput": 261
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/inc.js": {
+          "bytesInOutput": 518
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/diff.js": {
+          "bytesInOutput": 1152
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/major.js": {
+          "bytesInOutput": 173
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/minor.js": {
+          "bytesInOutput": 173
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/patch.js": {
+          "bytesInOutput": 173
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/prerelease.js": {
+          "bytesInOutput": 291
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/compare.js": {
+          "bytesInOutput": 206
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/rcompare.js": {
+          "bytesInOutput": 181
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/compare-loose.js": {
+          "bytesInOutput": 186
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/compare-build.js": {
+          "bytesInOutput": 337
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/sort.js": {
+          "bytesInOutput": 206
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/rsort.js": {
+          "bytesInOutput": 209
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/gt.js": {
+          "bytesInOutput": 167
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/lt.js": {
+          "bytesInOutput": 167
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/eq.js": {
+          "bytesInOutput": 169
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/neq.js": {
+          "bytesInOutput": 172
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/gte.js": {
+          "bytesInOutput": 171
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/lte.js": {
+          "bytesInOutput": 171
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/cmp.js": {
+          "bytesInOutput": 1069
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/coerce.js": {
+          "bytesInOutput": 1492
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/internal/lrucache.js": {
+          "bytesInOutput": 780
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/classes/range.js": {
+          "bytesInOutput": 11797
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/classes/comparator.js": {
+          "bytesInOutput": 3421
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/satisfies.js": {
+          "bytesInOutput": 305
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/to-comparators.js": {
+          "bytesInOutput": 273
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/max-satisfying.js": {
+          "bytesInOutput": 601
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/min-satisfying.js": {
+          "bytesInOutput": 600
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/min-version.js": {
+          "bytesInOutput": 1463
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/valid.js": {
+          "bytesInOutput": 274
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/outside.js": {
+          "bytesInOutput": 1867
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/gtr.js": {
+          "bytesInOutput": 195
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/ltr.js": {
+          "bytesInOutput": 195
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/intersects.js": {
+          "bytesInOutput": 277
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/simplify.js": {
+          "bytesInOutput": 1266
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/subset.js": {
+          "bytesInOutput": 5065
+        },
+        "../../node_modules/.bun/semver@7.7.4/node_modules/semver/index.js": {
+          "bytesInOutput": 2270
+        },
+        "src/config/pkg.ts": {
+          "bytesInOutput": 549
+        },
+        "src/config/index.ts": {
+          "bytesInOutput": 863
+        },
+        "src/config/entry.ts": {
+          "bytesInOutput": 535
+        },
+        "src/utils/path.ts": {
+          "bytesInOutput": 611
+        },
+        "src/plugins/typescript/checker.ts": {
+          "bytesInOutput": 1692
+        },
+        "src/esbuild/build.ts": {
+          "bytesInOutput": 1355
+        },
+        "src/utils/screen.ts": {
+          "bytesInOutput": 117
+        },
+        "src/plugins/progress.ts": {
+          "bytesInOutput": 826
+        },
+        "../../node_modules/.bun/is-plain-obj@4.1.0/node_modules/is-plain-obj/index.js": {
+          "bytesInOutput": 334
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/file-url.js": {
+          "bytesInOutput": 610
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/parameters.js": {
+          "bytesInOutput": 1127
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/utils/uint-array.js": {
+          "bytesInOutput": 2222
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/template.js": {
+          "bytesInOutput": 4061
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/utils/standard-stream.js": {
+          "bytesInOutput": 342
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/specific.js": {
+          "bytesInOutput": 3083
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/values.js": {
+          "bytesInOutput": 795
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/escape.js": {
+          "bytesInOutput": 1680
+        },
+        "../../node_modules/.bun/figures@6.1.0/node_modules/figures/index.js": {
+          "bytesInOutput": 7215
+        },
+        "../../node_modules/.bun/yoctocolors@2.1.2/node_modules/yoctocolors/base.js": {
+          "bytesInOutput": 2149
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/default.js": {
+          "bytesInOutput": 1223
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/custom.js": {
+          "bytesInOutput": 762
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/log.js": {
+          "bytesInOutput": 1229
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/start.js": {
+          "bytesInOutput": 198
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/info.js": {
+          "bytesInOutput": 972
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/return/duration.js": {
+          "bytesInOutput": 159
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/command.js": {
+          "bytesInOutput": 449
+        },
+        "../../node_modules/.bun/isexe@2.0.0/node_modules/isexe/windows.js": {
+          "bytesInOutput": 1018
+        },
+        "../../node_modules/.bun/isexe@2.0.0/node_modules/isexe/mode.js": {
+          "bytesInOutput": 998
+        },
+        "../../node_modules/.bun/isexe@2.0.0/node_modules/isexe/index.js": {
+          "bytesInOutput": 1239
+        },
+        "../../node_modules/.bun/which@2.0.2/node_modules/which/which.js": {
+          "bytesInOutput": 3128
+        },
+        "../../node_modules/.bun/path-key@3.1.1/node_modules/path-key/index.js": {
+          "bytesInOutput": 439
+        },
+        "../../node_modules/.bun/cross-spawn@7.0.6/node_modules/cross-spawn/lib/util/resolveCommand.js": {
+          "bytesInOutput": 1155
+        },
+        "../../node_modules/.bun/cross-spawn@7.0.6/node_modules/cross-spawn/lib/util/escape.js": {
+          "bytesInOutput": 638
+        },
+        "../../node_modules/.bun/shebang-regex@3.0.0/node_modules/shebang-regex/index.js": {
+          "bytesInOutput": 96
+        },
+        "../../node_modules/.bun/shebang-command@2.0.0/node_modules/shebang-command/index.js": {
+          "bytesInOutput": 471
+        },
+        "../../node_modules/.bun/cross-spawn@7.0.6/node_modules/cross-spawn/lib/util/readShebang.js": {
+          "bytesInOutput": 465
+        },
+        "../../node_modules/.bun/cross-spawn@7.0.6/node_modules/cross-spawn/lib/parse.js": {
+          "bytesInOutput": 1920
+        },
+        "../../node_modules/.bun/cross-spawn@7.0.6/node_modules/cross-spawn/lib/enoent.js": {
+          "bytesInOutput": 1231
+        },
+        "../../node_modules/.bun/cross-spawn@7.0.6/node_modules/cross-spawn/index.js": {
+          "bytesInOutput": 848
+        },
+        "../../node_modules/.bun/path-key@4.0.0/node_modules/path-key/index.js": {
+          "bytesInOutput": 278
+        },
+        "../../node_modules/.bun/unicorn-magic@0.3.0/node_modules/unicorn-magic/node.js": {
+          "bytesInOutput": 779
+        },
+        "../../node_modules/.bun/npm-run-path@6.0.0/node_modules/npm-run-path/index.js": {
+          "bytesInOutput": 1383
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/return/final-error.js": {
+          "bytesInOutput": 1032
+        },
+        "../../node_modules/.bun/human-signals@8.0.1/node_modules/human-signals/build/src/realtime.js": {
+          "bytesInOutput": 374
+        },
+        "../../node_modules/.bun/human-signals@8.0.1/node_modules/human-signals/build/src/core.js": {
+          "bytesInOutput": 5233
+        },
+        "../../node_modules/.bun/human-signals@8.0.1/node_modules/human-signals/build/src/signals.js": {
+          "bytesInOutput": 584
+        },
+        "../../node_modules/.bun/human-signals@8.0.1/node_modules/human-signals/build/src/main.js": {
+          "bytesInOutput": 1313
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/terminate/signal.js": {
+          "bytesInOutput": 2320
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/terminate/kill.js": {
+          "bytesInOutput": 2445
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/utils/abort-signal.js": {
+          "bytesInOutput": 191
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/terminate/cancel.js": {
+          "bytesInOutput": 705
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/validation.js": {
+          "bytesInOutput": 3740
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/utils/deferred.js": {
+          "bytesInOutput": 215
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/fd-options.js": {
+          "bytesInOutput": 3803
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/utils/max-listeners.js": {
+          "bytesInOutput": 475
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/reference.js": {
+          "bytesInOutput": 651
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/incoming.js": {
+          "bytesInOutput": 1438
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/forward.js": {
+          "bytesInOutput": 1065
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/strict.js": {
+          "bytesInOutput": 2565
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/outgoing.js": {
+          "bytesInOutput": 1351
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/send.js": {
+          "bytesInOutput": 1817
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/graceful.js": {
+          "bytesInOutput": 1318
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/terminate/graceful.js": {
+          "bytesInOutput": 1540
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/terminate/timeout.js": {
+          "bytesInOutput": 720
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/node.js": {
+          "bytesInOutput": 1329
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/ipc-input.js": {
+          "bytesInOutput": 963
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/encoding-option.js": {
+          "bytesInOutput": 1400
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/cwd.js": {
+          "bytesInOutput": 861
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/options.js": {
+          "bytesInOutput": 2329
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/shell.js": {
+          "bytesInOutput": 197
+        },
+        "../../node_modules/.bun/strip-final-newline@4.0.0/node_modules/strip-final-newline/index.js": {
+          "bytesInOutput": 651
+        },
+        "../../node_modules/.bun/is-stream@4.0.1/node_modules/is-stream/index.js": {
+          "bytesInOutput": 1133
+        },
+        "../../node_modules/.bun/@sec-ant+readable-stream@0.4.1/node_modules/@sec-ant/readable-stream/dist/ponyfill/asyncIterator.js": {
+          "bytesInOutput": 1669
+        },
+        "../../node_modules/.bun/@sec-ant+readable-stream@0.4.1/node_modules/@sec-ant/readable-stream/dist/ponyfill/fromAnyIterable.js": {
+          "bytesInOutput": 0
+        },
+        "../../node_modules/.bun/@sec-ant+readable-stream@0.4.1/node_modules/@sec-ant/readable-stream/dist/ponyfill/index.js": {
+          "bytesInOutput": 0
+        },
+        "../../node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/stream.js": {
+          "bytesInOutput": 1288
+        },
+        "../../node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/contents.js": {
+          "bytesInOutput": 2823
+        },
+        "../../node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/utils.js": {
+          "bytesInOutput": 308
+        },
+        "../../node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/array.js": {
+          "bytesInOutput": 631
+        },
+        "../../node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/array-buffer.js": {
+          "bytesInOutput": 2210
+        },
+        "../../node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/string.js": {
+          "bytesInOutput": 1044
+        },
+        "../../node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/exports.js": {
+          "bytesInOutput": 0
+        },
+        "../../node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/index.js": {
+          "bytesInOutput": 129
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/max-buffer.js": {
+          "bytesInOutput": 2032
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/return/message.js": {
+          "bytesInOutput": 3841
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/return/result.js": {
+          "bytesInOutput": 3394
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/error.js": {
+          "bytesInOutput": 193
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/complete.js": {
+          "bytesInOutput": 382
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/return/reject.js": {
+          "bytesInOutput": 167
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/type.js": {
+          "bytesInOutput": 5664
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/object-mode.js": {
+          "bytesInOutput": 1151
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/normalize.js": {
+          "bytesInOutput": 3062
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/direction.js": {
+          "bytesInOutput": 1783
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/array.js": {
+          "bytesInOutput": 124
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/stdio-option.js": {
+          "bytesInOutput": 1837
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/native.js": {
+          "bytesInOutput": 2524
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/input-option.js": {
+          "bytesInOutput": 1085
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/duplicate.js": {
+          "bytesInOutput": 2756
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/handle.js": {
+          "bytesInOutput": 5233
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/handle-sync.js": {
+          "bytesInOutput": 1630
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/strip-newline.js": {
+          "bytesInOutput": 379
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/split.js": {
+          "bytesInOutput": 2991
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/validate.js": {
+          "bytesInOutput": 1510
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/encoding-transform.js": {
+          "bytesInOutput": 1072
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/run-async.js": {
+          "bytesInOutput": 1417
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/run-sync.js": {
+          "bytesInOutput": 1227
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/generator.js": {
+          "bytesInOutput": 2347
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/input-sync.js": {
+          "bytesInOutput": 1667
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/output.js": {
+          "bytesInOutput": 1103
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/output-sync.js": {
+          "bytesInOutput": 3345
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/resolve/all-sync.js": {
+          "bytesInOutput": 590
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/resolve/exit-async.js": {
+          "bytesInOutput": 1181
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/resolve/exit-sync.js": {
+          "bytesInOutput": 550
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/main-sync.js": {
+          "bytesInOutput": 3827
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/get-one.js": {
+          "bytesInOutput": 1716
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/get-each.js": {
+          "bytesInOutput": 2067
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/methods.js": {
+          "bytesInOutput": 957
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/return/early-error.js": {
+          "bytesInOutput": 1547
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/stdio/handle-async.js": {
+          "bytesInOutput": 1948
+        },
+        "../../node_modules/.bun/@sindresorhus+merge-streams@4.0.0/node_modules/@sindresorhus/merge-streams/index.js": {
+          "bytesInOutput": 6469
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/pipeline.js": {
+          "bytesInOutput": 979
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/output-async.js": {
+          "bytesInOutput": 1952
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/terminate/cleanup.js": {
+          "bytesInOutput": 330
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/pipe/pipe-arguments.js": {
+          "bytesInOutput": 2746
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/pipe/throw.js": {
+          "bytesInOutput": 1181
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/pipe/sequence.js": {
+          "bytesInOutput": 587
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/pipe/streaming.js": {
+          "bytesInOutput": 1386
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/pipe/abort.js": {
+          "bytesInOutput": 567
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/pipe/setup.js": {
+          "bytesInOutput": 1635
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/iterate.js": {
+          "bytesInOutput": 2734
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/contents.js": {
+          "bytesInOutput": 2435
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/resolve/wait-stream.js": {
+          "bytesInOutput": 2068
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/resolve/stdio.js": {
+          "bytesInOutput": 1113
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/resolve/all-async.js": {
+          "bytesInOutput": 1081
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/ipc.js": {
+          "bytesInOutput": 275
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/buffer-messages.js": {
+          "bytesInOutput": 892
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/resolve/wait-subprocess.js": {
+          "bytesInOutput": 3295
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/convert/concurrent.js": {
+          "bytesInOutput": 787
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/convert/shared.js": {
+          "bytesInOutput": 1039
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/convert/readable.js": {
+          "bytesInOutput": 3213
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/convert/writable.js": {
+          "bytesInOutput": 2631
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/convert/duplex.js": {
+          "bytesInOutput": 1974
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/convert/iterable.js": {
+          "bytesInOutput": 736
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/convert/add.js": {
+          "bytesInOutput": 582
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/promise.js": {
+          "bytesInOutput": 456
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/main-async.js": {
+          "bytesInOutput": 4630
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/bind.js": {
+          "bytesInOutput": 599
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/create.js": {
+          "bytesInOutput": 1842
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/command.js": {
+          "bytesInOutput": 1130
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/script.js": {
+          "bytesInOutput": 625
+        },
+        "../../node_modules/.bun/execa@9.6.1/node_modules/execa/index.js": {
+          "bytesInOutput": 465
+        },
+        "src/plugins/run/node-runner.ts": {
+          "bytesInOutput": 594
+        },
+        "../../node_modules/.bun/dotenv@17.3.1/node_modules/dotenv/package.json": {
+          "bytesInOutput": 1852
+        },
+        "../../node_modules/.bun/dotenv@17.3.1/node_modules/dotenv/lib/main.js": {
+          "bytesInOutput": 11581
+        },
+        "../../node_modules/.bun/dotenv-expand@12.0.3/node_modules/dotenv-expand/lib/main.js": {
+          "bytesInOutput": 2210
+        },
+        "src/utils/env.ts": {
+          "bytesInOutput": 812
+        },
+        "src/plugins/run/index.ts": {
+          "bytesInOutput": 1200
+        },
+        "src/plugins/typescript/index.ts": {
+          "bytesInOutput": 400
+        },
+        "src/esbuild/plugins.ts": {
+          "bytesInOutput": 873
+        },
+        "src/esbuild/builder.ts": {
+          "bytesInOutput": 851
+        },
+        "src/esbuild/watch.ts": {
+          "bytesInOutput": 149
+        },
+        "src/esbuild/index.ts": {
+          "bytesInOutput": 555
+        },
+        "src/compiler/index.ts": {
+          "bytesInOutput": 1674
+        },
+        "src/compiler/command.ts": {
+          "bytesInOutput": 2894
+        },
+        "src/templates/module.ts": {
+          "bytesInOutput": 323
+        },
+        "src/generator/index.ts": {
+          "bytesInOutput": 824
+        },
+        "src/generator/command.ts": {
+          "bytesInOutput": 706
+        },
+        "src/command.ts": {
+          "bytesInOutput": 670
+        },
+        "src/index.ts": {
+          "bytesInOutput": 0
+        }
+      },
+      "imports": [
+      ],
+      "exports": [
+        "run"
+      ],
+      "entryPoint": "src/index.ts"
+    }
+  }
+}

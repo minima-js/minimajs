@@ -2,11 +2,9 @@ import { defineCommand, runMain } from "citty";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { newCommand } from "./commands/new.js";
-import { devCommand } from "./commands/dev.js";
-import { buildCommand } from "./commands/build.js";
-import { startCommand } from "./commands/start.js";
-import { generateCommand } from "./commands/generate.js";
+import { newCommand } from "./creator/command.js";
+import { devCommand, buildCommand, startCommand } from "./compiler/command.js";
+import { generateCommand } from "./generator/command.js";
 
 export type { CliOption } from "./config/types.js";
 

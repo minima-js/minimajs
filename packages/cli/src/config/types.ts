@@ -1,6 +1,8 @@
 import type { Loader } from "esbuild";
 
 export interface BaseConfig {
+  entry: string;
+  modulePattern: string;
   run: boolean | string;
   watch: boolean;
   clean: boolean;

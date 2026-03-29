@@ -4,18 +4,23 @@ import { clean } from "../utils/fs.js";
 import { isCurrentPath } from "../utils/path.js";
 import { buildPlugins } from "./plugins.js";
 
-export async function buildEsbuildConfig(filename: string, config: Config): Promise<BuildOptions> {
+export async function buildEsbuildConfig(entries: string[], config: Config): Promise<BuildOptions> {
   const { outdir, loader } = config;
   if (isCurrentPath(outdir)) config.clean = false;
   if (config.clean) clean(outdir);
-  const plugins = await buildPlugins(config, filename);
-  const entryPoints = [filename, ...config.import];
+  const primaryEntry = entries[0] ?? "";
+  const plugins = await buildPlugins(config, primaryEntry);
+  const entryPoints = [...entries, ...config.import];
+
+  // Determine if we have multiple entries — if so, use outbase to preserve directory structure
+  const isMultiEntry = entries.length > 1;
+
   const buildConfig: BuildOptions = {
     entryPoints,
     bundle: true,
+    packages: "external",
     platform: "node",
     format: "esm",
-    splitting: true,
     outExtension: { ".js": ".js" },
     outdir,
     minify: config.minify,
@@ -24,6 +29,8 @@ export async function buildEsbuildConfig(filename: string, config: Config): Prom
     metafile: true,
     plugins,
     loader,
+    // splitting is incompatible with outbase multi-entry; only enable for single entry
+    ...(isMultiEntry ? { outbase: "src" } : { splitting: true }),
   };
   if (config.target) {
     buildConfig.target = config.target;

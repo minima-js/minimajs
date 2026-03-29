@@ -11,7 +11,7 @@ export async function loadConfig(cliOption: CliOption = {}): Promise<Config> {
   let config: Partial<Config> = {};
   const packageInfo = loadPkg();
 
-  for (const ext of ["js", "mjs"]) {
+  for (const ext of ["ts", "js"]) {
     try {
       const configPath = join(process.cwd(), `minimajs.config.${ext}`);
       const configUrl = pathToFileURL(configPath).href;

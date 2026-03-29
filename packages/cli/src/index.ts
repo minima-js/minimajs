@@ -1,2 +1,1 @@
-import { run } from "./command.js";
-run();
+export { run } from "./command.js";

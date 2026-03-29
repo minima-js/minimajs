@@ -1,4 +1,4 @@
-import { ExecaError, execaNode, type ResultPromise } from "execa";
+import { spawn, type ChildProcess } from "node:child_process";
 
 export function runNode(
   filename: string,
@@ -6,26 +6,21 @@ export function runNode(
   envVars?: Record<string, string>
 ): (signal?: NodeJS.Signals) => Promise<void> {
   let isStopping = false;
-  let proc: ResultPromise;
+  let proc: ChildProcess;
 
-  async function waitForCompletion(): Promise<void> {
-    const env = envVars ? { ...process.env, ...envVars } : process.env;
-    proc = execaNode(filename, { nodeOptions, stdio: "inherit", env });
-    await proc.catch((err) => {
-      if (!(err instanceof ExecaError)) {
-        throw err;
-      }
-    });
-  }
+  const env = envVars ? { ...process.env, ...envVars } : process.env;
+  const args = [...nodeOptions, filename];
 
-  const promise = waitForCompletion();
+  const promise = new Promise<void>((resolve) => {
+    proc = spawn(process.execPath, args, { stdio: "inherit", env });
+    proc.on("exit", () => resolve());
+    proc.on("error", () => resolve());
+  });
 
-  function stop(signal?: NodeJS.Signals): Promise<void> {
-    if (isStopping) {
-      return promise;
-    }
+  function stop(signal: NodeJS.Signals = "SIGTERM"): Promise<void> {
+    if (isStopping) return promise;
     isStopping = true;
-    proc.kill(signal);
+    proc?.kill(signal);
     return promise;
   }
 

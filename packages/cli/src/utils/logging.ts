@@ -17,7 +17,9 @@ export const stderr = (...parameters: readonly unknown[]): boolean => {
   return std.write(`${parameters.join("")}\n`);
 };
 
+// eslint-disable-next-line no-console
 export const log = console.log;
+// eslint-disable-next-line no-console
 export const clear = console.clear;
 
 export function successMessage(outdir: string, metafile: Metafile, startedAt: number): string {

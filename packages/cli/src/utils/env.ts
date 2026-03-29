@@ -8,7 +8,8 @@ export function loadEnvFile(filepath: string): Record<string, string> {
   if (result.error) {
     const errorMsg = result.error.message;
     if (errorMsg.includes("ENOENT")) {
-      throw new Error(`Environment file not found: ${absolutePath}`);
+      // File doesn't exist — only warn, don't throw (file may be optional)
+      return {};
     }
     if (errorMsg.includes("EACCES")) {
       throw new Error(`Permission denied reading environment file: ${absolutePath}`);

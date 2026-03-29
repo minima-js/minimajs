@@ -1,18 +1,18 @@
 import { EOL } from "node:os";
 import esbuild, { type BuildOptions } from "esbuild";
-import ora from "ora";
 import { bold, cyan, red } from "../utils/colors.js";
 import { relativeId } from "../utils/path.js";
 import { errorMessage, stderr, successMessage } from "../utils/logging.js";
-import { getEntry } from "../utils/utils.js";
+import { getEntryLabel } from "../utils/utils.js";
 import { runTypeCheck } from "../plugins/typescript/checker.js";
 import type { CliOption } from "../command.js";
+import { createSpinner } from "../utils/spinner.js";
 
 export async function build(inputOptions: BuildOptions, config: CliOption): Promise<void> {
   const start = Date.now();
   const files = relativeId(inputOptions.outdir!);
-  const inputFiles = relativeId(getEntry(inputOptions));
-  const spinner = ora();
+  const inputFiles = relativeId(getEntryLabel(inputOptions));
+  const spinner = createSpinner();
   stderr(cyan(`\n${bold(inputFiles!)} → ${bold(files)}...`));
   spinner.start();
   spinner.text = (config.ignoreTypes ? "bundling..." : "bundling + type checking...") + EOL;

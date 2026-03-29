@@ -1,10 +1,10 @@
 import type { Plugin } from "esbuild";
-import ora from "ora";
+import { createSpinner } from "../utils/spinner.js";
 import { bold, cyan, dim } from "../utils/colors.js";
 import { relativeId } from "../utils/path.js";
 import { getResetScreen } from "../utils/screen.js";
 import { errorMessage, log, stderr, successMessage } from "../utils/logging.js";
-import { getEntry } from "../utils/utils.js";
+import { getEntryLabel } from "../utils/utils.js";
 
 interface ProgressOption {
   message?: string;
@@ -14,14 +14,14 @@ interface ProgressOption {
 
 export function progress({ clear, ...options }: ProgressOption): Plugin {
   const message = options.message ?? "Building";
-  const spinner = ora();
+  const spinner = createSpinner();
   const dist = relativeId(options.dist);
   return {
     name: "progress",
     setup(build) {
       let started = 0;
       const reset = getResetScreen();
-      const input = relativeId(getEntry(build.initialOptions));
+      const input = relativeId(getEntryLabel(build.initialOptions));
       build.onStart(() => {
         clear && reset();
         stderr(cyan(`\nbundles ${bold(input!)} → ${bold(dist)}...`));
