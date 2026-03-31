@@ -1,7 +1,7 @@
 import { join, resolve } from "node:path";
 import { mkdirSync, writeFileSync, existsSync } from "node:fs";
-import { moduleTs } from "../templates/module.js";
 import { green, bold, cyan, dim } from "../utils/colors.js";
+import { stubs } from "../adder/stubs.js";
 
 export interface GenerateModuleOptions {
   name: string;
@@ -17,8 +17,11 @@ export function generateModule({ name, dir = "src" }: GenerateModuleOptions): vo
     process.exit(1);
   }
 
+  const pascal = moduleName.charAt(0).toUpperCase() + moduleName.slice(1);
+  const content = stubs["module"]({ Name: pascal, name: moduleName });
+
   mkdirSync(modulePath, { recursive: true });
-  writeFileSync(join(modulePath, "module.ts"), moduleTs(moduleName), "utf8");
+  writeFileSync(join(modulePath, "module.ts"), content, "utf8");
 
   process.stdout.write(
     [

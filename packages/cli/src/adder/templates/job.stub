@@ -1,0 +1,6 @@
+// Usage: import * as {{ name }}Job from "./{{ name }}/job.js";
+// Run:   {{ name }}Job.perform(data)
+
+export async function perform(data: unknown): Promise<void> {
+  // TODO: implement job logic
+}

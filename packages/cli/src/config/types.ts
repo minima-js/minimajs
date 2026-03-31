@@ -1,5 +1,8 @@
 import type { Loader } from "esbuild";
 
+export type Runtime = "node" | "bun";
+export type PackageManager = "bun" | "pnpm" | "yarn" | "npm";
+
 export interface BaseConfig {
   entry: string;
   modulePattern: string;
@@ -18,6 +21,8 @@ export interface BaseConfig {
   loader: Record<string, Loader>;
   target?: string;
   envFile?: string;
+  runtime?: Runtime;
+  packageManager?: PackageManager;
 }
 
 export interface CliOption extends Partial<BaseConfig> {

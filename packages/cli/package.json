@@ -19,8 +19,8 @@
     ".": "./lib/index.js"
   },
   "scripts": {
-    "build": "bun build ./src/index.ts --outfile ./lib/index.js --target node --format esm --external esbuild --external typescript && bun build ./src/plugins/typescript/worker.ts --outfile ./lib/worker.js --target node --format esm --external typescript",
-    "dev": "tsc -w --preserveWatchOutput",
+    "build": "bun bundler.ts",
+    "dev": "bun bundler.ts --watch",
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "dependencies": {

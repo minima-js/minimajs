@@ -1,0 +1,21 @@
+// Usage: import * as {{ name }}Service from "./{{ name }}/service.js";
+
+export async function findAll() {
+  return [];
+}
+
+export async function findOne(id: string) {
+  return { id };
+}
+
+export async function create(data: unknown) {
+  return data as { id: string };
+}
+
+export async function update(id: string, data: unknown) {
+  return { id, ...(data as object) };
+}
+
+export async function remove(id: string) {
+  return { id };
+}

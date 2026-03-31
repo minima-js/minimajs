@@ -1,66 +1,37 @@
 import { join } from "node:path";
-import { mkdirSync, writeFileSync, existsSync, readFileSync } from "node:fs";
-import { execSync } from "node:child_process";
+import { mkdirSync, existsSync } from "node:fs";
 import { bold, cyan, green, dim } from "../utils/colors.js";
 import { createSpinner } from "../utils/spinner.js";
-import { projectPackageJson, tsConfig, indexTs, rootModuleTs } from "../templates/project.js";
+import { renderIndex, renderRootModule, renderMinimaJsConfig, renderTsConfig, renderPackageJson, renderGitignore, renderEnv } from "./stubs.js";
+import type { Runtime } from "../config/types.js";
+import * as pm from "../pm/index.js";
+import { exec, execSafe } from "../exec/index.js";
+import { write } from "../utils/fs.js";
 
-export type PackageManager = "bun" | "pnpm" | "yarn" | "npm";
-export type Runtime = "bun" | "node";
+export type { Runtime };
+export type { PM as PackageManager } from "../pm/index.js";
 
 export interface CreateProjectOptions {
   name: string;
-  pm?: PackageManager;
+  pm?: pm.PM;
   runtime?: Runtime;
   skipInstall?: boolean;
   git?: boolean;
 }
 
-function write(filePath: string, content: string): void {
-  writeFileSync(filePath, content, "utf8");
-}
-
-export function detectPackageManager(): PackageManager {
-  // 1. Read packageManager field from nearest package.json (corepack standard)
-  try {
-    const pkgPath = join(process.cwd(), "package.json");
-    const { packageManager } = JSON.parse(readFileSync(pkgPath, "utf8")) as { packageManager?: string };
-    if (packageManager) {
-      const name = packageManager.split("@")[0] as PackageManager;
-      if (["bun", "pnpm", "yarn", "npm"].includes(name)) return name;
-    }
-  } catch {
-    // no package.json or no field
-  }
-
-  // 2. Fall back to binary detection
-  for (const pm of ["bun", "pnpm", "yarn"] as const) {
-    try {
-      execSync(`${pm} --version`, { stdio: "ignore" });
-      return pm;
-    } catch {
-      // not available
-    }
-  }
-  return "npm";
+export function detectPackageManager(): pm.PM {
+  return pm.detect();
 }
 
 export function detectRuntime(): Runtime {
-  // Running inside Bun runtime
   if (typeof process.versions.bun === "string") return "bun";
-  // Bun binary available on PATH
-  try {
-    execSync("bun --version", { stdio: "ignore" });
-    return "bun";
-  } catch {
-    // not available
-  }
+  if (execSafe("bun", ["--version"], { stdio: ["ignore", "ignore", "ignore"] }).ok) return "bun";
   return "node";
 }
 
 export function createProject(opts: CreateProjectOptions): void {
   const { name, skipInstall = false, git = true } = opts;
-  const pm = opts.pm ?? detectPackageManager();
+  const manager = opts.pm ?? pm.detect();
   const runtime = opts.runtime ?? detectRuntime();
   const cwd = join(process.cwd(), name);
 
@@ -71,48 +42,36 @@ export function createProject(opts: CreateProjectOptions): void {
 
   const spinner = createSpinner();
 
-  // ── Create directory structure
   spinner.start(`Scaffolding ${bold(cyan(name))}...`);
 
   mkdirSync(join(cwd, "src"), { recursive: true });
 
-  const pkg = projectPackageJson(name);
-  if (runtime === "bun") {
-    pkg.devDependencies = { ...pkg.devDependencies, "@types/bun": "latest" };
-    delete pkg.engines;
-  }
-  write(join(cwd, "package.json"), JSON.stringify(pkg, null, 2) + "\n");
-  write(join(cwd, "tsconfig.json"), JSON.stringify(tsConfig, null, 2) + "\n");
-  write(join(cwd, "src", "index.ts"), indexTs(runtime));
-  write(join(cwd, "src", "module.ts"), rootModuleTs);
-  write(join(cwd, ".gitignore"), "node_modules\ndist\n*.tsbuildinfo\n.env\n");
-  write(join(cwd, ".env"), "PORT=3000\n");
+  write(join(cwd, "package.json"), renderPackageJson(name, runtime));
+  write(join(cwd, "tsconfig.json"), renderTsConfig());
+  write(join(cwd, "minimajs.config.ts"), renderMinimaJsConfig(runtime, manager));
+  write(join(cwd, "src", "index.ts"), renderIndex(runtime));
+  write(join(cwd, "src", "module.ts"), renderRootModule());
+  write(join(cwd, ".gitignore"), renderGitignore());
+  write(join(cwd, ".env"), renderEnv());
 
   spinner.succeed(`Scaffolded ${bold(cyan(name))}`);
 
-  // ── Git init
   if (git) {
-    try {
-      execSync("git init", { cwd, stdio: "ignore" });
-      execSync("git add -A", { cwd, stdio: "ignore" });
-      execSync('git commit -m "chore: initial commit"', { cwd, stdio: "ignore" });
-    } catch {
-      // git not available, skip silently
-    }
+    execSafe("git", ["init"], { cwd });
+    execSafe("git", ["add", "-A"], { cwd });
+    execSafe("git", ["commit", "-m", "chore: initial commit"], { cwd });
   }
 
-  // ── Install dependencies
   if (!skipInstall) {
-    spinner.start(`Installing dependencies with ${bold(pm)}...`);
+    spinner.start(`Installing dependencies with ${bold(manager)}...`);
     try {
-      execSync(`${pm} install`, { cwd, stdio: "ignore" });
+      exec(manager, ["install"], { cwd });
       spinner.succeed("Dependencies installed");
     } catch {
-      spinner.fail(`Failed to install with ${pm}. Run ${bold(`${pm} install`)} manually.`);
+      spinner.fail(`Failed to install. Run ${bold(`${manager} install`)} manually.`);
     }
   }
 
-  // ── Done
   process.stdout.write(
     [
       "",
@@ -120,7 +79,10 @@ export function createProject(opts: CreateProjectOptions): void {
       "",
       `  ${dim("Next steps:")}`,
       `    ${cyan(`cd ${name}`)}`,
-      `    ${cyan(`${pm} run dev`)}`,
+      `    ${cyan(`${manager} run dev`)}`,
+      "",
+      `  ${dim("Tip: use")} ${cyan(`${manager} run app`)} ${dim("as a shortcut for")} ${cyan("minimajs")}`,
+      `    ${dim("e.g.")} ${cyan(`${manager} run app add module users`)}`,
       "",
     ].join("\n")
   );

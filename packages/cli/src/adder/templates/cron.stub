@@ -1,0 +1,9 @@
+// Cron schedule: "* * * * *"  (min hour dom month dow)
+// Examples:     "0 * * * *"  every hour
+//               "0 0 * * *"  every day at midnight
+
+export const schedule = "* * * * *";
+
+export async function run(): Promise<void> {
+  // TODO: implement scheduled task
+}

@@ -1,0 +1,7 @@
+import { type Plugin, hook } from "@minimajs/server";
+
+export const {{ instance }}: Plugin = async (app) => {
+  app.register(hook("request", async () => {
+    // TODO: implement middleware logic
+  }));
+};
