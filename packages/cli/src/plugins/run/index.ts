@@ -1,13 +1,13 @@
 import { EOL } from "node:os";
 import type { Plugin, PluginBuild } from "esbuild";
-import { runNode } from "./node-runner.js";
+import { runProcess } from "./node-runner.js";
 import { bold, dim } from "../../utils/colors.js";
 import { log } from "../../utils/logging.js";
 import { loadEnvFile } from "../../utils/env.js";
 
 interface RunOption {
-  filename: string;
-  nodeOptions: string[];
+  bin: string;
+  args: string[];
   killSignal?: NodeJS.Signals;
   envFile?: string;
 }
@@ -23,7 +23,7 @@ let restartListenerAttached = false;
 
 async function setup(build: PluginBuild, opts: RunOption): Promise<void> {
   if (build.initialOptions.sourcemap) {
-    opts.nodeOptions.push("--enable-source-maps");
+    opts.args.push("--enable-source-maps");
   }
   const execute = createRunner(opts);
   build.onEnd(({ errors }) => {
@@ -39,15 +39,12 @@ function onRestart(execute: ReturnType<typeof createRunner>): void {
   if (restartListenerAttached) return;
   restartListenerAttached = true;
   process.stdout.on("data", (buf: Buffer) => {
-    const txt = buf.toString().trim();
-    if (txt === "rs") {
-      execute();
-    }
+    if (buf.toString().trim() === "rs") execute();
   });
 }
 
 export function createRunner(option: RunOption): () => Promise<void> {
-  let stopProcess: ReturnType<typeof runNode> | null = null;
+  let stopProcess: ReturnType<typeof runProcess> | null = null;
   let isExecuting = false;
 
   const envVars = option.envFile ? loadEnvFile(option.envFile) : undefined;
@@ -57,7 +54,7 @@ export function createRunner(option: RunOption): () => Promise<void> {
     isExecuting = true;
     try {
       await stopProcess?.(option.killSignal);
-      stopProcess = runNode(option.filename, option.nodeOptions, envVars);
+      stopProcess = runProcess(option.bin, option.args, envVars);
     } finally {
       isExecuting = false;
     }

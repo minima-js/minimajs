@@ -14,7 +14,6 @@ export interface BaseConfig {
   minify: boolean;
   ignoreTypes: boolean;
   reset: boolean;
-  nodeOptions: string[];
   killSignal: NodeJS.Signals;
   import: string[];
   outdir: string;

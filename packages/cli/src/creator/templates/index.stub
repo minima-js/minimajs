@@ -1,5 +1,5 @@
+import { logger } from "@minimajs/server";
 import { createApp } from "@minimajs/server/{{ runtime }}";
-import { logger } from "@minimajs/server/{{ runtime }}";
 
 const app = createApp();
 const addr = await app.listen({ port: 3000 });

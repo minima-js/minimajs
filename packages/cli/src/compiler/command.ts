@@ -114,17 +114,11 @@ export const startCommand = defineCommand({
       description: "Path to .env file",
       valueHint: "path",
     },
-    "node-options": {
-      type: "string",
-      description: "Extra options to pass to Node.js",
-      valueHint: "options",
-    },
   },
   async run({ args }) {
-    await runStart({
+    runStart({
       entry: args.entry,
       envFile: args["env-file"],
-      nodeOptions: args["node-options"],
     });
   },
 });

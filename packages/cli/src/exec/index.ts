@@ -53,11 +53,7 @@ export function execCapture(file: string, args: string[] = [], options: ExecOpti
   return exec(file, args, { ...options, stdio: ["ignore", "pipe", "pipe"] });
 }
 
-export function execSafe(
-  file: string,
-  args: string[] = [],
-  options: ExecOptions = {}
-): ExecResult & { ok: boolean } {
+export function execSafe(file: string, args: string[] = [], options: ExecOptions = {}): ExecResult & { ok: boolean } {
   try {
     return { ...exec(file, args, options), ok: true };
   } catch (e) {

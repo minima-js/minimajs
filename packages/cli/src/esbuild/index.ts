@@ -19,6 +19,11 @@ export async function handleAction(opt: CliOption): Promise<void> {
     config.ignoreTypes = true;
   }
 
+  // In watch mode, default run to true unless config already specifies a run command
+  if (config.watch && !config.run) {
+    config.run = true;
+  }
+
   try {
     const option = await buildEsbuildConfig(entries, config);
     if (config.watch) {

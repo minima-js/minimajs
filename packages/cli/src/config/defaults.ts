@@ -9,7 +9,6 @@ export const defaults: BaseConfig = {
   ignoreTypes: false,
   import: [],
   minify: false,
-  nodeOptions: [],
   reset: false,
   killSignal: "SIGTERM",
   run: false,

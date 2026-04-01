@@ -1,5 +1,4 @@
 import { dirname, join, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
 import type { Config } from "./types.js";
 import { defaults } from "./defaults.js";
 import type { CliOption } from "../command.js";
@@ -9,19 +8,20 @@ export type { Config };
 
 export async function loadConfig(cliOption: CliOption = {}): Promise<Config> {
   let config: Partial<Config> = {};
-  const packageInfo = loadPkg();
 
   for (const ext of ["ts", "js"]) {
     try {
       const configPath = join(process.cwd(), `minimajs.config.${ext}`);
-      const configUrl = pathToFileURL(configPath).href;
-      const module = await import(configUrl);
+      const module = await import(configPath);
       config = (module.default ?? module) as Partial<Config>;
       break;
-    } catch {
-      // no config file found for this extension — try next
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code !== "ERR_MODULE_NOT_FOUND" && code !== "MODULE_NOT_FOUND") throw err;
     }
   }
+
+  const packageInfo = loadPkg();
 
   const { main, engines } = packageInfo;
   if (main) {
@@ -32,12 +32,15 @@ export async function loadConfig(cliOption: CliOption = {}): Promise<Config> {
     config.target ??= getTarget(engines.node);
   }
 
-  const { grace, ...cliOverrides } = cliOption;
+  const { grace, ...rawOverrides } = cliOption;
 
   // grace: false means force kill instead of graceful shutdown
   if (grace === false) {
     config.killSignal = "SIGKILL";
   }
+
+  // Only apply overrides that were explicitly set (not undefined)
+  const cliOverrides = Object.fromEntries(Object.entries(rawOverrides).filter(([, v]) => v !== undefined));
 
   return {
     ...defaults,

@@ -1,6 +1,5 @@
 import { defineConfig } from "@minimajs/cli";
 
 export default defineConfig({
-  runtime: "{{ runtime }}",
-  packageManager: "{{ packageManager }}",
+  run: "{{ runtime }} %filename%"
 });

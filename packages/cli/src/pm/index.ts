@@ -1,6 +1,6 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { exec, execSafe } from "../exec/index.js";
+import { exec } from "../exec/index.js";
 
 export type PM = "bun" | "pnpm" | "yarn" | "npm";
 
@@ -16,6 +16,15 @@ const LOCKFILES: [string, PM][] = [
   ["package-lock.json", "npm"],
 ];
 
+function fromUserAgent(): PM | null {
+  const agent = process.env.npm_config_user_agent ?? "";
+  if (agent.startsWith("bun")) return "bun";
+  if (agent.startsWith("pnpm")) return "pnpm";
+  if (agent.startsWith("yarn")) return "yarn";
+  if (agent.startsWith("npm")) return "npm";
+  return null;
+}
+
 export function detect(cwd = process.cwd()): PM {
   // 1. packageManager field in package.json (corepack standard)
   try {
@@ -28,14 +37,13 @@ export function detect(cwd = process.cwd()): PM {
     // no package.json
   }
 
-  // 2. Lockfile detection
+  // 2. How the CLI was invoked (bunx / npx / yarn / pnpm dlx)
+  const agent = fromUserAgent();
+  if (agent) return agent;
+
+  // 3. Lockfile detection
   for (const [file, pm] of LOCKFILES) {
     if (existsSync(join(cwd, file))) return pm;
-  }
-
-  // 3. Binary probe
-  for (const pm of ["bun", "pnpm", "yarn"] as const) {
-    if (execSafe(pm, ["--version"], { stdio: ["ignore", "ignore", "ignore"] }).ok) return pm;
   }
 
   return "npm";

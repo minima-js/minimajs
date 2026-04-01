@@ -28,13 +28,11 @@ export interface BuildOptions {
 export interface StartOptions {
   entry?: string;
   envFile?: string;
-  nodeOptions?: string;
 }
 
 export async function runDev(opts: DevOptions): Promise<void> {
   const cliOption: CliOption = {
     watch: true,
-    run: true,
     clean: false,
     envFile: opts.envFile,
     tsconfig: opts.tsconfig,
@@ -82,16 +80,10 @@ export function runStart(opts: StartOptions): void {
     process.exit(1);
   }
 
-  const nodeArgs: string[] = [];
-  if (opts.nodeOptions) nodeArgs.push(...opts.nodeOptions.split(" "));
-
   const env: NodeJS.ProcessEnv = { ...process.env };
   if (opts.envFile) {
     Object.assign(env, loadEnvFile(opts.envFile));
   }
 
-  execFileSync(process.execPath, [...nodeArgs, entry], {
-    stdio: "inherit",
-    env,
-  });
+  execFileSync(process.execPath, [entry], { stdio: "inherit", env });
 }
