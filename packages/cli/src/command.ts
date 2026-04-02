@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { newCommand } from "./creator/command.js";
 import { devCommand, buildCommand, startCommand } from "./compiler/command.js";
-import { addCommand } from "./adder/command.js";
+import { addCommand } from "./generator/command.js";
 import { checkCommand } from "./check/command.js";
 import { infoCommand } from "./info/command.js";
 

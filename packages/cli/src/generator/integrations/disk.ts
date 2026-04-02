@@ -8,11 +8,7 @@ export const disk: Integration = {
     {
       path: "src/disk.ts",
       content: `import { createDisk } from "@minimajs/disk";
-
-export const disk = createDisk({
-  driver: "local",
-  root: "./storage",
-});
+export const disk = createDisk();
 `,
     },
   ],
