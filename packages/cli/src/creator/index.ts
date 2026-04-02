@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { mkdirSync, existsSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { bold, cyan, green, dim } from "../utils/colors.js";
 import { createSpinner } from "../utils/spinner.js";
 import {
@@ -14,7 +14,7 @@ import {
 import type { Runtime } from "../config/types.js";
 import * as pm from "../pm/index.js";
 import { exec } from "../exec/index.js";
-import { text } from "../utils/fs.js";
+import { text, mkdir } from "../utils/fs.js";
 
 export type { PM as PackageManager } from "../pm/index.js";
 
@@ -55,7 +55,7 @@ export function createProject(opts: CreateProjectOptions): void {
 
   spinner.start(`Scaffolding ${bold(cyan(name))}...`);
 
-  mkdirSync(join(cwd, "src"), { recursive: true });
+  mkdir.sync(join(cwd, "src"));
 
   text.write(join(cwd, "package.json"), renderPackageJson(name, runtime, packageManagerField));
   text.write(join(cwd, "tsconfig.json"), renderTsConfig());

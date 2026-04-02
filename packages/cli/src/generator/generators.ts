@@ -1,7 +1,7 @@
-import { mkdirSync, existsSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { bold, cyan, green, dim } from "../utils/colors.js";
-import { text } from "../utils/fs.js";
+import { text, mkdir } from "../utils/fs.js";
 import { stubs } from "./stubs.js";
 
 export type GeneratorType = "service" | "middleware" | "plugin" | "hook" | "job" | "cron" | "event";
@@ -33,7 +33,7 @@ export function generateFile(type: GeneratorType, name: string, dir = "src"): vo
     instance: camel + type.charAt(0).toUpperCase() + type.slice(1),
   });
 
-  mkdirSync(targetDir, { recursive: true });
+  mkdir.sync(targetDir);
   text.write(filePath, content);
 
   process.stdout.write(

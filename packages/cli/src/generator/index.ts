@@ -1,7 +1,7 @@
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { bold, cyan, green, dim, yellow } from "../utils/colors.js";
-import { text } from "../utils/fs.js";
+import { text, mkdir } from "../utils/fs.js";
 import * as pm from "../pm/index.js";
 import { fileURLToPath } from "node:url";
 import { stubs } from "./stubs.js";
@@ -25,10 +25,11 @@ export function generateModule({ name, dir = "src" }: GenerateModuleOptions): vo
 
   const pascal = moduleName.charAt(0).toUpperCase() + moduleName.slice(1);
   const vars = { Name: pascal, name: moduleName };
+  const handlerFile = `${moduleName}.handler.ts`;
 
-  mkdirSync(modulePath, { recursive: true });
+  mkdir.sync(modulePath);
   text.write(join(modulePath, "module.ts"), stubs["module"](vars));
-  text.write(join(modulePath, "handlers.ts"), stubs["handlers"](vars));
+  text.write(join(modulePath, handlerFile), stubs["handler"](vars));
 
   process.stdout.write(
     [
@@ -37,7 +38,7 @@ export function generateModule({ name, dir = "src" }: GenerateModuleOptions): vo
       "",
       `  ${dim("Created:")}`,
       `    ${cyan(join(dir, name, "module.ts"))}`,
-      `    ${cyan(join(dir, name, "handlers.ts"))}`,
+      `    ${cyan(join(dir, name, handlerFile))}`,
       "",
     ].join("\n")
   );

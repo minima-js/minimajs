@@ -1,4 +1,4 @@
-import { existsSync, writeFileSync, rmSync, mkdirSync, readFileSync } from "node:fs";
+import { existsSync, writeFileSync, rmSync, readFileSync, mkdirSync } from "node:fs";
 
 export function isExists(f: string): boolean {
   return existsSync(f);
@@ -10,6 +10,12 @@ export const text = {
   },
   write(name: string, content: string): void {
     writeFileSync(name, content);
+  },
+};
+
+export const mkdir = {
+  sync(path: string): void {
+    mkdirSync(path, { recursive: true });
   },
 };
 
