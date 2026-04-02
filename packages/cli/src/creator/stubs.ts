@@ -1,4 +1,4 @@
-import type { Runtime, PackageManager } from "../config/types.js";
+import type { Runtime } from "../config/types.js";
 import indexStub from "./templates/index.stub";
 import rootModuleStub from "./templates/root-module.stub";
 import minimaJsConfigStub from "./templates/minimajs.config.stub";
@@ -16,16 +16,21 @@ export function renderRootModule(): string {
   return rootModuleStub({});
 }
 
-export function renderMinimaJsConfig(runtime: Runtime, packageManager: PackageManager): string {
-  return minimaJsConfigStub({ runtime, packageManager });
+export function renderMinimaJsConfig(runtime: Runtime): string {
+  return minimaJsConfigStub({ runtime });
 }
 
 export function renderTsConfig(): string {
   return tsconfigStub({});
 }
 
-export function renderPackageJson(name: string, runtime: Runtime): string {
-  return (runtime === "bun" ? packageBunStub : packageNodeStub)({ name });
+export function renderPackageJson(name: string, runtime: Runtime, packageManager?: string | null): string {
+  const raw = (runtime === "bun" ? packageBunStub : packageNodeStub)({ name, packageManager: packageManager ?? "" });
+  // Remove the "packageManager" line entirely when no value was resolved
+  if (!packageManager) {
+    return raw.replace(/\n\s+"packageManager": "",/, "");
+  }
+  return raw;
 }
 
 export function renderGitignore(): string {

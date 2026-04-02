@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
+  "packageManager": "{{ packageManager }}",
   "scripts": {
     "app": "minimajs",
     "dev": "minimajs dev",
@@ -14,6 +15,7 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "@minimajs/cli": "latest",
     "@types/node": "^22.0.0",
     "typescript": "^5.9.0"
   }

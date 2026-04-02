@@ -2,7 +2,15 @@ import { join } from "node:path";
 import { mkdirSync, existsSync } from "node:fs";
 import { bold, cyan, green, dim } from "../utils/colors.js";
 import { createSpinner } from "../utils/spinner.js";
-import { renderIndex, renderRootModule, renderMinimaJsConfig, renderTsConfig, renderPackageJson, renderGitignore, renderEnv } from "./stubs.js";
+import {
+  renderIndex,
+  renderRootModule,
+  renderMinimaJsConfig,
+  renderTsConfig,
+  renderPackageJson,
+  renderGitignore,
+  renderEnv,
+} from "./stubs.js";
 import type { Runtime } from "../config/types.js";
 import * as pm from "../pm/index.js";
 import { exec, execSafe } from "../exec/index.js";
@@ -40,15 +48,19 @@ export function createProject(opts: CreateProjectOptions): void {
     process.exit(1);
   }
 
+  // Resolve exact installed version for the corepack `packageManager` field.
+  // This is safe to skip if the PM binary isn't available (returns null).
+  const packageManagerField = pm.getVersion(manager);
+
   const spinner = createSpinner();
 
   spinner.start(`Scaffolding ${bold(cyan(name))}...`);
 
   mkdirSync(join(cwd, "src"), { recursive: true });
 
-  write(join(cwd, "package.json"), renderPackageJson(name, runtime));
+  write(join(cwd, "package.json"), renderPackageJson(name, runtime, packageManagerField));
   write(join(cwd, "tsconfig.json"), renderTsConfig());
-  write(join(cwd, "minimajs.config.ts"), renderMinimaJsConfig(runtime, manager));
+  write(join(cwd, "minimajs.config.ts"), renderMinimaJsConfig(runtime));
   write(join(cwd, "src", "index.ts"), renderIndex(runtime));
   write(join(cwd, "src", "module.ts"), renderRootModule());
   write(join(cwd, ".gitignore"), renderGitignore());

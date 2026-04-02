@@ -1,0 +1,29 @@
+# ── Build stage ────────────────────────────────────────────────────────────────
+FROM oven/bun:alpine AS builder
+
+WORKDIR /app
+
+COPY package.json bun.lock* ./
+RUN bun install --frozen-lockfile
+
+COPY . .
+RUN bun run build
+
+# ── Production stage ───────────────────────────────────────────────────────────
+FROM oven/bun:alpine
+
+WORKDIR /app
+
+# Create non-root user
+RUN addgroup --system app && adduser --system --ingroup app app
+
+COPY package.json bun.lock* ./
+RUN bun install --frozen-lockfile --production
+
+COPY --from=builder /app/dist ./dist
+
+USER app
+
+EXPOSE 3000
+
+CMD ["bun", "dist/index.js"]

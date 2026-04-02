@@ -2,5 +2,5 @@ import { logger } from "@minimajs/server";
 import { createApp } from "@minimajs/server/{{ runtime }}";
 
 const app = createApp();
-const addr = await app.listen({ port: 3000 });
+const addr = await app.listen({ port: Number(process.env.PORT) || 3000 });
 logger.info("Listening on %s", addr);

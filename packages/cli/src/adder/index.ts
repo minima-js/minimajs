@@ -1,9 +1,10 @@
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { bold, cyan, green, dim, yellow } from "../utils/colors.js";
 import { write } from "../utils/fs.js";
 import { createSpinner } from "../utils/spinner.js";
 import * as pm from "../pm/index.js";
+import { fileURLToPath } from "node:url";
 
 export interface Integration {
   name: string;
@@ -100,6 +101,46 @@ export const mailer = createMailer({
     ],
   },
 };
+
+const templatesDir = fileURLToPath(new URL("./templates", import.meta.url));
+
+/** Map detected PM to the Dockerfile template filename */
+const DOCKERFILE_TEMPLATE: Record<pm.PM, string> = {
+  bun: "Dockerfile.bun",
+  npm: "Dockerfile.node",
+  pnpm: "Dockerfile.pnpm",
+  yarn: "Dockerfile.yarn",
+};
+
+function readDockerfile(manager: pm.PM, berry: boolean): string {
+  const template = manager === "yarn" && berry ? "Dockerfile.berry" : DOCKERFILE_TEMPLATE[manager];
+  return readFileSync(join(templatesDir, template), "utf8");
+}
+
+export function addDockerfile(): void {
+  const detected = pm.detect();
+  const berry = detected === "yarn" && pm.isYarnBerry();
+  const destPath = join(process.cwd(), "Dockerfile");
+
+  if (existsSync(destPath)) {
+    process.stderr.write(`  ${yellow("!")} Dockerfile already exists\n`);
+    process.exit(1);
+  }
+
+  write(destPath, readDockerfile(detected, berry));
+
+  const label = berry ? "yarn berry" : detected;
+
+  process.stdout.write(
+    [
+      "",
+      `  ${green("✔")} Created ${bold(cyan("Dockerfile"))} for ${bold(label)}`,
+      "",
+      `  ${dim("Tip:")} build with ${cyan("docker build -t my-app .")}`,
+      "",
+    ].join("\n")
+  );
+}
 
 export function addIntegration(name: string, _opts: { description?: string } = {}): void {
   const integration = integrations[name];

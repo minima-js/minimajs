@@ -23,9 +23,7 @@ function resolveRunCommand(
     return { bin: resolveBin(runtime), args: [outputFile] };
   }
 
-  const cmd = runConfig.includes("{{filename}}")
-    ? runConfig.replace("{{filename}}", outputFile)
-    : `${runConfig} ${outputFile}`;
+  const cmd = runConfig.includes("[filename]") ? runConfig.replace("[filename]", outputFile) : `${runConfig} ${outputFile}`;
 
   const [bin, ...args] = cmd.trim().split(/\s+/);
   return { bin: bin!, args };
@@ -45,14 +43,8 @@ export async function buildPlugins(config: Config, filename: string): Promise<Pl
   }
 
   if (config.run) {
-    const outputFile = config.run === true
-      ? getOutputFilename(filename, outdir, ".js")
-      : getOutputFilename(filename, outdir, ".js");
-
-    const importArgs = config.import.flatMap((x) => [
-      "--import",
-      getOutputFilename(x, outdir, ".js"),
-    ]);
+    const outputFile = getOutputFilename(filename, outdir, ".js");
+    const importArgs = config.import.flatMap((x) => ["--import", getOutputFilename(x, outdir, ".js")]);
 
     const { bin, args } = resolveRunCommand(config.run, outputFile, config.runtime);
     args.push(...importArgs);

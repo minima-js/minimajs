@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 import { generateModule } from "../generator/index.js";
-import { addIntegration, integrations } from "./index.js";
+import { addIntegration, addDockerfile, integrations } from "./index.js";
 import { generateFile, type GeneratorType } from "./generators.js";
 
 function makeGeneratorCommand(type: GeneratorType, description: string) {
@@ -74,6 +74,12 @@ export const addCommand = defineCommand({
     job: makeGeneratorCommand("job", "Scaffold a background job"),
     cron: makeGeneratorCommand("cron", "Scaffold a scheduled task"),
     event: makeGeneratorCommand("event", "Scaffold an event handler"),
+    dockerfile: defineCommand({
+      meta: { name: "dockerfile", description: "Generate a Dockerfile (auto-detects bun or node runtime)" },
+      run() {
+        addDockerfile();
+      },
+    }),
     ...Object.fromEntries(
       Object.entries(integrations).map(([key, integration]) => [
         key,
