@@ -49,11 +49,11 @@ export function exec(file: string, args: string[] = [], options: ExecOptions = {
   return { stdout, stderr, exitCode };
 }
 
-export function execCapture(file: string, args: string[] = [], options: ExecOptions = {}): ExecResult {
+exec.capture = function execCapture(file: string, args: string[] = [], options: ExecOptions = {}): ExecResult {
   return exec(file, args, { ...options, stdio: ["ignore", "pipe", "pipe"] });
-}
+};
 
-export function execSafe(file: string, args: string[] = [], options: ExecOptions = {}): ExecResult & { ok: boolean } {
+exec.safe = function execSafe(file: string, args: string[] = [], options: ExecOptions = {}): ExecResult & { ok: boolean } {
   try {
     return { ...exec(file, args, options), ok: true };
   } catch (e) {
@@ -62,4 +62,4 @@ export function execSafe(file: string, args: string[] = [], options: ExecOptions
     }
     throw e;
   }
-}
+};

@@ -10,6 +10,7 @@
     "deepmerge",
     "llms",
     "llmstxt",
+    "LOCKFILES",
     "minimajs",
     "pino",
     "unsign",

@@ -4,9 +4,14 @@ export function isExists(f: string): boolean {
   return existsSync(f);
 }
 
-export function write(name: string, content: string): void {
-  writeFileSync(name, content);
-}
+export const text = {
+  read(name: string): string {
+    return readFileSync(name, "utf8");
+  },
+  write(name: string, content: string): void {
+    writeFileSync(name, content);
+  },
+};
 
 export function clean(dest: string): void {
   try {
@@ -19,6 +24,11 @@ export function clean(dest: string): void {
   }
 }
 
-export function loadJSON<T = unknown>(fn: string): T {
-  return JSON.parse(readFileSync(fn, "utf8")) as T;
-}
+export const json = {
+  read<T = unknown>(name: string): T {
+    return JSON.parse(readFileSync(name, "utf8")) as T;
+  },
+  write(name: string, content: unknown, indent = 2): void {
+    writeFileSync(name, JSON.stringify(content, null, indent));
+  },
+};

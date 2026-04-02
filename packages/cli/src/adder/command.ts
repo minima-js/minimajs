@@ -1,7 +1,8 @@
 import { defineCommand } from "citty";
 import { generateModule } from "../generator/index.js";
-import { addIntegration, addDockerfile, integrations } from "./index.js";
+import { addIntegration, addDockerfile } from "./index.js";
 import { generateFile, type GeneratorType } from "./generators.js";
+import { integrations } from "./integrations/index.js";
 
 function makeGeneratorCommand(type: GeneratorType, description: string) {
   return defineCommand({
@@ -83,7 +84,7 @@ export const addCommand = defineCommand({
     ...Object.fromEntries(
       Object.entries(integrations).map(([key, integration]) => [
         key,
-        makeIntegrationCommand(key, `Install ${integration.description.toLowerCase()}`),
+        makeIntegrationCommand(key, `Install ${integration!.description.toLowerCase()}`),
       ])
     ),
   },

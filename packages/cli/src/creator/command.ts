@@ -1,5 +1,6 @@
 import { defineCommand } from "citty";
-import { createProject, detectPackageManager, detectRuntime, type PackageManager, type Runtime } from "./index.js";
+import { createProject, detectPackageManager, detectRuntime, type PackageManager } from "./index.js";
+import type { Runtime } from "../config/types.js";
 
 export const newCommand = defineCommand({
   meta: {

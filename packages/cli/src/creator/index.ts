@@ -13,10 +13,9 @@ import {
 } from "./stubs.js";
 import type { Runtime } from "../config/types.js";
 import * as pm from "../pm/index.js";
-import { exec, execSafe } from "../exec/index.js";
-import { write } from "../utils/fs.js";
+import { exec } from "../exec/index.js";
+import { text } from "../utils/fs.js";
 
-export type { Runtime };
 export type { PM as PackageManager } from "../pm/index.js";
 
 export interface CreateProjectOptions {
@@ -33,7 +32,7 @@ export function detectPackageManager(): pm.PM {
 
 export function detectRuntime(): Runtime {
   if (typeof process.versions.bun === "string") return "bun";
-  if (execSafe("bun", ["--version"], { stdio: ["ignore", "ignore", "ignore"] }).ok) return "bun";
+  if (exec.safe("bun", ["--version"], { stdio: ["ignore", "ignore", "ignore"] }).ok) return "bun";
   return "node";
 }
 
@@ -58,20 +57,20 @@ export function createProject(opts: CreateProjectOptions): void {
 
   mkdirSync(join(cwd, "src"), { recursive: true });
 
-  write(join(cwd, "package.json"), renderPackageJson(name, runtime, packageManagerField));
-  write(join(cwd, "tsconfig.json"), renderTsConfig());
-  write(join(cwd, "minimajs.config.ts"), renderMinimaJsConfig(runtime));
-  write(join(cwd, "src", "index.ts"), renderIndex(runtime));
-  write(join(cwd, "src", "module.ts"), renderRootModule());
-  write(join(cwd, ".gitignore"), renderGitignore());
-  write(join(cwd, ".env"), renderEnv());
+  text.write(join(cwd, "package.json"), renderPackageJson(name, runtime, packageManagerField));
+  text.write(join(cwd, "tsconfig.json"), renderTsConfig());
+  text.write(join(cwd, "minimajs.config.ts"), renderMinimaJsConfig(runtime));
+  text.write(join(cwd, "src", "index.ts"), renderIndex(runtime));
+  text.write(join(cwd, "src", "module.ts"), renderRootModule());
+  text.write(join(cwd, ".gitignore"), renderGitignore());
+  text.write(join(cwd, ".env"), renderEnv());
 
   spinner.succeed(`Scaffolded ${bold(cyan(name))}`);
 
   if (git) {
-    execSafe("git", ["init"], { cwd });
-    execSafe("git", ["add", "-A"], { cwd });
-    execSafe("git", ["commit", "-m", "chore: initial commit"], { cwd });
+    exec.safe("git", ["init"], { cwd });
+    exec.safe("git", ["add", "-A"], { cwd });
+    exec.safe("git", ["commit", "-m", "chore: initial commit"], { cwd });
   }
 
   if (!skipInstall) {

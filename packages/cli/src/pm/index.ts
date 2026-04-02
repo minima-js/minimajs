@@ -1,6 +1,6 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { exec, execCapture } from "../exec/index.js";
+import { exec } from "../exec/index.js";
 
 export type PM = "bun" | "pnpm" | "yarn" | "npm";
 
@@ -23,7 +23,7 @@ const LOCKFILES: [string, PM][] = [
  */
 export function isYarnBerry(cwd = process.cwd()): boolean {
   try {
-    const result = execCapture("yarn", ["--version"], { cwd });
+    const result = exec.capture("yarn", ["--version"], { cwd });
     const major = parseInt(result.stdout.trim().replace(/^v/, ""), 10);
     return major >= 2;
   } catch {
@@ -71,7 +71,7 @@ export function detect(cwd = process.cwd()): PM {
  */
 export function getVersion(manager: PM): string | null {
   try {
-    const result = execCapture(manager, ["--version"]);
+    const result = exec.capture(manager, ["--version"]);
     // strip any leading 'v' (e.g. yarn classic outputs "1.22.22")
     const version = result.stdout.trim().replace(/^v/, "");
     if (!version) return null;
