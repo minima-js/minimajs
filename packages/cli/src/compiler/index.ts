@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { join, resolve } from "node:path";
 import { existsSync } from "node:fs";
-import { handleAction } from "../esbuild/index.js";
+import { handleAction } from "./esbuild/index.js";
 import { loadPkg } from "../config/pkg.js";
 import { bold, cyan } from "../utils/colors.js";
 import { loadEnvFile } from "../utils/env.js";

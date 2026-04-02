@@ -1,10 +1,10 @@
 import type { Plugin } from "esbuild";
-import { createSpinner } from "../utils/spinner.js";
-import { bold, cyan, dim } from "../utils/colors.js";
-import { relativeId } from "../utils/path.js";
-import { getResetScreen } from "../utils/screen.js";
-import { errorMessage, log, stderr, successMessage } from "../utils/logging.js";
-import { getEntryLabel } from "../utils/utils.js";
+import { createSpinner } from "../../utils/spinner.js";
+import { bold, cyan, dim } from "../../utils/colors.js";
+import { relativeId } from "../../utils/path.js";
+import { getResetScreen } from "../../utils/screen.js";
+import { errorMessage, log, stderr, successMessage } from "../../utils/logging.js";
+import { getEntryLabel } from "../../utils/utils.js";
 
 interface ProgressOption {
   message?: string;

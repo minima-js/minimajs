@@ -1,29 +1,23 @@
-import { runTypeCheck } from "../plugins/typescript/checker.js";
-import { bold, green, red, dim } from "../utils/colors.js";
-import { createSpinner } from "../utils/spinner.js";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { bold, green, red, dim, cyan } from "../utils/colors.js";
 
-export async function runCheck(tsconfig = "tsconfig.json"): Promise<void> {
-  const spinner = createSpinner();
-  spinner.start("Type checking...");
+const tscBin = fileURLToPath(import.meta.resolve("typescript/bin/tsc"));
 
+export function runCheck(tsconfig = "tsconfig.json"): void {
+  process.stdout.write(cyan("type checking...\n"));
   const start = Date.now();
-  let errorCount = 0;
 
-  try {
-    errorCount = await runTypeCheck(tsconfig);
-  } catch (err) {
-    spinner.fail("Type checker failed to start");
-    if (err instanceof Error) process.stderr.write(red(err.message) + "\n");
-    process.exit(1);
-  }
+  const result = spawnSync(process.execPath, [tscBin, "--noEmit", "--project", tsconfig], {
+    stdio: "inherit",
+  });
 
   const elapsed = dim(`(${Date.now() - start}ms)`);
 
-  if (errorCount === 0) {
-    spinner.succeed(`No type errors found ${elapsed}`);
-    process.stdout.write(`\n  ${green("✔")} ${bold("All good!")}\n\n`);
+  if (result.status === 0) {
+    process.stdout.write(`\n  ${green("✔")} ${bold("No type errors")} ${elapsed}\n\n`);
   } else {
-    spinner.fail(`Found ${bold(String(errorCount))} type error(s) ${elapsed}`);
+    process.stderr.write(red(`\nType check failed ${elapsed}\n`));
     process.exit(1);
   }
 }

@@ -1,9 +1,9 @@
 import { EOL } from "node:os";
 import type { Plugin, PluginBuild } from "esbuild";
 import { runProcess } from "./node-runner.js";
-import { bold, dim } from "../../utils/colors.js";
-import { log } from "../../utils/logging.js";
-import { loadEnvFile } from "../../utils/env.js";
+import { bold, dim } from "../../../utils/colors.js";
+import { log } from "../../../utils/logging.js";
+import { loadEnvFile } from "../../../utils/env.js";
 
 interface RunOption {
   bin: string;

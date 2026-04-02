@@ -1,8 +1,7 @@
 import type { BaseConfig } from "./types.js";
 
 export const defaults: BaseConfig = {
-  entry: "src/index.ts",
-  modulePattern: "src/**/module.{ts,js}",
+  entry: ["src/index.ts", "src/**/module.ts"],
   outdir: "dist",
   loader: {},
   clean: true,

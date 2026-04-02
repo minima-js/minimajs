@@ -17,10 +17,6 @@ export const devCommand = defineCommand({
       description: "Path to tsconfig.json",
       valueHint: "path",
     },
-    "ignore-types": {
-      type: "boolean",
-      description: "Skip TypeScript type checking",
-    },
     reset: {
       type: "boolean",
       description: "Clear screen on each rebuild",
@@ -40,7 +36,6 @@ export const devCommand = defineCommand({
     await runDev({
       envFile: args["env-file"],
       tsconfig: args.tsconfig,
-      ignoreTypes: args["ignore-types"],
       reset: args.reset,
       killSignal: args["kill-signal"] as NodeJS.Signals | undefined,
       grace: args.grace === false ? false : undefined,

@@ -1,29 +1,40 @@
 import { existsSync } from "node:fs";
 import { glob } from "node:fs/promises";
 
+const GLOB_CHARS = /[*?{[]/;
+
+function isGlobPattern(s: string): boolean {
+  return GLOB_CHARS.test(s);
+}
+
 /**
- * Resolves the full list of entry points for the build:
- * - The primary entry (e.g. src/index.ts)
- * - All files matching modulePattern (e.g. src/** /module.ts) as individual entries
- *   so their directory structure is preserved in the output via `outbase`.
+ * Resolves the full list of entry points for the build.
+ * Each element of `entries` is either:
+ *   - a static file path (e.g. "src/index.ts")
+ *   - a glob pattern   (e.g. "src/** /module.{ts,js}", "src/** /cron.ts")
  */
-export async function resolveEntries(entry: string, modulePattern: string): Promise<string[]> {
-  const entries: string[] = [];
+export async function resolveEntries(entries: string[]): Promise<string[]> {
+  const resolved: string[] = [];
 
-  if (existsSync(entry)) {
-    entries.push(entry);
-  }
-
-  for await (const file of glob(modulePattern)) {
-    // Avoid duplicating the primary entry if it matches the pattern
-    if (file !== entry && !entries.includes(file)) {
-      entries.push(file);
+  for (const entry of entries) {
+    if (isGlobPattern(entry)) {
+      for await (const file of glob(entry)) {
+        if (!resolved.includes(file)) {
+          resolved.push(file);
+        }
+      }
+    } else {
+      if (existsSync(entry) && !resolved.includes(entry)) {
+        resolved.push(entry);
+      }
     }
   }
 
-  if (entries.length === 0) {
-    throw new Error(`No entry points found. Expected "${entry}" to exist, or files matching "${modulePattern}".`);
+  if (resolved.length === 0) {
+    throw new Error(
+      `No entry points found. Checked: ${entries.map((e) => `"${e}"`).join(", ")}.`
+    );
   }
 
-  return entries;
+  return resolved;
 }

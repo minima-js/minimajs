@@ -1,7 +1,7 @@
 import type { BuildOptions } from "esbuild";
-import type { Config } from "../config/index.js";
-import { clean } from "../utils/fs.js";
-import { isCurrentPath } from "../utils/path.js";
+import type { Config } from "../../config/index.js";
+import { clean } from "../../utils/fs.js";
+import { isCurrentPath } from "../../utils/path.js";
 import { buildPlugins } from "./plugins.js";
 
 export async function buildEsbuildConfig(entries: string[], config: Config): Promise<BuildOptions> {
@@ -11,9 +11,6 @@ export async function buildEsbuildConfig(entries: string[], config: Config): Pro
   const primaryEntry = entries[0] ?? "";
   const plugins = await buildPlugins(config, primaryEntry);
   const entryPoints = [...entries, ...config.import];
-
-  // Determine if we have multiple entries — if so, use outbase to preserve directory structure
-  const isMultiEntry = entries.length > 1;
 
   const buildConfig: BuildOptions = {
     entryPoints,
@@ -29,8 +26,7 @@ export async function buildEsbuildConfig(entries: string[], config: Config): Pro
     metafile: true,
     plugins,
     loader,
-    // splitting is incompatible with outbase multi-entry; only enable for single entry
-    ...(isMultiEntry ? { outbase: "src" } : { splitting: true }),
+    splitting: true,
   };
   if (config.target) {
     buildConfig.target = config.target;

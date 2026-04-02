@@ -31,7 +31,7 @@ export async function printInfo(): Promise<void> {
   process.stdout.write(row("Package Manager", cyan(config.packageManager ?? "auto-detect")));
 
   process.stdout.write(section("Build"));
-  process.stdout.write(row("Entry", cyan(config.entry)));
+  process.stdout.write(row("Entry", cyan(config.entry.join(", "))));
   process.stdout.write(row("Output", cyan(config.outdir)));
   process.stdout.write(row("TypeScript", cyan(config.tsconfig)));
   if (config.target) process.stdout.write(row("Target", cyan(config.target)));

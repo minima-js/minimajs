@@ -15,6 +15,6 @@ export const checkCommand = defineCommand({
     },
   },
   async run({ args }) {
-    await runCheck(args.tsconfig);
+    runCheck(args.tsconfig);
   },
 });

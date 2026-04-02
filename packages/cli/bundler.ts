@@ -41,7 +41,7 @@ const entries: esbuild.BuildOptions[] = [
     external: ["esbuild", "typescript"],
   },
   {
-    entryPoints: ["src/plugins/typescript/worker.ts"],
+    entryPoints: ["src/compiler/plugins/typescript/worker.ts"],
     outfile: "lib/worker.js",
     external: ["typescript"],
   },

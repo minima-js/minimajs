@@ -74,12 +74,8 @@ if (!isMainThread) {
     parentPort!.postMessage(msg);
   }
 
-  const host = typescript.createCompilerHost({});
   const configPath = typescript.findConfigFile(process.cwd(), typescript.sys.fileExists, tsconfig);
   if (!configPath) throw new Error(`Cannot find tsconfig: ${tsconfig}`);
-
-  const { config } = typescript.readConfigFile(configPath, typescript.sys.readFile);
-  const parsed = typescript.parseJsonConfigFileContent(config, typescript.sys, process.cwd());
 
   if (watch) {
     // ── Watch mode: ts.createWatchProgram stays alive, sends diagnostics as they arrive
@@ -94,36 +90,5 @@ if (!isMainThread) {
     );
 
     typescript.createWatchProgram(watchHost);
-  } else {
-    // ── One-shot build: incremental program reuses .tsbuildinfo for fast re-runs
-
-    const options: ts.CompilerOptions = {
-      ...parsed.options,
-      noEmit: true,
-      incremental: true,
-    };
-
-    const program = typescript.createIncrementalProgram({
-      rootNames: parsed.fileNames,
-      options,
-      host,
-    });
-
-    const allDiagnostics = [
-      ...program.getConfigFileParsingDiagnostics(),
-      ...program.getSyntacticDiagnostics(),
-      ...program.getOptionsDiagnostics(),
-      ...program.getSemanticDiagnostics(),
-    ];
-
-    let errorCount = 0;
-    for (const d of allDiagnostics) {
-      if (d.category === typescript.DiagnosticCategory.Error) errorCount++;
-      send({ type: "diagnostic", payload: toDiagnostic(d) });
-    }
-
-    // Emit only the .tsbuildinfo (incremental state), no JS
-    program.emit();
-    send({ type: "done", errorCount });
   }
 }

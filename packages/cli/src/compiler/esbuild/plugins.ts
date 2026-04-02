@@ -1,12 +1,12 @@
 import type { Plugin } from "esbuild";
-import type { Config } from "../config/index.js";
-import type { Runtime } from "../config/types.js";
-import { getOutputFilename } from "../utils/path.js";
+import type { Config } from "../../config/index.js";
+import type { Runtime } from "../../config/types.js";
+import { getOutputFilename } from "../../utils/path.js";
 import { progress } from "../plugins/progress.js";
 import { run } from "../plugins/run/index.js";
 import { tsCheckPlugin } from "../plugins/typescript/index.js";
-import { yellow } from "../utils/colors.js";
-import { log } from "../utils/logging.js";
+import { yellow } from "../../utils/colors.js";
+import { log } from "../../utils/logging.js";
 
 function resolveBin(runtime: Runtime | undefined): string {
   const inBun = typeof process.versions.bun === "string";
@@ -34,7 +34,7 @@ export async function buildPlugins(config: Config, filename: string): Promise<Pl
   const plugins: Plugin[] = [];
 
   if (config.watch) {
-    if (!config.ignoreTypes) plugins.push(tsCheckPlugin(config.tsconfig));
+    plugins.push(tsCheckPlugin(config.tsconfig));
     plugins.push(progress({ dist: outdir, clear: config.reset }));
   }
 

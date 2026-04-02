@@ -4,8 +4,7 @@ export type Runtime = "node" | "bun";
 export type PackageManager = "bun" | "pnpm" | "yarn" | "npm";
 
 export interface BaseConfig {
-  entry: string;
-  modulePattern: string;
+  entry: string[];
   run: boolean | string;
   watch: boolean;
   clean: boolean;
