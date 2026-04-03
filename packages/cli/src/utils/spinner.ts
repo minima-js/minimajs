@@ -9,6 +9,19 @@ export interface Spinner {
   stop(): void;
 }
 
+export async function withSpinner<T>(label: string, fn: () => T | Promise<T>): Promise<T> {
+  const spinner = createSpinner();
+  spinner.start(label);
+  try {
+    const result = await fn();
+    spinner.succeed(label);
+    return result;
+  } catch (err) {
+    spinner.fail(label);
+    throw err;
+  }
+}
+
 export function createSpinner(): Spinner {
   let frame = 0;
   let timer: ReturnType<typeof setInterval> | null = null;

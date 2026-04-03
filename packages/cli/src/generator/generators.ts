@@ -1,19 +1,8 @@
 import { join, resolve } from "node:path";
 import { bold, cyan, green, dim } from "../utils/colors.js";
 import { exists, text, mkdir } from "../utils/fs.js";
-import { stubs } from "./stubs.js";
-
-export type GeneratorType = "service" | "middleware" | "plugin" | "hook" | "job" | "cron" | "event";
-
-function toPascal(name: string): string {
-  const base = name.split("/").at(-1) ?? name;
-  return base.replace(/-([a-z])/g, (_, c: string) => (c as string).toUpperCase()).replace(/^./, (c) => c.toUpperCase());
-}
-
-function toCamel(name: string): string {
-  const base = name.split("/").at(-1) ?? name;
-  return base.replace(/-([a-z])/g, (_, c: string) => (c as string).toUpperCase());
-}
+import { templates, type GeneratorType } from "./templates/index.js";
+import { toPascal, toCamel } from "../utils/str.js";
 
 export function generateFile(type: GeneratorType, name: string, dir = "src"): void {
   const targetDir = resolve(dir, name);
@@ -26,7 +15,7 @@ export function generateFile(type: GeneratorType, name: string, dir = "src"): vo
 
   const pascal = toPascal(name);
   const camel = toCamel(name);
-  const content = stubs[type]({
+  const content = templates[type]({
     Name: pascal,
     name: camel,
     instance: camel + type.charAt(0).toUpperCase() + type.slice(1),

@@ -1,17 +1,20 @@
+import type { CommandDef } from "citty";
 import { openapi } from "./openapi.js";
 import { disk } from "./disk.js";
-import { cache } from "./cache.js";
-import { queue } from "./queue.js";
-import { mail } from "./mail.js";
-import type { Integration } from "./types.js";
+import { dockerfile } from "./docker-file.js";
+import { module } from "./module.js";
+import { middleware } from "./middleware.js";
+import { plugin } from "./plugin.js";
+import { hook } from "./hook.js";
+import { service } from "./service.js";
 
-export type { Integration } from "./types.js";
-export { addIntegration } from "./run.js";
-
-export const integrations: Record<string, Integration | undefined> = {
+export const integrations: Record<string, CommandDef<any>> = {
   openapi,
   disk,
-  cache,
-  queue,
-  mail,
+  dockerfile,
+  module,
+  middleware,
+  plugin,
+  hook,
+  service,
 };

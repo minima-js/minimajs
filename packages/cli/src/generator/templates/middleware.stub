@@ -1,7 +1,8 @@
-import { type Plugin, hook } from "@minimajs/server";
+import { middleware } from "@minimajs/server";
 
-export const {{ instance }}: Plugin = async (app) => {
-  app.register(hook("request", async () => {
-    // TODO: implement middleware logic
-  }));
-};
+export const {{ instance }} = middleware(async (ctx, next) => {
+  const start = Date.now();
+  const response = await next();
+  console.log(`Request took ${Date.now() - start}ms`);
+  return response;
+});

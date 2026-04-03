@@ -1,0 +1,3 @@
+import { createDisk } from "@minimajs/disk";
+
+export const disk = createDisk();

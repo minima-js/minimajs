@@ -1,7 +1,6 @@
-import { type Plugin, hook } from "@minimajs/server";
+import { hook } from "@minimajs/server";
 
-export const {{ instance }}: Plugin = async (app) => {
-  app.register(hook("request", async () => {
-    // TODO: implement hook logic
-  }));
-};
+
+export const {{ instance }} = hook("request", async () => {
+  // TODO: implement hook logic
+});

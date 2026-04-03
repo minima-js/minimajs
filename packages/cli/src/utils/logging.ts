@@ -17,6 +17,12 @@ export const stderr = (...parameters: readonly unknown[]): boolean => {
   return std.write(`${parameters.join("")}\n`);
 };
 
+export function print(...lines: string[]): void {
+  for (const line of lines) {
+    process.stdout.write(line + "\n");
+  }
+}
+
 // eslint-disable-next-line no-console
 export const log = console.log;
 // eslint-disable-next-line no-console
