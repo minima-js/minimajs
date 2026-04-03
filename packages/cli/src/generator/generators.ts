@@ -1,7 +1,6 @@
-import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { bold, cyan, green, dim } from "../utils/colors.js";
-import { text, mkdir } from "../utils/fs.js";
+import { exists, text, mkdir } from "../utils/fs.js";
 import { stubs } from "./stubs.js";
 
 export type GeneratorType = "service" | "middleware" | "plugin" | "hook" | "job" | "cron" | "event";
@@ -20,7 +19,7 @@ export function generateFile(type: GeneratorType, name: string, dir = "src"): vo
   const targetDir = resolve(dir, name);
   const filePath = join(targetDir, `${type}.ts`);
 
-  if (existsSync(filePath)) {
+  if (exists(filePath)) {
     process.stderr.write(`  ${type} ${bold(name)} already exists at ${cyan(filePath)}\n`);
     process.exit(1);
   }

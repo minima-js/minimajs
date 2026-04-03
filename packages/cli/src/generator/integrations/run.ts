@@ -1,7 +1,6 @@
-import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { bold, cyan, green, dim, yellow } from "../../utils/colors.js";
-import { text, mkdir } from "../../utils/fs.js";
+import { exists, text, mkdir } from "../../utils/fs.js";
 import { createSpinner } from "../../utils/spinner.js";
 import * as pm from "../../pm/index.js";
 import { patchModule } from "../patch.js";
@@ -29,7 +28,7 @@ export function addIntegration(name: string, _opts: { description?: string } = {
   const created: string[] = [];
   for (const file of integration.files) {
     const fullPath = join(process.cwd(), file.path);
-    if (existsSync(fullPath)) {
+    if (exists(fullPath)) {
       process.stdout.write(`  ${yellow("!")} Skipped ${cyan(file.path)} (already exists)\n`);
       continue;
     }

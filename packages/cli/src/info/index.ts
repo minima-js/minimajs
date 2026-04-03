@@ -1,6 +1,6 @@
-import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { bold, cyan, dim, green } from "../utils/colors.js";
+import { exists, json } from "../utils/fs.js";
 import { loadConfig } from "../config/index.js";
 
 function row(label: string, value: string, width = 18): string {
@@ -17,8 +17,8 @@ export async function printInfo(): Promise<void> {
   let pkgName = "unknown";
   let pkgVersion = "—";
   const pkgPath = join(process.cwd(), "package.json");
-  if (existsSync(pkgPath)) {
-    const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as { name?: string; version?: string };
+  if (exists(pkgPath)) {
+    const pkg = json.read<{ name?: string; version?: string }>(pkgPath);
     pkgName = pkg.name ?? pkgName;
     pkgVersion = pkg.version ?? pkgVersion;
   }

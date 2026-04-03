@@ -1,6 +1,6 @@
-import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { exec } from "../exec/index.js";
+import { exists, json } from "../utils/fs.js";
 
 export type PM = "bun" | "pnpm" | "yarn" | "npm";
 
@@ -43,7 +43,7 @@ function fromUserAgent(): PM | null {
 export function detect(cwd = process.cwd()): PM {
   // 1. packageManager field in package.json (corepack standard)
   try {
-    const pkg = JSON.parse(readFileSync(join(cwd, "package.json"), "utf8")) as { packageManager?: string };
+    const pkg = json.read<{ packageManager?: string }>(join(cwd, "package.json"));
     if (pkg.packageManager) {
       const name = pkg.packageManager.split("@")[0] as PM;
       if (["bun", "pnpm", "yarn", "npm"].includes(name)) return name;
@@ -58,7 +58,7 @@ export function detect(cwd = process.cwd()): PM {
 
   // 3. Lockfile detection
   for (const [file, detected] of LOCKFILES) {
-    if (existsSync(join(cwd, file))) return detected;
+    if (exists(join(cwd, file))) return detected;
   }
 
   return "npm";

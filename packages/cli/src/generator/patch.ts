@@ -6,7 +6,7 @@
 
 import { join } from "node:path";
 import ts from "typescript";
-import { isExists, text } from "../utils/fs.js";
+import { exists, text } from "../utils/fs.js";
 
 /**
  * Patch src/module.ts to:
@@ -18,7 +18,7 @@ import { isExists, text } from "../utils/fs.js";
  */
 export function patchModule(cwd: string, importLine: string, plugin: string): void {
   const modulePath = join(cwd, "src", "module.ts");
-  if (!isExists(modulePath)) return;
+  if (!exists(modulePath)) return;
 
   const original = text.read(modulePath);
 

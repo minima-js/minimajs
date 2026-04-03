@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { exists } from "../utils/fs.js";
 import { glob } from "node:fs/promises";
 
 const GLOB_CHARS = /[*?{[]/;
@@ -24,16 +24,14 @@ export async function resolveEntries(entries: string[]): Promise<string[]> {
         }
       }
     } else {
-      if (existsSync(entry) && !resolved.includes(entry)) {
+      if (exists(entry) && !resolved.includes(entry)) {
         resolved.push(entry);
       }
     }
   }
 
   if (resolved.length === 0) {
-    throw new Error(
-      `No entry points found. Checked: ${entries.map((e) => `"${e}"`).join(", ")}.`
-    );
+    throw new Error(`No entry points found. Checked: ${entries.map((e) => `"${e}"`).join(", ")}.`);
   }
 
   return resolved;

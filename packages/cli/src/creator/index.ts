@@ -1,5 +1,4 @@
 import { join } from "node:path";
-import { existsSync } from "node:fs";
 import { bold, cyan, green, dim } from "../utils/colors.js";
 import { createSpinner } from "../utils/spinner.js";
 import {
@@ -14,7 +13,7 @@ import {
 import type { Runtime } from "../config/types.js";
 import * as pm from "../pm/index.js";
 import { exec } from "../exec/index.js";
-import { text, mkdir } from "../utils/fs.js";
+import { exists, text, mkdir } from "../utils/fs.js";
 
 export type { PM as PackageManager } from "../pm/index.js";
 
@@ -42,7 +41,7 @@ export function createProject(opts: CreateProjectOptions): void {
   const runtime = opts.runtime ?? detectRuntime();
   const cwd = join(process.cwd(), name);
 
-  if (existsSync(cwd)) {
+  if (exists(cwd)) {
     process.stderr.write(`Directory ${bold(name)} already exists.\n`);
     process.exit(1);
   }

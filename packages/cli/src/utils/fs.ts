@@ -1,6 +1,6 @@
 import { existsSync, writeFileSync, rmSync, readFileSync, mkdirSync } from "node:fs";
 
-export function isExists(f: string): boolean {
+export function exists(f: string): boolean {
   return existsSync(f);
 }
 
@@ -19,17 +19,6 @@ export const mkdir = {
   },
 };
 
-export function clean(dest: string): void {
-  try {
-    if (existsSync(dest)) {
-      rmSync(dest, { recursive: true });
-    }
-    mkdirSync(dest, { recursive: true });
-  } catch {
-    // Ignore errors if directory doesn't exist or can't be cleaned
-  }
-}
-
 export const json = {
   read<T = unknown>(name: string): T {
     return JSON.parse(readFileSync(name, "utf8")) as T;
@@ -38,3 +27,14 @@ export const json = {
     writeFileSync(name, JSON.stringify(content, null, indent));
   },
 };
+
+export function clean(dest: string): void {
+  try {
+    if (existsSync(dest)) {
+      rmSync(dest, { recursive: true });
+    }
+    mkdir.sync(dest);
+  } catch {
+    // Ignore errors if directory doesn't exist or can't be cleaned
+  }
+}

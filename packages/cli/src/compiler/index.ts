@@ -1,10 +1,10 @@
 import { execFileSync } from "node:child_process";
 import { join, resolve } from "node:path";
-import { existsSync } from "node:fs";
 import { handleAction } from "./esbuild/index.js";
 import { loadPkg } from "../config/pkg.js";
 import { bold, cyan } from "../utils/colors.js";
 import { loadEnvFile } from "../utils/env.js";
+import { exists } from "../utils/fs.js";
 import type { CliOption } from "../command.js";
 
 export interface DevOptions {
@@ -67,7 +67,7 @@ export function runStart(opts: StartOptions): void {
     } else {
       const candidates = [join("dist", "index.js"), join("dist", "index.mjs"), join("dist", "main.js")];
       for (const c of candidates) {
-        if (existsSync(c)) {
+        if (exists(c)) {
           entry = c;
           break;
         }
@@ -75,7 +75,7 @@ export function runStart(opts: StartOptions): void {
     }
   }
 
-  if (!entry || !existsSync(entry)) {
+  if (!entry || !exists(entry)) {
     process.stderr.write(`Cannot find compiled output. Run ${bold(cyan("minimajs build"))} first.\n`);
     process.exit(1);
   }

@@ -1,7 +1,6 @@
-import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { bold, cyan, green, dim, yellow } from "../utils/colors.js";
-import { text, mkdir } from "../utils/fs.js";
+import { exists, text, mkdir } from "../utils/fs.js";
 import * as pm from "../pm/index.js";
 import { fileURLToPath } from "node:url";
 import { stubs } from "./stubs.js";
@@ -18,7 +17,7 @@ export function generateModule({ name, dir = "src" }: GenerateModuleOptions): vo
   const modulePath = resolve(dir, name);
   const moduleName = name.split("/").at(-1) ?? name;
 
-  if (existsSync(join(modulePath, "module.ts"))) {
+  if (exists(join(modulePath, "module.ts"))) {
     process.stderr.write(`  Module ${bold(name)} already exists at ${cyan(modulePath)}\n`);
     process.exit(1);
   }
@@ -64,7 +63,7 @@ export function addDockerfile(): void {
   const berry = detected === "yarn" && pm.isYarnBerry();
   const destPath = join(process.cwd(), "Dockerfile");
 
-  if (existsSync(destPath)) {
+  if (exists(destPath)) {
     process.stderr.write(`  ${yellow("!")} Dockerfile already exists\n`);
     process.exit(1);
   }
