@@ -1,33 +1,39 @@
 # ── Build stage ────────────────────────────────────────────────────────────────
-FROM node:24-alpine AS builder
+FROM node:{{ version }}-alpine AS builder
 
 WORKDIR /app
 
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 COPY . .
 RUN pnpm run build
 
 # ── Production stage ───────────────────────────────────────────────────────────
-FROM node:24-alpine
+FROM node:{{ version }}-alpine
 
 WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
 
 # Create non-root user
 RUN addgroup --system app && adduser --system --ingroup app app
 
-RUN corepack enable
-
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --prod && pnpm store prune
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prod
 
-COPY --from=builder /app/dist ./dist
+COPY --chown=app:app --from=builder /app/dist ./dist
 
 USER app
 
+ENV PORT=3000
 EXPOSE 3000
 
 CMD ["node", "dist/index.js"]
