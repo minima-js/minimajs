@@ -30,10 +30,7 @@ runtime.version = function version(): string {
 runtime.detect = detect;
 
 runtime.bin = function bin(rt?: Runtime): string {
-  const r = rt ?? runtime();
-  const inBun = typeof process.versions.bun === "string";
-  if (r === "bun") return inBun ? process.execPath : "bun";
-  return inBun ? "node" : process.execPath;
+  return rt ?? runtime();
 };
 
 runtime.isNode = function isNode(bin: string): boolean {
