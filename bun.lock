@@ -90,7 +90,6 @@
       "dependencies": {
         "esbuild": "^0.25.0",
         "typescript": "^5.9.0",
-        "yocto-spinner": "^1.1.0",
       },
       "devDependencies": {
         "@types/node": "^22.0.0",
@@ -101,6 +100,7 @@
         "pretty-bytes": "^6.1.1",
         "pretty-ms": "^9.2.0",
         "rimraf": "^6.0.0",
+        "yocto-spinner": "^1.1.0",
       },
     },
     "packages/cookie": {

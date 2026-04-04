@@ -1,5 +1,4 @@
 import { defineCommand } from "citty";
-import { join } from "node:path";
 import { bold, cyan, green, dim, yellow } from "../../utils/colors.js";
 import { exists, text } from "../../utils/fs.js";
 import { print } from "../../utils/logging.js";
@@ -32,7 +31,7 @@ async function fetchDockerVersion(repo: string, fallback: string): Promise<strin
 async function handle() {
   const detected = pm.detect();
   const berry = detected === "yarn" && pm.isYarnBerry();
-  const destPath = join(process.cwd(), "Dockerfile");
+  const destPath = "Dockerfile";
 
   if (exists(destPath)) {
     process.stderr.write(`  ${yellow("!")} Dockerfile already exists\n`);

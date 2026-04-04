@@ -16,14 +16,14 @@ const pm = detectPM();
 const pmVersion = getVersion(pm)?.split("@")[1] ?? "";
 const pmLabel = pm === "yarn" && isYarnBerry() ? "yarn (berry)" : pm;
 
-const rtLine  = `  Runtime:         ${rt} ${rtVersion}`;
-const pmLine  = `  Package manager: ${pmLabel} ${pmVersion}`;
+const rtLine = `  Runtime:         ${rt} ${rtVersion}`;
+const pmLine = `  Package manager: ${pmLabel} ${pmVersion}`;
 
 const main = defineCommand({
   meta: {
     name: "minimajs",
     version: pkg.version,
-    description: `CLI for MinimaJS — scaffold, develop, build and manage your app\n\n${rtLine}\n${pmLine}\n`,
+    description: `CLI for MinimaJS — scaffold, develop, build and manage your app\n\n${rtLine}\n${pmLine}\n\n`,
   },
   subCommands: {
     new: newCommand,

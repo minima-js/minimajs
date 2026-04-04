@@ -19,6 +19,18 @@ function handle({ args }: { args: { name: string; dir: string } }) {
   const vars = { Name: pascal, name: moduleName };
   const handlerFile = `${moduleName}.handler.ts`;
 
+  const segments = name.split("/");
+  const createdParents: string[] = [];
+  for (let i = 1; i < segments.length; i++) {
+    const parentPath = resolve(dir, segments.slice(0, i).join("/"));
+    const parentModule = join(parentPath, "module.ts");
+    if (!exists(parentModule)) {
+      mkdir.sync(parentPath);
+      text.write(parentModule, "");
+      createdParents.push(join(dir, segments.slice(0, i).join("/"), "module.ts"));
+    }
+  }
+
   mkdir.sync(modulePath);
   text.write(join(modulePath, "module.ts"), templates.module(vars));
   text.write(join(modulePath, handlerFile), templates.handler(vars));
@@ -28,6 +40,7 @@ function handle({ args }: { args: { name: string; dir: string } }) {
     `  ${green("✔")} Generated module ${bold(cyan(name))}`,
     "",
     `  ${dim("Created:")}`,
+    ...createdParents.map((p) => `    ${cyan(p)}`),
     `    ${cyan(join(dir, name, "module.ts"))}`,
     `    ${cyan(join(dir, name, handlerFile))}`,
     ""

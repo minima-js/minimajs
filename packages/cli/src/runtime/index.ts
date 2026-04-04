@@ -1,22 +1,23 @@
-import { join } from "node:path";
 import type { Runtime } from "../config/types.js";
 import { exists, text } from "../utils/fs.js";
 
 function runtime(): Runtime {
   if (typeof process.versions.bun === "string") return "bun";
+  const agent = process.env.npm_config_user_agent ?? "";
+  if (agent.startsWith("bun")) return "bun";
   return "node";
 }
 
 function detect(): Runtime {
-  if (exists(join(process.cwd(), ".bun-version"))) return "bun";
-  if (exists(join(process.cwd(), ".node-version"))) return "node";
+  if (exists(".bun-version")) return "bun";
+  if (exists(".node-version")) return "node";
   return runtime();
 }
 
 detect.version = function detectVersion(): string | null {
-  const bunFile = join(process.cwd(), ".bun-version");
+  const bunFile = ".bun-version";
   if (exists(bunFile)) return text.read(bunFile).trim().replace(/^v/, "");
-  const nodeFile = join(process.cwd(), ".node-version");
+  const nodeFile = ".node-version";
   if (exists(nodeFile)) return text.read(nodeFile).trim().replace(/^v/, "");
   return null;
 };
