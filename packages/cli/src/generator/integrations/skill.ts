@@ -91,7 +91,7 @@ async function handle({ args }: { args: { name: string } }) {
       continue;
     }
     mkdir.sync(dirname(fullPath));
-    text.write(fullPath, content);
+    await text.write(fullPath, content);
     created.push(dest);
   }
 

@@ -38,8 +38,13 @@ async function setup(build: PluginBuild, opts: RunOption): Promise<void> {
 function onRestart(execute: ReturnType<typeof createRunner>): void {
   if (restartListenerAttached) return;
   restartListenerAttached = true;
-  process.stdout.on("data", (buf: Buffer) => {
-    if (buf.toString().trim() === "rs") execute();
+  const input = process.stdin;
+  if (!input.isTTY) return;
+
+  input.setEncoding("utf8");
+  input.resume();
+  input.on("data", (chunk: string) => {
+    if (chunk.trim() === "rs") void execute();
   });
 }
 

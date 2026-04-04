@@ -38,7 +38,7 @@ export async function build(inputOptions: BuildOptions, config: Config): Promise
   } catch (err) {
     const errors = (err as { errors?: unknown[] }).errors;
     spinner.fail(errors ? errorMessage(errors) : err instanceof Error ? err.message : String(err));
-    return;
+    throw err;
   }
 
   spinner.succeed(successMessage(files, buildResult.metafile!, start));

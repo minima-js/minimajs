@@ -4,7 +4,9 @@
  * precise, format-preserving edits rather than fragile regex replacements.
  */
 
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { resolve } from "node:path";
 import ts from "typescript";
 import { exists, text } from "../utils/fs.js";
 
@@ -20,7 +22,7 @@ export function patchModule(cwd: string, importLine: string, plugin: string): vo
   const modulePath = join(cwd, "src", "module.ts");
   if (!exists(modulePath)) return;
 
-  const original = text.read(modulePath);
+  const original = readFileSync(resolve(process.cwd(), modulePath), "utf8");
 
   // Fast idempotency check on raw source
   if (original.includes(importLine)) return;
@@ -42,7 +44,7 @@ export function patchModule(cwd: string, importLine: string, plugin: string): vo
   const output = printer.printFile(result.transformed[0] as ts.SourceFile);
   result.dispose();
 
-  text.write(modulePath, output);
+  text.write.sync(modulePath, output);
 }
 
 // ─── Transformer ─────────────────────────────────────────────────────────────

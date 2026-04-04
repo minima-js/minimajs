@@ -1,8 +1,11 @@
 import { dirname, join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import type { Config } from "./types.js";
 import { defaults } from "./defaults.js";
 import type { CliOption } from "../command.js";
 import { getTarget, loadPkg } from "./pkg.js";
+import { runtime } from "../runtime/index.js";
+import { exists } from "../utils/fs.js";
 
 export type { Config };
 
@@ -10,15 +13,12 @@ export async function loadConfig(cliOption: CliOption = {}): Promise<Config> {
   let config: Partial<Config> = {};
 
   for (const ext of ["ts", "js"]) {
-    try {
-      const configPath = join(process.cwd(), `minimajs.config.${ext}`);
-      const module = await import(configPath);
-      config = (module.default ?? module) as Partial<Config>;
-      break;
-    } catch (err) {
-      const code = (err as NodeJS.ErrnoException).code;
-      if (code !== "ERR_MODULE_NOT_FOUND" && code !== "MODULE_NOT_FOUND") throw err;
-    }
+    const configPath = join(process.cwd(), `minimajs.config.${ext}`);
+    if (!exists(configPath)) continue;
+
+    const module = await import(pathToFileURL(configPath).href);
+    config = (module.default ?? module) as Partial<Config>;
+    break;
   }
 
   const packageInfo = loadPkg();
@@ -31,6 +31,8 @@ export async function loadConfig(cliOption: CliOption = {}): Promise<Config> {
   if (engines?.node) {
     config.target ??= getTarget(engines.node);
   }
+
+  config.runtime ??= runtime.detect();
 
   const { grace, ...rawOverrides } = cliOption;
 

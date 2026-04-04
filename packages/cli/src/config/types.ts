@@ -20,7 +20,6 @@ export interface BaseConfig {
   target?: string;
   envFile?: string;
   runtime?: Runtime;
-  packageManager?: PackageManager;
 }
 
 export interface CliOption extends Partial<BaseConfig> {

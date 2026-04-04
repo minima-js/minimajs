@@ -16,9 +16,9 @@ function detect(): Runtime {
 
 detect.version = function detectVersion(): string | null {
   const bunFile = ".bun-version";
-  if (exists(bunFile)) return text.read(bunFile).trim().replace(/^v/, "");
+  if (exists(bunFile)) return text.sync(bunFile).trim().replace(/^v/, "");
   const nodeFile = ".node-version";
-  if (exists(nodeFile)) return text.read(nodeFile).trim().replace(/^v/, "");
+  if (exists(nodeFile)) return text.sync(nodeFile).trim().replace(/^v/, "");
   return null;
 };
 

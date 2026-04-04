@@ -43,7 +43,7 @@ function fromUserAgent(): PM | null {
 export function detect(cwd = process.cwd()): PM {
   // 1. packageManager field in package.json (corepack standard)
   try {
-    const pkg = json.read<{ packageManager?: string }>(join(cwd, "package.json"));
+    const pkg = json.sync<{ packageManager?: string }>(join(cwd, "package.json"));
     if (pkg.packageManager) {
       const name = pkg.packageManager.split("@")[0] as PM;
       if (["bun", "pnpm", "yarn", "npm"].includes(name)) return name;

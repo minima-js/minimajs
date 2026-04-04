@@ -55,7 +55,7 @@ export const disk = defineCommand({
         continue;
       }
       mkdir.sync(dirname(fullPath));
-      text.write(fullPath, file.content);
+      await text.write(fullPath, file.content);
       created.push(file.path);
     }
 

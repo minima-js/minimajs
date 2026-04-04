@@ -15,7 +15,7 @@ export function loadPkg(): PkgInfo {
   try {
     const cwd = process.cwd();
     const packagePath = join(cwd, "package.json");
-    const raw = json.read<Record<string, unknown>>(packagePath);
+    const raw = json.sync<Record<string, unknown>>(packagePath);
     ensureCase(raw, "type");
     return raw as PkgInfo;
   } catch {

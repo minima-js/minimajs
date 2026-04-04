@@ -16,6 +16,17 @@ const PM_EXEC: Record<Exclude<pm.PM, "bun">, string> = {
   yarn: "yarn minimajs",
 };
 
+function resolveVersionFileValue(rt: Runtime): string {
+  if (rt === "bun" && typeof process.versions.bun === "string") return process.versions.bun;
+  if (rt === "node" && typeof process.versions.bun !== "string") return process.versions.node;
+
+  try {
+    return exec.sync.capture(rt, ["--version"]).stdout.trim().replace(/^v/, "");
+  } catch {
+    return rt === "bun" ? "latest" : process.versions.node;
+  }
+}
+
 function renderPackageJson(name: string, runtime: Runtime, packageManager?: string | null): string {
   const stub = runtime === "bun" ? templates.packageBun : templates.packageNode;
   const raw = stub({ name, packageManager: packageManager ?? "" });
@@ -60,7 +71,7 @@ async function handle({ args }: { args: NewArgs }) {
     text.write(join(cwd, "src", "module.ts"), templates.rootModule({})),
     text.write(join(cwd, ".gitignore"), templates.gitignore({})),
     text.write(join(cwd, ".env"), templates.env({})),
-    text.write(join(cwd, versionFile), runtime.version() + "\n"),
+    text.write(join(cwd, versionFile), resolveVersionFileValue(rt) + "\n"),
     text.write(join(cwd, "app"), appContent, { mode: 0o755 }),
   ]);
 

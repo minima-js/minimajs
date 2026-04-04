@@ -5,6 +5,7 @@ import { print } from "../../utils/logging.js";
 import { dockerTemplates } from "../templates/index.js";
 import { runtime } from "../../runtime/index.js";
 import * as pm from "../../pm/index.js";
+import { loadConfig } from "../../config/index.js";
 
 async function fetchDockerVersion(repo: string, fallback: string): Promise<string> {
   try {
@@ -29,6 +30,7 @@ async function fetchDockerVersion(repo: string, fallback: string): Promise<strin
 }
 
 async function handle() {
+  const config = await loadConfig();
   const detected = pm.detect();
   const berry = detected === "yarn" && pm.isYarnBerry();
   const destPath = "Dockerfile";
@@ -43,8 +45,15 @@ async function handle() {
   const fallback = rt === "bun" ? "latest" : "lts";
   const version = runtime.detect.version() ?? (await fetchDockerVersion(repo, fallback));
 
-  const content = berry ? dockerTemplates.berry({ version }) : dockerTemplates[detected]({ version });
-  text.write(destPath, content);
+  const cmd =
+    rt === "node" && config.sourcemap
+      ? `["node", "--enable-source-maps", "dist/index.js"]`
+      : rt === "bun"
+        ? `["bun", "run", "dist/index.js"]`
+        : `["node", "dist/index.js"]`;
+  const templateVars = { version, cmd };
+  const content = berry ? dockerTemplates.berry(templateVars) : dockerTemplates[detected](templateVars);
+  await text.write(destPath, content);
 
   const label = berry ? "yarn berry" : detected;
   print(

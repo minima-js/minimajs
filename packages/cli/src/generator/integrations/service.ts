@@ -2,7 +2,7 @@ import { defineCommand } from "citty";
 import { generateFile } from "../generators.js";
 
 function handle({ args }: { args: { name: string; dir: string } }) {
-  generateFile("service", args.name, args.dir);
+  return generateFile("service", args.name, args.dir);
 }
 
 export const service = defineCommand({

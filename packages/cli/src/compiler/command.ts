@@ -110,8 +110,8 @@ export const startCommand = defineCommand({
       valueHint: "path",
     },
   },
-  async run({ args }) {
-    runStart({
+  run({ args }) {
+    return runStart({
       entry: args.entry,
       envFile: args["env-file"],
     });

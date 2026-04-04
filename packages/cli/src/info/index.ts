@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { bold, cyan, dim, green } from "../utils/colors.js";
 import { exists, json } from "../utils/fs.js";
 import { loadConfig } from "../config/index.js";
+import * as pm from "../pm/index.js";
 
 function row(label: string, value: string, width = 18): string {
   return `  ${dim(label.padEnd(width))}${value}\n`;
@@ -18,7 +19,7 @@ export async function printInfo(): Promise<void> {
   let pkgVersion = "—";
   const pkgPath = join(process.cwd(), "package.json");
   if (exists(pkgPath)) {
-    const pkg = json.read<{ name?: string; version?: string }>(pkgPath);
+    const pkg = json.sync<{ name?: string; version?: string }>(pkgPath);
     pkgName = pkg.name ?? pkgName;
     pkgVersion = pkg.version ?? pkgVersion;
   }
@@ -28,7 +29,7 @@ export async function printInfo(): Promise<void> {
   process.stdout.write(row("Name", bold(pkgName)));
   process.stdout.write(row("Version", pkgVersion));
   process.stdout.write(row("Runtime", cyan(config.runtime ?? "node")));
-  process.stdout.write(row("Package Manager", cyan(config.packageManager ?? "auto-detect")));
+  process.stdout.write(row("Package Manager", cyan(pm.detect())));
 
   process.stdout.write(section("Build"));
   process.stdout.write(row("Entry", cyan(config.entry.join(", "))));
