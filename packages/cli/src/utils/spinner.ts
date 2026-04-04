@@ -1,5 +1,4 @@
-const FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
-const INTERVAL = 80;
+import yoctoSpinner from "yocto-spinner";
 
 export interface Spinner {
   start(text?: string): void;
@@ -23,48 +22,27 @@ export async function withSpinner<T>(label: string, fn: () => T | Promise<T>): P
 }
 
 export function createSpinner(): Spinner {
-  let frame = 0;
-  let timer: ReturnType<typeof setInterval> | null = null;
-  let currentText = "";
-
-  function clear(): void {
-    process.stderr.write("\r\x1b[K");
-  }
-
-  function render(): void {
-    process.stderr.write(`\r${FRAMES[frame % FRAMES.length]} ${currentText}`);
-    frame++;
-  }
+  const inner = yoctoSpinner();
 
   return {
     get text() {
-      return currentText;
+      return inner.text;
     },
     set text(val: string) {
-      currentText = val;
+      inner.text = val;
     },
     start(text?: string) {
-      if (text) currentText = text;
-      frame = 0;
-      if (timer) clearInterval(timer);
-      timer = setInterval(render, INTERVAL);
+      if (text) inner.text = text;
+      inner.start(inner.text);
     },
     succeed(text?: string) {
-      if (timer) clearInterval(timer);
-      timer = null;
-      clear();
-      process.stderr.write(`✔ ${text ?? currentText}\n`);
+      inner.success(text ?? inner.text);
     },
     fail(text?: string) {
-      if (timer) clearInterval(timer);
-      timer = null;
-      clear();
-      process.stderr.write(`✘ ${text ?? currentText}\n`);
+      inner.error(text ?? inner.text);
     },
     stop() {
-      if (timer) clearInterval(timer);
-      timer = null;
-      clear();
+      inner.stop();
     },
   };
 }

@@ -12,8 +12,7 @@
   },
   "main": "./bin/cli.js",
   "bin": {
-    "minimajs": "./bin/cli.js",
-    "mjs": "./bin/cli.js"
+    "minimajs": "./bin/cli.js"
   },
   "exports": {
     ".": "./lib/index.js"
@@ -28,6 +27,7 @@
     "typescript": "^5.9.0"
   },
   "devDependencies": {
+    "yocto-spinner": "^1.1.0",
     "@types/node": "^22.0.0",
     "chalk": "^5.4.1",
     "citty": "^0.2.1",

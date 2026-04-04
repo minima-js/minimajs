@@ -1,6 +1,99 @@
 import { defineCommand } from "citty";
-import { createProject, detectPackageManager, detectRuntime, type PackageManager } from "./index.js";
+import { join } from "node:path";
+import { bold, cyan, green, dim } from "../utils/colors.js";
+import { createSpinner } from "../utils/spinner.js";
+import { print } from "../utils/logging.js";
+import { templates } from "./templates/index.js";
 import type { Runtime } from "../config/types.js";
+import * as pm from "../pm/index.js";
+import { exec } from "../exec/index.js";
+import { exists, text, mkdir } from "../utils/fs.js";
+import { runtime } from "../runtime/index.js";
+
+const PM_EXEC: Record<Exclude<pm.PM, "bun">, string> = {
+  npm: "npx --no minimajs",
+  pnpm: "pnpm exec minimajs",
+  yarn: "yarn minimajs",
+};
+
+function renderPackageJson(name: string, runtime: Runtime, packageManager?: string | null): string {
+  const stub = runtime === "bun" ? templates.packageBun : templates.packageNode;
+  const raw = stub({ name, packageManager: packageManager ?? "" });
+  if (!packageManager) return raw.replace(/\n\s+"packageManager": "",/, "");
+  return raw;
+}
+
+interface NewArgs {
+  name: string;
+  pm?: string;
+  runtime?: string;
+  install: boolean;
+  git: boolean;
+}
+
+async function handle({ args }: { args: NewArgs }) {
+  const { name, git } = args;
+  const manager = (args.pm as pm.PM) ?? pm.detect();
+  const rt = (args.runtime as Runtime) ?? runtime();
+  const cwd = join(process.cwd(), name);
+
+  if (exists(cwd)) {
+    process.stderr.write(`Directory ${bold(name)} already exists.\n`);
+    process.exit(1);
+  }
+
+  const packageManagerField = pm.getVersion(manager);
+  const spinner = createSpinner();
+
+  spinner.start(`Scaffolding ${bold(cyan(name))}...`);
+
+  const versionFile = rt === "bun" ? ".bun-version" : ".node-version";
+  const appContent =
+    rt === "bun" ? templates.appBun({}) : templates.appNode({ exec: PM_EXEC[manager as Exclude<pm.PM, "bun">] });
+
+  await mkdir(join(cwd, "src"));
+  await Promise.all([
+    text.write(join(cwd, "package.json"), renderPackageJson(name, rt, packageManagerField)),
+    text.write(join(cwd, "tsconfig.json"), templates.tsconfig({})),
+    text.write(join(cwd, "minimajs.config.ts"), templates.minimaJsConfig({ runtime: rt })),
+    text.write(join(cwd, "src", "index.ts"), templates.index({ runtime: rt })),
+    text.write(join(cwd, "src", "module.ts"), templates.rootModule({})),
+    text.write(join(cwd, ".gitignore"), templates.gitignore({})),
+    text.write(join(cwd, ".env"), templates.env({})),
+    text.write(join(cwd, versionFile), runtime.version() + "\n"),
+    text.write(join(cwd, "app"), appContent, { mode: 0o755 }),
+  ]);
+
+  spinner.succeed(`Scaffolded ${bold(cyan(name))}`);
+
+  if (git) {
+    exec.sync.safe("git", ["init"], { cwd });
+    exec.sync.safe("git", ["add", "-A"], { cwd });
+  }
+
+  if (args.install) {
+    spinner.start(`Installing dependencies with ${bold(manager)}...`);
+    try {
+      await pm.install({ cwd });
+      spinner.succeed("Dependencies installed");
+    } catch {
+      spinner.fail(`Failed to install. Run ${bold(`${manager} install`)} manually.`);
+    }
+  }
+
+  print(
+    "",
+    `  ${green("✔")} Project created at ${bold(cyan(`./${name}`))}`,
+    "",
+    `  ${dim("Next steps:")}`,
+    `    ${cyan(`cd ${name}`)}`,
+    `    ${cyan(`${manager} run dev`)}`,
+    "",
+    `  ${dim("Tip: use")} ${cyan("./app")} ${dim("as a shortcut for")} ${cyan("minimajs")}`,
+    `    ${dim("e.g.")} ${cyan("./app add module users")}`,
+    ""
+  );
+}
 
 export const newCommand = defineCommand({
   meta: {
@@ -23,9 +116,10 @@ export const newCommand = defineCommand({
       description: "Runtime target",
       valueHint: "node|bun",
     },
-    "skip-install": {
+    install: {
       type: "boolean",
-      description: "Skip dependency installation",
+      default: true,
+      negativeDescription: "Skip dependency installation",
     },
     git: {
       type: "boolean",
@@ -33,13 +127,5 @@ export const newCommand = defineCommand({
       negativeDescription: "Skip git init",
     },
   },
-  run({ args }) {
-    createProject({
-      name: args.name,
-      pm: (args.pm as PackageManager) ?? detectPackageManager(),
-      runtime: (args.runtime as Runtime) ?? detectRuntime(),
-      skipInstall: args["skip-install"],
-      git: args.git,
-    });
-  },
+  run: handle,
 });

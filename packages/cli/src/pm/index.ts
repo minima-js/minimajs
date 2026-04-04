@@ -23,7 +23,7 @@ const LOCKFILES: [string, PM][] = [
  */
 export function isYarnBerry(cwd = process.cwd()): boolean {
   try {
-    const result = exec.capture("yarn", ["--version"], { cwd });
+    const result = exec.sync.capture("yarn", ["--version"], { cwd });
     const major = parseInt(result.stdout.trim().replace(/^v/, ""), 10);
     return major >= 2;
   } catch {
@@ -71,7 +71,7 @@ export function detect(cwd = process.cwd()): PM {
  */
 export function getVersion(manager: PM): string | null {
   try {
-    const result = exec.capture(manager, ["--version"]);
+    const result = exec.sync.capture(manager, ["--version"]);
     // strip any leading 'v' (e.g. yarn classic outputs "1.22.22")
     const version = result.stdout.trim().replace(/^v/, "");
     if (!version) return null;
@@ -85,21 +85,21 @@ export function add(packages: string[], opts: PMOptions & { dev?: boolean } = {}
   const pm = detect(opts.cwd);
   const sub = pm === "npm" ? "install" : "add";
   const flag = opts.dev ? (pm === "npm" ? ["--save-dev"] : ["-D"]) : [];
-  exec(pm, [sub, ...packages, ...flag], { cwd: opts.cwd });
+  exec.sync(pm, [sub, ...packages, ...flag], { cwd: opts.cwd });
 }
 
 export function remove(packages: string[], opts: PMOptions = {}): void {
   const pm = detect(opts.cwd);
   const sub = pm === "npm" ? "uninstall" : "remove";
-  exec(pm, [sub, ...packages], { cwd: opts.cwd });
+  exec.sync(pm, [sub, ...packages], { cwd: opts.cwd });
 }
 
-export function install(opts: PMOptions = {}): void {
+export async function install(opts: PMOptions = {}): Promise<void> {
   const pm = detect(opts.cwd);
-  exec(pm, ["install"], { cwd: opts.cwd });
+  await exec(pm, ["install"], { cwd: opts.cwd });
 }
 
 export function run(script: string, args: string[] = [], opts: PMOptions = {}): void {
   const pm = detect(opts.cwd);
-  exec(pm, ["run", script, ...args], { cwd: opts.cwd });
+  exec.sync(pm, ["run", script, ...args], { cwd: opts.cwd });
 }

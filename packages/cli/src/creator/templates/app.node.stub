@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+if command -v fnm > /dev/null 2>&1; then
+  exec fnm exec --using=.node-version -- {{ exec }} "$@"
+fi
+{{ exec }} "$@"

@@ -4,6 +4,7 @@ import { bold, cyan, green, dim, yellow } from "../../utils/colors.js";
 import { exists, text } from "../../utils/fs.js";
 import { print } from "../../utils/logging.js";
 import { dockerTemplates } from "../templates/index.js";
+import { runtime } from "../../runtime/index.js";
 import * as pm from "../../pm/index.js";
 
 async function fetchDockerVersion(repo: string, fallback: string): Promise<string> {
@@ -38,9 +39,10 @@ async function handle() {
     process.exit(1);
   }
 
-  const repo = detected === "bun" ? "oven/bun" : "node";
-  const fallback = detected === "bun" ? "latest" : "lts";
-  const version = await fetchDockerVersion(repo, fallback);
+  const rt = runtime.detect();
+  const repo = rt === "bun" ? "oven/bun" : "node";
+  const fallback = rt === "bun" ? "latest" : "lts";
+  const version = runtime.detect.version() ?? (await fetchDockerVersion(repo, fallback));
 
   const content = berry ? dockerTemplates.berry({ version }) : dockerTemplates[detected]({ version });
   text.write(destPath, content);

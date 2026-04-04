@@ -4,15 +4,26 @@ import { devCommand, buildCommand, startCommand } from "./compiler/command.js";
 import { addCommand } from "./generator/command.js";
 import { checkCommand } from "./check/command.js";
 import { infoCommand } from "./info/command.js";
+import { runtime } from "./runtime/index.js";
+import { detect as detectPM, isYarnBerry, getVersion } from "./pm/index.js";
 import pkg from "../package.json" with { type: "json" };
 
 export type { CliOption } from "./config/types.js";
+
+const rt = runtime();
+const rtVersion = runtime.version();
+const pm = detectPM();
+const pmVersion = getVersion(pm)?.split("@")[1] ?? "";
+const pmLabel = pm === "yarn" && isYarnBerry() ? "yarn (berry)" : pm;
+
+const rtLine  = `  Runtime:         ${rt} ${rtVersion}`;
+const pmLine  = `  Package manager: ${pmLabel} ${pmVersion}`;
 
 const main = defineCommand({
   meta: {
     name: "minimajs",
     version: pkg.version,
-    description: "CLI for MinimaJS — scaffold, develop, build and manage your app",
+    description: `CLI for MinimaJS — scaffold, develop, build and manage your app\n\n${rtLine}\n${pmLine}\n`,
   },
   subCommands: {
     new: newCommand,

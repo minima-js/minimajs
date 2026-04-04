@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawnSync, spawn } from "node:child_process";
 import type { StdioOptions } from "node:child_process";
 
 export interface ExecOptions {
@@ -25,7 +25,37 @@ export class ExecError extends Error {
   }
 }
 
-export function exec(file: string, args: string[] = [], options: ExecOptions = {}): ExecResult {
+function execAsync(file: string, args: string[] = [], options: ExecOptions = {}): Promise<ExecResult> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(file, args, {
+      cwd: options.cwd ?? process.cwd(),
+      stdio: options.stdio ?? "inherit",
+      env: { ...process.env, ...options.env },
+    });
+
+    const stdout: Buffer[] = [];
+    const stderr: Buffer[] = [];
+
+    child.stdout?.on("data", (chunk: Buffer) => stdout.push(chunk));
+    child.stderr?.on("data", (chunk: Buffer) => stderr.push(chunk));
+
+    child.on("error", reject);
+    child.on("close", (code) => {
+      const out = Buffer.concat(stdout).toString("utf8").trim();
+      const err = Buffer.concat(stderr).toString("utf8").trim();
+      const exitCode = code ?? 1;
+      const command = [file, ...args].join(" ");
+
+      if (exitCode !== 0) {
+        reject(new ExecError(command, exitCode, out, err));
+      } else {
+        resolve({ stdout: out, stderr: err, exitCode });
+      }
+    });
+  });
+}
+
+function execSync(file: string, args: string[] = [], options: ExecOptions = {}): ExecResult {
   const result = spawnSync(file, args, {
     cwd: options.cwd ?? process.cwd(),
     stdio: options.stdio ?? "inherit",
@@ -38,24 +68,23 @@ export function exec(file: string, args: string[] = [], options: ExecOptions = {
   const exitCode = result.status ?? 1;
   const command = [file, ...args].join(" ");
 
-  if (result.error) {
-    throw Object.assign(result.error, { command });
-  }
-
-  if (exitCode !== 0) {
-    throw new ExecError(command, exitCode, stdout, stderr);
-  }
+  if (result.error) throw Object.assign(result.error, { command });
+  if (exitCode !== 0) throw new ExecError(command, exitCode, stdout, stderr);
 
   return { stdout, stderr, exitCode };
 }
 
-exec.capture = function execCapture(file: string, args: string[] = [], options: ExecOptions = {}): ExecResult {
-  return exec(file, args, { ...options, stdio: ["ignore", "pipe", "pipe"] });
+async function exec(file: string, args: string[] = [], options: ExecOptions = {}): Promise<ExecResult> {
+  return execAsync(file, args, options);
+}
+
+exec.capture = function (file: string, args: string[] = [], options: ExecOptions = {}): Promise<ExecResult> {
+  return execAsync(file, args, { ...options, stdio: ["ignore", "pipe", "pipe"] });
 };
 
-exec.safe = function execSafe(file: string, args: string[] = [], options: ExecOptions = {}): ExecResult & { ok: boolean } {
+exec.safe = async function (file: string, args: string[] = [], options: ExecOptions = {}): Promise<ExecResult & { ok: boolean }> {
   try {
-    return { ...exec(file, args, options), ok: true };
+    return { ...await execAsync(file, args, options), ok: true };
   } catch (e) {
     if (e instanceof ExecError) {
       return { stdout: e.stdout, stderr: e.stderr, exitCode: e.exitCode, ok: false };
@@ -63,3 +92,21 @@ exec.safe = function execSafe(file: string, args: string[] = [], options: ExecOp
     throw e;
   }
 };
+
+exec.sync = Object.assign(execSync, {
+  capture(file: string, args: string[] = [], options: ExecOptions = {}): ExecResult {
+    return execSync(file, args, { ...options, stdio: ["ignore", "pipe", "pipe"] });
+  },
+  safe(file: string, args: string[] = [], options: ExecOptions = {}): ExecResult & { ok: boolean } {
+    try {
+      return { ...execSync(file, args, options), ok: true };
+    } catch (e) {
+      if (e instanceof ExecError) {
+        return { stdout: e.stdout, stderr: e.stderr, exitCode: e.exitCode, ok: false };
+      }
+      throw e;
+    }
+  },
+});
+
+export { exec };
