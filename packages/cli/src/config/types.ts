@@ -19,7 +19,6 @@ export interface BaseConfig {
   loader: Record<string, Loader>;
   target?: string;
   envFile?: string;
-  runtime?: Runtime;
 }
 
 export interface CliOption extends Partial<BaseConfig> {

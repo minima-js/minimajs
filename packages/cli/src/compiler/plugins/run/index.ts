@@ -22,9 +22,6 @@ export function run(opt: RunOption): Plugin {
 let restartListenerAttached = false;
 
 async function setup(build: PluginBuild, opts: RunOption): Promise<void> {
-  if (build.initialOptions.sourcemap) {
-    opts.args.push("--enable-source-maps");
-  }
   const execute = createRunner(opts);
   build.onEnd(({ errors }) => {
     if (!errors.length) {

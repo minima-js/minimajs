@@ -4,7 +4,6 @@ import type { Config } from "./types.js";
 import { defaults } from "./defaults.js";
 import type { CliOption } from "../command.js";
 import { getTarget, loadPkg } from "./pkg.js";
-import { runtime } from "../runtime/index.js";
 import { exists } from "../utils/fs.js";
 
 export type { Config };
@@ -31,8 +30,6 @@ export async function loadConfig(cliOption: CliOption = {}): Promise<Config> {
   if (engines?.node) {
     config.target ??= getTarget(engines.node);
   }
-
-  config.runtime ??= runtime.detect();
 
   const { grace, ...rawOverrides } = cliOption;
 

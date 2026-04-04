@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { bold, cyan, dim, green } from "../utils/colors.js";
+import { runtime } from "../runtime/index.js";
 import { exists, json } from "../utils/fs.js";
 import { loadConfig } from "../config/index.js";
 import * as pm from "../pm/index.js";
@@ -28,7 +29,7 @@ export async function printInfo(): Promise<void> {
   process.stdout.write(section("Project"));
   process.stdout.write(row("Name", bold(pkgName)));
   process.stdout.write(row("Version", pkgVersion));
-  process.stdout.write(row("Runtime", cyan(config.runtime ?? "node")));
+  process.stdout.write(row("Runtime", cyan(runtime.detect())));
   process.stdout.write(row("Package Manager", cyan(pm.detect())));
 
   process.stdout.write(section("Build"));

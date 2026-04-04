@@ -3,7 +3,6 @@ import { join, resolve } from "node:path";
 import { handleAction } from "./esbuild/index.js";
 import { loadConfig } from "../config/index.js";
 import { loadPkg } from "../config/pkg.js";
-import type { Runtime } from "../config/types.js";
 import { bold, cyan } from "../utils/colors.js";
 import { loadEnvFile } from "../utils/env.js";
 import { exists } from "../utils/fs.js";
@@ -37,6 +36,7 @@ export async function runDev(opts: DevOptions): Promise<void> {
   const cliOption: CliOption = {
     watch: true,
     clean: false,
+    sourcemap: true,
     envFile: opts.envFile,
     tsconfig: opts.tsconfig,
     ignoreTypes: opts.ignoreTypes,
@@ -58,20 +58,6 @@ export async function runBuild(opts: BuildOptions): Promise<void> {
     target: opts.target,
   };
   await handleAction(cliOption);
-}
-
-function resolveRuntimeBin(rt: Runtime): string {
-  const inBun = typeof process.versions.bun === "string";
-  if (rt === "bun") return inBun ? process.execPath : "bun";
-  return inBun ? "node" : process.execPath;
-}
-
-function resolveStartArgs(entry: string, rt: Runtime, sourcemap: boolean): string[] {
-  if (rt === "node" && sourcemap) {
-    return ["--enable-source-maps", entry];
-  }
-
-  return [entry];
 }
 
 export async function runStart(opts: StartOptions): Promise<void> {
@@ -103,6 +89,7 @@ export async function runStart(opts: StartOptions): Promise<void> {
     Object.assign(env, loadEnvFile(opts.envFile));
   }
 
-  const rt = config.runtime ?? runtime.detect();
-  execFileSync(resolveRuntimeBin(rt), resolveStartArgs(entry, rt, config.sourcemap), { stdio: "inherit", env });
+  const bin = runtime.bin(runtime.detect());
+  const args = config.sourcemap && runtime.isNode(bin) ? ["--enable-source-maps", entry] : [entry];
+  execFileSync(bin, args, { stdio: "inherit", env });
 }
