@@ -11,8 +11,7 @@ export async function generateFile(type: GeneratorType, name: string, dir = "src
   const filePath = join(targetDir, `${type}.ts`);
 
   if (exists(filePath)) {
-    process.stderr.write(`  ${type} ${chalk.bold(name)} already exists at ${chalk.cyan(filePath)}\n`);
-    process.exit(1);
+    logger.fatal(`${type} ${chalk.bold(name)} already exists at ${chalk.cyan(filePath)}`);
   }
 
   const pascal = toPascal(name);

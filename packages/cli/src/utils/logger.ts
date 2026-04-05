@@ -14,8 +14,9 @@ function error(msg: string): void {
   process.stderr.write(`${chalk.red("✖")} ${msg}\n`);
 }
 
-function fatal(msg: string): void {
+function fatal(msg: string): never {
   process.stderr.write(`${chalk.red(`✖ ${msg}`)}\n`);
+  process.exit(1);
 }
 
 function caught(err: unknown): void {

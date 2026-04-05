@@ -11,8 +11,7 @@ async function handle({ args }: { args: { name: string; dir: string } }) {
   const moduleName = name.split("/").at(-1) ?? name;
 
   if (exists(join(modulePath, "module.ts"))) {
-    process.stderr.write(`  Module ${chalk.bold(name)} already exists at ${chalk.cyan(modulePath)}\n`);
-    process.exit(1);
+    logger.fatal(`Module ${chalk.bold(name)} already exists at ${chalk.cyan(modulePath)}`);
   }
 
   const pascal = moduleName.charAt(0).toUpperCase() + moduleName.slice(1);

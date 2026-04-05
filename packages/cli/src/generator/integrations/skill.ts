@@ -48,19 +48,17 @@ async function downloadSkill(name: string): Promise<{ manifest: Manifest; files:
   const res = await fetch(url);
 
   if (!res.ok) {
-    process.stderr.write(`  Unknown skill: ${chalk.bold(name)}\n`);
-    process.exit(1);
+    logger.fatal(`Unknown skill: ${chalk.bold(name)}`);
   }
 
   const all = await parseTarGz(new Uint8Array(await res.arrayBuffer()));
 
   const manifestRaw = all["manifest.json"];
   if (!manifestRaw) {
-    process.stderr.write(`  Invalid skill: missing manifest.json\n`);
-    process.exit(1);
+    logger.fatal(`Invalid skill: missing manifest.json`);
   }
 
-  const manifest = JSON.parse(manifestRaw) as Manifest;
+  const manifest = JSON.parse(manifestRaw!) as Manifest;
   const files = Object.fromEntries(
     Object.entries(all)
       .filter(([p]) => p.startsWith("files/"))

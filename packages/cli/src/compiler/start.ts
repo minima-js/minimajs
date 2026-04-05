@@ -35,7 +35,6 @@ export async function runStart(opts: StartOptions): Promise<void> {
 
   if (!entry || !exists(entry)) {
     logger.fatal(`Cannot find compiled output. Run ${chalk.bold(chalk.cyan("minimajs build"))} first.`);
-    process.exit(1);
   }
 
   const env: NodeJS.ProcessEnv = { ...process.env };
@@ -44,7 +43,7 @@ export async function runStart(opts: StartOptions): Promise<void> {
   }
 
   const bin = runtime.bin(runtime.detect());
-  const args = config.sourcemap && runtime.isNode(bin) ? ["--enable-source-maps", entry] : [entry];
+  const args = config.sourcemap && runtime.isNode(bin) ? ["--enable-source-maps", entry!] : [entry!];
   execFileSync(bin, args, { stdio: "inherit", env });
 }
 

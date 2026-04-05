@@ -50,8 +50,7 @@ async function handle({ args }: { args: NewArgs }) {
   const cwd = resolveCwd(name);
 
   if (exists(cwd)) {
-    process.stderr.write(`Directory ${chalk.bold(name)} already exists.\n`);
-    process.exit(1);
+    logger.fatal(`Directory ${chalk.bold(name)} already exists.`);
   }
 
   const packageManagerField = pm.getVersion(manager);

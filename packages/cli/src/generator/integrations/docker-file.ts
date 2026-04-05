@@ -36,8 +36,7 @@ async function handle() {
   const destPath = "Dockerfile";
 
   if (exists(destPath)) {
-    logger.warn("Dockerfile already exists");
-    process.exit(1);
+    logger.fatal("Dockerfile already exists");
   }
 
   const rt = runtime.detect();

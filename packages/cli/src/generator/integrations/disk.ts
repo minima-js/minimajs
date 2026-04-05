@@ -36,10 +36,7 @@ export const disk = defineCommand({
   async run({ args }) {
     const driver = args.driver as Driver;
     if (!(driver in drivers)) {
-      process.stderr.write(
-        `  Unknown driver: ${chalk.bold(driver)}\n  Available: ${chalk.cyan(Object.keys(drivers).join(", "))}\n`
-      );
-      process.exit(1);
+      logger.fatal(`Unknown driver: ${chalk.bold(driver)}. Available: ${chalk.cyan(Object.keys(drivers).join(", "))}`);
     }
 
     const { packages, files } = drivers[driver];
