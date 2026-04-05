@@ -10,7 +10,7 @@
     "directory": "packages/cli",
     "url": "https://github.com/minima-js/minimajs"
   },
-  "main": "./bin/cli.js",
+  "main": "./lib/index.js",
   "bin": {
     "minimajs": "./bin/cli.js"
   },
