@@ -1,10 +1,10 @@
-import { clear, log } from "./logging.js";
+import { logger } from "./logger.js";
 
 export function getResetScreen(): (heading?: string) => void {
   return (heading) => {
-    clear();
+    logger.clear();
     if (heading) {
-      log(heading);
+      logger.info(heading);
     }
   };
 }

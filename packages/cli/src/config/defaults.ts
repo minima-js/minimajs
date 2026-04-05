@@ -5,7 +5,7 @@ export const defaults: BaseConfig = {
   outdir: "dist",
   loader: {},
   clean: true,
-  ignoreTypes: false,
+  check: true,
   import: [],
   minify: false,
   reset: false,

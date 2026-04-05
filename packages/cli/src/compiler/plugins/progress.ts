@@ -1,10 +1,11 @@
 import type { Plugin } from "esbuild";
 import { createSpinner } from "../../utils/spinner.js";
-import { bold, cyan, dim } from "../../utils/colors.js";
+import chalk from "chalk";
 import { relativeId } from "../../utils/path.js";
 import { getResetScreen } from "../../utils/screen.js";
-import { errorMessage, log, stderr, successMessage } from "../../utils/logging.js";
-import { getEntryLabel } from "../../utils/utils.js";
+import { logger } from "../../utils/logger.js";
+import { format } from "../format.js";
+import { getEntryLabel } from "../esbuild/entry.js";
 
 interface ProgressOption {
   message?: string;
@@ -24,16 +25,16 @@ export function progress({ clear, ...options }: ProgressOption): Plugin {
       const input = relativeId(getEntryLabel(build.initialOptions));
       build.onStart(() => {
         clear && reset();
-        stderr(cyan(`\nbundles ${bold(input!)} → ${bold(dist)}...`));
+        logger.info(chalk.cyan(`\nbundles ${chalk.bold(input!)} → ${chalk.bold(dist)}...`));
         spinner.text = message + "\n";
         spinner.start();
         started = Date.now();
       });
       build.onEnd((result) => {
         result.errors.length
-          ? spinner.fail(errorMessage(result.errors))
-          : spinner.succeed(successMessage(dist, result.metafile!, started));
-        log(dim(`⧖ waiting for changes...`));
+          ? spinner.fail(format.error(result.errors))
+          : spinner.succeed(format.success(dist, result.metafile!, started));
+        logger.info(chalk.dim(`⧖ waiting for changes...`));
       });
     },
   };

@@ -2,13 +2,13 @@ import { defineCommand } from "citty";
 import { dirname, join } from "node:path";
 import { gunzip } from "node:zlib";
 import { promisify } from "node:util";
-
-const gunzipAsync = promisify(gunzip);
-import { bold, cyan, green, dim, yellow } from "../../utils/colors.js";
+import chalk from "chalk";
 import { exists, text, mkdir } from "../../utils/fs.js";
 import { withSpinner } from "../../utils/spinner.js";
-import { print } from "../../utils/logging.js";
+import { logger } from "../../utils/logger.js";
 import * as pm from "../../pm/index.js";
+
+const gunzipAsync = promisify(gunzip);
 
 const SKILLS_REPO = "minima-js/skills";
 
@@ -48,7 +48,7 @@ async function downloadSkill(name: string): Promise<{ manifest: Manifest; files:
   const res = await fetch(url);
 
   if (!res.ok) {
-    process.stderr.write(`  Unknown skill: ${bold(name)}\n`);
+    process.stderr.write(`  Unknown skill: ${chalk.bold(name)}\n`);
     process.exit(1);
   }
 
@@ -73,12 +73,12 @@ async function downloadSkill(name: string): Promise<{ manifest: Manifest; files:
 async function handle({ args }: { args: { name: string } }) {
   const { name } = args;
 
-  const { manifest, files } = await withSpinner(`Downloading ${bold(name)} skill...`, () => downloadSkill(name));
+  const { manifest, files } = await withSpinner(`Downloading ${chalk.bold(name)} skill...`, () => downloadSkill(name));
 
   if (manifest.packages.length > 0) {
     const pkgs = manifest.packages.join(" ");
-    await withSpinner(`Installing ${bold(pkgs)}...`, () => pm.add(manifest.packages)).catch(() => {
-      process.stderr.write(`  Run ${bold(`${pm.detect()} add ${pkgs}`)} manually\n`);
+    await withSpinner(`Installing ${chalk.bold(pkgs)}...`, () => pm.add(manifest.packages)).catch(() => {
+      process.stderr.write(`  Run ${chalk.bold(`${pm.detect()} add ${pkgs}`)} manually\n`);
     });
   }
 
@@ -87,7 +87,7 @@ async function handle({ args }: { args: { name: string } }) {
   for (const [dest, content] of Object.entries(files)) {
     const fullPath = join(process.cwd(), dest);
     if (exists(fullPath)) {
-      print(`  ${yellow("!")} Skipped ${cyan(dest)} (already exists)`);
+      logger.info(`  ${chalk.yellow("!")} Skipped ${chalk.cyan(dest)} (already exists)`);
       continue;
     }
     mkdir.sync(dirname(fullPath));
@@ -95,11 +95,11 @@ async function handle({ args }: { args: { name: string } }) {
     created.push(dest);
   }
 
-  print(
+  logger.info(
     "",
-    `  ${green("✔")} Added ${bold(cyan(name))} — ${manifest.description}`,
+    `  ${chalk.green("✔")} Added ${chalk.bold(chalk.cyan(name))} — ${manifest.description}`,
     "",
-    ...(created.length > 0 ? [`  ${dim("Created:")}`, ...created.map((f) => `    ${cyan(f)}`)] : []),
+    ...(created.length > 0 ? [`  ${chalk.dim("Created:")}`, ...created.map((f) => `    ${chalk.cyan(f)}`)] : []),
     ""
   );
 }

@@ -11,12 +11,14 @@ export type { Config };
 export async function loadConfig(cliOption: CliOption = {}): Promise<Config> {
   let config: Partial<Config> = {};
 
-  for (const ext of ["ts", "js"]) {
+  for (const ext of ["js", "ts"]) {
     const configPath = join(process.cwd(), `minimajs.config.${ext}`);
     if (!exists(configPath)) continue;
 
     const module = await import(pathToFileURL(configPath).href);
-    config = (module.default ?? module) as Partial<Config>;
+    const raw = module.default ?? module;
+    const watch = !!cliOption.watch;
+    config = typeof raw === "function" ? (raw as (env: { production: boolean; watch: boolean }) => Partial<Config>)({ production: !watch, watch }) : (raw as Partial<Config>);
     break;
   }
 

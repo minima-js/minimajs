@@ -1,8 +1,7 @@
-import { EOL } from "node:os";
 import type { Plugin, PluginBuild } from "esbuild";
 import { runProcess } from "./node-runner.js";
-import { bold, dim } from "../../../utils/colors.js";
-import { log } from "../../../utils/logging.js";
+import chalk from "chalk";
+import { logger } from "../../../utils/logger.js";
 import { loadEnvFile } from "../../../utils/env.js";
 
 interface RunOption {
@@ -25,7 +24,7 @@ async function setup(build: PluginBuild, opts: RunOption): Promise<void> {
   const execute = createRunner(opts);
   build.onEnd(({ errors }) => {
     if (!errors.length) {
-      log(dim(`↺ ${bold("rs")} ⏎ to restart${EOL}`));
+      logger.info(chalk.dim(`↺ ${chalk.bold("rs")} ⏎ to restart`));
       execute();
     }
   });

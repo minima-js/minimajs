@@ -9,12 +9,13 @@ export const checkCommand = defineCommand({
   args: {
     tsconfig: {
       type: "string",
+      alias: ["p"],
       description: "Path to tsconfig.json",
       valueHint: "path",
       default: "tsconfig.json",
     },
   },
-  async run({ args }) {
-    runCheck(args.tsconfig);
+  run({ args }) {
+    return runCheck(args.tsconfig);
   },
 });

@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { json } from "../utils/fs.js";
-import { ensureCase } from "../utils/index.js";
+import { str } from "../utils/index.js";
 
 export interface PkgInfo {
   name?: string;
@@ -16,7 +16,7 @@ export function loadPkg(): PkgInfo {
     const cwd = process.cwd();
     const packagePath = join(cwd, "package.json");
     const raw = json.sync<Record<string, unknown>>(packagePath);
-    ensureCase(raw, "type");
+    str.ensureCase(raw, "type");
     return raw as PkgInfo;
   } catch {
     return {};

@@ -1,8 +1,8 @@
 import { defineCommand } from "citty";
 import { join, resolve } from "node:path";
-import { bold, cyan, green, dim } from "../../utils/colors.js";
+import chalk from "chalk";
 import { exists, text, mkdir } from "../../utils/fs.js";
-import { print } from "../../utils/logging.js";
+import { logger } from "../../utils/logger.js";
 import { templates } from "../templates/index.js";
 
 async function handle({ args }: { args: { name: string; dir: string } }) {
@@ -11,7 +11,7 @@ async function handle({ args }: { args: { name: string; dir: string } }) {
   const moduleName = name.split("/").at(-1) ?? name;
 
   if (exists(join(modulePath, "module.ts"))) {
-    process.stderr.write(`  Module ${bold(name)} already exists at ${cyan(modulePath)}\n`);
+    process.stderr.write(`  Module ${chalk.bold(name)} already exists at ${chalk.cyan(modulePath)}\n`);
     process.exit(1);
   }
 
@@ -35,14 +35,14 @@ async function handle({ args }: { args: { name: string; dir: string } }) {
   await text.write(join(modulePath, "module.ts"), templates.module(vars));
   await text.write(join(modulePath, handlerFile), templates.handler(vars));
 
-  print(
+  logger.info(
     "",
-    `  ${green("✔")} Generated module ${bold(cyan(name))}`,
+    `  ${chalk.green("✔")} Generated module ${chalk.bold(chalk.cyan(name))}`,
     "",
-    `  ${dim("Created:")}`,
-    ...createdParents.map((p) => `    ${cyan(p)}`),
-    `    ${cyan(join(dir, name, "module.ts"))}`,
-    `    ${cyan(join(dir, name, handlerFile))}`,
+    `  ${chalk.dim("Created:")}`,
+    ...createdParents.map((p) => `    ${chalk.cyan(p)}`),
+    `    ${chalk.cyan(join(dir, name, "module.ts"))}`,
+    `    ${chalk.cyan(join(dir, name, handlerFile))}`,
     ""
   );
 }

@@ -1,7 +1,7 @@
 import { defineCommand } from "citty";
-import { bold, cyan, green, dim, yellow } from "../../utils/colors.js";
+import chalk from "chalk";
 import { exists, text } from "../../utils/fs.js";
-import { print } from "../../utils/logging.js";
+import { logger } from "../../utils/logger.js";
 import { dockerTemplates } from "../templates/index.js";
 import { runtime } from "../../runtime/index.js";
 import * as pm from "../../pm/index.js";
@@ -36,7 +36,7 @@ async function handle() {
   const destPath = "Dockerfile";
 
   if (exists(destPath)) {
-    process.stderr.write(`  ${yellow("!")} Dockerfile already exists\n`);
+    logger.warn("Dockerfile already exists");
     process.exit(1);
   }
 
@@ -56,11 +56,11 @@ async function handle() {
   await text.write(destPath, content);
 
   const label = berry ? "yarn berry" : detected;
-  print(
+  logger.info(
     "",
-    `  ${green("✔")} Created ${bold(cyan("Dockerfile"))} for ${bold(label)}`,
+    `  ${chalk.green("✔")} Created ${chalk.bold(chalk.cyan("Dockerfile"))} for ${chalk.bold(label)}`,
     "",
-    `  ${dim("Tip:")} build with ${cyan("docker build -t my-app .")}`,
+    `  ${chalk.dim("Tip:")} build with ${chalk.cyan("docker build -t my-app .")}`,
     ""
   );
 }

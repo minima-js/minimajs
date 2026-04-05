@@ -4,8 +4,7 @@ import { getOutputFilename } from "../../utils/path.js";
 import { progress } from "../plugins/progress.js";
 import { run } from "../plugins/run/index.js";
 import { tsCheckPlugin } from "../plugins/typescript/index.js";
-import { yellow } from "../../utils/colors.js";
-import { log } from "../../utils/logging.js";
+import { logger } from "../../utils/logger.js";
 import { runtime } from "../../runtime/index.js";
 
 function resolveRunCommand(runConfig: string | true, outputFile: string): { bin: string; args: string[] } {
@@ -29,7 +28,7 @@ export async function buildPlugins(config: Config, filename: string): Promise<Pl
   }
 
   if (config.envFile && !config.run) {
-    log(yellow("Warning: --env-file has no effect without --run option"));
+    logger.warn("--env-file has no effect without --run option");
   }
 
   if (config.run) {

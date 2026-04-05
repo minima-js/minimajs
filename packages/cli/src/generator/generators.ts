@@ -1,16 +1,16 @@
 import { join, resolve } from "node:path";
-import { bold, cyan, green, dim } from "../utils/colors.js";
+import chalk from "chalk";
 import { exists, text, mkdir } from "../utils/fs.js";
 import { templates, type GeneratorType } from "./templates/index.js";
 import { toPascal, toCamel } from "../utils/str.js";
-import { print } from "../utils/logging.js";
+import { logger } from "../utils/logger.js";
 
 export async function generateFile(type: GeneratorType, name: string, dir = "src"): Promise<void> {
   const targetDir = resolve(dir, name);
   const filePath = join(targetDir, `${type}.ts`);
 
   if (exists(filePath)) {
-    process.stderr.write(`  ${type} ${bold(name)} already exists at ${cyan(filePath)}\n`);
+    process.stderr.write(`  ${type} ${chalk.bold(name)} already exists at ${chalk.cyan(filePath)}\n`);
     process.exit(1);
   }
 
@@ -25,12 +25,12 @@ export async function generateFile(type: GeneratorType, name: string, dir = "src
   mkdir.sync(targetDir);
   await text.write(filePath, content);
 
-  print(
+  logger.info(
     "",
-    `  ${green("✔")} Generated ${type} ${bold(cyan(name))}`,
+    `  ${chalk.green("✔")} Generated ${type} ${chalk.bold(chalk.cyan(name))}`,
     "",
-    `  ${dim("Created:")}`,
-    `    ${cyan(join(dir, name, `${type}.ts`))}`,
+    `  ${chalk.dim("Created:")}`,
+    `    ${chalk.cyan(join(dir, name, `${type}.ts`))}`,
     ""
   );
 }

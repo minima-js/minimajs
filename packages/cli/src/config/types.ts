@@ -11,7 +11,7 @@ export interface BaseConfig {
   sourcemap: boolean;
   tsconfig: string;
   minify: boolean;
-  ignoreTypes: boolean;
+  check: boolean;
   reset: boolean;
   killSignal: NodeJS.Signals;
   import: string[];

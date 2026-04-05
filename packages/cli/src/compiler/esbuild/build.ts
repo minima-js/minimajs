@@ -1,11 +1,12 @@
 import { EOL } from "node:os";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import chalk from "chalk";
 import esbuild, { type BuildOptions } from "esbuild";
-import { bold, cyan, red } from "../../utils/colors.js";
 import { relativeId } from "../../utils/path.js";
-import { errorMessage, stderr, successMessage } from "../../utils/logging.js";
-import { getEntryLabel } from "../../utils/utils.js";
+import { logger } from "../../utils/logger.js";
+import { format } from "../format.js";
+import { getEntryLabel } from "./entry.js";
 import type { Config } from "../../config/index.js";
 import { createSpinner } from "../../utils/spinner.js";
 
@@ -16,15 +17,15 @@ export async function build(inputOptions: BuildOptions, config: Config): Promise
   const files = relativeId(inputOptions.outdir!);
   const inputFiles = relativeId(getEntryLabel(inputOptions));
   const spinner = createSpinner();
-  stderr(cyan(`\n${bold(inputFiles)} → ${bold(files)}...`));
+  logger.info(chalk.cyan(`\n${chalk.bold(inputFiles)} → ${chalk.bold(files)}...`));
 
-  if (!config.ignoreTypes) {
-    process.stderr.write(cyan("type checking...\n"));
+  if (config.check) {
+    logger.info(chalk.cyan("type checking..."));
     const result = spawnSync(process.execPath, [tscBin, "--noEmit", "--project", inputOptions.tsconfig ?? "tsconfig.json"], {
       stdio: "inherit",
     });
     if (result.status !== 0) {
-      process.stderr.write(red("Type check failed\n"));
+      logger.fatal("Type check failed");
       process.exit(1);
     }
   }
@@ -37,9 +38,9 @@ export async function build(inputOptions: BuildOptions, config: Config): Promise
     buildResult = await esbuild.build(inputOptions);
   } catch (err) {
     const errors = (err as { errors?: unknown[] }).errors;
-    spinner.fail(errors ? errorMessage(errors) : err instanceof Error ? err.message : String(err));
+    spinner.fail(errors ? format.error(errors) : err instanceof Error ? err.message : String(err));
     throw err;
   }
 
-  spinner.succeed(successMessage(files, buildResult.metafile!, start));
+  spinner.succeed(format.success(files, buildResult.metafile!, start));
 }

@@ -1,8 +1,8 @@
 import { defineCommand } from "citty";
 import { join } from "node:path";
-import { bold, cyan, green, dim } from "../utils/colors.js";
+import chalk from "chalk";
 import { createSpinner } from "../utils/spinner.js";
-import { print } from "../utils/logging.js";
+import { logger } from "../utils/logger.js";
 import { templates } from "./templates/index.js";
 import type { Runtime } from "../config/types.js";
 import * as pm from "../pm/index.js";
@@ -27,8 +27,8 @@ function resolveVersionFileValue(rt: Runtime): string {
   }
 }
 
-function renderPackageJson(name: string, runtime: Runtime, packageManager?: string | null): string {
-  const stub = runtime === "bun" ? templates.packageBun : templates.packageNode;
+function renderPackageJson(name: string, rt: Runtime, packageManager?: string | null): string {
+  const stub = rt === "bun" ? templates.packageBun : templates.packageNode;
   const raw = stub({ name, packageManager: packageManager ?? "" });
   if (!packageManager) return raw.replace(/\n\s+"packageManager": "",/, "");
   return raw;
@@ -49,14 +49,14 @@ async function handle({ args }: { args: NewArgs }) {
   const cwd = join(process.cwd(), name);
 
   if (exists(cwd)) {
-    process.stderr.write(`Directory ${bold(name)} already exists.\n`);
+    process.stderr.write(`Directory ${chalk.bold(name)} already exists.\n`);
     process.exit(1);
   }
 
   const packageManagerField = pm.getVersion(manager);
   const spinner = createSpinner();
 
-  spinner.start(`Scaffolding ${bold(cyan(name))}...`);
+  spinner.start(`Scaffolding ${chalk.bold(chalk.cyan(name))}...`);
 
   const versionFile = rt === "bun" ? ".bun-version" : ".node-version";
   const appContent =
@@ -66,7 +66,7 @@ async function handle({ args }: { args: NewArgs }) {
   await Promise.all([
     text.write(join(cwd, "package.json"), renderPackageJson(name, rt, packageManagerField)),
     text.write(join(cwd, "tsconfig.json"), templates.tsconfig({})),
-    text.write(join(cwd, "minimajs.config.ts"), templates.minimaJsConfig({ runtime: rt })),
+    text.write(join(cwd, `minimajs.config.${rt === "bun" ? "ts" : "js"}`), templates.minimaJsConfig({ runtime: rt })),
     text.write(join(cwd, "src", "index.ts"), templates.index({ runtime: rt })),
     text.write(join(cwd, "src", "module.ts"), templates.rootModule({})),
     text.write(join(cwd, ".gitignore"), templates.gitignore({})),
@@ -75,7 +75,7 @@ async function handle({ args }: { args: NewArgs }) {
     text.write(join(cwd, "app"), appContent, { mode: 0o755 }),
   ]);
 
-  spinner.succeed(`Scaffolded ${bold(cyan(name))}`);
+  spinner.succeed(`Scaffolded ${chalk.bold(chalk.cyan(name))}`);
 
   if (git) {
     exec.sync.safe("git", ["init"], { cwd });
@@ -83,25 +83,25 @@ async function handle({ args }: { args: NewArgs }) {
   }
 
   if (args.install) {
-    spinner.start(`Installing dependencies with ${bold(manager)}...`);
+    spinner.start(`Installing dependencies with ${chalk.bold(manager)}...`);
     try {
       await pm.install({ cwd });
       spinner.succeed("Dependencies installed");
     } catch {
-      spinner.fail(`Failed to install. Run ${bold(`${manager} install`)} manually.`);
+      spinner.fail(`Failed to install. Run ${chalk.bold(`${manager} install`)} manually.`);
     }
   }
 
-  print(
+  logger.info(
     "",
-    `  ${green("✔")} Project created at ${bold(cyan(`./${name}`))}`,
+    `  ${chalk.green("✔")} Project created at ${chalk.bold(chalk.cyan(`./${name}`))}`,
     "",
-    `  ${dim("Next steps:")}`,
-    `    ${cyan(`cd ${name}`)}`,
-    `    ${cyan(`${manager} run dev`)}`,
+    `  ${chalk.dim("Next steps:")}`,
+    `    ${chalk.cyan(`cd ${name}`)}`,
+    `    ${chalk.cyan(`${manager} run dev`)}`,
     "",
-    `  ${dim("Tip: use")} ${cyan("./app")} ${dim("as a shortcut for")} ${cyan("minimajs")}`,
-    `    ${dim("e.g.")} ${cyan("./app add module users")}`,
+    `  ${chalk.dim("Tip: use")} ${chalk.cyan("./app")} ${chalk.dim("as a shortcut for")} ${chalk.cyan("minimajs")}`,
+    `    ${chalk.dim("e.g.")} ${chalk.cyan("./app add module users")}`,
     ""
   );
 }

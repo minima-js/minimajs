@@ -1,7 +1,7 @@
 import { Worker, isMainThread } from "node:worker_threads";
 import { fileURLToPath } from "node:url";
 import type { WorkerMessage, TsDiagnostic } from "./worker.js";
-import { red, yellow, bold, dim, cyan } from "../../../utils/colors.js";
+import chalk from "chalk";
 
 // Only used from main thread
 if (!isMainThread) throw new Error("checker must be imported from main thread");
@@ -10,10 +10,10 @@ const workerPath = fileURLToPath(new URL("./worker.js", import.meta.url));
 
 export function formatDiagnostic(d: TsDiagnostic): string {
   const loc = d.file
-    ? `${cyan(d.file)}${d.line !== undefined ? `:${bold(String(d.line))}:${bold(String(d.col))}` : ""}`
+    ? `${chalk.cyan(d.file)}${d.line !== undefined ? `:${chalk.bold(String(d.line))}:${chalk.bold(String(d.col))}` : ""}`
     : "";
-  const prefix = d.category === "error" ? red("error") : d.category === "warning" ? yellow("warn") : dim("info");
-  const code = dim(`TS${d.code}`);
+  const prefix = d.category === "error" ? chalk.red("error") : d.category === "warning" ? chalk.yellow("warn") : chalk.dim("info");
+  const code = chalk.dim(`TS${d.code}`);
   return `${prefix} ${code}${loc ? `  ${loc}` : ""}  ${d.message}`;
 }
 
@@ -37,7 +37,7 @@ export function startWatchTypeChecker(tsconfig: string, cb: WatchTypeCheckerCall
     }
   });
 
-  worker.on("error", (err) => process.stderr.write(red(`Type checker error: ${err.message}\n`)));
+  worker.on("error", (err) => process.stderr.write(chalk.red(`Type checker error: ${err.message}\n`)));
 
   return () => {
     worker.terminate();

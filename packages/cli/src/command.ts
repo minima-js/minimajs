@@ -1,6 +1,8 @@
 import { defineCommand, runMain } from "citty";
 import { newCommand } from "./creator/command.js";
-import { devCommand, buildCommand, startCommand } from "./compiler/command.js";
+import { devCommand } from "./compiler/dev.js";
+import { buildCommand } from "./compiler/build.js";
+import { startCommand } from "./compiler/start.js";
 import { addCommand } from "./generator/command.js";
 import { checkCommand } from "./check/command.js";
 import { infoCommand } from "./info/command.js";

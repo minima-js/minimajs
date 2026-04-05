@@ -1,15 +1,15 @@
 import { defineCommand } from "citty";
-import { bold, cyan, green } from "../../utils/colors.js";
+import chalk from "chalk";
 import { withSpinner } from "../../utils/spinner.js";
-import { print } from "../../utils/logging.js";
+import { logger } from "../../utils/logger.js";
 import { patchModule } from "../patch.js";
 import * as pm from "../../pm/index.js";
 
 export const openapi = defineCommand({
   meta: { name: "openapi", description: "Install OpenAPI/Swagger documentation" },
   async run() {
-    await withSpinner(`Installing ${bold("@minimajs/openapi")}...`, () => pm.add(["@minimajs/openapi"])).catch(() => {
-      process.stderr.write(`  Run ${bold(`${pm.detect()} add @minimajs/openapi`)} manually\n`);
+    await withSpinner(`Installing ${chalk.bold("@minimajs/openapi")}...`, () => pm.add(["@minimajs/openapi"])).catch(() => {
+      process.stderr.write(`  Run ${chalk.bold(`${pm.detect()} add @minimajs/openapi`)} manually\n`);
     });
 
     patchModule(
@@ -18,6 +18,6 @@ export const openapi = defineCommand({
       `openapi({ info: { title: "My API", version: "1.0.0" } })`
     );
 
-    print("", `  ${green("✔")} Added ${bold(cyan("openapi"))} — OpenAPI/Swagger documentation`, "");
+    logger.info("", `  ${chalk.green("✔")} Added ${chalk.bold(chalk.cyan("openapi"))} — OpenAPI/Swagger documentation`, "");
   },
 });

@@ -1,5 +1,6 @@
 import { defineConfig } from "@minimajs/cli";
 
-export default defineConfig({
-  run: "{{ runtime }} [filename]"
-});
+export default defineConfig(({ production }) => ({
+  run: !production && "{{ runtime }} [filename]",
+  minify: production,
+}));
