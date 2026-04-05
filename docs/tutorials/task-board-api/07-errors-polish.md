@@ -20,6 +20,7 @@ By default, `abort` errors render themselves. To give every error response a con
 Add this to `src/index.ts` before `app.listen`:
 
 ::: code-group
+
 ```typescript [src/index.ts]
 import { createApp } from "@minimajs/server/node";
 import { HttpError } from "@minimajs/server/error";
@@ -38,11 +39,13 @@ const app = createApp();
 const address = await app.listen({ port: 3000 });
 console.log(`Task Board API running at ${address}`);
 ```
+
 :::
 
 Now every HTTP error — whether from `abort.notFound()`, `abort("Unauthorized", 401)`, or a validation failure — returns:
 
 ::: code-group
+
 ```json [Error Response]
 {
   "success": false,
@@ -52,6 +55,7 @@ Now every HTTP error — whether from `abort.notFound()`, `abort("Unauthorized",
   }
 }
 ```
+
 :::
 
 ## Global Error Hook
@@ -59,6 +63,7 @@ Now every HTTP error — whether from `abort.notFound()`, `abort("Unauthorized",
 For logging errors and catching unhandled exceptions, add an `error` hook to the root module:
 
 ::: code-group
+
 ```typescript [src/module.ts]
 // src/module.ts
 import { type Meta, hook, abort } from "@minimajs/server";
@@ -95,6 +100,7 @@ export const meta: Meta = {
   ],
 };
 ```
+
 :::
 
 ## Validation Error Format
@@ -102,6 +108,7 @@ export const meta: Meta = {
 Override the validation error shape from `@minimajs/schema` to match the same API format:
 
 ::: code-group
+
 ```typescript [src/index.ts]
 // src/index.ts
 import { ValidationError } from "@minimajs/schema/error";
@@ -118,11 +125,13 @@ ValidationError.toJSON = (err) => ({
   },
 });
 ```
+
 :::
 
 ## Final Project Structure
 
 ::: code-group
+
 ```text [Project Tree]
 src/
 ├── index.ts          # Entry + error format overrides
@@ -141,34 +150,35 @@ src/
 └── members/
     └── module.ts     # /workspaces/:workspaceId/members
 ```
+
 :::
 
 ## Complete API Surface
 
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| `POST` | `/auth/register` | — | Create account |
-| `POST` | `/auth/login` | — | Get access + refresh token |
-| `POST` | `/auth/refresh` | cookie | Rotate access token |
-| `POST` | `/auth/logout` | — | Clear refresh token cookie |
-| `GET` | `/workspaces` | ✓ | List user's workspaces |
-| `POST` | `/workspaces` | ✓ | Create workspace |
-| `GET` | `/workspaces/:id` | ✓ member | Get workspace |
-| `PATCH` | `/workspaces/:id` | ✓ admin | Update workspace |
-| `DELETE` | `/workspaces/:id` | ✓ admin | Delete workspace |
-| `GET` | `/workspaces/:workspaceId/members` | ✓ member | List members |
-| `POST` | `/workspaces/:workspaceId/members` | ✓ admin | Invite member |
-| `PATCH` | `/workspaces/:workspaceId/members/:id` | ✓ admin | Update role |
-| `DELETE` | `/workspaces/:workspaceId/members/:id` | ✓ admin | Remove member |
-| `GET` | `/workspaces/:workspaceId/boards` | ✓ member | List boards |
-| `POST` | `/workspaces/:workspaceId/boards` | ✓ member | Create board |
-| `PATCH` | `/workspaces/:workspaceId/boards/:id` | ✓ admin | Update board |
-| `DELETE` | `/workspaces/:workspaceId/boards/:id` | ✓ admin | Delete board |
-| `GET` | `/boards/:boardId/tasks` | ✓ member | List tasks (paginated) |
-| `POST` | `/boards/:boardId/tasks` | ✓ member | Create task |
-| `PATCH` | `/boards/:boardId/tasks/:id` | ✓ member | Update task |
-| `DELETE` | `/boards/:boardId/tasks/:id` | ✓ member | Delete task |
-| `POST` | `/boards/:boardId/tasks/:id/attachments` | ✓ member | Upload attachment |
+| Method   | Path                                     | Auth     | Description                |
+| -------- | ---------------------------------------- | -------- | -------------------------- |
+| `POST`   | `/auth/register`                         | —        | Create account             |
+| `POST`   | `/auth/login`                            | —        | Get access + refresh token |
+| `POST`   | `/auth/refresh`                          | cookie   | Rotate access token        |
+| `POST`   | `/auth/logout`                           | —        | Clear refresh token cookie |
+| `GET`    | `/workspaces`                            | ✓        | List user's workspaces     |
+| `POST`   | `/workspaces`                            | ✓        | Create workspace           |
+| `GET`    | `/workspaces/:id`                        | ✓ member | Get workspace              |
+| `PATCH`  | `/workspaces/:id`                        | ✓ admin  | Update workspace           |
+| `DELETE` | `/workspaces/:id`                        | ✓ admin  | Delete workspace           |
+| `GET`    | `/workspaces/:workspaceId/members`       | ✓ member | List members               |
+| `POST`   | `/workspaces/:workspaceId/members`       | ✓ admin  | Invite member              |
+| `PATCH`  | `/workspaces/:workspaceId/members/:id`   | ✓ admin  | Update role                |
+| `DELETE` | `/workspaces/:workspaceId/members/:id`   | ✓ admin  | Remove member              |
+| `GET`    | `/workspaces/:workspaceId/boards`        | ✓ member | List boards                |
+| `POST`   | `/workspaces/:workspaceId/boards`        | ✓ member | Create board               |
+| `PATCH`  | `/workspaces/:workspaceId/boards/:id`    | ✓ admin  | Update board               |
+| `DELETE` | `/workspaces/:workspaceId/boards/:id`    | ✓ admin  | Delete board               |
+| `GET`    | `/boards/:boardId/tasks`                 | ✓ member | List tasks (paginated)     |
+| `POST`   | `/boards/:boardId/tasks`                 | ✓ member | Create task                |
+| `PATCH`  | `/boards/:boardId/tasks/:id`             | ✓ member | Update task                |
+| `DELETE` | `/boards/:boardId/tasks/:id`             | ✓ member | Delete task                |
+| `POST`   | `/boards/:boardId/tasks/:id/attachments` | ✓ member | Upload attachment          |
 
 ## What You've Learned
 

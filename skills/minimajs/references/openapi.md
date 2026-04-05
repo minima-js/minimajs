@@ -20,6 +20,7 @@ export const meta: Meta = {
 ```
 
 Options:
+
 - `path` — endpoint path (default: `/openapi.json`)
 - `info` — OpenAPI info object
 - Any other top-level OpenAPI 3.1 document fields (`servers`, `components`, `security`, `tags`, etc.)
@@ -112,13 +113,14 @@ openapi({
   },
   // Apply globally to all operations
   security: [{ bearerAuth: [] }],
-})
+});
 ```
 
 Then reference in `describe()`:
+
 ```typescript
-describe({ security: [{ bearerAuth: [] }] })  // override per-route
-describe({ security: [] })                    // mark as public (no auth)
+describe({ security: [{ bearerAuth: [] }] }); // override per-route
+describe({ security: [] }); // mark as public (no auth)
 ```
 
 ## Programmatic spec generation

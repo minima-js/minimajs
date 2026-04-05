@@ -1,4 +1,5 @@
-import { join, resolve } from "node:path";
+import { join } from "node:path";
+import { resolveCwd } from "../utils/path.js";
 import chalk from "chalk";
 import { exists, text, mkdir } from "../utils/fs.js";
 import { templates, type GeneratorType } from "./templates/index.js";
@@ -6,7 +7,7 @@ import { toPascal, toCamel } from "../utils/str.js";
 import { logger } from "../utils/logger.js";
 
 export async function generateFile(type: GeneratorType, name: string, dir = "src"): Promise<void> {
-  const targetDir = resolve(dir, name);
+  const targetDir = resolveCwd(dir, name);
   const filePath = join(targetDir, `${type}.ts`);
 
   if (exists(filePath)) {

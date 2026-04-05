@@ -38,7 +38,7 @@ const tmp = createTempDisk();
 ```typescript
 // Write — DiskData = string | Buffer | ReadableStream | Blob | File | Uint8Array
 await disk.put("images/avatar.jpg", fileOrData);
-await disk.put(file);                            // uses File.name as key
+await disk.put(file); // uses File.name as key
 await disk.put("path.txt", "hello world");
 
 // Read — returns DiskFile (extends File) or null
@@ -48,12 +48,12 @@ if (file) {
   const buffer = await file.arrayBuffer();
   const stream = file.stream();
   const blob = await file.blob();
-  console.log(file.href);  // URL string
+  console.log(file.href); // URL string
 }
 
 // Delete
 await disk.delete("images/avatar.jpg");
-await disk.delete(diskFile);                     // pass DiskFile directly
+await disk.delete(diskFile); // pass DiskFile directly
 
 // Check existence
 const exists = await disk.exists("images/avatar.jpg");
@@ -67,9 +67,15 @@ const copied = await disk.copy("src/file.jpg", "dst/file.jpg");
 const moved = await disk.move("old/file.jpg", "new/file.jpg");
 
 // List files
-for await (const file of disk.list()) { /* all files */ }
-for await (const file of disk.list("images/")) { /* files with prefix */ }
-for await (const file of disk) { /* same as list() */ }
+for await (const file of disk.list()) {
+  /* all files */
+}
+for await (const file of disk.list("images/")) {
+  /* files with prefix */
+}
+for await (const file of disk) {
+  /* same as list() */
+}
 
 // Metadata
 const meta = await disk.metadata("images/avatar.jpg");
@@ -140,7 +146,7 @@ import { createFsDriver } from "@minimajs/disk/adapters";
 // Plugin imports depend on @minimajs/disk version
 
 const disk = createDisk(
-  { driver: createFsDriver({ root: "./secure" }) },
+  { driver: createFsDriver({ root: "./secure" }) }
   // compression(),
   // atomicWrite(),
   // encrypt({ password: process.env.DISK_SECRET }),

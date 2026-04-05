@@ -23,6 +23,7 @@ function handler() {
 ```
 
 Each `create*` function accepts:
+
 1. A Zod schema (object or `z.object({...})`)
 2. Options: `{ stripUnknown?: boolean, name?: string }`
    - `stripUnknown: true` (default) — strips extra fields
@@ -36,9 +37,11 @@ Use when the Zod schema contains async refinements:
 ```typescript
 import { createBodyAsync, createHeadersAsync, createSearchParamsAsync, createParamsAsync } from "@minimajs/schema";
 
-const getBody = createBodyAsync(z.object({
-  username: z.string().refine(async (val) => !(await User.exists(val)), "Username taken"),
-}));
+const getBody = createBodyAsync(
+  z.object({
+    username: z.string().refine(async (val) => !(await User.exists(val)), "Username taken"),
+  })
+);
 
 // In handler — must await
 async function createUser() {
@@ -71,14 +74,15 @@ Attaches validators to a route for OpenAPI spec generation. Pass any mix of requ
 ```typescript
 import { schema } from "@minimajs/schema";
 
-app.post("/users",
+app.post(
+  "/users",
   schema(
-    getBody,           // request body validator
-    getParams,         // request params validator
-    getSearch,         // query params validator
-    UserResponse,      // 200 response schema
-    Created,           // 201 response schema
-    BadRequest,        // 400 response schema
+    getBody, // request body validator
+    getParams, // request params validator
+    getSearch, // query params validator
+    UserResponse, // 200 response schema
+    Created, // 201 response schema
+    BadRequest // 400 response schema
   ),
   handler
 );
@@ -97,7 +101,7 @@ import { ValidationError } from "@minimajs/schema";
 ValidationError.toJSON = (err) => ({
   success: false,
   error: "Validation failed",
-  issues: err.issues?.map(i => ({
+  issues: err.issues?.map((i) => ({
     field: i.path.join("."),
     message: i.message,
     code: i.code,

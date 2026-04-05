@@ -55,7 +55,7 @@ import { type Meta } from "@minimajs/server";
 
 export const meta: Meta = {
   plugins: [
-    express(helmet()),      // Security headers
+    express(helmet()), // Security headers
     express(compression()), // Response compression
   ],
 };

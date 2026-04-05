@@ -1,5 +1,9 @@
 import { resolve, relative, isAbsolute, sep, basename, extname, join } from "node:path";
 
+export function resolveCwd(...parts: string[]): string {
+  return resolve(process.cwd(), ...parts);
+}
+
 export function relativeId(id: string): string {
   if (!isAbsolute(id)) return id;
   return relative(resolve(), id);

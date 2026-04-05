@@ -11,8 +11,9 @@ import { z } from "zod";
 
 const upload = createMultipart({
   name: z.string().min(1),
-  avatar: z.file()
-    .max(5 * 1024 * 1024)                        // 5MB max
+  avatar: z
+    .file()
+    .max(5 * 1024 * 1024) // 5MB max
     .mime(["image/jpeg", "image/png", "image/webp"]),
   photos: z.array(z.file().max(10_000_000)).max(10), // up to 10 photos
   description: z.string().optional(),
@@ -35,10 +36,10 @@ Files are fully buffered into memory as Web API `File` objects:
 import { multipart } from "@minimajs/multipart";
 
 // Single file by field name
-const avatar = await multipart.file("avatar");         // File | null
+const avatar = await multipart.file("avatar"); // File | null
 
 // First file in the form
-const [fieldName, file] = await multipart.firstFile() ?? [];
+const [fieldName, file] = (await multipart.firstFile()) ?? [];
 
 // Iterate all files
 for await (const [fieldName, file] of multipart.files()) {
@@ -60,6 +61,7 @@ for await (const [name, value] of multipart.body()) {
 ```
 
 All methods accept `MultipartOptions`:
+
 ```typescript
 {
   limits?: {
@@ -97,7 +99,7 @@ for await (const [field, rawFile] of raw.files()) {
 import { helpers } from "@minimajs/multipart";
 
 // Save a File or RawFile to disk
-const filename = await helpers.save(file, "./uploads");              // uses file.name
+const filename = await helpers.save(file, "./uploads"); // uses file.name
 const filename = await helpers.save(file, "./uploads", "custom.jpg"); // custom name
 
 // Generate a unique filename preserving extension
@@ -107,8 +109,8 @@ const name = helpers.randomName("photo.jpg"); // "a1b2c3d4-....jpg"
 await helpers.ensurePath("./uploads/avatars");
 
 // Type guards
-helpers.isFile(value)       // instanceof File
-helpers.isRawFile(value)    // raw multipart file guard
+helpers.isFile(value); // instanceof File
+helpers.isRawFile(value); // raw multipart file guard
 
 // Convert raw stream to buffered File
 const file = await helpers.raw2file(rawFile, { name: "upload.jpg" });

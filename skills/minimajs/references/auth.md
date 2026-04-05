@@ -13,6 +13,7 @@ const [authPlugin, getUser] = createAuth(callback, options?);
 - `options.required: true` — make all routes under this plugin require auth automatically
 
 Returns a `[plugin, resource]` tuple:
+
 - `plugin` — register on the app or in `meta.plugins`
 - `getUser()` — call inside handlers to get the authenticated user
 
@@ -26,8 +27,8 @@ const [authPlugin, getUser] = createAuth(async () => {
 });
 
 // In handler:
-const user = getUser();           // User | undefined
-const user = getUser.required();  // User — throws UnauthorizedError if not authed
+const user = getUser(); // User | undefined
+const user = getUser.required(); // User — throws UnauthorizedError if not authed
 ```
 
 ## Required auth
@@ -87,11 +88,11 @@ export const routes: Routes = {
 ```typescript
 import { UnauthorizedError, ForbiddenError } from "@minimajs/auth";
 
-throw new UnauthorizedError();                    // 401
-throw new UnauthorizedError("Token expired");     // 401 with message
+throw new UnauthorizedError(); // 401
+throw new UnauthorizedError("Token expired"); // 401 with message
 
-throw new ForbiddenError();                       // 403
-throw new ForbiddenError("Insufficient role");    // 403 with message
+throw new ForbiddenError(); // 403
+throw new ForbiddenError("Insufficient role"); // 403 with message
 ```
 
 Both extend `HttpError` — their JSON shape can be overridden via `HttpError.toJSON`.
@@ -105,10 +106,12 @@ import { ForbiddenError } from "@minimajs/auth";
 
 export function requireRole(role: string) {
   return plugin.sync((app) => {
-    app.register(hook("request", () => {
-      const user = getUser.required();
-      if (!user.roles.includes(role)) throw new ForbiddenError();
-    }));
+    app.register(
+      hook("request", () => {
+        const user = getUser.required();
+        if (!user.roles.includes(role)) throw new ForbiddenError();
+      })
+    );
   });
 }
 

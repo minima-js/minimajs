@@ -135,6 +135,7 @@ Returns the [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/Abo
 Use it to cancel long-running work (disk I/O, database queries, external HTTP calls) when the client is no longer waiting.
 
 > **Runtime coverage**
+>
 > - **Bun** — signal fires on disconnect at any point natively.
 > - **Node.js** — signal covers both phases: client disconnect before the request body is consumed, and client disconnect while the response is being streamed.
 

@@ -1,5 +1,6 @@
 import { defineCommand } from "citty";
 import { join } from "node:path";
+import { resolveCwd } from "../utils/path.js";
 import chalk from "chalk";
 import { createSpinner } from "../utils/spinner.js";
 import { logger } from "../utils/logger.js";
@@ -46,7 +47,7 @@ async function handle({ args }: { args: NewArgs }) {
   const { name, git } = args;
   const manager = (args.pm as pm.PM) ?? pm.detect();
   const rt = (args.runtime as Runtime) ?? runtime();
-  const cwd = join(process.cwd(), name);
+  const cwd = resolveCwd(name);
 
   if (exists(cwd)) {
     process.stderr.write(`Directory ${chalk.bold(name)} already exists.\n`);

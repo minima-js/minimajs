@@ -379,11 +379,7 @@ if (file) {
 
 ```typescript
 // Safe — concurrent writes to different files
-await Promise.all([
-  disk.put("file1.txt", data1),
-  disk.put("file2.txt", data2),
-  disk.put("file3.txt", data3),
-]);
+await Promise.all([disk.put("file1.txt", data1), disk.put("file2.txt", data2), disk.put("file3.txt", data3)]);
 ```
 
 ## Comparison

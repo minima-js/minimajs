@@ -46,27 +46,35 @@ hook("register", (plugin, opts) => void)
 
 ```typescript
 // Fire once, then auto-remove
-hook.once("request", handler)
+hook.once("request", handler);
 
 // Register multiple hooks at once
 hook.define({
-  request: (ctx) => { /* ... */ },
-  send: (res, ctx) => { /* ... */ },
-  close: () => { /* ... */ },
-})
+  request: (ctx) => {
+    /* ... */
+  },
+  send: (res, ctx) => {
+    /* ... */
+  },
+  close: () => {
+    /* ... */
+  },
+});
 
 // Lifecycle: setup runs on ready, returned fn runs on close
 hook.lifespan(async () => {
   const conn = await db.connect();
   return async () => conn.close();
-})
+});
 
 // Direct access to HookStore (a Set) — add/remove at runtime
 hook.factory((store) => {
-  const fn = (ctx) => { /* ... */ };
+  const fn = (ctx) => {
+    /* ... */
+  };
   store.request.add(fn);
   // later: store.request.delete(fn)
-})
+});
 ```
 
 ---
@@ -115,14 +123,11 @@ export default withDefaults(async (app) => {
 import { controller } from "@minimajs/server";
 
 // Map "METHOD /path handlerName" strings to handler functions
-const routes = controller(
-  { list: listUsers, find: getUser, create: createUser },
-  [
-    "GET / list",
-    "GET /:id find",
-    "POST / create",
-  ]
-);
+const routes = controller({ list: listUsers, find: getUser, create: createUser }, [
+  "GET / list",
+  "GET /:id find",
+  "POST / create",
+]);
 
 // RESTful shorthand — maps to list, find, create, update, remove exports
 import * as usersHandlers from "./handlers.js";
@@ -152,13 +157,13 @@ Use sparingly — always global, best for APM/tracing:
 ```typescript
 import { middleware } from "@minimajs/server";
 
-app.register(middleware(
-  async (ctx, next) => {
+app.register(
+  middleware(async (ctx, next) => {
     const start = Date.now();
     await next();
     console.log(`${Date.now() - start}ms`);
-  }
-));
+  })
+);
 ```
 
 ---
@@ -191,16 +196,18 @@ app.post("/raw", bodyParser.skip(), handler);
 ```typescript
 import { cors } from "@minimajs/server/plugins";
 
-app.register(cors({
-  origin: "*",                          // or string[] or (origin) => boolean
-  methods: ["GET", "POST"],
-  allowedHeaders: ["content-type"],
-  exposedHeaders: ["x-request-id"],
-  credentials: true,
-  maxAge: 86400,
-  optionsSuccessStatus: 204,
-  preflightContinue: false,
-}));
+app.register(
+  cors({
+    origin: "*", // or string[] or (origin) => boolean
+    methods: ["GET", "POST"],
+    allowedHeaders: ["content-type"],
+    exposedHeaders: ["x-request-id"],
+    credentials: true,
+    maxAge: 86400,
+    optionsSuccessStatus: 204,
+    preflightContinue: false,
+  })
+);
 ```
 
 ### proxy
@@ -223,10 +230,12 @@ const ip = request.ip();
 ```typescript
 import { shutdown } from "@minimajs/server/plugins";
 
-app.register(shutdown({
-  signals: ["SIGINT", "SIGTERM"], // default
-  timeout: 5000,                 // ms to wait for graceful close
-}));
+app.register(
+  shutdown({
+    signals: ["SIGINT", "SIGTERM"], // default
+    timeout: 5000, // ms to wait for graceful close
+  })
+);
 ```
 
 ---
@@ -236,8 +245,8 @@ app.register(shutdown({
 ```typescript
 createApp({
   moduleDiscovery: {
-    root: "./modules",   // default: cwd
-    index: "route.ts",   // default: "module.ts"
+    root: "./modules", // default: cwd
+    index: "route.ts", // default: "module.ts"
   },
   // Disable entirely (useful for tests or fully programmatic setup)
   // moduleDiscovery: false,
@@ -283,11 +292,7 @@ import { schema } from "@minimajs/schema";
 import { describe } from "@minimajs/openapi";
 
 export const routes: Routes = {
-  "POST /users": handler(
-    describe({ summary: "Create user" }),
-    schema(getBody, UserResponse),
-    createUser
-  ),
+  "POST /users": handler(describe({ summary: "Create user" }), schema(getBody, UserResponse), createUser),
 };
 ```
 
@@ -302,9 +307,9 @@ interface Context {
   request: Request;
   responseState: { status: number; headers: Headers; body: unknown };
   route: { path: string; method: string; metadata: Record<symbol, unknown> };
-  locals: Record<string, unknown>;  // arbitrary per-request storage
+  locals: Record<string, unknown>; // arbitrary per-request storage
   app: App;
-  serverAdapter: unknown;           // runtime-specific (Bun/Node internals)
+  serverAdapter: unknown; // runtime-specific (Bun/Node internals)
 }
 ```
 

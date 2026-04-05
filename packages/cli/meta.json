@@ -176,8 +176,7 @@
     },
     "../../node_modules/.bun/citty@0.2.1/node_modules/citty/dist/_chunks/libs/scule.mjs": {
       "bytes": 1787,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "src/compiler/index.ts": {
@@ -293,14 +292,12 @@
     },
     "src/templates/project.ts": {
       "bytes": 1299,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "src/templates/module.ts": {
       "bytes": 346,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "src/utils/env.ts": {
@@ -455,8 +452,7 @@
     },
     "../../node_modules/.bun/is-interactive@2.0.0/node_modules/is-interactive/index.js": {
       "bytes": 181,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/stdin-discarder@0.2.2/node_modules/stdin-discarder/index.js": {
@@ -521,8 +517,7 @@
     },
     "../../node_modules/.bun/dotenv-expand@12.0.3/node_modules/dotenv-expand/lib/main.js": {
       "bytes": 2594,
-      "imports": [
-      ],
+      "imports": [],
       "format": "cjs"
     },
     "../../node_modules/.bun/dotenv@17.3.1/node_modules/dotenv/lib/main.js": {
@@ -923,14 +918,12 @@
     },
     "../../node_modules/.bun/chalk@5.6.2/node_modules/chalk/source/vendor/ansi-styles/index.js": {
       "bytes": 5256,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/chalk@5.6.2/node_modules/chalk/source/utilities.js": {
       "bytes": 997,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/chalk@5.6.2/node_modules/chalk/source/vendor/supports-color/index.js": {
@@ -956,8 +949,7 @@
     },
     "../../node_modules/.bun/cli-spinners@2.9.2/node_modules/cli-spinners/spinners.json": {
       "bytes": 26268,
-      "imports": [
-      ],
+      "imports": [],
       "format": "json"
     },
     "../../node_modules/.bun/restore-cursor@5.1.0/node_modules/restore-cursor/index.js": {
@@ -983,8 +975,7 @@
     },
     "../../node_modules/.bun/ansi-regex@6.2.2/node_modules/ansi-regex/index.js": {
       "bytes": 590,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/is-unicode-supported@1.3.0/node_modules/is-unicode-supported/index.js": {
@@ -1000,8 +991,7 @@
     },
     "../../node_modules/.bun/emoji-regex@10.6.0/node_modules/emoji-regex/index.js": {
       "bytes": 14183,
-      "imports": [
-      ],
+      "imports": [],
       "format": "cjs"
     },
     "../../node_modules/.bun/get-east-asian-width@1.5.0/node_modules/get-east-asian-width/index.js": {
@@ -1022,14 +1012,12 @@
     },
     "src/config/defaults.ts": {
       "bytes": 394,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/dotenv@17.3.1/node_modules/dotenv/package.json": {
       "bytes": 1716,
-      "imports": [
-      ]
+      "imports": []
     },
     "src/esbuild/plugins.ts": {
       "bytes": 1340,
@@ -1122,8 +1110,7 @@
     },
     "src/utils/utils.ts": {
       "bytes": 1133,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/semver@7.7.4/node_modules/semver/ranges/intersects.js": {
@@ -1495,8 +1482,7 @@
     },
     "../../node_modules/.bun/semver@7.7.4/node_modules/semver/internal/identifiers.js": {
       "bytes": 525,
-      "imports": [
-      ],
+      "imports": [],
       "format": "cjs"
     },
     "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/clean.js": {
@@ -1521,8 +1507,7 @@
     },
     "../../node_modules/.bun/semver@7.7.4/node_modules/semver/internal/constants.js": {
       "bytes": 873,
-      "imports": [
-      ],
+      "imports": [],
       "format": "cjs"
     },
     "../../node_modules/.bun/semver@7.7.4/node_modules/semver/functions/major.js": {
@@ -1734,8 +1719,7 @@
     },
     "../../node_modules/.bun/pretty-bytes@6.1.1/node_modules/pretty-bytes/index.js": {
       "bytes": 2539,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "src/plugins/run/index.ts": {
@@ -1813,50 +1797,42 @@
     },
     "../../node_modules/.bun/semver@7.7.4/node_modules/semver/internal/lrucache.js": {
       "bytes": 802,
-      "imports": [
-      ],
+      "imports": [],
       "format": "cjs"
     },
     "../../node_modules/.bun/semver@7.7.4/node_modules/semver/internal/debug.js": {
       "bytes": 240,
-      "imports": [
-      ],
+      "imports": [],
       "format": "cjs"
     },
     "../../node_modules/.bun/semver@7.7.4/node_modules/semver/internal/parse-options.js": {
       "bytes": 338,
-      "imports": [
-      ],
+      "imports": [],
       "format": "cjs"
     },
     "../../node_modules/.bun/mimic-function@5.0.1/node_modules/mimic-function/index.js": {
       "bytes": 3038,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/signal-exit@4.1.0/node_modules/signal-exit/dist/mjs/signals.js": {
       "bytes": 1438,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/get-east-asian-width@1.5.0/node_modules/get-east-asian-width/lookup-data.js": {
       "bytes": 4421,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/get-east-asian-width@1.5.0/node_modules/get-east-asian-width/utilities.js": {
       "bytes": 650,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/parse-ms@4.0.0/node_modules/parse-ms/index.js": {
       "bytes": 1159,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "src/plugins/run/node-runner.ts": {
@@ -1954,14 +1930,12 @@
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/command.js": {
       "bytes": 1500,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/return/final-error.js": {
       "bytes": 1538,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/create.js": {
@@ -2023,8 +1997,7 @@
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/script.js": {
       "bytes": 1015,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/bind.js": {
@@ -2044,8 +2017,7 @@
     },
     "../../node_modules/.bun/is-plain-obj@4.1.0/node_modules/is-plain-obj/index.js": {
       "bytes": 344,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/parameters.js": {
@@ -2461,8 +2433,7 @@
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/validation.js": {
       "bytes": 5710,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/io/max-buffer.js": {
@@ -2751,8 +2722,7 @@
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/shell.js": {
       "bytes": 926,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/utils/standard-stream.js": {
@@ -2850,8 +2820,7 @@
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/methods/promise.js": {
       "bytes": 580,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/index.js": {
@@ -3028,8 +2997,7 @@
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/utils/deferred.js": {
       "bytes": 205,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/return/early-error.js": {
@@ -3107,8 +3075,7 @@
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/reference.js": {
       "bytes": 1777,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/utils/max-listeners.js": {
@@ -3220,8 +3187,7 @@
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/encoding-option.js": {
       "bytes": 1492,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/ipc-input.js": {
@@ -3291,8 +3257,7 @@
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/split.js": {
       "bytes": 3318,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/verbose/output.js": {
@@ -3482,8 +3447,7 @@
     },
     "../../node_modules/.bun/strip-final-newline@4.0.0/node_modules/strip-final-newline/index.js": {
       "bytes": 681,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/arguments/escape.js": {
@@ -3741,8 +3705,7 @@
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/pipe/sequence.js": {
       "bytes": 950,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/pipe/throw.js": {
@@ -3888,8 +3851,7 @@
     },
     "../../node_modules/.bun/is-stream@4.0.1/node_modules/is-stream/index.js": {
       "bytes": 1328,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/buffer-messages.js": {
@@ -3963,8 +3925,7 @@
     },
     "../../node_modules/.bun/path-key@4.0.0/node_modules/path-key/index.js": {
       "bytes": 263,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/unicorn-magic@0.3.0/node_modules/unicorn-magic/node.js": {
@@ -4066,8 +4027,7 @@
     },
     "../../node_modules/.bun/cross-spawn@7.0.6/node_modules/cross-spawn/lib/enoent.js": {
       "bytes": 1471,
-      "imports": [
-      ],
+      "imports": [],
       "format": "cjs"
     },
     "../../node_modules/.bun/cross-spawn@7.0.6/node_modules/cross-spawn/lib/parse.js": {
@@ -4124,8 +4084,7 @@
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/run-sync.js": {
       "bytes": 1355,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/transform/encoding-transform.js": {
@@ -4406,8 +4365,7 @@
     },
     "../../node_modules/.bun/human-signals@8.0.1/node_modules/human-signals/build/src/realtime.js": {
       "bytes": 352,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/human-signals@8.0.1/node_modules/human-signals/build/src/signals.js": {
@@ -4479,8 +4437,7 @@
     },
     "../../node_modules/.bun/cross-spawn@7.0.6/node_modules/cross-spawn/lib/util/escape.js": {
       "bytes": 1383,
-      "imports": [
-      ],
+      "imports": [],
       "format": "cjs"
     },
     "../../node_modules/.bun/cross-spawn@7.0.6/node_modules/cross-spawn/lib/util/readShebang.js": {
@@ -4501,26 +4458,22 @@
     },
     "../../node_modules/.bun/execa@9.6.1/node_modules/execa/lib/ipc/array.js": {
       "bytes": 196,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/get-stream@9.0.1/node_modules/get-stream/source/utils.js": {
       "bytes": 343,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/@sec-ant+readable-stream@0.4.1/node_modules/@sec-ant/readable-stream/dist/ponyfill/asyncIterator.js": {
       "bytes": 1725,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/@sec-ant+readable-stream@0.4.1/node_modules/@sec-ant/readable-stream/dist/ponyfill/fromAnyIterable.js": {
       "bytes": 749,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/figures@6.1.0/node_modules/figures/index.js": {
@@ -4535,14 +4488,12 @@
     },
     "../../node_modules/.bun/human-signals@8.0.1/node_modules/human-signals/build/src/core.js": {
       "bytes": 4126,
-      "imports": [
-      ],
+      "imports": [],
       "format": "esm"
     },
     "../../node_modules/.bun/path-key@3.1.1/node_modules/path-key/index.js": {
       "bytes": 415,
-      "imports": [
-      ],
+      "imports": [],
       "format": "cjs"
     },
     "../../node_modules/.bun/which@2.0.2/node_modules/which/which.js": {
@@ -4606,8 +4557,7 @@
     },
     "../../node_modules/.bun/shebang-regex@3.0.0/node_modules/shebang-regex/index.js": {
       "bytes": 42,
-      "imports": [
-      ],
+      "imports": [],
       "format": "cjs"
     },
     "../../node_modules/.bun/isexe@2.0.0/node_modules/isexe/windows.js": {
@@ -5403,11 +5353,8 @@
           "bytesInOutput": 0
         }
       },
-      "imports": [
-      ],
-      "exports": [
-        "run"
-      ],
+      "imports": [],
+      "exports": ["run"],
       "entryPoint": "src/index.ts"
     }
   }

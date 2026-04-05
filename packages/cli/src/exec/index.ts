@@ -25,7 +25,41 @@ export class ExecError extends Error {
   }
 }
 
-function execAsync(file: string, args: string[] = [], options: ExecOptions = {}): Promise<ExecResult> {
+function execSync(file: string, args: string[] = [], options: ExecOptions = {}): ExecResult {
+  const result = spawnSync(file, args, {
+    cwd: options.cwd ?? process.cwd(),
+    stdio: options.stdio ?? "inherit",
+    env: { ...process.env, ...options.env },
+    encoding: "buffer",
+  });
+
+  const stdout = result.stdout?.toString("utf8").trim() ?? "";
+  const stderr = result.stderr?.toString("utf8").trim() ?? "";
+  const exitCode = result.status ?? 1;
+  const command = [file, ...args].join(" ");
+
+  if (result.error) throw Object.assign(result.error, { command });
+  if (exitCode !== 0) throw new ExecError(command, exitCode, stdout, stderr);
+
+  return { stdout, stderr, exitCode };
+}
+
+execSync.capture = function (file: string, args: string[] = [], options: ExecOptions = {}): ExecResult {
+  return execSync(file, args, { ...options, stdio: ["ignore", "pipe", "pipe"] });
+};
+
+execSync.safe = function (file: string, args: string[] = [], options: ExecOptions = {}): ExecResult & { ok: boolean } {
+  try {
+    return { ...execSync(file, args, options), ok: true };
+  } catch (e) {
+    if (e instanceof ExecError) {
+      return { stdout: e.stdout, stderr: e.stderr, exitCode: e.exitCode, ok: false };
+    }
+    throw e;
+  }
+};
+
+export async function exec(file: string, args: string[] = [], options: ExecOptions = {}): Promise<ExecResult> {
   return new Promise((resolve, reject) => {
     const child = spawn(file, args, {
       cwd: options.cwd ?? process.cwd(),
@@ -55,36 +89,17 @@ function execAsync(file: string, args: string[] = [], options: ExecOptions = {})
   });
 }
 
-function execSync(file: string, args: string[] = [], options: ExecOptions = {}): ExecResult {
-  const result = spawnSync(file, args, {
-    cwd: options.cwd ?? process.cwd(),
-    stdio: options.stdio ?? "inherit",
-    env: { ...process.env, ...options.env },
-    encoding: "buffer",
-  });
-
-  const stdout = result.stdout?.toString("utf8").trim() ?? "";
-  const stderr = result.stderr?.toString("utf8").trim() ?? "";
-  const exitCode = result.status ?? 1;
-  const command = [file, ...args].join(" ");
-
-  if (result.error) throw Object.assign(result.error, { command });
-  if (exitCode !== 0) throw new ExecError(command, exitCode, stdout, stderr);
-
-  return { stdout, stderr, exitCode };
-}
-
-async function exec(file: string, args: string[] = [], options: ExecOptions = {}): Promise<ExecResult> {
-  return execAsync(file, args, options);
-}
-
 exec.capture = function (file: string, args: string[] = [], options: ExecOptions = {}): Promise<ExecResult> {
-  return execAsync(file, args, { ...options, stdio: ["ignore", "pipe", "pipe"] });
+  return exec(file, args, { ...options, stdio: ["ignore", "pipe", "pipe"] });
 };
 
-exec.safe = async function (file: string, args: string[] = [], options: ExecOptions = {}): Promise<ExecResult & { ok: boolean }> {
+exec.safe = async function execSafe(
+  file: string,
+  args: string[] = [],
+  options: ExecOptions = {}
+): Promise<ExecResult & { ok: boolean }> {
   try {
-    return { ...await execAsync(file, args, options), ok: true };
+    return { ...(await exec(file, args, options)), ok: true };
   } catch (e) {
     if (e instanceof ExecError) {
       return { stdout: e.stdout, stderr: e.stderr, exitCode: e.exitCode, ok: false };
@@ -93,20 +108,4 @@ exec.safe = async function (file: string, args: string[] = [], options: ExecOpti
   }
 };
 
-exec.sync = Object.assign(execSync, {
-  capture(file: string, args: string[] = [], options: ExecOptions = {}): ExecResult {
-    return execSync(file, args, { ...options, stdio: ["ignore", "pipe", "pipe"] });
-  },
-  safe(file: string, args: string[] = [], options: ExecOptions = {}): ExecResult & { ok: boolean } {
-    try {
-      return { ...execSync(file, args, options), ok: true };
-    } catch (e) {
-      if (e instanceof ExecError) {
-        return { stdout: e.stdout, stderr: e.stderr, exitCode: e.exitCode, ok: false };
-      }
-      throw e;
-    }
-  },
-});
-
-export { exec };
+exec.sync = execSync;

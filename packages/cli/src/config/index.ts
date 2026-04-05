@@ -5,6 +5,7 @@ import { defaults } from "./defaults.js";
 import type { CliOption } from "../command.js";
 import { getTarget, loadPkg } from "./pkg.js";
 import { exists } from "../utils/fs.js";
+import { isCurrentPath } from "../utils/path.js";
 
 export type { Config };
 
@@ -18,7 +19,10 @@ export async function loadConfig(cliOption: CliOption = {}): Promise<Config> {
     const module = await import(pathToFileURL(configPath).href);
     const raw = module.default ?? module;
     const watch = !!cliOption.watch;
-    config = typeof raw === "function" ? (raw as (env: { production: boolean; watch: boolean }) => Partial<Config>)({ production: !watch, watch }) : (raw as Partial<Config>);
+    config =
+      typeof raw === "function"
+        ? (raw as (env: { production: boolean; watch: boolean }) => Partial<Config>)({ production: !watch, watch })
+        : (raw as Partial<Config>);
     break;
   }
 
@@ -43,9 +47,15 @@ export async function loadConfig(cliOption: CliOption = {}): Promise<Config> {
   // Only apply overrides that were explicitly set (not undefined)
   const cliOverrides = Object.fromEntries(Object.entries(rawOverrides).filter(([, v]) => v !== undefined));
 
-  return {
+  const resolved: Config = {
     ...defaults,
     ...config,
     ...cliOverrides,
   };
+
+  if (isCurrentPath(resolved.outdir)) {
+    resolved.clean = false;
+  }
+
+  return resolved;
 }

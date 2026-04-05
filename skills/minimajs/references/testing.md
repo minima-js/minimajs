@@ -29,33 +29,33 @@ Always use `moduleDiscovery: false` in tests to avoid file discovery.
 import { createRequest } from "@minimajs/server/mock";
 
 // GET request
-createRequest("/users")
+createRequest("/users");
 
 // With method
-createRequest("/users", { method: "POST" })
+createRequest("/users", { method: "POST" });
 
 // With JSON body (auto-sets Content-Type: application/json)
 createRequest("/users", {
   method: "POST",
   body: { name: "Alice", email: "alice@example.com" },
-})
+});
 
 // With query string
-createRequest("/users", { query: { page: "1", limit: "10" } })
+createRequest("/users", { query: { page: "1", limit: "10" } });
 // equivalent to: createRequest("/users?page=1&limit=10")
 
 // With headers
 createRequest("/users", {
   headers: { authorization: "Bearer token123" },
-})
+});
 
 // Or use native Request directly
-new Request("http://localhost/users/123")
+new Request("http://localhost/users/123");
 new Request("http://localhost/users", {
   method: "POST",
   headers: { "content-type": "application/json" },
   body: JSON.stringify({ name: "Alice" }),
-})
+});
 ```
 
 ## Testing patterns
@@ -77,10 +77,12 @@ export function buildApp() {
 ### Asserting responses
 
 ```typescript
-const res = await app.handle(createRequest("/users", {
-  method: "POST",
-  body: { name: "Alice" },
-}));
+const res = await app.handle(
+  createRequest("/users", {
+    method: "POST",
+    body: { name: "Alice" },
+  })
+);
 
 expect(res.status).toBe(201);
 const body = await res.json();
@@ -98,9 +100,11 @@ expect(res.status).toBe(404);
 ### Testing with auth
 
 ```typescript
-const res = await app.handle(createRequest("/profile", {
-  headers: { authorization: "Bearer valid-jwt-token" },
-}));
+const res = await app.handle(
+  createRequest("/profile", {
+    headers: { authorization: "Bearer valid-jwt-token" },
+  })
+);
 expect(res.status).toBe(200);
 
 // Test unauthorized

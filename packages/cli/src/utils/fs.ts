@@ -45,7 +45,7 @@ json.sync = function readJSONSync<T = unknown>(name: string) {
 export function clean(dest: string): void {
   dest = resolve(process.cwd(), dest);
   try {
-    if (existsSync(dest)) {
+    if (exists(dest)) {
       rmSync(dest, { recursive: true });
     }
     mkdir.sync(dest);

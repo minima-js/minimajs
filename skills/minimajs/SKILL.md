@@ -14,10 +14,11 @@ minimajs is a TypeScript-first, ESM-only HTTP framework for Node.js and Bun. Its
 ## App creation
 
 ```typescript
+import { logger } from "@minimajs/server";
 // Bun
-import { createApp, logger } from "@minimajs/server/bun";
+import { createApp } from "@minimajs/server/bun";
 // Node.js
-import { createApp, logger } from "@minimajs/server/node";
+import { createApp } from "@minimajs/server/node";
 
 const app = createApp();
 app.get("/", () => ({ message: "Hello" }));
@@ -29,13 +30,13 @@ logger.info("App started %s", addr);
 
 - `prefix` — URL prefix for all routes
 - `logger` — Pino logger instance, or `false` to disable
-- `moduleDiscovery: false` — disable file-based module discovery (useful in tests)
+- `moduleDiscovery` — disable file-based module discovery (useful in tests)
 
 ---
 
 ## Two routing styles
 
-### 1. File-based modules (recommended for production)
+### 1. File-based modules (preferred)
 
 Directory structure maps to URL prefixes. Each `module.ts` registers routes for its subtree.
 
@@ -80,10 +81,6 @@ app.get("/users", listUsers);
 app.post("/users", createUser);
 app.get("/users/:id", getUser);
 app.delete("/users/:id", deleteUser);
-
-// With descriptors (validation, OpenAPI metadata, etc.)
-import { handler } from "@minimajs/server";
-app.post("/users", handler(schema(getBody, UserResponse), createUser));
 ```
 
 Route params: `:id`, `:id?` (optional), `*` (wildcard), `:id(\\d+)` (regex).

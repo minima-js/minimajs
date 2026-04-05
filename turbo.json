@@ -3,37 +3,23 @@
   "concurrency": "15",
   "tasks": {
     "build": {
-      "dependsOn": [
-        "clean",
-        "^build"
-      ],
-      "outputs": [
-        "lib/**",
-        "*.tsbuildinfo"
-      ]
+      "dependsOn": ["clean", "^build"],
+      "outputs": ["lib/**", "*.tsbuildinfo"]
     },
     "dev": {
       "cache": false,
       "persistent": true
     },
     "test": {
-      "dependsOn": [
-        "build"
-      ],
+      "dependsOn": ["build"],
       "cache": false
     },
     "coverage": {
-      "dependsOn": [
-        "build"
-      ],
-      "outputs": [
-        "coverage/**"
-      ]
+      "dependsOn": ["build"],
+      "outputs": ["coverage/**"]
     },
     "lint": {
-      "dependsOn": [
-        "^build"
-      ]
+      "dependsOn": ["^build"]
     },
     "clean": {
       "cache": false

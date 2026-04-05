@@ -12,7 +12,8 @@ export function formatDiagnostic(d: TsDiagnostic): string {
   const loc = d.file
     ? `${chalk.cyan(d.file)}${d.line !== undefined ? `:${chalk.bold(String(d.line))}:${chalk.bold(String(d.col))}` : ""}`
     : "";
-  const prefix = d.category === "error" ? chalk.red("error") : d.category === "warning" ? chalk.yellow("warn") : chalk.dim("info");
+  const prefix =
+    d.category === "error" ? chalk.red("error") : d.category === "warning" ? chalk.yellow("warn") : chalk.dim("info");
   const code = chalk.dim(`TS${d.code}`);
   return `${prefix} ${code}${loc ? `  ${loc}` : ""}  ${d.message}`;
 }

@@ -1,12 +1,10 @@
 import type { BuildOptions } from "esbuild";
 import type { Config } from "../../config/index.js";
 import { clean } from "../../utils/fs.js";
-import { isCurrentPath } from "../../utils/path.js";
 import { buildPlugins } from "./plugins.js";
 
 export async function buildEsbuildConfig(entries: string[], config: Config): Promise<BuildOptions> {
   const { outdir, loader } = config;
-  if (isCurrentPath(outdir)) config.clean = false;
   if (config.clean) clean(outdir);
   const primaryEntry = entries[0] ?? "";
   const plugins = await buildPlugins(config, primaryEntry);

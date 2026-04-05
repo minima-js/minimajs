@@ -24,9 +24,5 @@ function caught(err: unknown): void {
   process.stderr.write(`${chalk.red(`✖ ${msg}`)}\n`);
 }
 
-function clear(): void {
-  // eslint-disable-next-line no-console
-  console.clear();
-}
-
-export const logger = { info, warn, error, fatal, catch: caught, clear };
+// eslint-disable-next-line no-console
+export const logger = { info, warn, error, fatal, catch: caught, clear: console.clear };
