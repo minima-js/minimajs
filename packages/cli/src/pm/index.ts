@@ -23,8 +23,8 @@ const LOCKFILES: [string, PM][] = [
  */
 export function isYarnBerry(cwd = process.cwd()): boolean {
   try {
-    const result = exec.sync.capture("yarn", ["--version"], { cwd });
-    const major = parseInt(result.stdout.trim().replace(/^v/, ""), 10);
+    const { stdout } = exec.sync.capture("yarn", ["--version"], { cwd });
+    const major = parseInt(stdout.replace(/^v/, ""), 10);
     return major >= 2;
   } catch {
     return false;

@@ -12,7 +12,7 @@ export const openapi = defineCommand({
       process.stderr.write(`  Run ${chalk.bold(`${pm.detect()} add @minimajs/openapi`)} manually\n`);
     });
 
-    patchModule(
+    await patchModule(
       process.cwd(),
       `import { openapi } from "@minimajs/openapi";`,
       `openapi({ info: { title: "My API", version: "1.0.0" } })`
