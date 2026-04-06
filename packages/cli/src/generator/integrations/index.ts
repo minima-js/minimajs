@@ -8,6 +8,7 @@ import { middleware } from "./middleware.js";
 import { plugin } from "./plugin.js";
 import { hook } from "./hook.js";
 import { service } from "./service.js";
+import { lint } from "./lint.js";
 
 export const integrations: Record<string, CommandDef<any>> = {
   openapi,
@@ -19,4 +20,5 @@ export const integrations: Record<string, CommandDef<any>> = {
   plugin,
   hook,
   service,
+  lint,
 };

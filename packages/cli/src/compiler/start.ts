@@ -3,7 +3,7 @@ import { join, resolve } from "node:path";
 import { defineCommand } from "citty";
 import chalk from "chalk";
 import { loadConfig } from "../config/index.js";
-import { loadPkg } from "../config/pkg.js";
+import { pkg } from "../config/pkg.js";
 import { logger } from "../utils/logger.js";
 import { loadEnvFile } from "../utils/env.js";
 import { exists } from "../utils/fs.js";
@@ -19,9 +19,9 @@ export async function runStart(opts: StartOptions): Promise<void> {
   const config = await loadConfig();
 
   if (!entry) {
-    const pkg = loadPkg();
-    if (pkg.main) {
-      entry = resolve(pkg.main);
+    const pkgInfo = await pkg();
+    if (pkgInfo.main) {
+      entry = resolve(pkgInfo.main);
     } else {
       const candidates = [join("dist", "index.js"), join("dist", "index.mjs"), join("dist", "main.js")];
       for (const c of candidates) {

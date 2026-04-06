@@ -3,7 +3,7 @@ import { pathToFileURL } from "node:url";
 import type { Config } from "./types.js";
 import { defaults } from "./defaults.js";
 import type { CliOption } from "../command.js";
-import { getTarget, loadPkg } from "./pkg.js";
+import { getTarget, pkg } from "./pkg.js";
 import { exists } from "../utils/fs.js";
 import { isCurrentPath } from "../utils/path.js";
 
@@ -26,7 +26,7 @@ export async function loadConfig(cliOption: CliOption = {}): Promise<Config> {
     break;
   }
 
-  const packageInfo = loadPkg();
+  const packageInfo = await pkg();
 
   const { main, engines } = packageInfo;
   if (main) {

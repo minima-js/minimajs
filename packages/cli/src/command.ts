@@ -6,6 +6,7 @@ import { startCommand } from "./compiler/start.js";
 import { addCommand } from "./generator/command.js";
 import { checkCommand } from "./check/command.js";
 import { infoCommand } from "./info/command.js";
+import { initCommand } from "./init/command.js";
 import { runtime } from "./runtime/index.js";
 import { detect as detectPM, isYarnBerry, getVersion } from "./pm/index.js";
 import pkg from "../package.json" with { type: "json" };
@@ -29,6 +30,7 @@ const main = defineCommand({
   },
   subCommands: {
     new: newCommand,
+    init: initCommand,
     dev: devCommand,
     build: buildCommand,
     start: startCommand,

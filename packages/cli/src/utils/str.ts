@@ -7,7 +7,7 @@ export function toCamel(name: string): string {
   return base.replace(/-([a-z])/g, (_, c: string) => (c as string).toUpperCase());
 }
 
-export function ensureCase<T extends Record<string, unknown>>(data: T, ...args: (keyof T)[]): T {
+export function ensureCase<T extends object>(data: T, ...args: (keyof T)[]): T {
   for (const name of args) {
     const value = data[name];
     if (!value) continue;
