@@ -2,7 +2,7 @@ import type { Plugin, PluginBuild } from "esbuild";
 import { runProcess } from "./node-runner.js";
 import chalk from "chalk";
 import { logger } from "../../../utils/logger.js";
-import { loadEnvFile } from "../../../utils/env.js";
+import { loadEnvFile } from "../../../config/env.js";
 
 interface RunOption {
   bin: string;

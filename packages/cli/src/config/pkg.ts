@@ -1,12 +1,13 @@
-import { join } from "node:path";
 import { json, text } from "../utils/fs.js";
 import { str } from "../utils/index.js";
+import { EOL } from "node:os";
 
-export interface PkgInfo {
+export interface Manifest {
   name?: string;
   type?: "module" | "commonjs";
   main?: string;
   scripts?: Record<string, string>;
+  packageManager?: string;
   engines?: {
     node?: string;
   };
@@ -14,17 +15,29 @@ export interface PkgInfo {
 
 const PKG = "package.json";
 
-async function write(data: PkgInfo): Promise<void> {
-  await text.write(PKG, JSON.stringify(data, null, 2) + "\n");
+/**
+ * Writes data to `package.json` in the current working directory.
+ * Use `write.sync` for the synchronous variant.
+ */
+async function write(data: Manifest, indent = 2): Promise<void> {
+  await text.write(PKG, JSON.stringify(data, null, indent) + EOL);
 }
 
-write.sync = function writeSync(data: PkgInfo): void {
-  text.write.sync(PKG, JSON.stringify(data, null, 2) + "\n");
+write.sync = function writeSync(data: Manifest, indent = 2): void {
+  text.write.sync(PKG, JSON.stringify(data, null, indent) + EOL);
 };
 
-export async function pkg(): Promise<PkgInfo> {
+/**
+ * Reads and parses `package.json` from the current working directory.
+ * Returns an empty object if the file is missing or unreadable.
+ *
+ * Sub-methods:
+ * - `manifest.sync`  — synchronous variant
+ * - `manifest.write` — writes data back to `package.json`
+ */
+export async function manifest(): Promise<Manifest> {
   try {
-    const raw = await json<PkgInfo>(PKG);
+    const raw = await json<Manifest>(PKG);
     str.ensureCase(raw, "type");
     return raw;
   } catch {
@@ -32,9 +45,9 @@ export async function pkg(): Promise<PkgInfo> {
   }
 }
 
-pkg.sync = function pkgSync(): PkgInfo {
+manifest.sync = function manifestSync(): Manifest {
   try {
-    const raw = json.sync<PkgInfo>(join(process.cwd(), PKG));
+    const raw = json.sync<Manifest>(PKG);
     str.ensureCase(raw, "type");
     return raw;
   } catch {
@@ -42,8 +55,12 @@ pkg.sync = function pkgSync(): PkgInfo {
   }
 };
 
-pkg.write = write;
+manifest.write = write;
 
+/**
+ * Converts a Node.js version string into an esbuild-compatible target string.
+ * @example getTarget("20.1") // => "node20.1.0"
+ */
 export function getTarget(node: string, prefix = "node"): string {
   const match = node.match(/(\d+)(?:\.(\d+))?(?:\.(\d+))?/);
   if (!match) {

@@ -6,7 +6,5 @@ export const addCommand = defineCommand({
     name: "add",
     description: "Scaffold modules, services, middleware and install integrations",
   },
-  subCommands: {
-    ...integrations,
-  },
+  subCommands: integrations,
 });

@@ -25,6 +25,10 @@ export class ExecError extends Error {
   }
 }
 
+/**
+ * Synchronously spawns a process and returns its output.
+ * Throws `ExecError` on non-zero exit code. Default `stdio` is `"inherit"`.
+ */
 function execSync(file: string, args: string[] = [], options: ExecOptions = {}): ExecResult {
   const result = spawnSync(file, args, {
     cwd: options.cwd ?? process.cwd(),
@@ -44,10 +48,20 @@ function execSync(file: string, args: string[] = [], options: ExecOptions = {}):
   return { stdout, stderr, exitCode };
 }
 
+/**
+ * Synchronously spawns a process and captures its stdout/stderr.
+ * Forces `stdio: pipe` — output is not printed to the terminal.
+ * Throws `ExecError` on non-zero exit code.
+ */
 execSync.capture = function (file: string, args: string[] = [], options: ExecOptions = {}): ExecResult {
   return execSync(file, args, { ...options, stdio: ["ignore", "pipe", "pipe"] });
 };
 
+/**
+ * Synchronously spawns a process and never throws on non-zero exit.
+ * Returns `ok: true` on success, `ok: false` on process failure.
+ * Non-`ExecError` errors (e.g. spawn failures) are still re-thrown.
+ */
 execSync.safe = function (file: string, args: string[] = [], options: ExecOptions = {}): ExecResult & { ok: boolean } {
   try {
     return { ...execSync(file, args, options), ok: true };
@@ -59,6 +73,15 @@ execSync.safe = function (file: string, args: string[] = [], options: ExecOption
   }
 };
 
+/**
+ * Asynchronously spawns a process and resolves with its output.
+ * Throws `ExecError` on non-zero exit code. Default `stdio` is `"inherit"`.
+ *
+ * Sub-methods:
+ * - `exec.capture` — captures stdout/stderr instead of printing them
+ * - `exec.safe`    — never throws on non-zero exit; returns `ok` boolean
+ * - `exec.sync`    — synchronous variant with the same sub-methods
+ */
 export async function exec(file: string, args: string[] = [], options: ExecOptions = {}): Promise<ExecResult> {
   return new Promise((resolve, reject) => {
     const child = spawn(file, args, {
@@ -89,10 +112,20 @@ export async function exec(file: string, args: string[] = [], options: ExecOptio
   });
 }
 
+/**
+ * Asynchronously spawns a process and captures its stdout/stderr.
+ * Forces `stdio: pipe` — output is not printed to the terminal.
+ * Throws `ExecError` on non-zero exit code.
+ */
 exec.capture = function (file: string, args: string[] = [], options: ExecOptions = {}): Promise<ExecResult> {
   return exec(file, args, { ...options, stdio: ["ignore", "pipe", "pipe"] });
 };
 
+/**
+ * Asynchronously spawns a process and never throws on non-zero exit.
+ * Returns `ok: true` on success, `ok: false` on process failure.
+ * Non-`ExecError` errors (e.g. spawn failures) are still re-thrown.
+ */
 exec.safe = async function execSafe(
   file: string,
   args: string[] = [],

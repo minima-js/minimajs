@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { exec } from "../exec/index.js";
-import { exists, json } from "../utils/fs.js";
+import { exists } from "../utils/fs.js";
+import { manifest } from "../config/pkg.js";
 
 export type PM = "bun" | "pnpm" | "yarn" | "npm";
 
@@ -43,7 +44,7 @@ function fromUserAgent(): PM | null {
 export function detect(cwd = process.cwd()): PM {
   // 1. packageManager field in package.json (corepack standard)
   try {
-    const pkg = json.sync<{ packageManager?: string }>(join(cwd, "package.json"));
+    const pkg = manifest.sync();
     if (pkg.packageManager) {
       const name = pkg.packageManager.split("@")[0] as PM;
       if (["bun", "pnpm", "yarn", "npm"].includes(name)) return name;
@@ -73,7 +74,7 @@ export function getVersion(manager: PM): string | null {
   try {
     const result = exec.sync.capture(manager, ["--version"]);
     // strip any leading 'v' (e.g. yarn classic outputs "1.22.22")
-    const version = result.stdout.trim().replace(/^v/, "");
+    const version = result.stdout.replace(/^v/, "");
     if (!version) return null;
     return `${manager}@${version}`;
   } catch {

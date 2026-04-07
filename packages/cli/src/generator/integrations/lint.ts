@@ -3,7 +3,7 @@ import chalk from "chalk";
 import { exists, text } from "../../utils/fs.js";
 import { logger } from "../../utils/logger.js";
 import { eslintConfig } from "../templates/index.js";
-import { pkg } from "../../config/pkg.js";
+import { manifest } from "../../config/pkg.js";
 import * as pm from "../../pm/index.js";
 
 const ESLINT_PACKAGES = ["eslint", "@eslint/js", "typescript-eslint"];
@@ -18,11 +18,11 @@ async function handle() {
 
   text.write.sync(CONFIG_FILE, eslintConfig({}));
 
-  const info = await pkg();
+  const info = await manifest();
   info.scripts ??= {};
   if (!info.scripts["lint"]) {
     info.scripts["lint"] = "eslint .";
-    await pkg.write(info);
+    await manifest.write(info);
   }
 
   logger.info(

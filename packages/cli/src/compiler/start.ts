@@ -3,9 +3,9 @@ import { join, resolve } from "node:path";
 import { defineCommand } from "citty";
 import chalk from "chalk";
 import { loadConfig } from "../config/index.js";
-import { pkg } from "../config/pkg.js";
+import { manifest } from "../config/pkg.js";
 import { logger } from "../utils/logger.js";
-import { loadEnvFile } from "../utils/env.js";
+import { loadEnvFile } from "../config/env.js";
 import { exists } from "../utils/fs.js";
 import { runtime } from "../runtime/index.js";
 
@@ -19,7 +19,7 @@ export async function runStart(opts: StartOptions): Promise<void> {
   const config = await loadConfig();
 
   if (!entry) {
-    const pkgInfo = await pkg();
+    const pkgInfo = await manifest();
     if (pkgInfo.main) {
       entry = resolve(pkgInfo.main);
     } else {
