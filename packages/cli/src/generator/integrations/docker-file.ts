@@ -2,7 +2,7 @@ import { defineCommand } from "citty";
 import chalk from "chalk";
 import { exists, text } from "../../utils/fs.js";
 import { logger } from "../../utils/logger.js";
-import { dockerTemplates } from "../templates/index.js";
+import { templates } from "../templates/index.js";
 import { runtime } from "../../runtime/index.js";
 import * as pm from "../../pm/index.js";
 import { loadConfig } from "../../config/index.js";
@@ -51,7 +51,7 @@ async function handle() {
         ? `["bun", "run", "dist/index.js"]`
         : `["node", "dist/index.js"]`;
   const templateVars = { version, cmd };
-  const content = berry ? dockerTemplates.berry(templateVars) : dockerTemplates[detected](templateVars);
+  const content = berry ? templates.docker.berry(templateVars) : templates.docker[detected](templateVars);
   await text.write(destPath, content);
 
   const label = berry ? "yarn berry" : detected;

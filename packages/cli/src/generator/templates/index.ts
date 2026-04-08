@@ -14,33 +14,35 @@ import dockerYarn from "./docker/yarn.stub";
 import dockerBerry from "./docker/berry.stub";
 import eslintConfig from "./eslint.config.js.stub";
 import prettierConfig from "./prettier.config.js.stub";
+import type { Stub } from "../../types.js";
+
+type NamedVars = { name: string };
+type InstanceVars = { instance: string };
+type DockerVars = { version: string };
 
 export const templates = {
-  module: $module,
-  handler,
-  service,
-  middleware,
-  plugin,
-  hook,
-};
-
-export const diskTemplates = {
-  file: diskFile,
-  s3: diskS3,
-  "azure-blob": diskAzureBlob,
-};
-
-export const dockerTemplates = {
-  bun: dockerBun,
-  npm: dockerNpm,
-  pnpm: dockerPnpm,
-  yarn: dockerYarn,
-  berry: dockerBerry,
-};
-
-export const configTemplates = {
-  eslint: eslintConfig,
-  prettier: prettierConfig,
+  disk: {
+    file: diskFile as Stub,
+    s3: diskS3 as Stub,
+    "azure-blob": diskAzureBlob as Stub,
+  },
+  docker: {
+    bun: dockerBun as Stub<DockerVars>,
+    npm: dockerNpm as Stub<DockerVars>,
+    pnpm: dockerPnpm as Stub<DockerVars>,
+    yarn: dockerYarn as Stub<DockerVars>,
+    berry: dockerBerry as Stub<{ version: string }>,
+  },
+  configs: {
+    eslint: eslintConfig as Stub,
+    prettier: prettierConfig as Stub,
+  },
+  module: $module as Stub<NamedVars>,
+  handler: handler as Stub,
+  service: service as Stub<NamedVars>,
+  middleware: middleware as Stub<InstanceVars>,
+  plugin: plugin as Stub<InstanceVars>,
+  hook: hook as Stub<InstanceVars>,
 };
 
 export type GeneratorType = keyof typeof templates;

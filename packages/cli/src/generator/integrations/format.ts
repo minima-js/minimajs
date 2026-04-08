@@ -2,7 +2,7 @@ import { defineCommand } from "citty";
 import chalk from "chalk";
 import { exists, text } from "../../utils/fs.js";
 import { logger } from "../../utils/logger.js";
-import { configTemplates } from "../templates/index.js";
+import { templates } from "../templates/index.js";
 import { manifest } from "../../config/pkg.js";
 import * as pm from "../../pm/index.js";
 
@@ -20,7 +20,7 @@ async function handle() {
 
   pm.add(PRETTIER_PACKAGES, { dev: true });
 
-  text.write.sync(CONFIG_FILE, configTemplates.prettier());
+  text.write.sync(CONFIG_FILE, templates.configs.prettier());
 
   if (!hasIgnoreFile) {
     text.write.sync(IGNORE_FILE, IGNORE_CONTENT);

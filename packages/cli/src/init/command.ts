@@ -20,7 +20,7 @@ function handle() {
   if (exists(configFile)) {
     logger.warn(`${configFile} already exists, skipping`);
   } else {
-    text.write.sync(configFile, templates.minimaJsConfig({ runtime: rt }));
+    text.write.sync(configFile, templates.minimajsConfig({ runtime: rt }));
     created.push(configFile);
   }
 

@@ -2,11 +2,13 @@ import { join } from "node:path";
 import { resolveCwd } from "../utils/path.js";
 import chalk from "chalk";
 import { exists, text, mkdir } from "../utils/fs.js";
-import { templates, type GeneratorType } from "./templates/index.js";
-import { toPascal, toCamel } from "../utils/str.js";
+import { templates } from "./templates/index.js";
+import { toCamel } from "../utils/str.js";
 import { logger } from "../utils/logger.js";
 
-export async function generateFile(type: GeneratorType, name: string, dir = "src"): Promise<void> {
+type GenerateFileTypes = keyof Pick<typeof templates, "hook" | "middleware" | "service" | "plugin">;
+
+export async function generateFile(type: GenerateFileTypes, name: string, dir = "src"): Promise<void> {
   const targetDir = resolveCwd(dir, name);
   const filePath = join(targetDir, `${type}.ts`);
 
@@ -14,10 +16,9 @@ export async function generateFile(type: GeneratorType, name: string, dir = "src
     logger.fatal(`${type} ${chalk.bold(name)} already exists at ${chalk.cyan(filePath)}`);
   }
 
-  const pascal = toPascal(name);
   const camel = toCamel(name);
+
   const content = templates[type]({
-    Name: pascal,
     name: camel,
     instance: camel + type.charAt(0).toUpperCase() + type.slice(1),
   });

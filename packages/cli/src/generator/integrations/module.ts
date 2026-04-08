@@ -32,7 +32,7 @@ async function handle({ args }: { args: { name: string; dir: string } }) {
 
   mkdir.sync(modulePath);
   await text.write(join(modulePath, "module.ts"), templates.module(vars));
-  await text.write(join(modulePath, handlerFile), templates.handler(vars));
+  await text.write(join(modulePath, handlerFile), templates.handler());
 
   logger.info(
     "",

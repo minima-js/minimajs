@@ -29,7 +29,7 @@ function resolveVersionFileValue(rt: Runtime): string {
 }
 
 function renderPackageJson(name: string, rt: Runtime, packageManager?: string | null): string {
-  const stub = rt === "bun" ? templates.packageBun : templates.packageNode;
+  const stub = rt === "bun" ? templates.package.bun : templates.package.node;
   const raw = stub({ name, packageManager: packageManager ?? "" });
   if (!packageManager) return raw.replace(/\n\s+"packageManager": "",/, "");
   return raw;
@@ -62,12 +62,12 @@ function getScaffoldFiles({
 }): ScaffoldFile[] {
   const versionFile = rt === "bun" ? ".bun-version" : ".node-version";
   const appContent =
-    rt === "bun" ? templates.appBun() : templates.appNode({ exec: PM_EXEC[manager as Exclude<pm.PM, "bun">] });
+    rt === "bun" ? templates.app.bun() : templates.app.node({ exec: PM_EXEC[manager as Exclude<pm.PM, "bun">] });
 
   return [
     { path: "package.json", content: renderPackageJson(name, rt, packageManagerField) },
     { path: "tsconfig.json", content: templates.tsconfig() },
-    { path: `minimajs.config.${rt === "bun" ? "ts" : "js"}`, content: templates.minimaJsConfig({ runtime: rt }) },
+    { path: `minimajs.config.${rt === "bun" ? "ts" : "js"}`, content: templates.minimajsConfig({ runtime: rt }) },
     { path: join("src", "index.ts"), content: templates.index({ runtime: rt }) },
     { path: join("src", "module.ts"), content: templates.rootModule() },
     { path: ".gitignore", content: templates.gitignore() },

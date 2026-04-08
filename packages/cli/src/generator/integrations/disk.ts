@@ -4,21 +4,21 @@ import chalk from "chalk";
 import { exists, text, mkdir } from "../../utils/fs.js";
 import { withSpinner } from "../../utils/spinner.js";
 import { logger } from "../../utils/logger.js";
-import { diskTemplates } from "../templates/index.js";
+import { templates } from "../templates/index.js";
 import * as pm from "../../pm/index.js";
 
 const drivers = {
   file: {
     packages: ["@minimajs/disk"],
-    files: [{ path: "src/common/disk.ts", content: diskTemplates.file() }],
+    files: [{ path: "src/common/disk.ts", content: templates.disk.file() }],
   },
   s3: {
     packages: ["@minimajs/disk", "@minimajs/aws-s3"],
-    files: [{ path: "src/common/disk.ts", content: diskTemplates.s3() }],
+    files: [{ path: "src/common/disk.ts", content: templates.disk.s3() }],
   },
   "azure-blob": {
     packages: ["@minimajs/disk", "@minimajs/azure-blob"],
-    files: [{ path: "src/common/disk.ts", content: diskTemplates["azure-blob"]() }],
+    files: [{ path: "src/common/disk.ts", content: templates.disk["azure-blob"]() }],
   },
 };
 
