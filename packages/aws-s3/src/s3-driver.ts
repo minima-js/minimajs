@@ -124,7 +124,7 @@ export class S3Driver implements DiskDriver {
         }
 
         return { bucket, key };
-      } catch (error) {
+      } catch {
         throw new Error(`Invalid S3 href format: ${href}`);
       }
     }
