@@ -57,6 +57,12 @@ manifest.sync = function manifestSync(): Manifest {
 
 manifest.write = write;
 
+let CACHED_MANIFEST: Manifest | null = null;
+manifest.cached = async function cachedManifest() {
+  CACHED_MANIFEST ??= await manifest();
+  return CACHED_MANIFEST;
+};
+
 /**
  * Converts a Node.js version string into an esbuild-compatible target string.
  * @example getTarget("20.1") // => "node20.1.0"
