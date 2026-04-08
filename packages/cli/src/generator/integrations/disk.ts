@@ -10,15 +10,15 @@ import * as pm from "../../pm/index.js";
 const drivers = {
   file: {
     packages: ["@minimajs/disk"],
-    files: [{ path: "src/common/disk.ts", content: diskTemplates.file({}) }],
+    files: [{ path: "src/common/disk.ts", content: diskTemplates.file() }],
   },
   s3: {
     packages: ["@minimajs/disk", "@minimajs/aws-s3"],
-    files: [{ path: "src/common/disk.ts", content: diskTemplates.s3({}) }],
+    files: [{ path: "src/common/disk.ts", content: diskTemplates.s3() }],
   },
   "azure-blob": {
     packages: ["@minimajs/disk", "@minimajs/azure-blob"],
-    files: [{ path: "src/common/disk.ts", content: diskTemplates["azure-blob"]({}) }],
+    files: [{ path: "src/common/disk.ts", content: diskTemplates["azure-blob"]() }],
   },
 };
 

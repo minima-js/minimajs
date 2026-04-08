@@ -13,7 +13,7 @@ function handle() {
   if (exists("tsconfig.json")) {
     logger.warn("tsconfig.json already exists, skipping");
   } else {
-    text.write.sync("tsconfig.json", templates.tsconfig({}));
+    text.write.sync("tsconfig.json", templates.tsconfig());
     created.push("tsconfig.json");
   }
 

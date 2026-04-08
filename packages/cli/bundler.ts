@@ -11,7 +11,7 @@ const stubPlugin: esbuild.Plugin = {
       const raw = readFileSync(args.path, "utf8");
       const escaped = raw.replace(/\\/g, "\\\\").replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
       const contents =
-        `export default function(vars) {` +
+        `export default function(vars = {}) {` +
         `const t=\`${escaped}\`;` +
         `return t.replace(/\\{\\{\\s*(\\w+)\\s*\\}\\}/g,(_,k)=>vars[k]??("{{"+k+"}}"));}`;
       return { contents, loader: "js" };

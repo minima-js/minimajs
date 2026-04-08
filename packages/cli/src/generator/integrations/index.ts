@@ -9,6 +9,7 @@ import { plugin } from "./plugin.js";
 import { hook } from "./hook.js";
 import { service } from "./service.js";
 import { lint } from "./lint.js";
+import { format } from "./format.js";
 
 export const integrations: Record<string, CommandDef<any>> = {
   openapi,
@@ -21,4 +22,5 @@ export const integrations: Record<string, CommandDef<any>> = {
   hook,
   service,
   lint,
+  format,
 };

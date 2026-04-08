@@ -12,7 +12,8 @@ import dockerNpm from "./docker/npm.stub";
 import dockerPnpm from "./docker/pnpm.stub";
 import dockerYarn from "./docker/yarn.stub";
 import dockerBerry from "./docker/berry.stub";
-import eslintConfig from "./eslint.config.stub";
+import eslintConfig from "./eslint.config.js.stub";
+import prettierConfig from "./prettier.config.js.stub";
 
 export const templates = {
   module: $module,
@@ -37,6 +38,9 @@ export const dockerTemplates = {
   berry: dockerBerry,
 };
 
-export { eslintConfig };
+export const configTemplates = {
+  eslint: eslintConfig,
+  prettier: prettierConfig,
+};
 
 export type GeneratorType = keyof typeof templates;

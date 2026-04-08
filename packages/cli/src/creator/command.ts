@@ -43,6 +43,40 @@ interface NewArgs {
   git: boolean;
 }
 
+interface ScaffoldFile {
+  path: string;
+  content: string;
+  mode?: number;
+}
+
+function getScaffoldFiles({
+  name,
+  manager,
+  packageManagerField,
+  rt,
+}: {
+  name: string;
+  manager: pm.PM;
+  packageManagerField: string | null;
+  rt: Runtime;
+}): ScaffoldFile[] {
+  const versionFile = rt === "bun" ? ".bun-version" : ".node-version";
+  const appContent =
+    rt === "bun" ? templates.appBun() : templates.appNode({ exec: PM_EXEC[manager as Exclude<pm.PM, "bun">] });
+
+  return [
+    { path: "package.json", content: renderPackageJson(name, rt, packageManagerField) },
+    { path: "tsconfig.json", content: templates.tsconfig() },
+    { path: `minimajs.config.${rt === "bun" ? "ts" : "js"}`, content: templates.minimaJsConfig({ runtime: rt }) },
+    { path: join("src", "index.ts"), content: templates.index({ runtime: rt }) },
+    { path: join("src", "module.ts"), content: templates.rootModule() },
+    { path: ".gitignore", content: templates.gitignore() },
+    { path: ".env", content: templates.env() },
+    { path: versionFile, content: resolveVersionFileValue(rt) + "\n" },
+    { path: "app", content: appContent, mode: 0o755 },
+  ];
+}
+
 async function handle({ args }: { args: NewArgs }) {
   const { name, git } = args;
   const manager = (args.pm as pm.PM) ?? pm.detect();
@@ -58,22 +92,10 @@ async function handle({ args }: { args: NewArgs }) {
 
   spinner.start(`Scaffolding ${chalk.bold(chalk.cyan(name))}...`);
 
-  const versionFile = rt === "bun" ? ".bun-version" : ".node-version";
-  const appContent =
-    rt === "bun" ? templates.appBun({}) : templates.appNode({ exec: PM_EXEC[manager as Exclude<pm.PM, "bun">] });
+  const files = getScaffoldFiles({ name, manager, packageManagerField, rt });
 
   await mkdir(join(cwd, "src"));
-  await Promise.all([
-    text.write(join(cwd, "package.json"), renderPackageJson(name, rt, packageManagerField)),
-    text.write(join(cwd, "tsconfig.json"), templates.tsconfig({})),
-    text.write(join(cwd, `minimajs.config.${rt === "bun" ? "ts" : "js"}`), templates.minimaJsConfig({ runtime: rt })),
-    text.write(join(cwd, "src", "index.ts"), templates.index({ runtime: rt })),
-    text.write(join(cwd, "src", "module.ts"), templates.rootModule({})),
-    text.write(join(cwd, ".gitignore"), templates.gitignore({})),
-    text.write(join(cwd, ".env"), templates.env({})),
-    text.write(join(cwd, versionFile), resolveVersionFileValue(rt) + "\n"),
-    text.write(join(cwd, "app"), appContent, { mode: 0o755 }),
-  ]);
+  await Promise.all(files.map((file) => text.write(join(cwd, file.path), file.content, { mode: file.mode })));
 
   spinner.succeed(`Scaffolded ${chalk.bold(chalk.cyan(name))}`);
 
