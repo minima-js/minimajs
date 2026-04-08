@@ -1,9 +1,9 @@
 import type { Plugin } from "esbuild";
-import { createSpinner } from "../../utils/spinner.js";
+import { createSpinner } from "#/utils/spinner.js";
 import chalk from "chalk";
-import { relativeId } from "../../utils/path.js";
-import { getResetScreen } from "../../utils/screen.js";
-import { logger } from "../../utils/logger.js";
+import { relativeId } from "#/utils/path.js";
+import { getResetScreen } from "#/utils/screen.js";
+import { logger } from "#/utils/logger.js";
 import { format } from "../format.js";
 import { getEntryLabel } from "../esbuild/entry.js";
 

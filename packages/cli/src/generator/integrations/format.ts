@@ -1,24 +1,26 @@
 import { defineCommand } from "citty";
 import chalk from "chalk";
-import { exists, text } from "../../utils/fs.js";
-import { logger } from "../../utils/logger.js";
+import { exists, text } from "#/utils/fs.js";
+import { logger } from "#/utils/logger.js";
 import { templates } from "../templates/index.js";
-import { manifest } from "../../config/pkg.js";
-import * as pm from "../../pm/index.js";
+import { manifest } from "#/config/pkg.js";
+import * as pm from "#/pm/index.js";
 
 const PRETTIER_PACKAGES = ["prettier"];
 const CONFIG_FILE = "prettier.config.js";
 const IGNORE_FILE = ".prettierignore";
 const IGNORE_CONTENT = ["dist", "node_modules"].join("\n") + "\n";
 
-async function handle() {
+async function handle({ args }: { args: { install: boolean } }) {
   if (exists(CONFIG_FILE)) {
     logger.fatal(`${CONFIG_FILE} already exists`);
   }
 
   const hasIgnoreFile = exists(IGNORE_FILE);
 
-  pm.add(PRETTIER_PACKAGES, { dev: true });
+  if (args.install) {
+    pm.add(PRETTIER_PACKAGES, { dev: true });
+  }
 
   text.write.sync(CONFIG_FILE, templates.configs.prettier());
 
@@ -51,5 +53,12 @@ async function handle() {
 
 export const format = defineCommand({
   meta: { name: "format", description: "Scaffold code formatting with Prettier" },
+  args: {
+    install: {
+      type: "boolean",
+      default: true,
+      negativeDescription: "Skip dependency installation",
+    },
+  },
   run: handle,
 });

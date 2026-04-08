@@ -1,11 +1,11 @@
 import { defineCommand } from "citty";
 import { dirname, join } from "node:path";
 import chalk from "chalk";
-import { exists, text, mkdir } from "../../utils/fs.js";
-import { withSpinner } from "../../utils/spinner.js";
-import { logger } from "../../utils/logger.js";
+import { exists, text, mkdir } from "#/utils/fs.js";
+import { withSpinner } from "#/utils/spinner.js";
+import { logger } from "#/utils/logger.js";
 import { templates } from "../templates/index.js";
-import * as pm from "../../pm/index.js";
+import * as pm from "#/pm/index.js";
 
 const drivers = {
   file: {
@@ -24,46 +24,56 @@ const drivers = {
 
 type Driver = keyof typeof drivers;
 
+async function handle({ args }: { args: { driver: string; install: boolean } }) {
+  const driver = args.driver as Driver;
+  if (!(driver in drivers)) {
+    logger.fatal(`Unknown driver: ${chalk.bold(driver)}. Available: ${chalk.cyan(Object.keys(drivers).join(", "))}`);
+  }
+
+  const { packages, files } = drivers[driver];
+  const pkgs = packages.join(" ");
+
+  if (args.install) {
+    await withSpinner(`Installing ${chalk.bold(pkgs)}...`, () => pm.add([...packages])).catch(() => {
+      logger.error(`  Run ${chalk.bold(`${pm.detect()} add ${pkgs}`)} manually`);
+    });
+  }
+
+  const created: string[] = [];
+  for (const file of files) {
+    const fullPath = join(process.cwd(), file.path);
+    if (exists(fullPath)) {
+      logger.info(`  ${chalk.yellow("!")} Skipped ${chalk.cyan(file.path)} (already exists)`);
+      continue;
+    }
+    mkdir.sync(dirname(fullPath));
+    await text.write(fullPath, file.content);
+    created.push(file.path);
+  }
+
+  logger.info(
+    "",
+    `  ${chalk.green("✔")} Added ${chalk.bold(chalk.cyan("disk"))}${driver !== "file" ? ` (${driver})` : ""} — Disk file storage`,
+    "",
+    ...(created.length > 0 ? [`  ${chalk.dim("Created:")}`, ...created.map((f) => `    ${chalk.cyan(f)}`)] : []),
+    ""
+  );
+}
+
 export const disk = defineCommand({
   meta: { name: "disk", description: "Install disk file storage" },
   args: {
     driver: {
+      alias: ["d"],
       type: "string",
       description: `Storage driver (${Object.keys(drivers).join(", ")})`,
       default: "file",
     },
+    install: {
+      type: "boolean",
+      default: true,
+      negativeDescription: "Skip dependency installation",
+    },
   },
-  async run({ args }) {
-    const driver = args.driver as Driver;
-    if (!(driver in drivers)) {
-      logger.fatal(`Unknown driver: ${chalk.bold(driver)}. Available: ${chalk.cyan(Object.keys(drivers).join(", "))}`);
-    }
-
-    const { packages, files } = drivers[driver];
-    const pkgs = packages.join(" ");
-
-    await withSpinner(`Installing ${chalk.bold(pkgs)}...`, () => pm.add([...packages])).catch(() => {
-      process.stderr.write(`  Run ${chalk.bold(`${pm.detect()} add ${pkgs}`)} manually\n`);
-    });
-
-    const created: string[] = [];
-    for (const file of files) {
-      const fullPath = join(process.cwd(), file.path);
-      if (exists(fullPath)) {
-        logger.info(`  ${chalk.yellow("!")} Skipped ${chalk.cyan(file.path)} (already exists)`);
-        continue;
-      }
-      mkdir.sync(dirname(fullPath));
-      await text.write(fullPath, file.content);
-      created.push(file.path);
-    }
-
-    logger.info(
-      "",
-      `  ${chalk.green("✔")} Added ${chalk.bold(chalk.cyan("disk"))}${driver !== "file" ? ` (${driver})` : ""} — Disk file storage`,
-      "",
-      ...(created.length > 0 ? [`  ${chalk.dim("Created:")}`, ...created.map((f) => `    ${chalk.cyan(f)}`)] : []),
-      ""
-    );
-  },
+  run: handle,
 });

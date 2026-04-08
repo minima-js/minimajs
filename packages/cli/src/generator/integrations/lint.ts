@@ -1,20 +1,22 @@
 import { defineCommand } from "citty";
 import chalk from "chalk";
-import { exists, text } from "../../utils/fs.js";
-import { logger } from "../../utils/logger.js";
+import { exists, text } from "#/utils/fs.js";
+import { logger } from "#/utils/logger.js";
 import { templates } from "../templates/index.js";
-import { manifest } from "../../config/pkg.js";
-import * as pm from "../../pm/index.js";
+import { manifest } from "#/config/pkg.js";
+import * as pm from "#/pm/index.js";
 
 const ESLINT_PACKAGES = ["eslint", "@eslint/js", "typescript-eslint"];
 const CONFIG_FILE = "eslint.config.js";
 
-async function handle() {
+async function handle({ args }: { args: { install: boolean } }) {
   if (exists(CONFIG_FILE)) {
     logger.fatal(`${CONFIG_FILE} already exists`);
   }
 
-  pm.add(ESLINT_PACKAGES, { dev: true });
+  if (args.install) {
+    pm.add(ESLINT_PACKAGES, { dev: true });
+  }
 
   text.write.sync(CONFIG_FILE, templates.configs.eslint());
 
@@ -37,5 +39,12 @@ async function handle() {
 
 export const lint = defineCommand({
   meta: { name: "lint", description: "Scaffold ESLint with TypeScript support" },
+  args: {
+    install: {
+      type: "boolean",
+      default: true,
+      negativeDescription: "Skip dependency installation",
+    },
+  },
   run: handle,
 });

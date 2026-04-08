@@ -9,7 +9,7 @@ import packageNode from "./package.node.json.stub";
 import rootModule from "./module.ts.stub";
 import tsconfig from "./tsconfig.stub.json" with { type: "json" };
 
-import type { Stub } from "../../types.js";
+import type { Stub } from "#/types.js";
 
 export const templates = {
   app: {

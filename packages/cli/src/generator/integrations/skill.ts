@@ -3,10 +3,10 @@ import { dirname, join } from "node:path";
 import { gunzip } from "node:zlib";
 import { promisify } from "node:util";
 import chalk from "chalk";
-import { exists, text, mkdir } from "../../utils/fs.js";
-import { withSpinner } from "../../utils/spinner.js";
-import { logger } from "../../utils/logger.js";
-import * as pm from "../../pm/index.js";
+import { exists, text, mkdir } from "#/utils/fs.js";
+import { withSpinner } from "#/utils/spinner.js";
+import { logger } from "#/utils/logger.js";
+import * as pm from "#/pm/index.js";
 
 const gunzipAsync = promisify(gunzip);
 
@@ -68,12 +68,12 @@ async function downloadSkill(name: string): Promise<{ manifest: Manifest; files:
   return { manifest, files };
 }
 
-async function handle({ args }: { args: { name: string } }) {
+async function handle({ args }: { args: { name: string; install: boolean } }) {
   const { name } = args;
 
   const { manifest, files } = await withSpinner(`Downloading ${chalk.bold(name)} skill...`, () => downloadSkill(name));
 
-  if (manifest.packages.length > 0) {
+  if (args.install && manifest.packages.length > 0) {
     const pkgs = manifest.packages.join(" ");
     await withSpinner(`Installing ${chalk.bold(pkgs)}...`, () => pm.add(manifest.packages)).catch(() => {
       process.stderr.write(`  Run ${chalk.bold(`${pm.detect()} add ${pkgs}`)} manually\n`);
@@ -109,6 +109,11 @@ export const skill = defineCommand({
       type: "positional",
       description: "Skill name (e.g. auth, upload)",
       required: true,
+    },
+    install: {
+      type: "boolean",
+      default: true,
+      negativeDescription: "Skip dependency installation",
     },
   },
   run: handle,

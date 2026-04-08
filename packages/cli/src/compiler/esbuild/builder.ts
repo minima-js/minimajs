@@ -1,6 +1,6 @@
 import type { BuildOptions } from "esbuild";
-import type { Config } from "../../config/index.js";
-import { clean } from "../../utils/fs.js";
+import type { Config } from "#/config/index.js";
+import { clean } from "#/utils/fs.js";
 import { buildPlugins } from "./plugins.js";
 
 export async function buildEsbuildConfig(entries: string[], config: Config): Promise<BuildOptions> {

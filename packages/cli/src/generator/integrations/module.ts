@@ -1,8 +1,8 @@
 import { defineCommand } from "citty";
 import { join, resolve } from "node:path";
 import chalk from "chalk";
-import { exists, text, mkdir } from "../../utils/fs.js";
-import { logger } from "../../utils/logger.js";
+import { exists, text, mkdir } from "#/utils/fs.js";
+import { logger } from "#/utils/logger.js";
 import { templates } from "../templates/index.js";
 
 async function handle({ args }: { args: { name: string; dir: string } }) {

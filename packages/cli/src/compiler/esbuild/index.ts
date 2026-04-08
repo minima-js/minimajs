@@ -1,7 +1,7 @@
-import type { CliOption } from "../../command.js";
-import { loadConfig } from "../../config/index.js";
-import { resolveEntries } from "../../config/entry.js";
-import { logger } from "../../utils/logger.js";
+import type { CliOption } from "#/command.js";
+import { loadConfig } from "#/config/index.js";
+import { resolveEntries } from "#/config/entry.js";
+import { logger } from "#/utils/logger.js";
 import { build } from "./build.js";
 import { buildEsbuildConfig } from "./builder.js";
 import { watch } from "./watch.js";

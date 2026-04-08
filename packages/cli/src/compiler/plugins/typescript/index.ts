@@ -1,6 +1,7 @@
 import type { Plugin } from "esbuild";
 import { startWatchTypeChecker } from "./checker.js";
 import { formatDiagnostic } from "./checker.js";
+import { logger } from "#/utils/logger.js";
 
 export function tsCheckPlugin(tsconfig: string): Plugin {
   return {
@@ -14,7 +15,7 @@ export function tsCheckPlugin(tsconfig: string): Plugin {
             // tsc cleared — new check cycle starting, nothing to show yet
           },
           onDiagnostic(d) {
-            process.stderr.write(formatDiagnostic(d) + "\n");
+            logger.info(formatDiagnostic(d));
           },
         });
       });

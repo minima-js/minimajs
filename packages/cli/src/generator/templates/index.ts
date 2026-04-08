@@ -14,7 +14,7 @@ import dockerYarn from "./docker/yarn.stub";
 import dockerBerry from "./docker/berry.stub";
 import eslintConfig from "./eslint.config.js.stub";
 import prettierConfig from "./prettier.config.js.stub";
-import type { Stub } from "../../types.js";
+import type { Stub } from "#/types.js";
 
 type NamedVars = { name: string };
 type InstanceVars = { instance: string };

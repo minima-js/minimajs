@@ -1,11 +1,11 @@
 import type { Plugin } from "esbuild";
-import type { Config } from "../../config/index.js";
-import { getOutputFilename } from "../../utils/path.js";
+import type { Config } from "#/config/index.js";
+import { getOutputFilename } from "#/utils/path.js";
 import { progress } from "../plugins/progress.js";
 import { run } from "../plugins/run/index.js";
 import { tsCheckPlugin } from "../plugins/typescript/index.js";
-import { logger } from "../../utils/logger.js";
-import { runtime } from "../../runtime/index.js";
+import { logger } from "#/utils/logger.js";
+import { runtime } from "#/runtime/index.js";
 
 function resolveRunCommand(runConfig: string | true, outputFile: string): { bin: string; args: string[] } {
   if (runConfig === true) {
@@ -23,7 +23,9 @@ export async function buildPlugins(config: Config, filename: string): Promise<Pl
   const plugins: Plugin[] = [];
 
   if (config.watch) {
-    plugins.push(tsCheckPlugin(config.tsconfig));
+    if (config.check) {
+      plugins.push(tsCheckPlugin(config.tsconfig));
+    }
     plugins.push(progress({ dist: outdir, clear: config.reset }));
   }
 

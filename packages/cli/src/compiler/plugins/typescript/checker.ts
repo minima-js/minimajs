@@ -38,7 +38,7 @@ export function startWatchTypeChecker(tsconfig: string, cb: WatchTypeCheckerCall
     }
   });
 
-  worker.on("error", (err) => process.stderr.write(chalk.red(`Type checker error: ${err.message}\n`)));
+  worker.on("error", (err: any) => process.stderr.write(chalk.red(`Type checker error: ${err.message}\n`)));
 
   return () => {
     worker.terminate();

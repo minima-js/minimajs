@@ -1,3 +1,4 @@
+import { logger } from "#/utils/logger.js";
 import { exists } from "../utils/fs.js";
 import { glob } from "node:fs/promises";
 
@@ -31,7 +32,7 @@ export async function resolveEntries(entries: string[]): Promise<string[]> {
   }
 
   if (resolved.length === 0) {
-    throw new Error(`No entry points found. Checked: ${entries.map((e) => `"${e}"`).join(", ")}.`);
+    logger.fatal(`No entry points found. Checked: ${entries.map((e) => `"${e}"`).join(", ")}.`);
   }
 
   return resolved;

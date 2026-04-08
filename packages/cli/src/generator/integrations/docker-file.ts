@@ -1,11 +1,11 @@
 import { defineCommand } from "citty";
 import chalk from "chalk";
-import { exists, text } from "../../utils/fs.js";
-import { logger } from "../../utils/logger.js";
+import { exists, text } from "#/utils/fs.js";
+import { logger } from "#/utils/logger.js";
 import { templates } from "../templates/index.js";
-import { runtime } from "../../runtime/index.js";
-import * as pm from "../../pm/index.js";
-import { loadConfig } from "../../config/index.js";
+import { runtime } from "#/runtime/index.js";
+import * as pm from "#/pm/index.js";
+import { loadConfig } from "#/config/index.js";
 
 async function fetchDockerVersion(repo: string, fallback: string): Promise<string> {
   try {
