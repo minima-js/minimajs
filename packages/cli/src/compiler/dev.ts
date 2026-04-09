@@ -2,28 +2,14 @@ import { defineCommand } from "citty";
 import { handleAction } from "./esbuild/index.js";
 import type { CliOption } from "../command.js";
 
-export interface DevOptions {
-  envFile?: string;
-  tsconfig?: string;
-  check?: boolean;
-  reset?: boolean;
-  killSignal?: NodeJS.Signals;
-  grace?: boolean | undefined;
-}
-
-export async function runDev(opts: DevOptions): Promise<void> {
-  const cliOption: CliOption = {
+function runDev(opts: CliOption): Promise<void> {
+  return handleAction({
+    build: false,
     watch: true,
     clean: false,
     sourcemap: true,
-    envFile: opts.envFile,
-    tsconfig: opts.tsconfig,
-    check: opts.check,
-    reset: opts.reset,
-    killSignal: opts.killSignal,
-    grace: opts.grace === false ? false : undefined,
-  };
-  await handleAction(cliOption);
+    ...opts,
+  });
 }
 
 export const devCommand = defineCommand({
@@ -62,13 +48,25 @@ export const devCommand = defineCommand({
       default: true,
       negativeDescription: "Force restart without graceful shutdown",
     },
+    run: {
+      type: "boolean",
+      default: true,
+      negativeDescription: "Watch and rebuild without running the process",
+    },
+    exec: {
+      type: "string",
+      description: "Custom command to run after build",
+      valueHint: "'node [filename]'",
+    },
   },
-  async run({ args }) {
-    await runDev({
+  run({ args }) {
+    return runDev({
       envFile: args["env-file"],
       tsconfig: args.tsconfig,
       check: args.check,
       reset: args.reset,
+      run: args.run === false ? false : undefined,
+      exec: args.exec,
       killSignal: args["kill-signal"] as NodeJS.Signals | undefined,
       grace: args.grace === false ? false : undefined,
     });

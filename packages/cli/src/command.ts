@@ -1,12 +1,12 @@
 import { defineCommand, runMain } from "citty";
-import { newCommand } from "./creator/command.js";
+import { newCommand } from "./creator/index.js";
 import { devCommand } from "./compiler/dev.js";
 import { buildCommand } from "./compiler/build.js";
 import { startCommand } from "./compiler/start.js";
-import { addCommand } from "./generator/command.js";
-import { checkCommand } from "./check/command.js";
-import { infoCommand } from "./info/command.js";
-import { initCommand } from "./init/command.js";
+import { addCommand } from "./generator/index.js";
+import { checkCommand } from "./check/index.js";
+import { infoCommand } from "./info/index.js";
+import { initCommand } from "./init/index.js";
 import { runtime } from "./runtime/index.js";
 import { detect as detectPM, isYarnBerry, getVersion } from "./pm/index.js";
 import pkg from "../package.json" with { type: "json" };

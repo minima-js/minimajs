@@ -2,26 +2,13 @@ import { defineCommand } from "citty";
 import { handleAction } from "./esbuild/index.js";
 import type { CliOption } from "../command.js";
 
-export interface BuildOptions {
-  outdir?: string;
-  minify?: boolean;
-  sourcemap?: boolean;
-  tsconfig?: string;
-  check?: boolean;
-  target?: string;
-}
-
-export async function runBuild(opts: BuildOptions): Promise<void> {
-  const cliOption: CliOption = {
+function runBuild(opts: CliOption): Promise<void> {
+  return handleAction({
     clean: true,
-    minify: opts.minify,
-    sourcemap: opts.sourcemap,
-    outdir: opts.outdir,
-    tsconfig: opts.tsconfig,
-    check: opts.check,
-    target: opts.target,
-  };
-  await handleAction(cliOption);
+    build: true,
+    run: false,
+    ...opts,
+  });
 }
 
 export const buildCommand = defineCommand({
@@ -64,8 +51,8 @@ export const buildCommand = defineCommand({
       valueHint: "node22",
     },
   },
-  async run({ args }) {
-    await runBuild({
+  run({ args }) {
+    return runBuild({
       outdir: args.outdir,
       minify: args.minify,
       sourcemap: args.sourcemap,

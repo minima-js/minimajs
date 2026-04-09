@@ -10,6 +10,7 @@ export interface Manifest {
   packageManager?: string;
   engines?: {
     node?: string;
+    bun?: string;
   };
 }
 

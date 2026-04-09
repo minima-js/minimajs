@@ -18,10 +18,11 @@ export async function loadConfig(cliOption: CliOption = {}): Promise<Config> {
 
     const module = await import(pathToFileURL(configPath).href);
     const raw = module.default ?? module;
+    const build = !!cliOption.build;
     const watch = !!cliOption.watch;
     config =
       typeof raw === "function"
-        ? (raw as (env: { production: boolean; watch: boolean }) => Partial<Config>)({ production: !watch, watch })
+        ? (raw as (env: { build: boolean; watch: boolean }) => Partial<Config>)({ build, watch })
         : (raw as Partial<Config>);
     break;
   }

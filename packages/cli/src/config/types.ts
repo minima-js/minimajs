@@ -5,7 +5,8 @@ export type PackageManager = "bun" | "pnpm" | "yarn" | "npm";
 
 export interface BaseConfig {
   entry: string[];
-  run: boolean | string;
+  run: boolean;
+  exec?: string;
   watch: boolean;
   clean: boolean;
   sourcemap: boolean;
@@ -23,6 +24,7 @@ export interface BaseConfig {
 
 export interface CliOption extends Partial<BaseConfig> {
   grace?: boolean;
+  build?: boolean;
 }
 
 export interface Config extends BaseConfig {

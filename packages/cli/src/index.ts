@@ -4,7 +4,7 @@ export type { CliOption, Config } from "./config/types.js";
 import type { Config } from "./config/types.js";
 
 interface ConfigEnv {
-  production: boolean;
+  build: boolean;
   watch: boolean;
 }
 

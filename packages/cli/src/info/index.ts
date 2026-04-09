@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { defineCommand } from "citty";
 import chalk from "chalk";
 import { runtime } from "../runtime/index.js";
 import { exists, json } from "../utils/fs.js";
@@ -16,6 +17,16 @@ function table(title: string, rows: Row[]): string[] {
     ...rows.map(([label, value]) => `  ${chalk.dim(label.padEnd(width))}${value}`),
   ];
 }
+
+export const infoCommand = defineCommand({
+  meta: {
+    name: "info",
+    description: "Show project configuration and discovered modules",
+  },
+  run() {
+    return printInfo();
+  },
+});
 
 export async function printInfo(): Promise<void> {
   const config = await loadConfig();

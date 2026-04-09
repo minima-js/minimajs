@@ -7,13 +7,8 @@ import { tsCheckPlugin } from "../plugins/typescript/index.js";
 import { logger } from "#/utils/logger.js";
 import { runtime } from "#/runtime/index.js";
 
-function resolveRunCommand(runConfig: string | true, outputFile: string): { bin: string; args: string[] } {
-  if (runConfig === true) {
-    return { bin: runtime.bin(), args: [outputFile] };
-  }
-
-  const cmd = runConfig.includes("[filename]") ? runConfig.replace("[filename]", outputFile) : `${runConfig} ${outputFile}`;
-
+function resolveRunCommand(exec: string | undefined, outputFile: string): { bin: string; args: string[] } {
+  const cmd = exec ? exec.replace("[filename]", outputFile) : `${runtime.bin()} ${outputFile}`;
   const [bin, ...args] = cmd.trim().split(/\s+/);
   return { bin: bin!, args };
 }
@@ -37,7 +32,7 @@ export async function buildPlugins(config: Config, filename: string): Promise<Pl
     const outputFile = getOutputFilename(filename, outdir, ".js");
     const importArgs = config.import.flatMap((x) => ["--import", getOutputFilename(x, outdir, ".js")]);
 
-    const { bin, args } = resolveRunCommand(config.run, outputFile);
+    const { bin, args } = resolveRunCommand(config.exec, outputFile);
 
     if (config.sourcemap && runtime.isNode(bin)) {
       args.unshift("--enable-source-maps");
