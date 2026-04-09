@@ -11,12 +11,6 @@ import { exec } from "../exec/index.js";
 import { exists, text, mkdir } from "../utils/fs.js";
 import { runtime } from "../runtime/index.js";
 
-const PM_EXEC: Record<Exclude<pm.PM, "bun">, string> = {
-  npm: "npx --no minimajs",
-  pnpm: "pnpm exec minimajs",
-  yarn: "yarn minimajs",
-};
-
 function resolveVersionFileValue(rt: Runtime): string {
   if (rt === "bun" && typeof process.versions.bun === "string") return process.versions.bun;
   if (rt === "node" && typeof process.versions.bun !== "string") return process.versions.node;
@@ -62,7 +56,7 @@ function getScaffoldFiles({
 }): ScaffoldFile[] {
   const versionFile = rt === "bun" ? ".bun-version" : ".node-version";
   const appContent =
-    rt === "bun" ? templates.app.bun() : templates.app.node({ exec: PM_EXEC[manager as Exclude<pm.PM, "bun">] });
+    rt === "bun" ? templates.app.bun() : templates.app.node({ exec: pm.EXEC[manager as Exclude<pm.PM, "bun">] });
 
   return [
     { path: "package.json", content: renderPackageJson(name, rt, packageManagerField) },

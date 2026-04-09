@@ -82,6 +82,12 @@ export function getVersion(manager: PM): string | null {
   }
 }
 
+export const EXEC: Record<Exclude<PM, "bun">, string> = {
+  npm: "npx --no minimajs",
+  pnpm: "pnpm exec minimajs",
+  yarn: "yarn minimajs",
+};
+
 export function add(packages: string[], opts: PMOptions & { dev?: boolean } = {}): void {
   const pm = detect(opts.cwd);
   const sub = pm === "npm" ? "install" : "add";

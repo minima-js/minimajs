@@ -4,24 +4,30 @@ import { exists, text } from "../utils/fs.js";
 import { logger } from "../utils/logger.js";
 import { templates } from "../creator/templates/index.js";
 import { runtime } from "../runtime/index.js";
+import * as pm from "../pm/index.js";
 
 function handle() {
   const rt = runtime.detect();
+  const manager = pm.detect();
   const configFile = `minimajs.config.${rt === "bun" ? "ts" : "js"}`;
+  const appContent =
+    rt === "bun" ? templates.app.bun() : templates.app.node({ exec: pm.EXEC[manager as Exclude<pm.PM, "bun">] });
+
+  const files = [
+    { path: "app", content: appContent, mode: 0o755 },
+    { path: "tsconfig.json", content: templates.tsconfig() },
+    { path: configFile, content: templates.minimajsConfig({ runtime: rt }) },
+  ];
+
   const created: string[] = [];
 
-  if (exists("tsconfig.json")) {
-    logger.warn("tsconfig.json already exists, skipping");
-  } else {
-    text.write.sync("tsconfig.json", templates.tsconfig());
-    created.push("tsconfig.json");
-  }
-
-  if (exists(configFile)) {
-    logger.warn(`${configFile} already exists, skipping`);
-  } else {
-    text.write.sync(configFile, templates.minimajsConfig({ runtime: rt }));
-    created.push(configFile);
+  for (const file of files) {
+    if (exists(file.path)) {
+      logger.warn(`${file.path} already exists, skipping`);
+    } else {
+      text.write.sync(file.path, file.content, { mode: file.mode });
+      created.push(file.path);
+    }
   }
 
   if (created.length === 0) {
