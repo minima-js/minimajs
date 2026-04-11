@@ -52,7 +52,7 @@ async function handle() {
         : `["node", "dist/index.js"]`;
   const templateVars = { version, cmd };
   const content = berry ? templates.docker.berry(templateVars) : templates.docker[detected](templateVars);
-  await text.write(destPath, content);
+  text.write.sync(destPath, content);
 
   const label = berry ? "yarn berry" : detected;
   logger.info(

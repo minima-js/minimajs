@@ -24,7 +24,7 @@ const LOCKFILES: [string, PM][] = [
  */
 export function isYarnBerry(cwd = process.cwd()): boolean {
   try {
-    const { stdout } = exec.sync.capture("yarn", ["--version"], { cwd });
+    const { stdout } = exec.capture.sync("yarn", ["--version"], { cwd });
     const major = parseInt(stdout.replace(/^v/, ""), 10);
     return major >= 2;
   } catch {
@@ -72,7 +72,7 @@ export function detect(cwd = process.cwd()): PM {
  */
 export function getVersion(manager: PM): string | null {
   try {
-    const result = exec.sync.capture(manager, ["--version"]);
+    const result = exec.capture.sync(manager, ["--version"]);
     // strip any leading 'v' (e.g. yarn classic outputs "1.22.22")
     const version = result.stdout.replace(/^v/, "");
     if (!version) return null;
@@ -88,11 +88,23 @@ export const EXEC: Record<Exclude<PM, "bun">, string> = {
   yarn: "yarn minimajs",
 };
 
-export function add(packages: string[], opts: PMOptions & { dev?: boolean } = {}): void {
+export function isInstalled(pkg: string): boolean {
+  try {
+    const raw = manifest.sync();
+    if (!raw.dependencies) return false;
+    return pkg in raw.dependencies;
+  } catch {
+    return false;
+  }
+}
+
+export function add(packages: string[], opts: PMOptions & { dev?: boolean; skipInstalled?: boolean } = {}): void {
+  const toInstall = opts.skipInstalled ? packages.filter((p) => !isInstalled(p)) : packages;
+  if (toInstall.length === 0) return;
   const pm = detect(opts.cwd);
   const sub = pm === "npm" ? "install" : "add";
   const flag = opts.dev ? (pm === "npm" ? ["--save-dev"] : ["-D"]) : [];
-  exec.sync(pm, [sub, ...packages, ...flag], { cwd: opts.cwd });
+  exec.sync(pm, [sub, ...toInstall, ...flag], { cwd: opts.cwd });
 }
 
 export function remove(packages: string[], opts: PMOptions = {}): void {

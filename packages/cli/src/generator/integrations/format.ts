@@ -11,7 +11,7 @@ const CONFIG_FILE = "prettier.config.js";
 const IGNORE_FILE = ".prettierignore";
 const IGNORE_CONTENT = ["dist", "node_modules"].join("\n") + "\n";
 
-async function handle({ args }: { args: { install: boolean } }) {
+function handle({ args }: { args: { install: boolean } }) {
   if (exists(CONFIG_FILE)) {
     logger.fatal(`${CONFIG_FILE} already exists`);
   }
@@ -28,7 +28,7 @@ async function handle({ args }: { args: { install: boolean } }) {
     text.write.sync(IGNORE_FILE, IGNORE_CONTENT);
   }
 
-  const info = await manifest();
+  const info = manifest.sync();
   info.scripts ??= {};
   if (!info.scripts["format"]) {
     info.scripts["format"] = "prettier . --write";
@@ -36,7 +36,7 @@ async function handle({ args }: { args: { install: boolean } }) {
   if (!info.scripts["format:check"]) {
     info.scripts["format:check"] = "prettier . --check";
   }
-  await manifest.write(info);
+  manifest.write.sync(info);
 
   logger.info(
     "",

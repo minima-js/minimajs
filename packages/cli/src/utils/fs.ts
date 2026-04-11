@@ -1,5 +1,5 @@
 import { existsSync, rmSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { resolve, dirname } from "node:path";
 import { writeFile, mkdir as mkdirAsync } from "node:fs/promises";
 
 export function exists(f: string): boolean {
@@ -10,13 +10,17 @@ export async function text(name: string): Promise<string> {
   return readFileSync(resolve(process.cwd(), name), "utf8");
 }
 
-async function write(name: string, content: string, opts?: { mode?: number }): Promise<string> {
-  await writeFile(resolve(process.cwd(), name), content, { mode: opts?.mode });
+async function write(name: string, content: string, opts?: { mode?: number; ensuredir?: boolean }): Promise<string> {
+  const path = resolve(process.cwd(), name);
+  if (opts?.ensuredir) mkdirSync(dirname(path), { recursive: true });
+  await writeFile(path, content, { mode: opts?.mode });
   return name;
 }
 
-write.sync = function writeSync(name: string, content: string, opts?: { mode?: number }): string {
-  writeFileSync(resolve(process.cwd(), name), content, { mode: opts?.mode });
+write.sync = function writeSync(name: string, content: string, opts?: { mode?: number; ensuredir?: boolean }): string {
+  const path = resolve(process.cwd(), name);
+  if (opts?.ensuredir) mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, content, { mode: opts?.mode });
   return name;
 };
 

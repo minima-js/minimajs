@@ -8,6 +8,8 @@ export interface Manifest {
   main?: string;
   scripts?: Record<string, string>;
   packageManager?: string;
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
   engines?: {
     node?: string;
     bun?: string;

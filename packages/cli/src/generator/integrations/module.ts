@@ -5,7 +5,7 @@ import { exists, text, mkdir } from "#/utils/fs.js";
 import { logger } from "#/utils/logger.js";
 import { templates } from "../templates/index.js";
 
-async function handle({ args }: { args: { name: string; dir: string } }) {
+function handle({ args }: { args: { name: string; dir: string } }) {
   const { name, dir } = args;
   const modulePath = resolve(dir, name);
   const moduleName = name.split("/").at(-1) ?? name;
@@ -25,14 +25,14 @@ async function handle({ args }: { args: { name: string; dir: string } }) {
     const parentModule = join(parentPath, "module.ts");
     if (!exists(parentModule)) {
       mkdir.sync(parentPath);
-      await text.write(parentModule, "");
+      text.write.sync(parentModule, "");
       createdParents.push(join(dir, segments.slice(0, i).join("/"), "module.ts"));
     }
   }
 
   mkdir.sync(modulePath);
-  await text.write(join(modulePath, "module.ts"), templates.module(vars));
-  await text.write(join(modulePath, handlerFile), templates.handler());
+  text.write.sync(join(modulePath, "module.ts"), templates.module(vars));
+  text.write.sync(join(modulePath, handlerFile), templates.handler());
 
   logger.info(
     "",

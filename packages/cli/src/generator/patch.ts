@@ -18,11 +18,11 @@ import { exists, text } from "../utils/fs.js";
  *
  * Idempotent: skips if the import is already present.
  */
-export async function patchModule(cwd: string, importLine: string, plugin: string): Promise<void> {
+export function patchModule(cwd: string, importLine: string, plugin: string): void {
   const modulePath = join(cwd, "src", "module.ts");
   if (!exists(modulePath)) return;
 
-  const original = await text(modulePath);
+  const original = text.sync(modulePath);
   if (original.includes(importLine)) return;
 
   const src = ts.createSourceFile(modulePath, original, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
@@ -45,7 +45,7 @@ export async function patchModule(cwd: string, importLine: string, plugin: strin
     result = result.slice(0, pos) + insert + result.slice(pos);
   }
 
-  await text.write(modulePath, result);
+  text.write.sync(modulePath, result);
 }
 
 // ─── Position finders ─────────────────────────────────────────────────────────

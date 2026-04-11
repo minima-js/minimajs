@@ -16,7 +16,7 @@ function resolveVersionFileValue(rt: Runtime): string {
   if (rt === "node" && typeof process.versions.bun !== "string") return process.versions.node;
 
   try {
-    return exec.sync.capture(rt, ["--version"]).stdout.trim().replace(/^v/, "");
+    return exec.capture.sync(rt, ["--version"]).stdout.replace(/^v/, "");
   } catch {
     return rt === "bun" ? "latest" : process.versions.node;
   }
@@ -94,17 +94,16 @@ async function handle({ args }: { args: NewArgs }) {
   spinner.succeed(`Scaffolded ${chalk.bold(chalk.cyan(name))}`);
 
   if (git) {
-    exec.sync.safe("git", ["init"], { cwd });
-    exec.sync.safe("git", ["add", "-A"], { cwd });
+    exec.safe.sync("git", ["init"], { cwd });
+    exec.safe.sync("git", ["add", "-A"], { cwd });
   }
 
   if (args.install) {
-    spinner.start(`Installing dependencies with ${chalk.bold(manager)}...`);
+    logger.info(`  Installing dependencies with ${chalk.bold(manager)}...`);
     try {
       await pm.install({ cwd });
-      spinner.succeed("Dependencies installed");
     } catch {
-      spinner.fail(`Failed to install. Run ${chalk.bold(`${manager} install`)} manually.`);
+      logger.error(`  Failed to install. Run ${chalk.bold(`${manager} install`)} manually.`);
     }
   }
 

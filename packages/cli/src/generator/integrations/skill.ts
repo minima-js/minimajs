@@ -1,9 +1,8 @@
 import { defineCommand } from "citty";
-import { dirname, join } from "node:path";
 import { gunzip } from "node:zlib";
 import { promisify } from "node:util";
 import chalk from "chalk";
-import { exists, text, mkdir } from "#/utils/fs.js";
+import { exists, text } from "#/utils/fs.js";
 import { withSpinner } from "#/utils/spinner.js";
 import { logger } from "#/utils/logger.js";
 import * as pm from "#/pm/index.js";
@@ -75,21 +74,18 @@ async function handle({ args }: { args: { name: string; install: boolean } }) {
 
   if (args.install && manifest.packages.length > 0) {
     const pkgs = manifest.packages.join(" ");
-    await withSpinner(`Installing ${chalk.bold(pkgs)}...`, () => pm.add(manifest.packages)).catch(() => {
-      process.stderr.write(`  Run ${chalk.bold(`${pm.detect()} add ${pkgs}`)} manually\n`);
-    });
+    logger.info(`  Installing ${chalk.bold(pkgs)}...`);
+    pm.add(manifest.packages, { skipInstalled: true });
   }
 
   const created: string[] = [];
 
   for (const [dest, content] of Object.entries(files)) {
-    const fullPath = join(process.cwd(), dest);
-    if (exists(fullPath)) {
+    if (exists(dest)) {
       logger.info(`  ${chalk.yellow("!")} Skipped ${chalk.cyan(dest)} (already exists)`);
       continue;
     }
-    mkdir.sync(dirname(fullPath));
-    await text.write(fullPath, content);
+    text.write.sync(dest, content, { ensuredir: true });
     created.push(dest);
   }
 

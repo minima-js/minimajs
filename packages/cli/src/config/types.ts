@@ -1,4 +1,14 @@
-import type { Loader } from "esbuild";
+import type { BuildOptions, Loader, Plugin } from "esbuild";
+
+export interface MinimaPlugin extends Omit<Plugin, "setup"> {
+  setup?: Plugin["setup"];
+  entry?: string[];
+}
+
+type EsbuildOverrides = Omit<
+  BuildOptions,
+  "entryPoints" | "outdir" | "plugins" | "metafile" | "bundle" | "platform" | "format"
+>;
 
 export type Runtime = "node" | "bun";
 export type PackageManager = "bun" | "pnpm" | "yarn" | "npm";
@@ -20,6 +30,8 @@ export interface BaseConfig {
   loader: Record<string, Loader>;
   target?: string;
   envFile?: string;
+  plugins?: MinimaPlugin[];
+  esbuild?: EsbuildOverrides;
 }
 
 export interface CliOption extends Partial<BaseConfig> {

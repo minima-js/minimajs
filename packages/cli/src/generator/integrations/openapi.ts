@@ -1,18 +1,16 @@
 import { defineCommand } from "citty";
 import chalk from "chalk";
-import { withSpinner } from "#/utils/spinner.js";
 import { logger } from "#/utils/logger.js";
 import { patchModule } from "../patch.js";
 import * as pm from "#/pm/index.js";
 
 async function handle({ args }: { args: { install: boolean } }) {
   if (args.install) {
-    await withSpinner(`Installing ${chalk.bold("@minimajs/openapi")}...`, () => pm.add(["@minimajs/openapi"])).catch(() => {
-      process.stderr.write(`  Run ${chalk.bold(`${pm.detect()} add @minimajs/openapi`)} manually\n`);
-    });
+    logger.info(`  Installing ${chalk.bold("@minimajs/openapi")}...`);
+    pm.add(["@minimajs/openapi"], { skipInstalled: true });
   }
 
-  await patchModule(
+  patchModule(
     process.cwd(),
     `import { openapi } from "@minimajs/openapi";`,
     `openapi({ info: { title: "My API", version: "1.0.0" } })`

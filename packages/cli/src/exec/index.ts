@@ -49,31 +49,6 @@ function execSync(file: string, args: string[] = [], options: ExecOptions = {}):
 }
 
 /**
- * Synchronously spawns a process and captures its stdout/stderr.
- * Forces `stdio: pipe` — output is not printed to the terminal.
- * Throws `ExecError` on non-zero exit code.
- */
-execSync.capture = function (file: string, args: string[] = [], options: ExecOptions = {}): ExecResult {
-  return execSync(file, args, { ...options, stdio: ["ignore", "pipe", "pipe"] });
-};
-
-/**
- * Synchronously spawns a process and never throws on non-zero exit.
- * Returns `ok: true` on success, `ok: false` on process failure.
- * Non-`ExecError` errors (e.g. spawn failures) are still re-thrown.
- */
-execSync.safe = function (file: string, args: string[] = [], options: ExecOptions = {}): ExecResult & { ok: boolean } {
-  try {
-    return { ...execSync(file, args, options), ok: true };
-  } catch (e) {
-    if (e instanceof ExecError) {
-      return { stdout: e.stdout, stderr: e.stderr, exitCode: e.exitCode, ok: false };
-    }
-    throw e;
-  }
-};
-
-/**
  * Asynchronously spawns a process and resolves with its output.
  * Throws `ExecError` on non-zero exit code. Default `stdio` is `"inherit"`.
  *
@@ -117,20 +92,14 @@ export async function exec(file: string, args: string[] = [], options: ExecOptio
  * Forces `stdio: pipe` — output is not printed to the terminal.
  * Throws `ExecError` on non-zero exit code.
  */
-exec.capture = function (file: string, args: string[] = [], options: ExecOptions = {}): Promise<ExecResult> {
+function capture(file: string, args: string[] = [], options: ExecOptions = {}): Promise<ExecResult> {
   return exec(file, args, { ...options, stdio: ["ignore", "pipe", "pipe"] });
+}
+capture.sync = function captureSync(file: string, args: string[] = [], options: ExecOptions = {}): ExecResult {
+  return execSync(file, args, { ...options, stdio: ["ignore", "pipe", "pipe"] });
 };
 
-/**
- * Asynchronously spawns a process and never throws on non-zero exit.
- * Returns `ok: true` on success, `ok: false` on process failure.
- * Non-`ExecError` errors (e.g. spawn failures) are still re-thrown.
- */
-exec.safe = async function execSafe(
-  file: string,
-  args: string[] = [],
-  options: ExecOptions = {}
-): Promise<ExecResult & { ok: boolean }> {
+async function safe(file: string, args: string[] = [], options: ExecOptions = {}): Promise<ExecResult & { ok: boolean }> {
   try {
     return { ...(await exec(file, args, options)), ok: true };
   } catch (e) {
@@ -139,6 +108,18 @@ exec.safe = async function execSafe(
     }
     throw e;
   }
+}
+safe.sync = function safeSync(file: string, args: string[] = [], options: ExecOptions = {}): ExecResult & { ok: boolean } {
+  try {
+    return { ...execSync(file, args, options), ok: true };
+  } catch (e) {
+    if (e instanceof ExecError) {
+      return { stdout: e.stdout, stderr: e.stderr, exitCode: e.exitCode, ok: false };
+    }
+    throw e;
+  }
 };
 
+exec.capture = capture;
+exec.safe = safe;
 exec.sync = execSync;

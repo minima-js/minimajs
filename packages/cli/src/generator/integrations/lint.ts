@@ -9,7 +9,7 @@ import * as pm from "#/pm/index.js";
 const ESLINT_PACKAGES = ["eslint", "@eslint/js", "typescript-eslint"];
 const CONFIG_FILE = "eslint.config.js";
 
-async function handle({ args }: { args: { install: boolean } }) {
+function handle({ args }: { args: { install: boolean } }) {
   if (exists(CONFIG_FILE)) {
     logger.fatal(`${CONFIG_FILE} already exists`);
   }
@@ -20,11 +20,11 @@ async function handle({ args }: { args: { install: boolean } }) {
 
   text.write.sync(CONFIG_FILE, templates.configs.eslint());
 
-  const info = await manifest();
+  const info = manifest.sync();
   info.scripts ??= {};
   if (!info.scripts["lint"]) {
     info.scripts["lint"] = "eslint .";
-    await manifest.write(info);
+    manifest.write.sync(info);
   }
 
   logger.info(
