@@ -23,7 +23,7 @@ const watch = process.argv.includes("--watch");
 
 const tsc = fileURLToPath(import.meta.resolve("typescript/bin/tsc"));
 
-const cjsShim = `import { createRequire } from"module"; const require = createRequire(import.meta.url);`;
+const cjsShim = `import { createRequire } from "module"; const require = createRequire(import.meta.url);`;
 
 const shared: esbuild.BuildOptions = {
   bundle: true,

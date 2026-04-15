@@ -1,0 +1,37 @@
+name: Publish Skills
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "skills/**"
+
+jobs:
+  publish:
+    name: Publish skills.tar.gz
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Build skills.tar.gz
+        run: |
+          mkdir -p _skill_build/files
+          cp -r skills/minimajs/* _skill_build/files/
+          echo '{"description":"minimajs skill — routing, validation, auth, uploads, OpenAPI","packages":["@minimajs/server","@minimajs/schema","@minimajs/auth","@minimajs/multipart","@minimajs/disk","@minimajs/openapi","@minimajs/cookie"]}' > _skill_build/manifest.json
+          tar -czf skills.tar.gz -C _skill_build .
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: skills-latest
+          name: Skills
+          body: "Updated skills bundle from commit ${{ github.sha }}"
+          files: skills.tar.gz
+          make_latest: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

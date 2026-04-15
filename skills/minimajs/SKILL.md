@@ -331,3 +331,4 @@ For deeper API details, read the relevant reference file:
 - [references/disk.md](references/disk.md) — full Disk API, ProtoDisk multi-provider routing, S3/Azure drivers, disk hooks
 - [references/openapi.md](references/openapi.md) — `describe()`, `internal()`, `generateOpenAPIDocument()`, security schemes
 - [references/testing.md](references/testing.md) — `app.handle()`, `createRequest()`, mocking context
+- [references/cookie.md](references/cookie.md) — `cookies()`, `cookies.get/set/remove()`, set options, type-safe cookies
