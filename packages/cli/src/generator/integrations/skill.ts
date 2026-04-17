@@ -1,20 +1,19 @@
 import { defineCommand } from "citty";
 import { gunzip } from "node:zlib";
 import { promisify } from "node:util";
+import { join, dirname } from "node:path";
+import { symlinkSync, mkdirSync } from "node:fs";
 import chalk from "chalk";
 import { exists, text } from "#/utils/fs.js";
 import { withSpinner } from "#/utils/spinner.js";
 import { logger } from "#/utils/logger.js";
-import * as pm from "#/pm/index.js";
 
 const gunzipAsync = promisify(gunzip);
 
-const SKILLS_REPO = "minima-js/skills";
-
-interface Manifest {
-  description: string;
-  packages: string[];
-}
+const SKILLS_REPO = "minima-js/minimajs";
+const SKILL_TAG = "skills";
+const DEST_DIR = ".agents/skills/minimajs";
+const CLAUDE_SKILLS_DIR = ".claude/skills";
 
 async function parseTarGz(buffer: Uint8Array): Promise<Record<string, string>> {
   const data = await gunzipAsync(buffer);
@@ -33,7 +32,7 @@ async function parseTarGz(buffer: Uint8Array): Promise<Record<string, string>> {
     offset += 512;
 
     if ((type === "0" || type === "\0") && !isNaN(size)) {
-      files[name] = decode(data.subarray(offset, offset + size));
+      files[name.replace(/^\.\//, "")] = decode(data.subarray(offset, offset + size));
     }
 
     offset += Math.ceil(size / 512) * 512;
@@ -42,45 +41,38 @@ async function parseTarGz(buffer: Uint8Array): Promise<Record<string, string>> {
   return files;
 }
 
-async function downloadSkill(name: string): Promise<{ manifest: Manifest; files: Record<string, string> }> {
-  const url = `https://github.com/${SKILLS_REPO}/releases/download/${name}/skill.tar.gz`;
+async function downloadSkill(): Promise<Record<string, string>> {
+  const url = `https://github.com/${SKILLS_REPO}/releases/download/${SKILL_TAG}/skills.tar.gz`;
   const res = await fetch(url);
 
   if (!res.ok) {
-    logger.fatal(`Unknown skill: ${chalk.bold(name)}`);
+    logger.fatal(`Failed to download skill bundle (HTTP ${res.status})`);
   }
 
-  const all = await parseTarGz(new Uint8Array(await res.arrayBuffer()));
-
-  const manifestRaw = all["manifest.json"];
-  if (!manifestRaw) {
-    logger.fatal(`Invalid skill: missing manifest.json`);
-  }
-
-  const manifest = JSON.parse(manifestRaw!) as Manifest;
-  const files = Object.fromEntries(
-    Object.entries(all)
-      .filter(([p]) => p.startsWith("files/"))
-      .map(([p, c]) => [p.slice("files/".length), c])
-  );
-
-  return { manifest, files };
+  return parseTarGz(new Uint8Array(await res.arrayBuffer()));
 }
 
-async function handle({ args }: { args: { name: string; install: boolean } }) {
-  const { name } = args;
+function setupClaudeSymlink() {
+  const target = join(process.cwd(), DEST_DIR);
+  const link = join(process.cwd(), CLAUDE_SKILLS_DIR, "minimajs");
 
-  const { manifest, files } = await withSpinner(`Downloading ${chalk.bold(name)} skill...`, () => downloadSkill(name));
-
-  if (args.install && manifest.packages.length > 0) {
-    const pkgs = manifest.packages.join(" ");
-    logger.info(`  Installing ${chalk.bold(pkgs)}...`);
-    pm.add(manifest.packages, { skipInstalled: true });
+  if (exists(link)) {
+    logger.info(`  ${chalk.yellow("!")} Skipped symlink ${chalk.cyan(link)} (already exists)`);
+    return;
   }
+
+  mkdirSync(dirname(link), { recursive: true });
+  symlinkSync(target, link);
+  logger.info(`  ${chalk.green("✔")} Symlinked ${chalk.cyan(CLAUDE_SKILLS_DIR + "/minimajs")} → ${chalk.cyan(DEST_DIR)}`);
+}
+
+async function handle({ args }: { args: { claude: boolean } }) {
+  const files = await withSpinner(`Downloading minimajs skill...`, () => downloadSkill());
 
   const created: string[] = [];
 
-  for (const [dest, content] of Object.entries(files)) {
+  for (const [name, content] of Object.entries(files)) {
+    const dest = join(DEST_DIR, name);
     if (exists(dest)) {
       logger.info(`  ${chalk.yellow("!")} Skipped ${chalk.cyan(dest)} (already exists)`);
       continue;
@@ -89,9 +81,13 @@ async function handle({ args }: { args: { name: string; install: boolean } }) {
     created.push(dest);
   }
 
+  if (args.claude) {
+    setupClaudeSymlink();
+  }
+
   logger.info(
     "",
-    `  ${chalk.green("✔")} Added ${chalk.bold(chalk.cyan(name))} — ${manifest.description}`,
+    `  ${chalk.green("✔")} Skill installed to ${chalk.cyan(DEST_DIR)}`,
     "",
     ...(created.length > 0 ? [`  ${chalk.dim("Created:")}`, ...created.map((f) => `    ${chalk.cyan(f)}`)] : []),
     ""
@@ -99,17 +95,12 @@ async function handle({ args }: { args: { name: string; install: boolean } }) {
 }
 
 export const skill = defineCommand({
-  meta: { name: "skill", description: "Install a skill from minima-js/skills" },
+  meta: { name: "skill", description: "Install minimajs skill for AI agents" },
   args: {
-    name: {
-      type: "positional",
-      description: "Skill name (e.g. auth, upload)",
-      required: true,
-    },
-    install: {
+    claude: {
       type: "boolean",
-      default: true,
-      negativeDescription: "Skip dependency installation",
+      default: false,
+      description: "Symlink skill into .claude/skills for Claude Code",
     },
   },
   run: handle,

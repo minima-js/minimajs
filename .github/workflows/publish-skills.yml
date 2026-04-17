@@ -1,12 +1,12 @@
 name: Publish Skills
 
 on:
+  workflow_dispatch:
   push:
     branches:
-      - main
+      - skills
     paths:
       - "skills/**"
-
 jobs:
   publish:
     name: Publish skills.tar.gz
@@ -19,16 +19,12 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Build skills.tar.gz
-        run: |
-          mkdir -p _skill_build/files
-          cp -r skills/minimajs/* _skill_build/files/
-          echo '{"description":"minimajs skill — routing, validation, auth, uploads, OpenAPI","packages":["@minimajs/server","@minimajs/schema","@minimajs/auth","@minimajs/multipart","@minimajs/disk","@minimajs/openapi","@minimajs/cookie"]}' > _skill_build/manifest.json
-          tar -czf skills.tar.gz -C _skill_build .
+        run: tar -czf skills.tar.gz -C skills/minimajs .
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: skills-latest
+          tag_name: skills
           name: Skills
           body: "Updated skills bundle from commit ${{ github.sha }}"
           files: skills.tar.gz
