@@ -112,19 +112,37 @@ const unauthed = await app.handle(createRequest("/profile"));
 expect(unauthed.status).toBe(401);
 ```
 
-### Mocking context (inject values into AsyncLocalStorage)
+### Mocking context (test context-dependent functions in isolation)
 
 ```typescript
-import { createContext } from "@minimajs/server/mock";
+import { mockContext } from "@minimajs/server/mock";
+import { body, params } from "@minimajs/server";
 
-// Inject a pre-set context value for testing context-dependent code
-const cleanup = createContext({ userId: "test-user-123" });
-try {
-  const result = await someContextDependentFunction();
-  expect(result).toBeDefined();
-} finally {
-  cleanup();
-}
+// mockContext runs a callback inside a fake request scope
+mockContext(
+  () => {
+    const data = body();
+    expect(data.name).toBe("John");
+  },
+  { body: { name: "John" } }
+);
+
+mockContext(
+  () => {
+    const id = params().id;
+    expect(id).toBe("123");
+  },
+  { url: "/users/123", params: { id: "123" } }
+);
+
+// With headers
+mockContext(
+  () => {
+    const auth = headers.get("authorization");
+    expect(auth).toBe("Bearer token");
+  },
+  { headers: { authorization: "Bearer token" } }
+);
 ```
 
 ### Testing file uploads (multipart)

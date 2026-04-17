@@ -29,8 +29,32 @@ const disk = createDisk({
 // Default (uses CWD)
 const disk = createDisk();
 
-// Temp directory (auto-cleaned)
+// Temp directory (files not auto-cleaned — delete when done)
 const tmp = createTempDisk();
+
+// In-memory (for tests)
+import { createMemoryDriver } from "@minimajs/disk/adapters";
+const disk = createDisk({ driver: createMemoryDriver() });
+```
+
+## DiskFile
+
+`DiskFile` extends `File` (Web API). Returned by `disk.get()`, `disk.put()`, `disk.copy()`, `disk.move()`.
+
+```typescript
+const file = await disk.get("avatar.jpg");
+file.name; // "avatar.jpg"
+file.type; // "image/jpeg"
+file.size; // bytes
+file.href; // full URI: "file:///uploads/avatar.jpg" or "s3://bucket/avatar.jpg"
+file.metadata; // Record<string, string> — driver-specific metadata (etag, etc.)
+file.lastModified; // timestamp
+
+// Standard File methods — stream lazily from storage
+file.stream(); // ReadableStream
+await file.text();
+await file.bytes();
+await file.arrayBuffer();
 ```
 
 ## Disk API
@@ -116,7 +140,7 @@ await disk.put("report.pdf", data);  // goes to file://
 
 ## Disk hooks
 
-Intercept operations for logging, transformation, etc.:
+Intercept operations for logging, transformation, encryption, etc.:
 
 ```typescript
 const unsubscribe = disk.hook("stored", (file) => {
@@ -127,15 +151,48 @@ disk.hook("retrieved", (file) => {
   analytics.track("file.download", { path: file.href });
 });
 
-// All hook events:
-// put, storing, stored, putFailed
-// get, file, streaming, retrieved, getFailed
-// delete, deleted, deleteFailed
-// exists, checked
-// url, copy, copied, move, moved, list
-
 // Unsubscribe when done
 unsubscribe();
+```
+
+### All hook signatures
+
+Hooks can return a transformed value or void (pass-through). All are async-safe.
+
+```typescript
+// Write lifecycle
+disk.hook("put", (path, data, options) => [newPath, newData, newOptions]); // transform before write
+disk.hook("storing", (path, stream, options) => transformedStream); // transform stream before driver.put
+disk.hook("stored", (file) => file); // after successful write
+disk.hook("put:failed", (error, path, data, options) => {
+  throw error;
+}); // on driver.put error (must re-throw)
+
+// Read lifecycle
+disk.hook("get", (path) => transformedPath); // transform path before read
+disk.hook("file", (file) => file); // when constructing DiskFile
+disk.hook("streaming", (stream, file) => transformedStream); // transform read stream (e.g. decrypt)
+disk.hook("retrieved", (file) => file); // after successful read
+disk.hook("get:failed", (error, path) => {
+  throw error;
+}); // on driver.get error
+
+// Delete lifecycle
+disk.hook("delete", (source) => source);
+disk.hook("deleted", (href) => href);
+disk.hook("delete:failed", (error, href) => {
+  throw error;
+});
+
+// Other
+disk.hook("exists", (path) => path);
+disk.hook("checked", (path, exists) => exists);
+disk.hook("url", (path, url, options) => url);
+disk.hook("copy", (from, to) => [from, to]);
+disk.hook("copied", (from, to, file) => file);
+disk.hook("move", (from, to) => [from, to]);
+disk.hook("moved", (from, to, file) => file);
+disk.hook("list", (prefix, options) => [prefix, options]);
 ```
 
 ## Disk plugins (advanced)

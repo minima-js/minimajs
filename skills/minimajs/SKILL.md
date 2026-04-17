@@ -2,14 +2,13 @@
 name: minimajs
 description: >
   Comprehensive guide for building backends with minimajs — a TypeScript-first HTTP framework for Node.js and Bun.
-  Use this skill whenever the user is working with minimajs, imports from @minimajs/*, asks about routing, validation,
-  auth, file uploads, OpenAPI docs, storage, cookies, hooks, plugins, or testing in a minimajs project. Also trigger
-  when the user wants to create a new minimajs app from scratch or extend an existing one.
+  Trigger when the user works with minimajs, imports from @minimajs/*, or asks about routing, validation,
+  auth, file uploads, OpenAPI, storage, cookies, hooks, plugins, or testing in a minimajs project.
 ---
 
 # minimajs
 
-minimajs is a TypeScript-first, ESM-only HTTP framework for Node.js and Bun. Its central idea: **request context lives in `AsyncLocalStorage`**, so you never thread `req`/`res` through function calls — just import and call context helpers from anywhere in the request scope.
+TypeScript-first, ESM-only HTTP framework for Node.js and Bun. Core idea: **request context lives in `AsyncLocalStorage`** — import and call helpers from anywhere in the request scope, no `req`/`res` threading.
 
 ## App creation
 
@@ -26,34 +25,30 @@ const addr = await app.listen({ port: 3000 });
 logger.info("App started %s", addr);
 ```
 
-`createApp(options?)` options:
-
-- `prefix` — URL prefix for all routes
-- `logger` — Pino logger instance, or `false` to disable
-- `moduleDiscovery` — disable file-based module discovery (useful in tests)
+`createApp(options?)`: `prefix`, `logger` (Pino instance or `false`), `moduleDiscovery` (`false` to disable).
 
 ---
 
-## Two routing styles
+## Routing
 
-### 1. File-based modules (preferred)
+### File-based modules (preferred)
 
 Directory structure maps to URL prefixes. Each `module.ts` registers routes for its subtree.
 
 ```
 src/
 ├── index.ts           ← createApp() + listen
-├── module.ts          ← root: global plugins, /api prefix
+├── module.ts          ← root module: global plugins, /api prefix
 ├── users/
 │   └── module.ts      ← /api/users/*
 └── posts/
     └── module.ts      ← /api/posts/*
 ```
 
-A module file can export:
+A module file exports:
 
 - `routes` — declarative route map
-- `meta` — prefix + plugins scoped to this module
+- `meta` — `{ prefix?, plugins[] }` scoped to this module
 - `default function(app)` — programmatic registration
 
 ```typescript
@@ -74,22 +69,24 @@ export const routes: Routes = {
 };
 ```
 
-### 2. Programmatic routing
+### Programmatic routing
 
 ```typescript
 app.get("/users", listUsers);
 app.post("/users", createUser);
 app.get("/users/:id", getUser);
 app.delete("/users/:id", deleteUser);
+// Also: app.put, app.patch, app.head, app.options, app.all
+// app.route({ path, method }, handler)
 ```
 
 Route params: `:id`, `:id?` (optional), `*` (wildcard), `:id(\\d+)` (regex).
 
 ---
 
-## Context API — core helpers
+## Context API
 
-All imported from `@minimajs/server`. Call from any function within a request.
+All from `@minimajs/server`. Call from any function within a request scope.
 
 ```typescript
 import {
@@ -107,42 +104,40 @@ import {
   createContext,
 } from "@minimajs/server";
 
-// Request body (parsed JSON by default)
+// Body (parsed JSON by default — bodyParser is auto-registered)
 const data = body<{ name: string }>();
 
 // Route params
-const id = params.get("id"); // throws 404 if missing
-const maybeId = params.optional("id"); // undefined if missing
+const id = params.get("id"); // string — throws 404 if missing
+const maybeId = params.optional("id"); // string | undefined
 const all = params<{ id: string }>();
+// params.get("id", Number) — transform with callback
 
 // Query string
 const page = searchParams.get("page");
-const all = searchParams<{ page: string; limit: string }>();
+const pages = searchParams.getAll("tag"); // string[]
+const all = searchParams<{ page: string }>();
 
-// Request headers
-const token = headers.get("authorization");
-const all = headers<{ authorization: string }>();
-
-// Set response headers
+// Request headers (read)
+const token = headers.get("authorization"); // string | undefined
+// Response headers (write)
 headers.set("x-request-id", "abc123");
-headers.set({ "x-foo": "bar", "x-baz": "qux" });
+headers.set({ "x-foo": "bar" }); // object form
+headers.append("Set-Cookie", "a=b");
 
 // Response
-response({ id: 1 }); // set body
+response({ id: 1 }); // set body explicitly
 response.status(201); // set status code
-// Returning from handler also sets body:
-function getUser() {
-  return { id: 1, name: "Alice" };
-}
+// Returning from handler also sets body
 
-// Request object (Web API Request)
-const req = request();
+// Request
+const req = request(); // Web API Request
 const url = request.url(); // URL object
 const signal = request.signal(); // AbortSignal (client disconnect)
 const ip = request.ip(); // client IP (needs proxy plugin)
 
-// Run after response is sent
-defer(() => analytics.track("request"));
+// Deferred work (runs after response is sent)
+defer(() => analytics.track("pageview"));
 
 // Per-request error handler
 onError((err) => logger.error(err));
@@ -155,15 +150,17 @@ onError((err) => logger.error(err));
 ```typescript
 import { abort, redirect } from "@minimajs/server";
 
-abort("Not found", 404); // throw HttpError
+abort("Bad Request"); // HttpError, default 400
+abort("Not found", 404); // HttpError with status
+abort("Rate limited", 429, { headers: { "Retry-After": "60" } });
 abort.notFound("User not found"); // 404 shorthand
 abort.is(err); // type guard
-abort.rethrow(err); // re-throw if HttpError
+abort.rethrow(err); // re-throw if HttpError, swallow otherwise
 redirect("/login"); // 302
 redirect("/new-path", true); // 301
 ```
 
-**Override error response shape globally** (do this at app startup):
+**Override error response shape globally:**
 
 ```typescript
 import { HttpError } from "@minimajs/server/error";
@@ -184,19 +181,20 @@ ValidationError.toJSON = (err) => ({
 
 ---
 
-## Package selection guide
+## Packages
 
-| Need                               | Package               | Key import                                         |
-| ---------------------------------- | --------------------- | -------------------------------------------------- |
-| Validate request body/params/query | `@minimajs/schema`    | `createBody`, `createParams`, `createSearchParams` |
-| Authenticate users                 | `@minimajs/auth`      | `createAuth`                                       |
-| File uploads                       | `@minimajs/multipart` | `multipart`, `createMultipart`                     |
-| File storage (FS/S3/Azure)         | `@minimajs/disk`      | `createDisk`, `createProtoDisk`                    |
-| OpenAPI docs                       | `@minimajs/openapi`   | `openapi`, `describe`, `schema`                    |
-| Cookies                            | `@minimajs/cookie`    | `cookies`                                          |
-| CORS                               | `@minimajs/server`    | `cors` (built-in plugin)                           |
-| Graceful shutdown                  | `@minimajs/server`    | `shutdown` (built-in plugin)                       |
-| Proxy/IP extraction                | `@minimajs/server`    | `proxy` (built-in plugin)                          |
+| Need                       | Package                    | Key import                                         |
+| -------------------------- | -------------------------- | -------------------------------------------------- |
+| Validate body/params/query | `@minimajs/schema`         | `createBody`, `createParams`, `createSearchParams` |
+| Authenticate users         | `@minimajs/auth`           | `createAuth`                                       |
+| File uploads               | `@minimajs/multipart`      | `multipart`, `createMultipart`                     |
+| File storage (FS/S3/Azure) | `@minimajs/disk`           | `createDisk`, `createProtoDisk`                    |
+| OpenAPI docs               | `@minimajs/openapi`        | `openapi`, `describe`, `schema`                    |
+| Cookies                    | `@minimajs/cookie`         | `cookies`                                          |
+| CORS                       | `@minimajs/server/plugins` | `cors`                                             |
+| Graceful shutdown          | `@minimajs/server/plugins` | `shutdown`                                         |
+| Proxy/IP                   | `@minimajs/server/plugins` | `proxy`                                            |
+| Express middleware compat  | `@minimajs/server/plugins` | `express`                                          |
 
 ---
 
@@ -205,7 +203,7 @@ ValidationError.toJSON = (err) => ({
 ### Validation + OpenAPI
 
 ```typescript
-import { createBody, createParams, createResponse, schema } from "@minimajs/schema";
+import { createBody, createResponse, schema } from "@minimajs/schema";
 import { describe } from "@minimajs/openapi";
 import { handler } from "@minimajs/server";
 import { z } from "zod";
@@ -225,17 +223,16 @@ export const routes: Routes = {
 
 ```typescript
 // auth/context.ts
-import { createAuth } from "@minimajs/auth";
-import { UnauthorizedError } from "@minimajs/auth";
+import { createAuth, UnauthorizedError } from "@minimajs/auth";
 import { headers } from "@minimajs/server";
 
 export const [authPlugin, getUser] = createAuth(async () => {
   const token = headers.get("authorization")?.replace("Bearer ", "");
   if (!token) throw new UnauthorizedError();
-  return await verifyToken(token); // return user object
+  return await verifyToken(token);
 });
 
-// root module.ts — register globally
+// root module.ts
 export const meta: Meta = { plugins: [authPlugin] };
 
 // protected route
@@ -264,14 +261,14 @@ const upload = createMultipart({
 
 export const routes: Routes = {
   "POST /upload": async () => {
-    const { name, avatar } = await upload(); // validates + throws 422 on failure
+    const { name, avatar } = await upload();
     const filename = await helpers.save(avatar, "./public/avatars");
     return { name, avatar: `/avatars/${filename}` };
   },
 };
 ```
 
-### Global plugins (CORS, OpenAPI, shutdown)
+### Global plugins
 
 ```typescript
 // src/module.ts (root)
@@ -300,7 +297,7 @@ export const requestIdPlugin = plugin.sync((app) => {
   );
 });
 
-export { getRequestId }; // callable from anywhere in request scope
+export { getRequestId };
 ```
 
 ### Database lifecycle
@@ -312,7 +309,7 @@ export const meta: Meta = {
   plugins: [
     hook.lifespan(async () => {
       await db.connect();
-      return async () => db.disconnect(); // runs on close
+      return async () => db.disconnect();
     }),
   ],
 };
@@ -324,11 +321,11 @@ export const meta: Meta = {
 
 For deeper API details, read the relevant reference file:
 
-- [references/server.md](references/server.md) — full hook lifecycle, plugin system, built-in plugins, module discovery config
-- [references/schema.md](references/schema.md) — all `createBody`/`createParams`/`createSearchParams`/`createHeaders` options, async variants, response schemas
-- [references/auth.md](references/auth.md) — `createAuth` options, `required` mode, `UnauthorizedError`/`ForbiddenError`
-- [references/multipart.md](references/multipart.md) — `raw`/`streaming` namespaces, `helpers` API, limits config
-- [references/disk.md](references/disk.md) — full Disk API, ProtoDisk multi-provider routing, S3/Azure drivers, disk hooks
+- [references/server.md](references/server.md) — hooks, plugin system, built-in plugins, module discovery, compose, middleware, context
+- [references/schema.md](references/schema.md) — `createBody`/`createParams`/`createSearchParams`/`createHeaders`, async variants, response schemas
+- [references/auth.md](references/auth.md) — `createAuth`, required mode, guards, `UnauthorizedError`/`ForbiddenError`
+- [references/multipart.md](references/multipart.md) — `raw`/`streaming` namespaces, `helpers` API, limits
+- [references/disk.md](references/disk.md) — Disk API, ProtoDisk multi-provider routing, S3/Azure drivers, disk hooks
 - [references/openapi.md](references/openapi.md) — `describe()`, `internal()`, `generateOpenAPIDocument()`, security schemes
 - [references/testing.md](references/testing.md) — `app.handle()`, `createRequest()`, mocking context
-- [references/cookie.md](references/cookie.md) — `cookies()`, `cookies.get/set/remove()`, set options, type-safe cookies
+- [references/cookie.md](references/cookie.md) — `cookies.get/set/remove()`, options, type-safe cookies

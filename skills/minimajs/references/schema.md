@@ -109,12 +109,15 @@ ValidationError.toJSON = (err) => ({
 });
 ```
 
-## Low-level validator (use schema() instead for routes)
+## Low-level: validator / validatorAsync
+
+Internal building blocks used by `createBody`, `createParams`, etc. They bind a Zod schema to a data source callback (e.g., `body`, `params`) and return a callable that validates on invocation. Prefer the `create*` functions — they use these internally.
 
 ```typescript
-import { validator, validatorAsync } from "@minimajs/schema";
+import { validator } from "@minimajs/schema";
+import { body } from "@minimajs/server";
 
-// Create a reusable standalone validator (not tied to context)
-const validate = validator(z.object({ email: z.string().email() }));
-const result = validate({ email: "test@example.com" }); // throws ValidationError on failure
+// Equivalent to createBody(schema)
+const getBody = validator(z.object({ email: z.string().email() }), body, "body", {});
+// getBody() reads from context, validates, throws ValidationError on failure
 ```

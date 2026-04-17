@@ -117,24 +117,6 @@ export default withDefaults(async (app) => {
 });
 ```
 
-### controller
-
-```typescript
-import { controller } from "@minimajs/server";
-
-// Map "METHOD /path handlerName" strings to handler functions
-const routes = controller({ list: listUsers, find: getUser, create: createUser }, [
-  "GET / list",
-  "GET /:id find",
-  "POST / create",
-]);
-
-// RESTful shorthand — maps to list, find, create, update, remove exports
-import * as usersHandlers from "./handlers.js";
-const restRoutes = controller.rest(usersHandlers, "id");
-// Creates: GET /, GET /:id, POST /, PUT /:id, DELETE /:id
-```
-
 ### descriptor (module-level)
 
 Apply route metadata descriptors to all routes in a module:
@@ -216,12 +198,52 @@ app.register(
 import { proxy } from "@minimajs/server/plugins";
 
 // Extract IP, host, proto from proxy headers (X-Forwarded-*)
+app.register(proxy({ trustProxies: true }));
+
+// Trust specific IPs or subnets
+app.register(proxy({ trustProxies: ["127.0.0.1", "10.0.0.0/8"] }));
+
+// Trust loopback
 app.register(proxy({ trustProxies: "loopback" }));
 
-// IP-only
-app.register(proxy.ip());
+// Custom trust validator
+app.register(
+  proxy({
+    trustProxies: (ctx) => {
+      const ip = ctx.incomingMessage?.socket?.remoteAddress;
+      return ip?.startsWith("10.") ?? false;
+    },
+  })
+);
 
-// After registering, use:
+// Fine-grained control over ip/host/proto extraction
+app.register(
+  proxy({
+    trustProxies: true,
+    ip: { proxyDepth: 2 }, // how many proxies deep
+    host: { header: ["x-forwarded-host"], stripPort: true },
+    proto: { header: ["x-forwarded-proto", "cloudfront-forwarded-proto"] },
+  })
+);
+
+// Disable specific extractions
+app.register(proxy({ trustProxies: true, host: false, proto: false }));
+
+// Custom callbacks for complex scenarios
+app.register(
+  proxy({
+    trustProxies: true,
+    ip: (ctx) => ctx.request.headers.get("x-real-ip"),
+    proto: (ctx) => ctx.request.headers.get("x-forwarded-proto") ?? "https",
+    host: (ctx) => ctx.request.headers.get("host") ?? "example.com",
+  })
+);
+
+// IP-only shorthand
+app.register(proxy.ip());
+app.register(proxy.ip({ trustProxies: "loopback", ip: { proxyDepth: 1 } }));
+
+// After registering, use in handlers:
 const ip = request.ip();
 ```
 
@@ -234,6 +256,21 @@ app.register(
   shutdown({
     signals: ["SIGINT", "SIGTERM"], // default
     timeout: 5000, // ms to wait for graceful close
+  })
+);
+```
+
+### express (Node.js only)
+
+Wrap Express-style `(req, res, next)` middleware for use in minimajs:
+
+```typescript
+import { express } from "@minimajs/server/plugins";
+
+app.register(
+  express((req, res, next) => {
+    console.log("Request URL:", req.url);
+    next();
   })
 );
 ```
@@ -314,3 +351,63 @@ interface Context {
 ```
 
 `context().locals` is a plain object — useful for passing data between hooks and handlers without `createContext`.
+
+### maybeContext / safe
+
+```typescript
+import { maybeContext, safe } from "@minimajs/server";
+
+// Returns null if called outside a request scope (no throw)
+const ctx = maybeContext();
+
+// Escape request scope — runs callback without inheriting AsyncLocalStorage context
+const detached = safe(() => {
+  // context() would throw here — useful for background work
+  doBackgroundTask();
+});
+```
+
+---
+
+## App lifecycle
+
+```typescript
+const app = createApp();
+
+// Register routes + plugins...
+app.get("/", handler);
+app.register(myPlugin);
+
+// Boot the app (runs ready hooks, starts module discovery)
+await app.ready();
+
+// Start listening
+const addr = await app.listen({ port: 3000 });
+
+// Test a route without starting a server
+const response = await app.handle(new Request("http://localhost/"));
+
+// Graceful shutdown (runs close hooks)
+await app.close();
+```
+
+---
+
+## contextProvider (advanced)
+
+Wrap the entire request lifecycle in custom middleware (e.g., APM, tracing):
+
+```typescript
+import { contextProvider } from "@minimajs/server/plugins";
+
+app.register(
+  contextProvider(async (ctx, next) => {
+    const span = tracer.startSpan("http.request");
+    try {
+      return await next();
+    } finally {
+      span.end();
+    }
+  })
+);
+```

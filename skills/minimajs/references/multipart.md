@@ -75,14 +75,14 @@ All methods accept `MultipartOptions`:
 }
 ```
 
-## Raw / streaming API (`raw` namespace)
+## Raw API (`raw` namespace)
 
-For memory-efficient large file handling — files are not buffered:
+Low-level access — files are raw streams (not buffered, not Web API File):
 
 ```typescript
 import { raw } from "@minimajs/multipart";
 
-// Raw file has .stream, .filename, .mimeType, .fieldname
+// Raw file has .stream (Readable), .filename, .mimeType, .fieldname
 const rawAvatar = await raw.file("avatar"); // MultipartRawFile | null
 
 for await (const [field, rawFile] of raw.files()) {
@@ -90,6 +90,29 @@ for await (const [field, rawFile] of raw.files()) {
   await disk.put(rawFile.filename, rawFile.stream);
   // Or drain if you don't want the file
   await helpers.drain(rawFile);
+}
+```
+
+## Streaming API (`streaming` namespace)
+
+Returns `StreamFile` (extends `File`, lazily buffers from stream on first read):
+
+```typescript
+import { streaming } from "@minimajs/multipart";
+
+// StreamFile by field name
+const avatar = await streaming.file("avatar"); // StreamFile | null
+
+// First file
+const [fieldName, file] = (await streaming.firstFile()) ?? [];
+
+// All fields (files as StreamFile, text as string)
+for await (const [name, value] of streaming.body()) {
+  if (value instanceof File) {
+    await disk.put(value.name, value.stream());
+  } else {
+    console.log(name, value); // string
+  }
 }
 ```
 
