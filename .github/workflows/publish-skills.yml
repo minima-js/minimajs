@@ -7,6 +7,7 @@ on:
       - skills-dev
     paths:
       - "skills/**"
+      - .github/workflows/publish-skills.yaml
 jobs:
   publish:
     name: Publish skills.tar.gz

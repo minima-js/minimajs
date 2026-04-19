@@ -211,10 +211,10 @@ import { handler } from "@minimajs/server";
 import { z } from "zod";
 
 const getBody = createBody(z.object({ name: z.string(), email: z.string().email() }));
-const UserResponse = createResponse(z.object({ id: z.string(), name: z.string() }));
+const userResponse = createResponse(z.object({ id: z.string(), name: z.string() }));
 
 export const routes: Routes = {
-  "POST /": handler(describe({ summary: "Create user", tags: ["Users"] }), schema(getBody, UserResponse), async () => {
+  "POST /": handler(describe({ summary: "Create user", tags: ["Users"] }), schema(getBody, userResponse), async () => {
     const { name, email } = getBody();
     return { id: crypto.randomUUID(), name };
   }),
