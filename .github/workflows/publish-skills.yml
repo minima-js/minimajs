@@ -8,7 +8,7 @@ on:
       - main
     paths:
       - "skills/**"
-      - .github/workflows/publish-skills.yaml
+      - .github/workflows/publish-skills.yml
 jobs:
   publish:
     name: Publish skills.tar.gz
