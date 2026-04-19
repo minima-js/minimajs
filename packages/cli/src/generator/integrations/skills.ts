@@ -12,7 +12,7 @@ const gunzipAsync = promisify(gunzip);
 
 const SKILLS_REPO = "minima-js/minimajs";
 const SKILL_TAG = "skills";
-const DEST_DIR = ".agents/skills/minimajs";
+const DEST_DIR = ".agents/skills";
 const CLAUDE_SKILLS_DIR = ".claude/skills";
 
 async function parseTarGz(buffer: Uint8Array): Promise<Record<string, string>> {
@@ -54,7 +54,7 @@ async function downloadSkill(): Promise<Record<string, string>> {
 
 function setupClaudeSymlink() {
   const target = join(process.cwd(), DEST_DIR);
-  const link = join(process.cwd(), CLAUDE_SKILLS_DIR, "minimajs");
+  const link = join(process.cwd(), CLAUDE_SKILLS_DIR);
 
   if (exists(link)) {
     logger.info(`  ${chalk.yellow("!")} Skipped symlink ${chalk.cyan(link)} (already exists)`);
@@ -62,8 +62,10 @@ function setupClaudeSymlink() {
   }
 
   mkdirSync(dirname(link), { recursive: true });
-  symlinkSync(target, link);
-  logger.info(`  ${chalk.green("✔")} Symlinked ${chalk.cyan(CLAUDE_SKILLS_DIR + "/minimajs")} → ${chalk.cyan(DEST_DIR)}`);
+  for (const name of ["minimajs"]) {
+    symlinkSync(join(target, name), join(link, name));
+    logger.info(`  ${chalk.green("✔")} Symlinked ${chalk.cyan(CLAUDE_SKILLS_DIR + name)} → ${chalk.cyan(DEST_DIR)}`);
+  }
 }
 
 async function handle({ args }: { args: { claude: boolean } }) {
@@ -94,8 +96,8 @@ async function handle({ args }: { args: { claude: boolean } }) {
   );
 }
 
-export const skill = defineCommand({
-  meta: { name: "skill", description: "Install minimajs skill for AI agents" },
+export const skills = defineCommand({
+  meta: { name: "skills", description: "Install minimajs skill for AI agents" },
   args: {
     claude: {
       type: "boolean",

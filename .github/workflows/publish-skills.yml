@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Build skills.tar.gz
-        run: tar -czf skills.tar.gz -C skills/minimajs .
+        run: tar -czf skills.tar.gz -C skills .
 
       - name: Publish release
         uses: softprops/action-gh-release@v2

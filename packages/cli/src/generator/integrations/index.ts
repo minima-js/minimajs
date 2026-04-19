@@ -3,7 +3,7 @@ import { openapi } from "./openapi.js";
 import { disk } from "./disk.js";
 import { dockerfile } from "./docker-file.js";
 import { module } from "./module.js";
-import { skill } from "./skill.js";
+import { skills } from "./skills.js";
 import { middleware } from "./middleware.js";
 import { plugin } from "./plugin.js";
 import { hook } from "./hook.js";
@@ -16,7 +16,7 @@ export const integrations: Record<string, CommandDef<any>> = {
   disk,
   dockerfile,
   module,
-  skill,
+  skills,
   middleware,
   plugin,
   hook,

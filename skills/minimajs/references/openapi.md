@@ -12,7 +12,6 @@ export const meta: Meta = {
   plugins: [
     openapi({
       info: { title: "My API", version: "1.0.0", description: "..." },
-      servers: [{ url: "https://api.example.com" }],
       // Any other OpenAPI 3.1 document fields
     }),
   ],
