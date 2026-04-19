@@ -23,7 +23,7 @@ jobs:
         run: tar -czf skills.tar.gz -C skills .
 
       - name: Publish release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: skills
           name: Skills
