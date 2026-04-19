@@ -11,11 +11,15 @@
     "url": "https://github.com/minima-js/minimajs"
   },
   "main": "./lib/index.js",
+  "types": "./types.d.ts",
   "bin": {
     "minimajs": "./bin/cli.js"
   },
   "exports": {
-    ".": "./lib/index.js"
+    ".": {
+      "types": "./types.d.ts",
+      "default": "./lib/index.js"
+    }
   },
   "scripts": {
     "build": "bun bundler.ts",
@@ -39,7 +43,8 @@
   },
   "files": [
     "bin",
-    "lib"
+    "lib",
+    "types.d.ts"
   ],
   "engines": {
     "node": ">=20"
