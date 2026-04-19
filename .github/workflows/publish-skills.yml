@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - skills-dev
+      - main
     paths:
       - "skills/**"
       - .github/workflows/publish-skills.yaml

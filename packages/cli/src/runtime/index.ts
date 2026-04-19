@@ -4,8 +4,6 @@ import { manifest } from "../config/pkg.js";
 
 function runtime(): Runtime {
   if (typeof process.versions.bun === "string") return "bun";
-  const agent = process.env.npm_config_user_agent ?? "";
-  if (agent.startsWith("bun")) return "bun";
   return "node";
 }
 

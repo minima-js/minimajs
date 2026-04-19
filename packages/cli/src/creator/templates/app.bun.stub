@@ -2,4 +2,4 @@
 if [ ! -d "node_modules" ]; then
   bun install
 fi
-./node_modules/.bin/minimajs "$@"
+bun ./node_modules/.bin/minimajs "$@"

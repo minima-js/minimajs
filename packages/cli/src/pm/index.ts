@@ -113,9 +113,9 @@ export function remove(packages: string[], opts: PMOptions = {}): void {
   exec.sync(pm, [sub, ...packages], { cwd: opts.cwd });
 }
 
-export async function install(opts: PMOptions = {}): Promise<void> {
+export function install(opts: PMOptions = {}): void {
   const pm = detect(opts.cwd);
-  await exec(pm, ["install"], { cwd: opts.cwd });
+  exec.sync(pm, ["install"], { cwd: opts.cwd });
 }
 
 export function run(script: string, args: string[] = [], opts: PMOptions = {}): void {

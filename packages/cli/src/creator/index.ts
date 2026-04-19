@@ -10,6 +10,7 @@ import * as pm from "../pm/index.js";
 import { exec } from "../exec/index.js";
 import { exists, text, mkdir } from "../utils/fs.js";
 import { runtime } from "../runtime/index.js";
+import { EOL } from "node:os";
 
 function resolveVersionFileValue(rt: Runtime): string {
   if (rt === "bun" && typeof process.versions.bun === "string") return process.versions.bun;
@@ -56,7 +57,9 @@ function getScaffoldFiles({
 }): ScaffoldFile[] {
   const versionFile = rt === "bun" ? ".bun-version" : ".node-version";
   const appContent =
-    rt === "bun" ? templates.app.bun() : templates.app.node({ exec: pm.EXEC[manager as Exclude<pm.PM, "bun">] });
+    rt === "bun"
+      ? templates.app.bun()
+      : templates.app.node({ exec: pm.EXEC[manager as Exclude<pm.PM, "bun">] ?? pm.EXEC.npm });
 
   return [
     { path: "package.json", content: renderPackageJson(name, rt, packageManagerField) },
@@ -66,7 +69,7 @@ function getScaffoldFiles({
     { path: join("src", "module.ts"), content: templates.rootModule() },
     { path: ".gitignore", content: templates.gitignore() },
     { path: ".env", content: templates.env() },
-    { path: versionFile, content: resolveVersionFileValue(rt) + "\n" },
+    { path: versionFile, content: resolveVersionFileValue(rt) + EOL },
     { path: "app", content: appContent, mode: 0o755 },
   ];
 }
@@ -101,7 +104,7 @@ async function handle({ args }: { args: NewArgs }) {
   if (args.install) {
     logger.info(`  Installing dependencies with ${chalk.bold(manager)}...`);
     try {
-      await pm.install({ cwd });
+      pm.install({ cwd });
     } catch {
       logger.error(`  Failed to install. Run ${chalk.bold(`${manager} install`)} manually.`);
     }

@@ -1,10 +1,10 @@
 import { defineCommand } from "citty";
 import { gunzip } from "node:zlib";
 import { promisify } from "node:util";
-import { join, dirname } from "node:path";
-import { symlinkSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
+import { symlinkSync } from "node:fs";
 import chalk from "chalk";
-import { exists, text } from "#/utils/fs.js";
+import { exists, mkdir, text } from "#/utils/fs.js";
 import { withSpinner } from "#/utils/spinner.js";
 import { logger } from "#/utils/logger.js";
 
@@ -60,11 +60,14 @@ function setupClaudeSymlink() {
     logger.info(`  ${chalk.yellow("!")} Skipped symlink ${chalk.cyan(link)} (already exists)`);
     return;
   }
+  logger.info(`ensuring directory ${link}`);
+  mkdir.sync(link);
 
-  mkdirSync(dirname(link), { recursive: true });
   for (const name of ["minimajs"]) {
     symlinkSync(join(target, name), join(link, name));
-    logger.info(`  ${chalk.green("✔")} Symlinked ${chalk.cyan(CLAUDE_SKILLS_DIR + name)} → ${chalk.cyan(DEST_DIR)}`);
+    logger.info(
+      `  ${chalk.green("✔")} Symlinked ${chalk.cyan(CLAUDE_SKILLS_DIR + "/" + name)} → ${chalk.cyan(DEST_DIR + "/" + name)}`
+    );
   }
 }
 

@@ -11,7 +11,9 @@ function handle() {
   const manager = pm.detect();
   const configFile = `minimajs.config.${rt === "bun" ? "ts" : "js"}`;
   const appContent =
-    rt === "bun" ? templates.app.bun() : templates.app.node({ exec: pm.EXEC[manager as Exclude<pm.PM, "bun">] });
+    rt === "bun"
+      ? templates.app.bun()
+      : templates.app.node({ exec: pm.EXEC[manager as Exclude<pm.PM, "bun">] ?? pm.EXEC.npm });
 
   const files = [
     { path: "app", content: appContent, mode: 0o755 },
