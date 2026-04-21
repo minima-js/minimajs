@@ -50,6 +50,22 @@ features:
     details: "APIs are designed for inference, so you spend less time on annotations and more on logic."
 ---
 
+## Try It Now
+
+::: code-group
+
+```bash [Bun]
+bunx @minimajs/cli new my-app --bun && cd my-app && ./app dev
+```
+
+```bash [Node.js]
+npx @minimajs/cli new my-app && cd my-app && ./app dev
+```
+
+:::
+
+That's it — a scaffolded project with TypeScript, file-based routing, and a running dev server.
+
 ## Start Here
 
 - New to Minima.js: read [Introduction](/intro)

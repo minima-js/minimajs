@@ -9,120 +9,74 @@ tags:
 
 # Getting Started with Minima.js
 
-This guide takes you from an empty folder to a working modular API.
+This guide takes you from zero to a running modular API using the Minima.js CLI.
 
 ## Prerequisites
 
 - Bun `>=1.3` or Node.js `>=22`
 - Basic TypeScript familiarity
 
-## 1) Create Project
+## 1) Scaffold a Project
 
-### Bun
-
-```bash
-mkdir minimajs-app
-cd minimajs-app
-bun init -y
-bun add @minimajs/server
-mkdir -p src/users
-```
-
-### Node.js
-
-```bash
-mkdir minimajs-app
-cd minimajs-app
-npm init -y
-npm install @minimajs/server
-npm install -D typescript tsc-watch @types/node
-mkdir -p src/users
-```
-
-For Node.js, set ESM and scripts in `package.json`:
-
-```json
-{
-  "type": "module",
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/index.js",
-    "dev": "tsc-watch --onSuccess \"node dist/index.js\" --noClear"
-  }
-}
-```
-
-Minimal `tsconfig.json`:
-
-```json
-{
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "strict": true,
-    "outDir": "dist",
-    "rootDir": "src"
-  },
-  "include": ["src"]
-}
-```
-
-If you already have a shared base config, keep it and only add the fields required for `outDir`, `rootDir`, and Node ESM module settings.
-
-## 2) Create Entry Point
-
-Create `src/index.ts`:
+The fastest way to start is with `@minimajs/cli`:
 
 ::: code-group
 
-```typescript [Bun]
-import { createApp } from "@minimajs/server/bun";
-
-const app = createApp();
-await app.listen({ port: 3000 });
-
-console.log("Listening on http://localhost:3000");
+```bash [Bun]
+bunx @minimajs/cli new my-app --bun
+cd my-app
 ```
 
-```typescript [Node.js]
-import { createApp } from "@minimajs/server/node";
-
-const app = createApp();
-await app.listen({ port: 3000 });
-
-console.log("Listening on http://localhost:3000");
+```bash [Node.js]
+npx @minimajs/cli new my-app
+cd my-app
 ```
 
 :::
 
-## 3) Add Root Module
+This creates a fully configured project with TypeScript, a root module, and an `./app` runner script.
 
-Create `src/module.ts`:
+::: tip Use the `./app` runner
+Every scaffolded project includes an executable `./app` script that wraps the CLI. You don't need a global install — the project always uses its own pinned version.
+:::
 
-```typescript
-import type { Meta, Routes } from "@minimajs/server";
-import { cors } from "@minimajs/server/plugins";
+## 2) Start the Dev Server
 
-export const meta: Meta = {
-  prefix: "/api",
-  plugins: [cors()],
-};
-
-function health() {
-  return { status: "ok" };
-}
-
-export const routes: Routes = {
-  "GET /health": health,
-};
+```bash
+./app dev
 ```
 
-Now `GET /api/health` should return `{"status":"ok"}`.
+Watch mode starts, TypeScript is compiled on save, and the server restarts automatically.
 
-## 4) Add Feature Module
+## 3) Understand File-Based Routing
 
-Create `src/users/module.ts`:
+Minima.js uses **file-based module discovery** — routes are defined in `module.ts` files, not registered imperatively with `app.get()`. The framework scans your `src/` directory and mounts each module automatically.
+
+::: warning Prefer `module.ts` over imperative registration
+Don't do this:
+```typescript
+// ❌ not the Minima.js way
+app.get("/users", listUsers);
+```
+Do this instead — create `src/users/module.ts`:
+```typescript
+// ✅ file-based routing
+export const routes: Routes = {
+  "GET /list": listUsers,
+};
+```
+The file's directory path becomes the URL prefix automatically.
+:::
+
+## 4) Add a Feature Module
+
+Generate a module with the CLI:
+
+```bash
+./app add module users
+```
+
+This creates `src/users/module.ts`. Edit it to define your routes:
 
 ```typescript
 import type { Routes } from "@minimajs/server";
@@ -152,46 +106,32 @@ export const routes: Routes = {
 };
 ```
 
-Now you have:
+With the root module's `/api` prefix you now have:
 
-- `GET /api/health`
 - `GET /api/users/list`
 - `GET /api/users/:id`
 - `POST /api/users/create`
 
-## 5) Run
+No registration needed — adding the file is enough.
 
-### Bun
-
-```bash
-bun --watch src/index.ts
-```
-
-### Node.js
+## 5) Build for Production
 
 ```bash
-npm run dev
+./app build    # compile TypeScript → dist/
+./app start    # run the compiled output
 ```
-
-For a production-style run:
-
-```bash
-npm run build
-npm run start
-```
-
-If port `3000` is busy, change `listen({ port: 3000 })` in `src/index.ts`.
 
 ## 6) What You Just Used
 
-- File-based module discovery (`module.ts` files)
-- Scoped module config via `meta`
-- Context helpers (`params`, `body`)
-- Runtime-specific adapters (`/bun` and `/node`)
+- **File-based module discovery** — `module.ts` files are found and mounted automatically
+- **Scoped module config** via `meta` (prefix, plugins, hooks)
+- **Context helpers** (`params`, `body`) — no request object passed around
+- **CLI scaffolding** — `add module`, `add service`, `add middleware` and more
 
 ## 7) Next Steps
 
 - Learn module architecture: [Modules](/core-concepts/modules)
 - Learn request helpers: [HTTP Guide](/guides/http)
 - Learn hooks and lifecycle: [Hooks Guide](/guides/hooks)
+- Explore all CLI commands: [CLI Reference](/packages/cli)
 - Build a complete example: [Task Board Tutorial](/tutorials/task-board-api/)

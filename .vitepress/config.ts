@@ -154,7 +154,7 @@ const config = defineConfig({
       { text: "Cookbook", link: "/cookbook/jwt-authentication" },
       { text: "Advanced", link: "/advanced" },
       { text: "API Reference", link: "/api/README" },
-      { text: "Packages", link: "/packages/auth" },
+      { text: "Packages", link: "/packages/cli" },
     ],
 
     sidebar: [
@@ -245,6 +245,7 @@ const config = defineConfig({
       {
         text: "Packages",
         items: [
+          { text: "CLI", link: "/packages/cli" },
           { text: "Auth", link: "/packages/auth" },
           { text: "Schema", link: "/packages/schema" },
           { text: "OpenAPI", link: "/packages/openapi" },
