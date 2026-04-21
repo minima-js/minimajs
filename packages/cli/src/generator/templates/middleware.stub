@@ -1,0 +1,8 @@
+import { middleware } from "@minimajs/server";
+
+export const {{ instance }} = middleware(async (ctx, next) => {
+  const start = Date.now();
+  const response = await next();
+  console.log(`Request took ${Date.now() - start}ms`);
+  return response;
+});

@@ -21,14 +21,14 @@
     "clean": "rimraf -g '*.tsbuildinfo' lib"
   },
   "peerDependencies": {
-    "@minimajs/server": ">=0.9.0",
+    "@minimajs/server": ">=0.10.0",
     "zod": "^4.3.2"
   },
   "devDependencies": {
-    "@jest/globals": "^30.2.0",
-    "@minimajs/server": "workspace:*",
-    "@types/node": "^25.0.3",
-    "zod": "^4.3.2"
+    "@jest/globals": "^30.3.0",
+    "@minimajs/server": "^0.11.0",
+    "@types/node": "^25.5.2",
+    "zod": "^4.3.6"
   },
   "author": "Adil <adil.sudo@gmail.com>",
   "files": [

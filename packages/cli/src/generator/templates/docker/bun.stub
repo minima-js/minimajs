@@ -1,0 +1,29 @@
+# ── Build stage ────────────────────────────────────────────────────────────────
+FROM oven/bun:{{ version }}-alpine AS builder
+
+WORKDIR /app
+
+COPY package.json bun.lock* ./
+RUN bun install --frozen-lockfile
+
+COPY . .
+RUN bun run build
+
+# ── Production stage ───────────────────────────────────────────────────────────
+FROM oven/bun:{{ version }}-alpine
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+COPY package.json bun.lock* ./
+RUN bun install --frozen-lockfile --production
+
+COPY --chown=bun:bun --from=builder /app/dist ./dist
+
+USER bun
+
+ENV PORT=3000
+EXPOSE 3000
+
+CMD ["bun", "run", "dist/index.js"]

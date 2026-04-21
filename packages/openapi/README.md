@@ -133,29 +133,16 @@ app.get("/protected", schema(authHeaders), () => {
 ### Multiple Response Status Codes
 
 ```typescript
-const successResponse = createResponse(
-  200,
-  z.object({ data: z.string() })
-);
+const successResponse = createResponse(200, z.object({ data: z.string() }));
 
-const errorResponse = createResponse(
-  400,
-  z.object({ error: z.string() })
-);
+const errorResponse = createResponse(400, z.object({ error: z.string() }));
 
-const notFoundResponse = createResponse(
-  404,
-  z.object({ message: z.string() })
-);
+const notFoundResponse = createResponse(404, z.object({ message: z.string() }));
 
-app.get(
-  "/resource/:id",
-  schema(successResponse, errorResponse, notFoundResponse),
-  () => {
-    // Handler logic
-    return { data: "ok" };
-  }
-);
+app.get("/resource/:id", schema(successResponse, errorResponse, notFoundResponse), () => {
+  // Handler logic
+  return { data: "ok" };
+});
 ```
 
 ### Response Headers
@@ -184,21 +171,29 @@ Add OpenAPI operation metadata (summary, description, tags, etc.) to individual 
 ```typescript
 import { describe } from "@minimajs/openapi";
 
-app.get("/users", describe({
-  summary: "List all users",
-  description: "Returns a paginated list of all users.",
-  tags: ["Users"],
-  operationId: "listUsers",
-}), () => {
-  return getUsers();
-});
+app.get(
+  "/users",
+  describe({
+    summary: "List all users",
+    description: "Returns a paginated list of all users.",
+    tags: ["Users"],
+    operationId: "listUsers",
+  }),
+  () => {
+    return getUsers();
+  }
+);
 
-app.post("/users", describe({
-  summary: "Create a user",
-  tags: ["Users"],
-}), () => {
-  return createUser();
-});
+app.post(
+  "/users",
+  describe({
+    summary: "Create a user",
+    tags: ["Users"],
+  }),
+  () => {
+    return createUser();
+  }
+);
 
 // Mark endpoint as deprecated
 app.get("/v1/users", describe({ deprecated: true }), () => {
@@ -258,9 +253,9 @@ export const meta = {
 };
 
 export default async function (app) {
-  app.get("/", () => getUsers());       // Tagged: Users
-  app.post("/", () => createUser());    // Tagged: Users
-  app.get("/:id", () => getUser());     // Tagged: Users
+  app.get("/", () => getUsers()); // Tagged: Users
+  app.post("/", () => createUser()); // Tagged: Users
+  app.get("/:id", () => getUser()); // Tagged: Users
 }
 ```
 
@@ -270,12 +265,7 @@ Multiple descriptors can be passed at once:
 const kAdminOnly = Symbol("admin");
 
 export const meta = {
-  plugins: [
-    descriptor(
-      describe({ tags: ["Admin"], security: [{ bearerAuth: [] }] }),
-      [kAdminOnly, true]
-    ),
-  ],
+  plugins: [descriptor(describe({ tags: ["Admin"], security: [{ bearerAuth: [] }] }), [kAdminOnly, true])],
 };
 ```
 
@@ -379,12 +369,8 @@ app.register(
         url: "https://opensource.org/licenses/MIT",
       },
     },
-    servers: [
-      { url: "https://api.example.com", description: "Production" },
-    ],
-    tags: [
-      { name: "users", description: "User operations" },
-    ],
+    servers: [{ url: "https://api.example.com", description: "Production" }],
+    tags: [{ name: "users", description: "User operations" }],
     externalDocs: {
       description: "Full documentation",
       url: "https://docs.example.com",
@@ -401,15 +387,15 @@ Creates an OpenAPI plugin for your MinimaJS application.
 
 #### Options
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `info` | `object` | **Required.** API title, version, description, contact, license |
-| `path` | `string` | OpenAPI spec endpoint path (default: `/openapi.json`) |
-| `servers` | `array` | Server configurations |
-| `tags` | `array` | Tag definitions |
-| `security` | `array` | Global security requirements |
-| `components` | `object` | OpenAPI components (schemas, security schemes) |
-| `externalDocs` | `object` | External documentation link |
+| Option         | Type     | Description                                                     |
+| -------------- | -------- | --------------------------------------------------------------- |
+| `info`         | `object` | **Required.** API title, version, description, contact, license |
+| `path`         | `string` | OpenAPI spec endpoint path (default: `/openapi.json`)           |
+| `servers`      | `array`  | Server configurations                                           |
+| `tags`         | `array`  | Tag definitions                                                 |
+| `security`     | `array`  | Global security requirements                                    |
+| `components`   | `object` | OpenAPI components (schemas, security schemes)                  |
+| `externalDocs` | `object` | External documentation link                                     |
 
 ### `generateOpenAPIDocument(app, options)`
 

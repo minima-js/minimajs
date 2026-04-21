@@ -1,0 +1,4 @@
+import type { Meta } from "@minimajs/server";
+
+export const meta: Meta = {
+};

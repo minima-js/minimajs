@@ -13,16 +13,18 @@ import type { Meta, Routes } from "@minimajs/server";
 const kAuth = Symbol("auth");
 
 export const meta: Meta = {
-  plugins: [
-    descriptor([kAuth, "required"]),
-  ],
+  plugins: [descriptor([kAuth, "required"])],
 };
 
-function getUsers() { /* ... */ }
-function createUser() { /* ... */ }
+function getUsers() {
+  /* ... */
+}
+function createUser() {
+  /* ... */
+}
 
 export const routes: Routes = {
-  "GET /": getUsers,   // Has kAuth metadata
+  "GET /": getUsers, // Has kAuth metadata
   "POST /": createUser, // Has kAuth metadata
 };
 ```
@@ -44,13 +46,7 @@ const kAuth = Symbol("auth");
 const kRateLimit = Symbol("rateLimit");
 
 export const meta: Meta = {
-  plugins: [
-    descriptor(
-      [kAuth, "required"],
-      [kRateLimit, { max: 100, window: "1m" }],
-      describe({ tags: ["Users"] })
-    ),
-  ],
+  plugins: [descriptor([kAuth, "required"], [kRateLimit, { max: 100, window: "1m" }], describe({ tags: ["Users"] }))],
 };
 ```
 

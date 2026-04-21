@@ -1,0 +1,38 @@
+# ── Build stage ────────────────────────────────────────────────────────────────
+FROM node:{{ version }}-alpine AS builder
+
+WORKDIR /app
+
+RUN corepack enable
+
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY .yarn ./.yarn
+RUN yarn install --immutable
+
+COPY . .
+RUN yarn build
+
+# ── Production stage ───────────────────────────────────────────────────────────
+FROM node:{{ version }}-alpine
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Create non-root user
+RUN addgroup --system app && adduser --system --ingroup app app
+
+RUN corepack enable
+
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY .yarn ./.yarn
+RUN yarn workspaces focus --all --production
+
+COPY --chown=app:app --from=builder /app/dist ./dist
+
+USER app
+
+ENV PORT=3000
+EXPOSE 3000
+
+CMD {{ cmd }}

@@ -1,0 +1,24 @@
+{
+  "name": "{{ name }}",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "packageManager": "{{ packageManager }}",
+  "scripts": {
+    "app": "minimajs",
+    "dev": "minimajs dev",
+    "build": "minimajs build",
+    "start": "minimajs start"
+  },
+  "dependencies": {
+    "@minimajs/server": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@minimajs/cli": "latest",
+    "typescript": "^5.9.0"
+  },
+  "engines": {
+    "node": ">=v22.22.2"
+  }
+}

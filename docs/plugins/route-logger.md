@@ -36,9 +36,7 @@ import { routeLogger } from "@minimajs/server/plugins";
 import { type Meta } from "@minimajs/server";
 
 export const meta: Meta = {
-  plugins: [
-    routeLogger({ enabled: false }),
-  ],
+  plugins: [routeLogger({ enabled: false })],
 };
 ```
 
@@ -86,9 +84,7 @@ import { routeLogger } from "@minimajs/server/plugins";
 import { type Meta } from "@minimajs/server";
 
 export const meta: Meta = {
-  plugins: [
-    routeLogger({ commonPrefix: true }),
-  ],
+  plugins: [routeLogger({ commonPrefix: true })],
 };
 ```
 

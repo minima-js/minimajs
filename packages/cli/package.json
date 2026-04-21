@@ -1,0 +1,61 @@
+{
+  "name": "@minimajs/cli",
+  "version": "0.0.1",
+  "description": "CLI for running, watching, and compiling MinimaJS TypeScript projects",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://minimajs.com",
+  "repository": {
+    "type": "github",
+    "directory": "packages/cli",
+    "url": "https://github.com/minima-js/minimajs"
+  },
+  "main": "./lib/index.js",
+  "types": "./types.d.ts",
+  "bin": {
+    "minimajs": "./bin/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./types.d.ts",
+      "default": "./lib/index.js"
+    }
+  },
+  "scripts": {
+    "build": "bun bundler.ts",
+    "dev": "bun bundler.ts --watch",
+    "clean": "rimraf -g '*.tsbuildinfo' lib"
+  },
+  "dependencies": {
+    "esbuild": "^0.28.0",
+    "typescript": "^6.0.2"
+  },
+  "devDependencies": {
+    "yocto-spinner": "^1.1.0",
+    "@types/node": "^25.5.2",
+    "chalk": "^5.4.1",
+    "citty": "^0.2.2",
+    "dotenv": "^17.4.1",
+    "dotenv-expand": "^12.0.0",
+    "pretty-bytes": "^7.1.0",
+    "pretty-ms": "^9.2.0",
+    "rimraf": "^6.0.0"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "types.d.ts"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "minimajs",
+    "cli",
+    "typescript",
+    "esbuild",
+    "build",
+    "watch"
+  ],
+  "author": "Adil <adil.sudo@gmail.com>"
+}

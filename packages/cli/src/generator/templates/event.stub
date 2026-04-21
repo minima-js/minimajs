@@ -1,0 +1,10 @@
+// Usage: import * as {{ name }}Event from "./{{ name }}/event.js";
+// Emit:  app.emit("{{ name }}", payload)
+
+export interface {{ Name }}Payload {
+  // TODO: define event payload shape
+}
+
+export async function handle(data: {{ Name }}Payload): Promise<void> {
+  // TODO: handle {{ name }} event
+}

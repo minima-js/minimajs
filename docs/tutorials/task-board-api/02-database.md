@@ -19,6 +19,7 @@ After this step, your app has global runtime behavior:
 Create `src/database.ts` — a single Prisma instance shared across the entire app, with a `hook.lifespan` that connects on startup and disconnects on shutdown:
 
 ::: code-group
+
 ```typescript [src/database.ts]
 import { PrismaClient } from "@prisma/client";
 import { hook } from "@minimajs/server";
@@ -35,6 +36,7 @@ export const dbLifespan = hook.lifespan(async () => {
   };
 });
 ```
+
 :::
 
 `hook.lifespan` runs the setup function when the app starts and the returned cleanup function when `app.close()` is called. This is the idiomatic way to manage resources in Minima.js.
@@ -46,6 +48,7 @@ The root module (`src/module.ts`) is the first module discovered. Anything regis
 Create `src/module.ts`:
 
 ::: code-group
+
 ```typescript [src/module.ts]
 import { type Meta } from "@minimajs/server";
 import { cors, shutdown } from "@minimajs/server/plugins";
@@ -68,6 +71,7 @@ export const meta: Meta = {
   ],
 };
 ```
+
 :::
 
 > **Why the root module?**
@@ -78,6 +82,7 @@ export const meta: Meta = {
 Add a request logger to the root module so every route is logged:
 
 ::: code-group
+
 ```typescript [src/module.ts]
 import { type Meta, hook } from "@minimajs/server";
 import { cors, shutdown } from "@minimajs/server/plugins";
@@ -117,6 +122,7 @@ export const meta: Meta = {
   ],
 };
 ```
+
 :::
 
 ## Verify
@@ -124,10 +130,12 @@ export const meta: Meta = {
 Run `npm run dev`. You should see:
 
 ::: code-group
+
 ```text [Output]
 Database connected
 Task Board API running at http://localhost:3000
 ```
+
 :::
 
 Every request will now be logged, CORS headers will be set, and the database will be cleanly disconnected when the process exits.
@@ -135,12 +143,14 @@ Every request will now be logged, CORS headers will be set, and the database wil
 Quick checks:
 
 ::: code-group
+
 ```bash [Terminal]
 curl http://localhost:3000/openapi.json | head
 curl -i -X OPTIONS http://localhost:3000/workspaces \
   -H "Origin: http://localhost:5173" \
   -H "Access-Control-Request-Method: GET"
 ```
+
 :::
 
 ## Troubleshooting

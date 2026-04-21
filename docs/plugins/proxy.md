@@ -33,7 +33,7 @@ function getClientInfo() {
   return {
     ip: clientIp,
     host: info.host,
-    proto: info.protocol
+    proto: info.protocol,
   };
 }
 
@@ -125,9 +125,7 @@ interface IpSettings {
 
 ```typescript
 export const meta: Meta = {
-  plugins: [
-    proxy({ ip: false })
-  ]
+  plugins: [proxy({ ip: false })],
 };
 ```
 
@@ -172,9 +170,7 @@ interface HostSettings {
 
 ```typescript
 export const meta: Meta = {
-  plugins: [
-    proxy({ host: false })
-  ]
+  plugins: [proxy({ host: false })],
 };
 ```
 

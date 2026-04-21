@@ -4,16 +4,16 @@ Plugins extend `@minimajs/disk` by hooking into file operation lifecycle events.
 
 ## Quick Reference
 
-| Plugin                                  | Import                   | What it does                                               |
-| --------------------------------------- | ------------------------ | ---------------------------------------------------------- |
-| [`storeAs`](#storeas)                   | `@minimajs/disk/plugins` | Rename files on upload (UUID, UUID+original, custom)       |
-| [`partition`](#partition)               | `@minimajs/disk/plugins` | Organize files into subdirectories (date, hash, or custom) |
-| [`atomicWrite`](#atomicwrite)           | `@minimajs/disk/plugins` | Safe writes via temp-file-then-rename                      |
-| [`checksum`](#checksum)                 | `@minimajs/disk/plugins` | Write + verify SHA-256 sidecar files                       |
-| [`compression`](#compression)           | `@minimajs/disk/plugins` | Transparent gzip/deflate compression                       |
-| [`encryption`](#encryption)             | `@minimajs/disk/plugins` | Transparent AES-256-GCM encryption                         |
-| [`uploadProgress`](#uploadprogress)     | `@minimajs/disk/plugins` | Track upload byte progress                                 |
-| [`downloadProgress`](#downloadprogress) | `@minimajs/disk/plugins` | Track download byte progress                               |
+| Plugin                                  | Import           | What it does                                               |
+| --------------------------------------- | ---------------- | ---------------------------------------------------------- |
+| [`storeAs`](#storenas)                  | `@minimajs/disk` | Rename files on upload (UUID, UUID+original, custom)       |
+| [`partition`](#partition)               | `@minimajs/disk` | Organize files into subdirectories (date, hash, or custom) |
+| [`atomicWrite`](#atomicwrite)           | `@minimajs/disk` | Safe writes via temp-file-then-rename                      |
+| [`checksum`](#checksum)                 | `@minimajs/disk` | Write + verify SHA-256 sidecar files                       |
+| [`compression`](#compression)           | `@minimajs/disk` | Transparent gzip/deflate compression                       |
+| [`encryption`](#encryption)             | `@minimajs/disk` | Transparent AES-256-GCM encryption                         |
+| [`uploadProgress`](#uploadprogress)     | `@minimajs/disk` | Track upload byte progress                                 |
+| [`downloadProgress`](#downloadprogress) | `@minimajs/disk` | Track download byte progress                               |
 
 ## Usage
 
