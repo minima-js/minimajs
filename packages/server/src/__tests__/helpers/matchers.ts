@@ -1,3 +1,4 @@
+import { expect } from "@jest/globals";
 /**
  * Custom Jest matchers for better test readability
  *
@@ -10,21 +11,6 @@
  * });
  * ```
  */
-
-interface CustomMatchers<R = unknown> {
-  toHaveStatusCode(expected: number): R;
-  toHaveHeader(name: string, value?: string): R;
-  toBeSuccessResponse(): R;
-  toBeErrorResponse(): R;
-}
-
-declare global {
-  namespace jest {
-    interface Expect extends CustomMatchers {}
-    interface Matchers<R> extends CustomMatchers<R> {}
-    interface InverseAsymmetricMatchers extends CustomMatchers {}
-  }
-}
 
 export function setupCustomMatchers() {
   expect.extend({

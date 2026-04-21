@@ -1,3 +1,4 @@
+import { describe, test, expect } from "@jest/globals";
 import { isAsyncIterator, isObject, toArray, toLastValue, toFirstValue } from "./iterable.js";
 
 describe("iterable", () => {

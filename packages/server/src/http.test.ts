@@ -9,6 +9,10 @@ import { proxy } from "./plugins/proxy/index.js";
 
 const setHeader = headers.set;
 
+function fail(message: string) {
+  throw new Error(message);
+}
+
 describe("Http", () => {
   describe("request", () => {
     test("should retrieve request object", () => {

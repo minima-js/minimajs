@@ -1,3 +1,4 @@
+import { describe, test, expect } from "@jest/globals";
 /**
  * Integration tests demonstrating complete HTTP request/response flows
  */
