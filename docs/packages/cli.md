@@ -42,13 +42,13 @@ bunx @minimajs/cli new my-app --bun
 bunx @minimajs/cli new my-app --runtime=node --pm=pnpm
 ```
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--pm` | auto-detected | Package manager (`bun`, `pnpm`, `yarn`, `npm`) |
-| `--runtime` | auto-detected | Runtime target (`node` or `bun`) |
-| `--bun` | — | Shorthand for `--runtime=bun` |
-| `--install` / `--no-install` | `true` | Install dependencies after scaffolding |
-| `--git` / `--no-git` | `true` | Run `git init` after scaffolding |
+| Flag                         | Default       | Description                                    |
+| ---------------------------- | ------------- | ---------------------------------------------- |
+| `--pm`                       | auto-detected | Package manager (`bun`, `pnpm`, `yarn`, `npm`) |
+| `--runtime`                  | auto-detected | Runtime target (`node` or `bun`)               |
+| `--bun`                      | —             | Shorthand for `--runtime=bun`                  |
+| `--install` / `--no-install` | `true`        | Install dependencies after scaffolding         |
+| `--git` / `--no-git`         | `true`        | Run `git init` after scaffolding               |
 
 **Generated files:**
 
@@ -88,16 +88,16 @@ Start the development server with watch mode and auto-restart.
 ./app dev --env-file .env.local
 ```
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--env-file` | — | Path to `.env` file |
-| `-p, --tsconfig` | — | Path to `tsconfig.json` |
-| `--check` / `--no-check` | `true` | Run TypeScript type checking on each rebuild |
-| `--reset` | — | Clear screen on each rebuild |
-| `--kill-signal` | — | Signal used to stop process before restart (`SIGTERM`, `SIGKILL`) |
-| `--grace` / `--no-grace` | `true` | Graceful shutdown before restart |
-| `--run` / `--no-run` | `true` | Watch and rebuild without running the process |
-| `--exec` | — | Custom command to run after build (e.g. `'node [filename]'`) |
+| Flag                     | Default | Description                                                       |
+| ------------------------ | ------- | ----------------------------------------------------------------- |
+| `--env-file`             | —       | Path to `.env` file                                               |
+| `-p, --tsconfig`         | —       | Path to `tsconfig.json`                                           |
+| `--check` / `--no-check` | `true`  | Run TypeScript type checking on each rebuild                      |
+| `--reset`                | —       | Clear screen on each rebuild                                      |
+| `--kill-signal`          | —       | Signal used to stop process before restart (`SIGTERM`, `SIGKILL`) |
+| `--grace` / `--no-grace` | `true`  | Graceful shutdown before restart                                  |
+| `--run` / `--no-run`     | `true`  | Watch and rebuild without running the process                     |
+| `--exec`                 | —       | Custom command to run after build (e.g. `'node [filename]'`)      |
 
 ---
 
@@ -111,14 +111,14 @@ Compile TypeScript to production JavaScript using esbuild.
 ./app build --outdir dist --target node22
 ```
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `-o, --outdir` | `dist` | Output directory |
-| `-m, --minify` | — | Minify output |
-| `-s, --sourcemap` | — | Emit sourcemaps |
-| `-p, --tsconfig` | — | Path to `tsconfig.json` |
-| `--check` / `--no-check` | `true` | Run TypeScript type checking before building |
-| `-t, --target` | — | Target environment (e.g. `node22`) |
+| Flag                     | Default | Description                                  |
+| ------------------------ | ------- | -------------------------------------------- |
+| `-o, --outdir`           | `dist`  | Output directory                             |
+| `-m, --minify`           | —       | Minify output                                |
+| `-s, --sourcemap`        | —       | Emit sourcemaps                              |
+| `-p, --tsconfig`         | —       | Path to `tsconfig.json`                      |
+| `--check` / `--no-check` | `true`  | Run TypeScript type checking before building |
+| `-t, --target`           | —       | Target environment (e.g. `node22`)           |
 
 ---
 
@@ -134,10 +134,10 @@ Run the compiled production build.
 
 The entry file is auto-detected from `package.json#main`, or the first existing file among `dist/index.js`, `dist/index.mjs`, `dist/main.js`. Enables source maps automatically on Node.js when the build included them.
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `[entry]` | auto-detected | Compiled entry file |
-| `--env-file` | — | Path to `.env` file |
+| Flag         | Default       | Description         |
+| ------------ | ------------- | ------------------- |
+| `[entry]`    | auto-detected | Compiled entry file |
+| `--env-file` | —             | Path to `.env` file |
 
 ---
 
@@ -150,8 +150,8 @@ Run TypeScript type checking without building.
 ./app check -p tsconfig.build.json
 ```
 
-| Flag | Description |
-|------|-------------|
+| Flag             | Description             |
+| ---------------- | ----------------------- |
 | `-p, --tsconfig` | Path to `tsconfig.json` |
 
 ---
@@ -174,13 +174,13 @@ Scaffold modules, services, and install integrations.
 
 #### Code generators
 
-| Command | Description |
-|---------|-------------|
-| `add module <name>` | Scaffold a route module (handler + `module.ts`) |
-| `add service <name>` | Scaffold a service file |
-| `add middleware <name>` | Scaffold a middleware plugin |
-| `add plugin <name>` | Scaffold a reusable plugin |
-| `add hook <name>` | Scaffold a lifecycle hook |
+| Command                 | Description                                     |
+| ----------------------- | ----------------------------------------------- |
+| `add module <name>`     | Scaffold a route module (handler + `module.ts`) |
+| `add service <name>`    | Scaffold a service file                         |
+| `add middleware <name>` | Scaffold a middleware plugin                    |
+| `add plugin <name>`     | Scaffold a reusable plugin                      |
+| `add hook <name>`       | Scaffold a lifecycle hook                       |
 
 All generators support `--dir <path>` to specify the output directory (default: `src`).
 
@@ -192,14 +192,14 @@ All generators support `--dir <path>` to specify the output directory (default: 
 
 #### Integrations
 
-| Command | Description |
-|---------|-------------|
-| `add disk` | Install disk file-storage integration |
-| `add openapi` | Install OpenAPI / Swagger documentation |
-| `add lint` | Scaffold ESLint with TypeScript support |
-| `add format` | Scaffold Prettier formatting |
-| `add dockerfile` | Generate a Dockerfile |
-| `add skills` | Install the MinimaJS skill for AI agents |
+| Command          | Description                              |
+| ---------------- | ---------------------------------------- |
+| `add disk`       | Install disk file-storage integration    |
+| `add openapi`    | Install OpenAPI / Swagger documentation  |
+| `add lint`       | Scaffold ESLint with TypeScript support  |
+| `add format`     | Scaffold Prettier formatting             |
+| `add dockerfile` | Generate a Dockerfile                    |
+| `add skills`     | Install the MinimaJS skill for AI agents |
 
 **`add disk`**
 
@@ -209,7 +209,7 @@ All generators support `--dir <path>` to specify the output directory (default: 
 ./app add disk --driver=azure-blob
 ```
 
-Installs the required packages and scaffolds the disk plugin. See [Disk](/packages/disk) for usage.
+Installs the required packages and scaffolds the disk plugin. See [Disk](/packages/disk/index.md) for usage.
 
 **`add openapi`**
 
