@@ -1,6 +1,6 @@
 {
   "name": "@minimajs/cli",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "CLI for running, watching, and compiling MinimaJS TypeScript projects",
   "type": "module",
   "license": "MIT",
