@@ -64,7 +64,12 @@ function setupClaudeSymlink() {
   mkdir.sync(link);
 
   for (const name of ["minimajs"]) {
-    symlinkSync(join(target, name), join(link, name));
+    try {
+      symlinkSync(join(target, name), join(link, name));
+    } catch (e) {
+      logger.warn(`Could not create symlink for ${name}: ${e instanceof Error ? e.message : String(e)}`);
+      continue;
+    }
     logger.info(
       `  ${chalk.green("✔")} Symlinked ${chalk.cyan(CLAUDE_SKILLS_DIR + "/" + name)} → ${chalk.cyan(DEST_DIR + "/" + name)}`
     );

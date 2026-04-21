@@ -34,6 +34,7 @@ interface NewArgs {
   name: string;
   pm?: string;
   runtime?: string;
+  bun?: boolean;
   install: boolean;
   git: boolean;
 }
@@ -77,6 +78,7 @@ function getScaffoldFiles({
 async function handle({ args }: { args: NewArgs }) {
   const { name, git } = args;
   const manager = (args.pm as pm.PM) ?? pm.detect();
+  if (args.bun) args.runtime = "bun";
   const rt = (args.runtime as Runtime) ?? runtime();
   const cwd = resolveCwd(name);
 
@@ -116,10 +118,12 @@ async function handle({ args }: { args: NewArgs }) {
     "",
     `  ${chalk.dim("Next steps:")}`,
     `    ${chalk.cyan(`cd ${name}`)}`,
-    `    ${chalk.cyan(`${manager} run dev`)}`,
+    `    ${chalk.cyan("./app dev")}`,
     "",
-    `  ${chalk.dim("Tip: use")} ${chalk.cyan("./app")} ${chalk.dim("as a shortcut for")} ${chalk.cyan("minimajs")}`,
-    `    ${chalk.dim("e.g.")} ${chalk.cyan("./app add module users")}`,
+    `  ${chalk.dim("Commands:")}`,
+    `    ${chalk.cyan("./app dev")}        ${chalk.dim("Start development server")}`,
+    `    ${chalk.cyan("./app build")}      ${chalk.dim("Build for production")}`,
+    `    ${chalk.cyan("./app add module <name>")}  ${chalk.dim("Generate a module")}`,
     ""
   );
 }
@@ -144,6 +148,10 @@ export const newCommand = defineCommand({
       type: "string",
       description: "Runtime target",
       valueHint: "node|bun",
+    },
+    bun: {
+      type: "boolean",
+      description: "Use Bun runtime (shorthand for --runtime=bun)",
     },
     install: {
       type: "boolean",

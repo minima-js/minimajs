@@ -1,4 +1,5 @@
 import { spawn, type ChildProcess } from "node:child_process";
+import { logger } from "#/utils/logger.js";
 
 export function runProcess(
   bin: string,
@@ -13,7 +14,10 @@ export function runProcess(
   const promise = new Promise<void>((resolve) => {
     proc = spawn(bin, args, { stdio: "inherit", env });
     proc.on("exit", () => resolve());
-    proc.on("error", () => resolve());
+    proc.on("error", (err) => {
+      logger.error(`Failed to start process "${bin}": ${err.message}`);
+      resolve();
+    });
   });
 
   function stop(signal: NodeJS.Signals = "SIGTERM"): Promise<void> {

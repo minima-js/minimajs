@@ -1,13 +1,13 @@
 import { existsSync, rmSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
-import { writeFile, mkdir as mkdirAsync } from "node:fs/promises";
+import { readFile, writeFile, mkdir as mkdirAsync } from "node:fs/promises";
 
 export function exists(f: string): boolean {
   return existsSync(resolve(process.cwd(), f));
 }
 
 export async function text(name: string): Promise<string> {
-  return readFileSync(resolve(process.cwd(), name), "utf8");
+  return readFile(resolve(process.cwd(), name), "utf8");
 }
 
 async function write(name: string, content: string, opts?: { mode?: number; ensuredir?: boolean }): Promise<string> {
@@ -53,7 +53,7 @@ export function clean(dest: string): void {
       rmSync(dest, { recursive: true });
     }
     mkdir.sync(dest);
-  } catch {
-    // ignore
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
   }
 }

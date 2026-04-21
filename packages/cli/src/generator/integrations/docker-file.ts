@@ -25,6 +25,7 @@ async function fetchDockerVersion(repo: string, fallback: string): Promise<strin
       });
     return found[0]?.name.replace("-alpine", "") ?? fallback;
   } catch {
+    logger.warn(`Could not fetch latest Docker version for ${repo}, using "${fallback}"`);
     return fallback;
   }
 }
