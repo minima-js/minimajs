@@ -27,7 +27,7 @@
   "devDependencies": {
     "@jest/globals": "^30.2.0",
     "@minimajs/server": "workspace:*",
-    "@types/node": "^25.0.3"
+    "@types/node": "^25.5.2"
   },
   "files": [
     "lib"

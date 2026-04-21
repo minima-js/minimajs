@@ -36,20 +36,18 @@ const dynamicDescriptor: RouteMetaDescriptor = (route) => {
 The type definition:
 
 ```typescript
-type RouteMetaDescriptor<S = unknown> =
-  | [symbol: symbol, value: unknown]
-  | ((config: RouteConfig<S>) => void);
+type RouteMetaDescriptor<S = unknown> = [symbol: symbol, value: unknown] | ((config: RouteConfig<S>) => void);
 ```
 
 The `RouteConfig` provides access to:
 
 ```typescript
 interface RouteConfig<S> {
-  methods: HTTPMethod[];   // HTTP methods (GET, POST, etc.)
-  path: string;            // Route path pattern
-  handler: Handler<S>;     // Route handler function
+  methods: HTTPMethod[]; // HTTP methods (GET, POST, etc.)
+  path: string; // Route path pattern
+  handler: Handler<S>; // Route handler function
   metadata: RouteMetadata; // Metadata object to modify
-  app: App<S>;             // Application instance
+  app: App<S>; // Application instance
 }
 ```
 
@@ -135,20 +133,19 @@ Usage in a module:
 import { handler, type Routes } from "@minimajs/server";
 import { requireAuth, requireRoles, rateLimit } from "./descriptors/auth.js";
 
-function getProfile() { /* ... */ }
-function deleteUser() { /* ... */ }
+function getProfile() {
+  /* ... */
+}
+function deleteUser() {
+  /* ... */
+}
 
 export const routes: Routes = {
   // Single descriptor
   "GET /profile": handler(requireAuth(), getProfile),
 
   // Multiple descriptors
-  "DELETE /users/:id": handler(
-    requireAuth(),
-    requireRoles("admin"),
-    rateLimit({ max: 10, window: "1m" }),
-    deleteUser
-  ),
+  "DELETE /users/:id": handler(requireAuth(), requireRoles("admin"), rateLimit({ max: 10, window: "1m" }), deleteUser),
 };
 ```
 
@@ -175,7 +172,7 @@ export function autoOperationId(): RouteMetaDescriptor {
 export function auditMutations(): RouteMetaDescriptor {
   return (route) => {
     const mutationMethods = ["POST", "PUT", "PATCH", "DELETE"];
-    if (route.methods.some(m => mutationMethods.includes(m))) {
+    if (route.methods.some((m) => mutationMethods.includes(m))) {
       route.metadata[kAuditLog] = true;
     }
   };
@@ -235,7 +232,7 @@ app.register(
     const requiredRoles = metadata[kAuthRoles] as string[] | undefined;
     if (requiredRoles?.length) {
       const userRoles = getUserRoles(); // From verified token
-      const hasRole = requiredRoles.some(r => userRoles.includes(r));
+      const hasRole = requiredRoles.some((r) => userRoles.includes(r));
       if (!hasRole) {
         abort({ error: "Forbidden" }, 403);
       }
@@ -295,7 +292,7 @@ export const rateLimitPlugin = plugin(async (app) => {
       } else {
         rateLimitStore.set(key, {
           count: 1,
-          resetAt: now + parseWindow(config.window)
+          resetAt: now + parseWindow(config.window),
         });
       }
     })
@@ -312,16 +309,15 @@ import { descriptor } from "@minimajs/server/plugins";
 import type { Meta, Routes } from "@minimajs/server";
 
 export const meta: Meta = {
-  plugins: [
-    descriptor(
-      requireAuth(),
-      rateLimit({ max: 100, window: "1m" })
-    ),
-  ],
+  plugins: [descriptor(requireAuth(), rateLimit({ max: 100, window: "1m" }))],
 };
 
-function getData() { /* ... */ }
-function createData() { /* ... */ }
+function getData() {
+  /* ... */
+}
+function createData() {
+  /* ... */
+}
 
 export const routes: Routes = {
   // All routes inherit the descriptors
@@ -342,17 +338,22 @@ The `@minimajs/openapi` package provides built-in descriptors:
 import { describe } from "@minimajs/openapi";
 import { handler, type Routes } from "@minimajs/server";
 
-function getUsers() { /* ... */ }
+function getUsers() {
+  /* ... */
+}
 
 export const routes: Routes = {
-  "GET /users": handler(describe({
-    summary: "List all users",
-    description: "Returns a paginated list of all users.",
-    tags: ["Users"],
-    operationId: "listUsers",
-    deprecated: false,
-    security: [{ bearerAuth: [] }],
-  }), getUsers),
+  "GET /users": handler(
+    describe({
+      summary: "List all users",
+      description: "Returns a paginated list of all users.",
+      tags: ["Users"],
+      operationId: "listUsers",
+      deprecated: false,
+      security: [{ bearerAuth: [] }],
+    }),
+    getUsers
+  ),
 };
 ```
 
@@ -362,8 +363,12 @@ export const routes: Routes = {
 import { internal } from "@minimajs/openapi";
 import { handler, type Routes } from "@minimajs/server";
 
-function getHealth() { return "ok"; }
-function getMetrics() { /* ... */ }
+function getHealth() {
+  return "ok";
+}
+function getMetrics() {
+  /* ... */
+}
 
 export const routes: Routes = {
   // Won't appear in OpenAPI documentation
@@ -387,11 +392,14 @@ const CreateUser = createBody(
   })
 );
 
-const UserResponse = createResponse(201, z.object({
-  id: z.string(),
-  name: z.string(),
-  email: z.string(),
-}));
+const UserResponse = createResponse(
+  201,
+  z.object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string(),
+  })
+);
 
 function createUser() {
   const body = CreateUser();
@@ -410,6 +418,7 @@ export const routes: Routes = {
 ## Best Practices
 
 1. **Use symbols for keys** - Prevents naming collisions between packages
+
    ```typescript
    // Good - unique symbol
    export const kAuth = Symbol("myapp.auth");
@@ -419,6 +428,7 @@ export const routes: Routes = {
    ```
 
 2. **Create helper functions** - More readable than raw tuples
+
    ```typescript
    // Good
    export const routes: Routes = {
@@ -427,6 +437,7 @@ export const routes: Routes = {
    ```
 
 3. **Export symbols for consumers** - Allow other code to read your metadata
+
    ```typescript
    // auth.ts
    export const kAuthRequired = Symbol("auth.required");
@@ -436,6 +447,7 @@ export const routes: Routes = {
    ```
 
 4. **Keep descriptors focused** - Single responsibility per descriptor
+
    ```typescript
    // Good - separate concerns
    app.get("/data", requireAuth(), rateLimit(100), cacheFor("1h"), handler);
@@ -445,6 +457,7 @@ export const routes: Routes = {
    ```
 
 5. **Use module-level for common metadata** - Route-level for exceptions
+
    ```typescript
    const kPublic = Symbol("public");
 

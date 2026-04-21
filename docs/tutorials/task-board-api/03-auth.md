@@ -21,6 +21,7 @@ After this step, you can:
 Create `src/auth/index.ts`:
 
 ::: code-group
+
 ```typescript [src/auth/index.ts]
 import { headers } from "@minimajs/server";
 import { createAuth, UnauthorizedError } from "@minimajs/auth";
@@ -75,6 +76,7 @@ export const [authPlugin, getUser] = createAuth(async () => {
 
 export { ACCESS_SECRET, REFRESH_SECRET };
 ```
+
 :::
 
 ## Auth Guards
@@ -82,6 +84,7 @@ export { ACCESS_SECRET, REFRESH_SECRET };
 Create `src/auth/guards.ts`:
 
 ::: code-group
+
 ```typescript [src/auth/guards.ts]
 import { getUser } from "./index.js";
 import { ForbiddenError } from "@minimajs/auth";
@@ -150,6 +153,7 @@ export async function workspaceAdmin() {
   return member;
 }
 ```
+
 :::
 
 ## Auth Routes
@@ -157,6 +161,7 @@ export async function workspaceAdmin() {
 Create `src/auth/module.ts`:
 
 ::: code-group
+
 ```typescript [src/auth/module.ts]
 import { type Routes, abort } from "@minimajs/server";
 import { cookies } from "@minimajs/cookie";
@@ -164,11 +169,7 @@ import { createBody } from "@minimajs/schema";
 import { z } from "zod";
 import jwt from "jsonwebtoken";
 import { prisma } from "../database.js";
-import {
-  signAccessToken,
-  signRefreshToken,
-  REFRESH_SECRET,
-} from "./index.js";
+import { signAccessToken, signRefreshToken, REFRESH_SECRET } from "./index.js";
 import bcrypt from "bcryptjs";
 
 const loginSchema = z.object({
@@ -266,6 +267,7 @@ export const routes: Routes = {
   "POST /logout": logout,
 };
 ```
+
 :::
 
 ### Register the auth plugin globally
@@ -273,6 +275,7 @@ export const routes: Routes = {
 Update `src/module.ts` to register the `authPlugin` so it runs on every request (but only throws in routes that call `getUser.required()`):
 
 ::: code-group
+
 ```typescript [src/module.ts]
 import { type Meta, hook } from "@minimajs/server";
 import { cors, shutdown } from "@minimajs/server/plugins";
@@ -296,21 +299,25 @@ export const meta: Meta = {
   ],
 };
 ```
+
 :::
 
 ## Dependency Note
 
 ::: code-group
+
 ```bash [Terminal]
 # If you skipped Step 1's full install list:
 npm install bcryptjs
 npm install -D @types/bcryptjs
 ```
+
 :::
 
 ## Test It
 
 ::: code-group
+
 ```bash [Terminal]
 # Register
 curl -X POST http://localhost:3000/auth/register \
@@ -323,11 +330,13 @@ curl -X POST http://localhost:3000/auth/login \
   -d '{"email":"alice@example.com","password":"secret123"}'
 # → { "accessToken": "eyJ...", "user": { ... } }
 ```
+
 :::
 
 Full refresh-cookie flow:
 
 ::: code-group
+
 ```bash [Terminal]
 # Save cookie jar
 curl -c cookies.txt -X POST http://localhost:3000/auth/login \
@@ -337,6 +346,7 @@ curl -c cookies.txt -X POST http://localhost:3000/auth/login \
 # Use refresh token from cookie jar
 curl -b cookies.txt -X POST http://localhost:3000/auth/refresh
 ```
+
 :::
 
 ## Troubleshooting

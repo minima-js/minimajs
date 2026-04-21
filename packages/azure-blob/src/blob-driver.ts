@@ -69,7 +69,7 @@ export class AzureBlobDriver implements DiskDriver {
         }
 
         return { container, blob };
-      } catch (error) {
+      } catch {
         throw new Error(`Invalid Azure Blob URL format: ${href}`);
       }
     }

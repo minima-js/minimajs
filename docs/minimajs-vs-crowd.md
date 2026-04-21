@@ -87,16 +87,16 @@ Practical impact:
 
 ## Quick Comparison Matrix
 
-| Dimension | Minima.js | Express | Fastify | NestJS | Hono |
-|---|---|---|---|---|---|
-| Runtime focus | Node.js + Bun servers | Node.js servers | Node.js servers | Node.js servers | Edge + multi-runtime |
-| HTTP primitives | Web API (`Request`/`Response`) | Node req/res wrappers | Fastify req/reply wrappers | Framework abstractions | Web API style context |
-| Module isolation | Encapsulated module tree | Mostly convention-based | Plugin encapsulation | Module + DI boundaries | App/router composition |
-| Module discovery | Auto-discovery + explicit routes | Manual wiring | Manual wiring | CLI/decorator driven structure | Manual wiring |
-| Lifecycle model | Multi-stage hooks + lifespan | Middleware-first | Hooks + lifecycle | Interceptors/guards/pipes | Middleware + handlers |
-| Architecture style | Functional modules + hooks | Middleware chains | Plugin + schema-centric | DI + decorators + classes | Functional handlers |
-| Boilerplate | Low | Low | Medium | High | Low |
-| Best fit | Server APIs with clean modular growth | Legacy simplicity/ecosystem | High-throughput tuned APIs | Large enterprise org patterns | Edge-first apps |
+| Dimension          | Minima.js                             | Express                     | Fastify                    | NestJS                         | Hono                   |
+| ------------------ | ------------------------------------- | --------------------------- | -------------------------- | ------------------------------ | ---------------------- |
+| Runtime focus      | Node.js + Bun servers                 | Node.js servers             | Node.js servers            | Node.js servers                | Edge + multi-runtime   |
+| HTTP primitives    | Web API (`Request`/`Response`)        | Node req/res wrappers       | Fastify req/reply wrappers | Framework abstractions         | Web API style context  |
+| Module isolation   | Encapsulated module tree              | Mostly convention-based     | Plugin encapsulation       | Module + DI boundaries         | App/router composition |
+| Module discovery   | Auto-discovery + explicit routes      | Manual wiring               | Manual wiring              | CLI/decorator driven structure | Manual wiring          |
+| Lifecycle model    | Multi-stage hooks + lifespan          | Middleware-first            | Hooks + lifecycle          | Interceptors/guards/pipes      | Middleware + handlers  |
+| Architecture style | Functional modules + hooks            | Middleware chains           | Plugin + schema-centric    | DI + decorators + classes      | Functional handlers    |
+| Boilerplate        | Low                                   | Low                         | Medium                     | High                           | Low                    |
+| Best fit           | Server APIs with clean modular growth | Legacy simplicity/ecosystem | High-throughput tuned APIs | Large enterprise org patterns  | Edge-first apps        |
 
 ## Minima.js vs Express
 
@@ -176,6 +176,7 @@ Your core product runs as a server backend, not primarily at the Edge.
 ## Example: Request Access in Deep Helpers
 
 ::: code-group
+
 ```typescript [Minima.js]
 import { request } from "@minimajs/server";
 
@@ -195,6 +196,7 @@ export function auditAction(req: RequestLike, action: string) {
 // Every caller must pass req manually
 handler((req) => auditAction(req, "create_task"));
 ```
+
 :::
 
 ## Decision Checklist

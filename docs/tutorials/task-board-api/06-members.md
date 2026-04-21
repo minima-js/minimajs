@@ -20,6 +20,7 @@ After this step, each workspace supports team management:
 Create `src/members/module.ts`:
 
 ::: code-group
+
 ```typescript [src/members/module.ts]
 import { type Meta, type Routes, hook, params, abort } from "@minimajs/server";
 import { descriptor } from "@minimajs/server/plugins";
@@ -36,9 +37,7 @@ const inviteBody = createBody(
   })
 );
 
-const updateRoleBody = createBody(
-  z.object({ role: z.enum(["admin", "member"]) })
-);
+const updateRoleBody = createBody(z.object({ role: z.enum(["admin", "member"]) }));
 
 async function list() {
   const workspaceId = Number(params.get("workspaceId"));
@@ -108,11 +107,7 @@ async function remove() {
 }
 
 export const meta: Meta = {
-  plugins: [
-    hook("request", authenticated),
-    hook("request", workspaceMember),
-    descriptor(describe({ tags: ["Members"] })),
-  ],
+  plugins: [hook("request", authenticated), hook("request", workspaceMember), descriptor(describe({ tags: ["Members"] }))],
 };
 
 export const routes: Routes = {
@@ -122,6 +117,7 @@ export const routes: Routes = {
   "DELETE /:id": remove,
 };
 ```
+
 :::
 
 `list` is available to any workspace member. The `invite`, `updateRole`, and `remove` handlers call `await workspaceAdmin()` themselves — this is the idiomatic way to apply per-handler authorization without splitting routes into separate modules.
@@ -129,6 +125,7 @@ export const routes: Routes = {
 ## Smoke Check
 
 ::: code-group
+
 ```bash [Terminal]
 # List members
 curl http://localhost:3000/workspaces/1/members \
@@ -146,6 +143,7 @@ curl -X PATCH http://localhost:3000/workspaces/1/members/:id \
   -H "Content-Type: application/json" \
   -d '{"role":"admin"}'
 ```
+
 :::
 
 ## Troubleshooting

@@ -16,6 +16,6 @@
   },
   "devDependencies": {
     "@minimajs/server": "workspace:*",
-    "@types/node": "^25.0.3"
+    "@types/node": "^25.5.2"
   }
 }

@@ -28,25 +28,26 @@ Each step has a clear outcome so you always know what “done” means before co
 
 ## What You’ll Learn (Framework Coverage)
 
-| Feature | Where it appears |
-|---|---|
-| File-based module discovery | All modules |
-| `meta.prefix` for nested resources | Boards + Tasks |
-| `@minimajs/auth` | Auth plugin and guards |
-| `@minimajs/cookie` | Refresh token cookie |
-| `@minimajs/schema` + Zod | Body + query validation |
-| `@minimajs/multipart` | Attachment uploads |
-| Prisma integration | All data access |
-| `hook.lifespan` | DB connect/disconnect |
-| `hook("request")` | Logging + route guards |
-| `hook("error")` | Centralized error behavior |
-| `abort.*` helpers | Typed HTTP failures |
-| `cors` + `shutdown` | Production runtime basics |
-| `routes: Routes` map | Handler wiring per module |
+| Feature                            | Where it appears           |
+| ---------------------------------- | -------------------------- |
+| File-based module discovery        | All modules                |
+| `meta.prefix` for nested resources | Boards + Tasks             |
+| `@minimajs/auth`                   | Auth plugin and guards     |
+| `@minimajs/cookie`                 | Refresh token cookie       |
+| `@minimajs/schema` + Zod           | Body + query validation    |
+| `@minimajs/multipart`              | Attachment uploads         |
+| Prisma integration                 | All data access            |
+| `hook.lifespan`                    | DB connect/disconnect      |
+| `hook("request")`                  | Logging + route guards     |
+| `hook("error")`                    | Centralized error behavior |
+| `abort.*` helpers                  | Typed HTTP failures        |
+| `cors` + `shutdown`                | Production runtime basics  |
+| `routes: Routes` map               | Handler wiring per module  |
 
 ## Final Project Structure
 
 ::: code-group
+
 ```text [Project Tree]
 task-board/
 ├── src/
@@ -69,6 +70,7 @@ task-board/
 │   └── schema.prisma
 └── package.json
 ```
+
 :::
 
 ## Prerequisites

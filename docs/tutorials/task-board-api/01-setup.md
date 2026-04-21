@@ -15,6 +15,7 @@ After this step, you will have:
 ## Install Dependencies
 
 ::: code-group
+
 ```bash [Terminal]
 mkdir task-board && cd task-board
 npm init -y
@@ -23,11 +24,13 @@ npm install prisma @prisma/client zod jsonwebtoken bcryptjs
 npm install -D typescript tsc-watch @types/node @types/jsonwebtoken @types/bcryptjs
 npx prisma init --datasource-provider sqlite
 ```
+
 :::
 
 Update `package.json`:
 
 ::: code-group
+
 ```json [package.json]
 {
   "type": "module",
@@ -38,11 +41,13 @@ Update `package.json`:
   }
 }
 ```
+
 :::
 
 Create `tsconfig.json`:
 
 ::: code-group
+
 ```json [tsconfig.json]
 {
   "compilerOptions": {
@@ -56,6 +61,7 @@ Create `tsconfig.json`:
   "include": ["src"]
 }
 ```
+
 :::
 
 ## Prisma Schema
@@ -63,6 +69,7 @@ Create `tsconfig.json`:
 Replace `prisma/schema.prisma` with:
 
 ::: code-group
+
 ```prisma [prisma/schema.prisma]
 generator client {
   provider = "prisma-client-js"
@@ -142,22 +149,27 @@ model Attachment {
   task      Task     @relation(fields: [taskId], references: [id])
 }
 ```
+
 :::
 
 Run the migration:
 
 ::: code-group
+
 ```bash [Terminal]
 npx prisma migrate dev --name init
 ```
+
 :::
 
 Optional: open Prisma Studio to inspect your tables:
 
 ::: code-group
+
 ```bash [Terminal]
 npx prisma studio
 ```
+
 :::
 
 ## Entry Point
@@ -165,6 +177,7 @@ npx prisma studio
 Create `src/index.ts`:
 
 ::: code-group
+
 ```typescript [src/index.ts]
 import { createApp } from "@minimajs/server/node";
 
@@ -173,6 +186,7 @@ const app = createApp();
 const address = await app.listen({ port: 3000 });
 console.log(`Task Board API running at ${address}`);
 ```
+
 :::
 
 At this point `npm run dev` should start without errors. The `createApp()` call auto-discovers all `module.ts` files under `src/` — we'll add those next.
@@ -182,25 +196,31 @@ At this point `npm run dev` should start without errors. The `createApp()` call 
 Run:
 
 ::: code-group
+
 ```bash [Terminal]
 npm run dev
 ```
+
 :::
 
 Expected output:
 
 ::: code-group
+
 ```text [Output]
 Task Board API running at http://localhost:3000
 ```
+
 :::
 
 And in a second terminal:
 
 ::: code-group
+
 ```bash [Terminal]
 curl -i http://localhost:3000/
 ```
+
 :::
 
 Any HTTP response here is fine for now. The important part is that the process boots cleanly.

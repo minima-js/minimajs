@@ -1,0 +1,35 @@
+name: Publish Skills
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - skills-dev
+      - main
+    paths:
+      - "skills/**"
+      - .github/workflows/publish-skills.yml
+jobs:
+  publish:
+    name: Publish skills.tar.gz
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Build skills.tar.gz
+        run: tar -czf skills.tar.gz -C skills .
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: skills
+          name: Skills
+          body: "Updated skills bundle from commit ${{ github.sha }}"
+          files: skills.tar.gz
+          make_latest: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

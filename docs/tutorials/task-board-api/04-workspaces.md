@@ -19,6 +19,7 @@ After this step, authenticated users can fully manage workspaces:
 Everything lives in a single `src/workspaces/module.ts`. The handler functions are defined in the file, and `export const routes` wires them to HTTP methods and paths.
 
 ::: code-group
+
 ```typescript [src/workspaces/module.ts]
 import { type Meta, type Routes, hook, params, abort } from "@minimajs/server";
 import { descriptor } from "@minimajs/server/plugins";
@@ -29,9 +30,7 @@ import { prisma } from "../database.js";
 import { getUser } from "../auth/index.js";
 import { authenticated } from "../auth/guards.js";
 
-const workspaceBody = createBody(
-  z.object({ name: z.string().min(1).max(100) })
-);
+const workspaceBody = createBody(z.object({ name: z.string().min(1).max(100) }));
 
 async function list() {
   const user = getUser.required();
@@ -102,10 +101,7 @@ async function remove() {
 }
 
 export const meta: Meta = {
-  plugins: [
-    hook("request", authenticated),
-    descriptor(describe({ tags: ["Workspaces"] })),
-  ],
+  plugins: [hook("request", authenticated), descriptor(describe({ tags: ["Workspaces"] }))],
 };
 
 export const routes: Routes = {
@@ -116,6 +112,7 @@ export const routes: Routes = {
   "DELETE /:id": remove,
 };
 ```
+
 :::
 
 Notice how `hook("request", authenticated)` in `meta.plugins` runs before every route in this module. The admin check for `update` and `remove` is done inline in each handler since they need access to `:id` as the workspace ID.
@@ -123,6 +120,7 @@ Notice how `hook("request", authenticated)` in `meta.plugins` runs before every 
 ## Test It
 
 ::: code-group
+
 ```bash [Terminal]
 # Create a workspace (use the access token from login)
 curl -X POST http://localhost:3000/workspaces \
@@ -134,11 +132,13 @@ curl -X POST http://localhost:3000/workspaces \
 curl http://localhost:3000/workspaces \
   -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
+
 :::
 
 Expected create response shape:
 
 ::: code-group
+
 ```json [Response]
 {
   "id": 1,
@@ -146,6 +146,7 @@ Expected create response shape:
   "createdAt": "2026-01-01T00:00:00.000Z"
 }
 ```
+
 :::
 
 ## Troubleshooting

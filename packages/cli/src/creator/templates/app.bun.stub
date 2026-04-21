@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+if [ ! -d "node_modules" ]; then
+  bun install
+fi
+bun ./node_modules/.bin/minimajs "$@"
