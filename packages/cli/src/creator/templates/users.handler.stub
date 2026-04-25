@@ -1,0 +1,45 @@
+import { abort, body, params, response } from "@minimajs/server";
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+const users: User[] = [];
+let nextId = 1;
+
+export function list() {
+  return { data: users };
+}
+
+export function show() {
+  const id = params.get("id", Number);
+  const user = users.find((u) => u.id === id);
+  if (!user) abort.notFound();
+  return user;
+}
+
+export function create() {
+  const data = body<Omit<User, "id">>();
+  const user: User = { id: nextId++, ...data };
+  users.push(user);
+  response.status("CREATED");
+  return user;
+}
+
+export function update() {
+  const id = params.get("id", Number);
+  const idx = users.findIndex((u) => u.id === id);
+  if (idx === -1) abort.notFound();
+  users[idx] = { ...users[idx]!, ...body<Partial<Omit<User, "id">>>() };
+  return users[idx];
+}
+
+export function destroy() {
+  const id = params.get("id", Number);
+  const idx = users.findIndex((u) => u.id === id);
+  if (idx === -1) abort.notFound();
+  users.splice(idx, 1);
+  response.status("NO_CONTENT");
+}

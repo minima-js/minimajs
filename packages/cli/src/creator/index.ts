@@ -68,6 +68,8 @@ function getScaffoldFiles({
     { path: `minimajs.config.${rt === "bun" ? "ts" : "js"}`, content: templates.minimajsConfig({ runtime: rt }) },
     { path: join("src", "index.ts"), content: templates.index({ runtime: rt }) },
     { path: join("src", "module.ts"), content: templates.rootModule() },
+    { path: join("src", "users", "module.ts"), content: templates.usersModule() },
+    { path: join("src", "users", "users.handler.ts"), content: templates.usersHandler() },
     { path: ".gitignore", content: templates.gitignore() },
     { path: ".env", content: templates.env() },
     { path: versionFile, content: resolveVersionFileValue(rt) + EOL },
@@ -93,7 +95,7 @@ async function handle({ args }: { args: NewArgs }) {
 
   const files = getScaffoldFiles({ name, manager, packageManagerField, rt });
 
-  await mkdir(join(cwd, "src"));
+  await Promise.all([mkdir(join(cwd, "src")), mkdir(join(cwd, "src", "users"))]);
   await Promise.all(files.map((file) => text.write(join(cwd, file.path), file.content, { mode: file.mode })));
 
   spinner.succeed(`Scaffolded ${chalk.bold(chalk.cyan(name))}`);

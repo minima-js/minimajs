@@ -1,5 +1,5 @@
 # ── Build stage ────────────────────────────────────────────────────────────────
-FROM node:{{ version }}-alpine AS builder
+FROM node:{{ version }} AS builder
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ COPY . .
 RUN pnpm run build
 
 # ── Production stage ───────────────────────────────────────────────────────────
-FROM node:{{ version }}-alpine
+FROM node:{{ version }}
 
 WORKDIR /app
 
@@ -24,14 +24,14 @@ ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
 # Create non-root user
-RUN addgroup --system app && adduser --system --ingroup app app
+RUN addgroup --system {{ user }} && adduser --system --ingroup {{ user }} {{ user }}
 
 COPY package.json pnpm-lock.yaml ./
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prod
 
-COPY --chown=app:app --from=builder /app/dist ./dist
+COPY --chown={{ user }}:{{ user }} --from=builder /app/dist ./dist
 
-USER app
+USER {{ user }}
 
 ENV PORT=3000
 EXPOSE 3000

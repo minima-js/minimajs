@@ -221,3 +221,74 @@ export async function fileFromMetadata(
     return trigger.streaming(result[0], file);
   });
 }
+
+type DecimalUnit = "K" | "M" | "G" | "T" | "P";
+type BinaryUnit = "Ki" | "Mi" | "Gi" | "Ti" | "Pi";
+
+type Unit = DecimalUnit | BinaryUnit;
+
+export type ByteLiteral = `${number}${Unit}`;
+
+export function b<T extends ByteLiteral>(strings: TemplateStringsArray, ..._expr: T[]): number {
+  const input = strings[0]!; // no interpolations allowed
+  return parseBytes(input);
+}
+const DECIMAL_BASE = 1000;
+const BINARY_BASE = 1024;
+
+const DECIMAL_MAP: Record<DecimalUnit, number> = {
+  K: 1,
+  M: 2,
+  G: 3,
+  T: 4,
+  P: 5,
+};
+
+const BINARY_MAP: Record<BinaryUnit, number> = {
+  Ki: 1,
+  Mi: 2,
+  Gi: 3,
+  Ti: 4,
+  Pi: 5,
+};
+
+function parseBytes(input: string): number {
+  const len = input.length;
+
+  // --- parse number ---
+  let i = 0;
+  while (i < len && ((input[i]! >= "0" && input[i]! <= "9") || input[i]! === ".")) {
+    i++;
+  }
+
+  if (i === 0) {
+    throw new Error(`Invalid byte literal: "${input}"`);
+  }
+
+  const num = Number(input.slice(0, i));
+  const unit = input.slice(i) as Unit;
+
+  if (!unit) {
+    throw new Error(`Missing unit in "${input}"`);
+  }
+
+  // --- binary units (Ki, Mi, etc.) ---
+  if (unit.length === 2) {
+    const power = BINARY_MAP[unit as BinaryUnit];
+    if (power === undefined) {
+      throw new Error(`Invalid unit "${unit}" in "${input}"`);
+    }
+    return num * BINARY_BASE ** power;
+  }
+
+  // --- decimal units (K, M, etc.) ---
+  if (unit.length === 1) {
+    const power = DECIMAL_MAP[unit as DecimalUnit];
+    if (power === undefined) {
+      throw new Error(`Invalid unit "${unit}" in "${input}"`);
+    }
+    return num * DECIMAL_BASE ** power;
+  }
+
+  throw new Error(`Invalid unit "${unit}" in "${input}"`);
+}

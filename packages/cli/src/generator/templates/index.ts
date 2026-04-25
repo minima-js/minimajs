@@ -14,11 +14,12 @@ import dockerYarn from "./docker/yarn.stub";
 import dockerBerry from "./docker/berry.stub";
 import eslintConfig from "./eslint.config.js.stub";
 import prettierConfig from "./prettier.config.js.stub";
+import swaggerModule from "./swagger.module.stub";
 import type { Stub } from "#/types.js";
 
 type NamedVars = { name: string };
 type InstanceVars = { instance: string };
-type DockerVars = { version: string };
+type DockerVars = { version: string; user: string };
 
 export const templates = {
   disk: {
@@ -31,12 +32,13 @@ export const templates = {
     npm: dockerNpm as Stub<DockerVars>,
     pnpm: dockerPnpm as Stub<DockerVars>,
     yarn: dockerYarn as Stub<DockerVars>,
-    berry: dockerBerry as Stub<{ version: string }>,
+    berry: dockerBerry as Stub<DockerVars>,
   },
   configs: {
     eslint: eslintConfig as Stub,
     prettier: prettierConfig as Stub,
   },
+  swaggerModule: swaggerModule as Stub<{ spec: string }>,
   module: $module as Stub<NamedVars>,
   handler: handler as Stub,
   service: service as Stub<NamedVars>,
