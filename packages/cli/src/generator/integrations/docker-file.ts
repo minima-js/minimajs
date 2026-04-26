@@ -23,14 +23,19 @@ async function fetchDockerVersion(repo: string, fallback: string): Promise<strin
         for (let i = 0; i < 3; i++) if (av[i] !== bv[i]) return bv[i]! - av[i]!;
         return 0;
       });
-    return found[0]?.name.replace("-alpine", "") ?? fallback;
+    return found[0]?.name ?? fallback;
   } catch {
     logger.warn(`Could not fetch latest Docker version for ${repo}, using "${fallback}"`);
     return fallback;
   }
 }
 
-async function handle() {
+interface DockerfileArgs {
+  user: string;
+  version?: string;
+}
+
+async function handle({ args }: { args: DockerfileArgs }) {
   const config = await loadConfig();
   const detected = pm.detect();
   const berry = detected === "yarn" && pm.isYarnBerry();
@@ -42,8 +47,9 @@ async function handle() {
 
   const rt = runtime.detect();
   const repo = rt === "bun" ? "oven/bun" : "node";
-  const fallback = rt === "bun" ? "latest" : "lts";
-  const version = runtime.detect.version() ?? (await fetchDockerVersion(repo, fallback));
+  const fallback = rt === "bun" ? "latest" : "lts-alpine";
+  const detectedVersion = runtime.detect.version();
+  const version = args.version ?? (detectedVersion ? `${detectedVersion}-alpine` : await fetchDockerVersion(repo, fallback));
 
   const cmd =
     rt === "node" && config.sourcemap
@@ -51,7 +57,7 @@ async function handle() {
       : rt === "bun"
         ? `["bun", "run", "dist/index.js"]`
         : `["node", "dist/index.js"]`;
-  const templateVars = { version, cmd };
+  const templateVars = { version, cmd, user: args.user };
   const content = berry ? templates.docker.berry(templateVars) : templates.docker[detected](templateVars);
   text.write.sync(destPath, content);
 
@@ -59,6 +65,8 @@ async function handle() {
   logger.info(
     "",
     `  ${chalk.green("✔")} Created ${chalk.bold(chalk.cyan("Dockerfile"))} for ${chalk.bold(label)}`,
+    `  ${chalk.dim("Version:")} ${chalk.cyan(version)}`,
+    `  ${chalk.dim("User:")} ${chalk.cyan(args.user)}`,
     "",
     `  ${chalk.dim("Tip:")} build with ${chalk.cyan("docker build -t my-app .")}`,
     ""
@@ -67,5 +75,16 @@ async function handle() {
 
 export const dockerfile = defineCommand({
   meta: { name: "dockerfile", description: "Generate a Dockerfile (auto-detects bun or node runtime)" },
+  args: {
+    user: {
+      type: "string",
+      description: "Non-root user to run the container as",
+      default: "minimajs",
+    },
+    version: {
+      type: "string",
+      description: "Base image version tag (e.g. 24-alpine, lts-alpine)",
+    },
+  },
   run: handle,
 });

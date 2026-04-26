@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { defineCommand } from "citty";
 import chalk from "chalk";
 import ms from "pretty-ms";
-import { logger } from "../utils/logger.js";
+import { logger } from "#/utils/logger.js";
 
 const tscBin = fileURLToPath(import.meta.resolve("typescript/bin/tsc"));
 

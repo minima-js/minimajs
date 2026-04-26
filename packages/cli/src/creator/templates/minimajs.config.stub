@@ -1,6 +1,7 @@
 import { defineConfig } from "@minimajs/cli";
 
 export default defineConfig(({ watch }) => ({
-  run: watch,
   exec: "{{ runtime }} [filename]",
+  envFile: ".env",
+  sourcemap: watch,
 }));

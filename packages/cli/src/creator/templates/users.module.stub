@@ -1,0 +1,12 @@
+import type { Meta, Routes } from "@minimajs/server";
+import * as handlers from "./users.handler.js";
+
+export const meta: Meta = {};
+
+export const routes: Routes = {
+  "GET /": handlers.list,
+  "GET /:id": handlers.show,
+  "POST /": handlers.create,
+  "PUT /:id": handlers.update,
+  "DELETE /:id": handlers.destroy,
+};

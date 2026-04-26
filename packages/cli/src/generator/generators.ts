@@ -4,9 +4,9 @@ import chalk from "chalk";
 import { exists, text } from "../utils/fs.js";
 import { templates } from "./templates/index.js";
 import { toCamel } from "../utils/str.js";
-import { logger } from "../utils/logger.js";
+import { logger } from "#/utils/logger.js";
 
-type GenerateFileTypes = keyof Pick<typeof templates, "hook" | "middleware" | "service" | "plugin">;
+type GenerateFileTypes = keyof Pick<typeof templates, "middleware" | "service" | "plugin">;
 
 export function generateFile(type: GenerateFileTypes, name: string, dir = "src"): void {
   const targetDir = resolveCwd(dir, name);

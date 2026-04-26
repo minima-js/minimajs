@@ -1,5 +1,6 @@
 import type { CommandDef } from "citty";
 import { openapi } from "./openapi.js";
+import { swagger } from "./swagger.js";
 import { disk } from "./disk.js";
 import { dockerfile } from "./docker-file.js";
 import { module } from "./module.js";
@@ -13,6 +14,7 @@ import { format } from "./format.js";
 
 export const integrations: Record<string, CommandDef<any>> = {
   openapi,
+  swagger,
   disk,
   dockerfile,
   module,

@@ -2,9 +2,9 @@ import { join } from "node:path";
 import { defineCommand } from "citty";
 import chalk from "chalk";
 import { runtime } from "../runtime/index.js";
-import { exists, json } from "../utils/fs.js";
+import { exists, json } from "#/utils/fs.js";
 import { loadConfig } from "../config/index.js";
-import { logger } from "../utils/logger.js";
+import { logger } from "#/utils/logger.js";
 import * as pm from "../pm/index.js";
 
 type Row = [label: string, value: string];

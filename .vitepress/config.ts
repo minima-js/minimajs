@@ -222,6 +222,24 @@ const config = defineConfig({
         ],
       },
       {
+        text: "CLI",
+        items: [
+          { text: "Configuration", link: "/cli/configuration" },
+          {
+            text: "add",
+            collapsed: false,
+            items: [
+              { text: "disk", link: "/cli/add/disk" },
+              { text: "openapi", link: "/cli/add/openapi" },
+              { text: "swagger", link: "/cli/add/swagger" },
+              { text: "dockerfile", link: "/cli/add/dockerfile" },
+              { text: "skills", link: "/cli/add/skills" },
+              { text: 'hook', link: '/cli/add/hook' }
+            ],
+          },
+        ],
+      },
+      {
         text: "Packages",
         items: [
           { text: "Auth", link: "/packages/auth" },
