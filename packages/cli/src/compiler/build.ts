@@ -1,15 +1,5 @@
 import { defineCommand } from "citty";
 import { handleAction } from "./esbuild/index.js";
-import type { CliOption } from "../command.js";
-
-function runBuild(opts: CliOption): Promise<void> {
-  return handleAction({
-    clean: true,
-    build: true,
-    run: false,
-    ...opts,
-  });
-}
 
 export const buildCommand = defineCommand({
   meta: {
@@ -52,13 +42,10 @@ export const buildCommand = defineCommand({
     },
   },
   run({ args }) {
-    return runBuild({
-      outdir: args.outdir,
-      minify: args.minify,
-      sourcemap: args.sourcemap,
-      tsconfig: args.tsconfig,
-      check: args.check,
-      target: args.target,
+    return handleAction({
+      build: true,
+      run: false,
+      ...args,
     });
   },
 });

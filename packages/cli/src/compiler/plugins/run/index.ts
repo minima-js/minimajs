@@ -8,7 +8,7 @@ interface RunOption {
   bin: string;
   args: string[];
   killSignal?: NodeJS.Signals;
-  envFile?: string;
+  envFile?: string | string[];
 }
 
 export function run(opt: RunOption): Plugin {

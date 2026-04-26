@@ -29,7 +29,7 @@ export interface BaseConfig {
   outdir: string;
   loader: Record<string, Loader>;
   target?: string;
-  envFile?: string;
+  envFile?: string | string[];
   plugins?: MinimaPlugin[];
   esbuild?: EsbuildOverrides;
 }

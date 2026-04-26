@@ -1,104 +1,91 @@
-/**
- * AST-guided source patcher for src/module.ts.
- *
- * Uses the TypeScript Compiler API to locate exact character positions, then
- * performs surgical text splices on the original source.  The printer is never
- * involved, so all original formatting is preserved.
- */
-
 import { join } from "node:path";
-import ts from "typescript";
+import { parseModule, generateCode, builders } from "magicast";
 import { exists, text } from "../utils/fs.js";
 
+export interface PatchSpec {
+  from: string;
+  imported: string;
+  plugin: string;
+}
+
+export interface PatchSuggestion {
+  modulePath: string;
+  before: string;
+  after: string;
+  spec: PatchSpec;
+}
+
+function resolveModulePath(cwd: string): string {
+  return join(cwd, "src", "module.ts");
+}
+
+function buildPatch(source: string, spec: PatchSpec): string {
+  const mod = parseModule(source);
+
+  const alreadyImported = mod.imports.$items.some((i) => i.from === spec.from && i.imported === spec.imported);
+  if (alreadyImported) return source;
+
+  mod.imports.$prepend({ from: spec.from, imported: spec.imported });
+
+  const meta = mod.exports.meta as any;
+  if (meta) {
+    if (!meta.plugins) {
+      meta.plugins = [builders.raw(spec.plugin)];
+    } else {
+      meta.plugins.push(builders.raw(spec.plugin));
+    }
+  }
+
+  return generateCode(mod).code;
+}
+
 /**
- * Patch src/module.ts to:
- *  1. Add an import declaration (after the last existing import)
- *  2. Append a plugin expression to the `plugins` array inside `export const meta`
- *     (or create the `plugins` property if it doesn't exist yet)
- *
- * Idempotent: skips if the import is already present.
+ * Return what applying spec would produce without touching the file.
+ * Returns null when the patch is already applied (idempotent / no-op).
+ * Pass `modulePath` to target a module other than `src/module.ts`.
  */
-export function patchModule(cwd: string, importLine: string, plugin: string): void {
-  const modulePath = join(cwd, "src", "module.ts");
-  if (!exists(modulePath)) return;
+export function suggestModule(cwd: string, spec: PatchSpec, modulePath?: string): PatchSuggestion | null {
+  const resolvedPath = modulePath ?? resolveModulePath(cwd);
+  if (!exists(resolvedPath)) return null;
 
-  const original = text.sync(modulePath);
-  if (original.includes(importLine)) return;
+  const original = text.sync(resolvedPath);
+  const after = buildPatch(original, spec);
+  if (after === original) return null;
 
-  const src = ts.createSourceFile(modulePath, original, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-
-  // ── 1. Locate import insertion point ────────────────────────────────────────
-  let importInsertPos = 0;
-  for (const stmt of src.statements) {
-    if (ts.isImportDeclaration(stmt)) importInsertPos = stmt.end;
-  }
-  const importSplice: Splice =
-    importInsertPos === 0 ? { pos: 0, insert: importLine + "\n" } : { pos: importInsertPos, insert: "\n" + importLine };
-
-  // ── 2. Locate plugins array insertion point inside `export const meta` ──────
-  const pluginSplice = findPluginSplice(src, original, plugin);
-
-  // ── 3. Apply splices highest-position first so earlier positions stay valid ─
-  let result = original;
-  const splices = [importSplice, ...(pluginSplice ? [pluginSplice] : [])].sort((a, b) => b.pos - a.pos);
-  for (const { pos, insert } of splices) {
-    result = result.slice(0, pos) + insert + result.slice(pos);
-  }
-
-  text.write.sync(modulePath, result);
+  return { modulePath: resolvedPath, before: original, after, spec };
 }
 
-// ─── Position finders ─────────────────────────────────────────────────────────
-
-type Splice = { pos: number; insert: string };
-
-function findPluginSplice(src: ts.SourceFile, original: string, plugin: string): Splice | null {
-  for (const stmt of src.statements) {
-    if (!ts.isVariableStatement(stmt)) continue;
-    if (!stmt.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) continue;
-
-    for (const decl of stmt.declarationList.declarations) {
-      if (!ts.isIdentifier(decl.name) || decl.name.text !== "meta") continue;
-      if (!decl.initializer || !ts.isObjectLiteralExpression(decl.initializer)) continue;
-
-      return spliceForMetaObject(decl.initializer, original, plugin);
-    }
-  }
-  return null;
+/**
+ * Write a previously computed suggestion to disk.
+ */
+export function applyPatch(suggestion: PatchSuggestion): void {
+  text.write.sync(suggestion.modulePath, suggestion.after);
 }
 
-function spliceForMetaObject(obj: ts.ObjectLiteralExpression, original: string, plugin: string): Splice {
-  const pluginsProp = obj.properties.find(
-    (p) => ts.isPropertyAssignment(p) && ts.isIdentifier(p.name) && p.name.text === "plugins"
-  ) as ts.PropertyAssignment | undefined;
+function buildIndexPatch(source: string, spec: PatchSpec): string {
+  const mod = parseModule(source);
 
-  if (pluginsProp) {
-    // Append to the existing array literal
-    if (!ts.isArrayLiteralExpression(pluginsProp.initializer)) {
-      return { pos: pluginsProp.end, insert: "" }; // not an array — no-op
-    }
-    const arr = pluginsProp.initializer;
-    const lastEl = arr.elements.at(-1);
-    if (!lastEl) {
-      return { pos: arr.getStart() + 1, insert: plugin };
-    }
-    return { pos: lastEl.end, insert: `, ${plugin}` };
-  }
+  const alreadyImported = mod.imports.$items.some((i) => i.from === spec.from && i.imported === spec.imported);
+  if (alreadyImported) return source;
 
-  // No plugins property — create one before the closing brace of the meta object.
-  // Mirror the indentation of existing properties (or fall back to two spaces).
-  const firstProp = obj.properties.at(0);
-  const lastProp = obj.properties.at(-1);
-  const indent = firstProp ? lineIndent(original, firstProp.getStart()) : "  ";
-  const insertAfter = lastProp ? lastProp.end : obj.getStart() + 1;
+  mod.imports.$prepend({ from: spec.from, imported: spec.imported });
 
-  return { pos: insertAfter, insert: `,\n${indent}plugins: [${plugin}]` };
+  let code = generateCode(mod).code;
+  code = code.replace(/^(const app = createApp\([^)]*\);)$/m, `$1\napp.register(${spec.plugin});`);
+  return code;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+/**
+ * Patch src/index.ts by adding an import and registering via app.register().
+ * Returns null when already applied or index.ts doesn't exist.
+ */
+export function suggestIndex(cwd: string, spec: PatchSpec): PatchSuggestion | null {
+  const indexPath = join(cwd, "src", "index.ts");
+  if (!exists(indexPath)) return null;
 
-/** Return the leading whitespace of the line that contains `pos`. */
-function lineIndent(src: string, pos: number): string {
-  const lineStart = src.lastIndexOf("\n", pos) + 1;
-  return src.slice(lineStart).match(/^(\s*)/)?.[1] ?? "";
+  const original = text.sync(indexPath);
+  const after = buildIndexPatch(original, spec);
+  if (after === original) return null;
+
+  return { modulePath: indexPath, before: original, after, spec };
 }

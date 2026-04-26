@@ -80,15 +80,13 @@ async function handle({ args }: { args: { claude: boolean } }) {
   const files = await withSpinner(`Downloading minimajs skill...`, () => downloadSkill());
 
   const created: string[] = [];
+  const updated: string[] = [];
 
   for (const [name, content] of Object.entries(files)) {
     const dest = join(DEST_DIR, name);
-    if (exists(dest)) {
-      logger.info(`  ${chalk.yellow("!")} Skipped ${chalk.cyan(dest)} (already exists)`);
-      continue;
-    }
+    const isUpdate = exists(dest);
     text.write.sync(dest, content, { ensuredir: true });
-    created.push(dest);
+    (isUpdate ? updated : created).push(dest);
   }
 
   if (args.claude) {
@@ -100,6 +98,7 @@ async function handle({ args }: { args: { claude: boolean } }) {
     `  ${chalk.green("✔")} Skill installed to ${chalk.cyan(DEST_DIR)}`,
     "",
     ...(created.length > 0 ? [`  ${chalk.dim("Created:")}`, ...created.map((f) => `    ${chalk.cyan(f)}`)] : []),
+    ...(updated.length > 0 ? [`  ${chalk.dim("Updated:")}`, ...updated.map((f) => `    ${chalk.cyan(f)}`)] : []),
     ""
   );
 }

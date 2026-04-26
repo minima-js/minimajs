@@ -1,50 +1,53 @@
-import { execFileSync } from "node:child_process";
-import { join, resolve } from "node:path";
+import { spawn } from "node:child_process";
 import { defineCommand } from "citty";
 import chalk from "chalk";
 import { loadConfig } from "../config/index.js";
-import { manifest } from "../config/pkg.js";
-import { logger } from "../utils/logger.js";
+import { logger } from "#/utils/logger.js";
 import { loadEnvFile } from "../config/env.js";
-import { exists } from "../utils/fs.js";
+import { exists } from "#/utils/fs.js";
 import { runtime } from "../runtime/index.js";
+import { getOutputFilename } from "../utils/path.js";
 
 export interface StartOptions {
-  entry?: string;
   envFile?: string;
+  sourcemap?: boolean;
 }
 
 export async function runStart(opts: StartOptions): Promise<void> {
-  let entry = opts.entry;
-  const config = await loadConfig();
+  const config = await loadConfig(opts);
+  const entry = getOutputFilename(config.entry[0]!, config.outdir, ".js");
+  const needsEntry = !config.exec || config.exec.includes("[filename]");
 
-  if (!entry) {
-    const pkgInfo = await manifest();
-    if (pkgInfo.main) {
-      entry = resolve(pkgInfo.main);
-    } else {
-      const candidates = [join("dist", "index.js"), join("dist", "index.mjs"), join("dist", "main.js")];
-      for (const c of candidates) {
-        if (exists(c)) {
-          entry = c;
-          break;
-        }
-      }
+  if (needsEntry) {
+    if (!entry || !exists(entry)) {
+      logger.fatal(`Cannot find compiled output. Run ${chalk.bold(chalk.cyan("minimajs build"))} first.`);
     }
   }
 
-  if (!entry || !exists(entry)) {
-    logger.fatal(`Cannot find compiled output. Run ${chalk.bold(chalk.cyan("minimajs build"))} first.`);
+  const cmd = config.exec ? config.exec.replace("[filename]", entry ?? "") : `${runtime.bin(runtime.detect())} ${entry!}`;
+
+  const [bin, ...args] = cmd.trim().split(/\s+/);
+
+  if (config.sourcemap && runtime.isNode(bin!)) {
+    args.unshift("--enable-source-maps");
   }
 
-  const env: NodeJS.ProcessEnv = { ...process.env };
-  if (opts.envFile) {
-    Object.assign(env, loadEnvFile(opts.envFile));
-  }
+  const importArgs = config.import.flatMap((x) => ["--import", getOutputFilename(x, config.outdir, ".js")]);
+  args.push(...importArgs);
 
-  const bin = runtime.bin(runtime.detect());
-  const args = config.sourcemap && runtime.isNode(bin) ? ["--enable-source-maps", entry!] : [entry!];
-  execFileSync(bin, args, { stdio: "inherit", env });
+  const envVars = config.envFile ? loadEnvFile(config.envFile) : undefined;
+  const env = envVars ? { ...process.env, ...envVars } : process.env;
+
+  await new Promise<void>((resolve) => {
+    const proc = spawn(bin!, args, { stdio: "inherit", env });
+    proc.on("exit", () => resolve());
+    proc.on("error", (err) => {
+      logger.error(`Failed to start process "${bin}": ${err.message}`);
+      resolve();
+    });
+    process.once("SIGTERM", () => proc.kill("SIGTERM"));
+    process.once("SIGINT", () => proc.kill("SIGINT"));
+  });
 }
 
 export const startCommand = defineCommand({
@@ -53,21 +56,20 @@ export const startCommand = defineCommand({
     description: "Run the compiled production build",
   },
   args: {
-    entry: {
-      type: "positional",
-      description: "Compiled entry file (auto-detected from package.json if omitted)",
-      required: false,
-    },
     "env-file": {
       type: "string",
       description: "Path to .env file",
       valueHint: "path",
     },
+    sourcemap: {
+      type: "boolean",
+      alias: ["s"],
+      description: "Enable sourcemaps",
+    },
   },
   run({ args }) {
-    return runStart({
-      entry: args.entry,
-      envFile: args["env-file"],
-    });
+    const { _, ...options } = args;
+    delete options["env-file"];
+    return runStart(options);
   },
 });

@@ -1,22 +1,28 @@
 import { defineCommand } from "citty";
 import chalk from "chalk";
 import { logger } from "#/utils/logger.js";
-import { patchModule } from "../patch.js";
+import { suggestModule, applyPatch } from "../patch.js";
 import * as pm from "#/pm/index.js";
 
-async function handle({ args }: { args: { install: boolean } }) {
-  if (args.install) {
-    logger.info(`  Installing ${chalk.bold("@minimajs/openapi")}...`);
+export function integrateOpenapi(cwd: string, install: boolean): void {
+  if (install) {
     pm.add(["@minimajs/openapi"], { skipInstalled: true });
   }
 
-  patchModule(
-    process.cwd(),
-    `import { openapi } from "@minimajs/openapi";`,
-    `openapi({ info: { title: "My API", version: "1.0.0" } })`
-  );
+  const suggestion = suggestModule(cwd, {
+    from: "@minimajs/openapi",
+    imported: "openapi",
+    plugin: `openapi({ info: { title: "My API", version: "1.0.0" } })`,
+  });
 
-  logger.info("", `  ${chalk.green("✔")} Added ${chalk.bold(chalk.cyan("openapi"))} — OpenAPI/Swagger documentation`, "");
+  if (suggestion) {
+    applyPatch(suggestion);
+    logger.info(`  ${chalk.green("✔")} Configured openapi`);
+  }
+}
+
+function handle({ args }: { args: { install: boolean } }) {
+  integrateOpenapi(process.cwd(), args.install);
 }
 
 export const openapi = defineCommand({

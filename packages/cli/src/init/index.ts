@@ -1,7 +1,7 @@
 import { defineCommand } from "citty";
 import chalk from "chalk";
 import { exists, text } from "../utils/fs.js";
-import { logger } from "../utils/logger.js";
+import { logger } from "#/utils/logger.js";
 import { templates } from "../creator/templates/index.js";
 import { runtime } from "../runtime/index.js";
 import * as pm from "../pm/index.js";

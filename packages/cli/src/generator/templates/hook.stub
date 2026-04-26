@@ -1,6 +1,6 @@
 import { hook } from "@minimajs/server";
 
 
-export const {{ instance }} = hook("request", async () => {
+export const {{ instance }} = hook("{{ hookType }}", async () => {
   // TODO: implement hook logic
 });

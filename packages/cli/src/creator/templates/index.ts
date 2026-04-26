@@ -7,6 +7,8 @@ import minimajsConfig from "./minimajs.config.stub";
 import packageBun from "./package.bun.json.stub";
 import packageNode from "./package.node.json.stub";
 import rootModule from "./module.ts.stub";
+import usersModule from "./users.module.stub";
+import usersHandler from "./users.handler.stub";
 import tsconfig from "./tsconfig.stub.json" with { type: "json" };
 
 import type { Stub } from "#/types.js";
@@ -25,5 +27,7 @@ export const templates = {
   index: index as Stub<{ runtime: string }>,
   minimajsConfig: minimajsConfig as Stub<{ runtime: string }>,
   rootModule: rootModule as Stub,
+  usersModule: usersModule as Stub,
+  usersHandler: usersHandler as Stub,
   tsconfig: () => JSON.stringify(tsconfig, null, 2),
 };
