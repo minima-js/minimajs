@@ -2,9 +2,9 @@ import { spawn } from "node:child_process";
 import { defineCommand } from "citty";
 import chalk from "chalk";
 import { loadConfig } from "../config/index.js";
-import { logger } from "../utils/logger.js";
+import { logger } from "#/utils/logger.js";
 import { loadEnvFile } from "../config/env.js";
-import { exists } from "../utils/fs.js";
+import { exists } from "#/utils/fs.js";
 import { runtime } from "../runtime/index.js";
 import { getOutputFilename } from "../utils/path.js";
 
@@ -14,7 +14,7 @@ export interface StartOptions {
 }
 
 export async function runStart(opts: StartOptions): Promise<void> {
-  const config = await loadConfig({ envFile: opts.envFile, sourcemap: opts.sourcemap });
+  const config = await loadConfig(opts);
   const entry = getOutputFilename(config.entry[0]!, config.outdir, ".js");
   const needsEntry = !config.exec || config.exec.includes("[filename]");
 

@@ -1,9 +1,9 @@
 import { defineCommand } from "citty";
 import { join } from "node:path";
-import { resolveCwd } from "../utils/path.js";
+import { resolveCwd } from "#/utils/path.js";
 import chalk from "chalk";
-import { createSpinner } from "../utils/spinner.js";
-import { logger } from "../utils/logger.js";
+import { createSpinner } from "#/utils/spinner.js";
+import { logger } from "#/utils/logger.js";
 import { templates } from "./templates/index.js";
 import type { Runtime } from "../config/types.js";
 import * as pm from "../pm/index.js";
