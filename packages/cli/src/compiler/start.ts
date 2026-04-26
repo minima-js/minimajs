@@ -7,6 +7,7 @@ import { loadEnvFile } from "../config/env.js";
 import { exists } from "#/utils/fs.js";
 import { runtime } from "../runtime/index.js";
 import { getOutputFilename } from "../utils/path.js";
+import { resolveRunCommand } from "./esbuild/plugins.js";
 
 export interface StartOptions {
   envFile?: string;
@@ -24,22 +25,22 @@ export async function runStart(opts: StartOptions): Promise<void> {
     }
   }
 
-  const cmd = config.exec ? config.exec.replace("[filename]", entry ?? "") : `${runtime.bin(runtime.detect())} ${entry!}`;
+  const { bin, args } = resolveRunCommand(config.exec, entry ?? "");
 
-  const [bin, ...args] = cmd.trim().split(/\s+/);
-
-  if (config.sourcemap && runtime.isNode(bin!)) {
+  if (config.sourcemap && runtime.isNode(bin)) {
     args.unshift("--enable-source-maps");
   }
 
-  const importArgs = config.import.flatMap((x) => ["--import", getOutputFilename(x, config.outdir, ".js")]);
-  args.push(...importArgs);
+  const importArgs = config.import?.flatMap((x) => ["--import", getOutputFilename(x, config.outdir, ".js")]);
+  if (importArgs) {
+    args.push(...importArgs);
+  }
 
   const envVars = config.envFile ? loadEnvFile(config.envFile) : undefined;
   const env = envVars ? { ...process.env, ...envVars } : process.env;
 
   await new Promise<void>((resolve) => {
-    const proc = spawn(bin!, args, { stdio: "inherit", env });
+    const proc = spawn(bin, args, { stdio: "inherit", env });
     proc.on("exit", () => resolve());
     proc.on("error", (err) => {
       logger.error(`Failed to start process "${bin}": ${err.message}`);

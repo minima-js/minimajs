@@ -1,5 +1,4 @@
 import { logger } from "#/utils/logger.js";
-import { exists } from "../utils/fs.js";
 import { glob } from "node:fs/promises";
 
 const GLOB_CHARS = /[*?{[]/;
@@ -20,14 +19,10 @@ export async function resolveEntries(entries: string[]): Promise<string[]> {
   for (const entry of entries) {
     if (isGlobPattern(entry)) {
       for await (const file of glob(entry)) {
-        if (!resolved.includes(file)) {
-          resolved.push(file);
-        }
+        resolved.push(file);
       }
     } else {
-      if (exists(entry) && !resolved.includes(entry)) {
-        resolved.push(entry);
-      }
+      resolved.push(entry);
     }
   }
 

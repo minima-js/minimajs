@@ -1,6 +1,6 @@
 import { EOL } from "node:os";
 import chalk from "chalk";
-import esbuild, { type BuildOptions } from "esbuild";
+import esbuild from "esbuild";
 import { relativeId } from "#/utils/path.js";
 import { logger } from "#/utils/logger.js";
 import { format } from "../format.js";
@@ -8,8 +8,10 @@ import { getEntryLabel } from "./entry.js";
 import type { Config } from "#/config/index.js";
 import { createSpinner } from "#/utils/spinner.js";
 import { runCheck } from "#/check/index.js";
+import { buildEsbuildConfig } from "./builder.js";
 
-export async function build(inputOptions: BuildOptions, config: Config): Promise<void> {
+export async function build(config: Config): Promise<void> {
+  const inputOptions = await buildEsbuildConfig(config);
   const start = Date.now();
   const files = relativeId(inputOptions.outdir!);
   const inputFiles = relativeId(getEntryLabel(inputOptions));

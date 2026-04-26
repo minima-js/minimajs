@@ -16,7 +16,7 @@ export type PackageManager = "bun" | "pnpm" | "yarn" | "npm";
 export interface BaseConfig {
   entry: string[];
   run: boolean;
-  exec?: string;
+  exec: string;
   watch: boolean;
   clean: boolean;
   sourcemap: boolean;
@@ -25,7 +25,7 @@ export interface BaseConfig {
   check: boolean;
   reset: boolean;
   killSignal: NodeJS.Signals;
-  import: string[];
+  import?: string[];
   outdir: string;
   loader: Record<string, Loader>;
   target?: string;
