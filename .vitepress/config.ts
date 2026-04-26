@@ -234,6 +234,7 @@ const config = defineConfig({
               { text: "swagger", link: "/cli/add/swagger" },
               { text: "dockerfile", link: "/cli/add/dockerfile" },
               { text: "skills", link: "/cli/add/skills" },
+              { text: 'hook', link: '/cli/add/hook' }
             ],
           },
         ],

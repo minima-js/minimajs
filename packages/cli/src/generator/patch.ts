@@ -22,9 +22,7 @@ function resolveModulePath(cwd: string): string {
 function buildPatch(source: string, spec: PatchSpec): string {
   const mod = parseModule(source);
 
-  const alreadyImported = mod.imports.$items.some(
-    (i) => i.from === spec.from && i.imported === spec.imported
-  );
+  const alreadyImported = mod.imports.$items.some((i) => i.from === spec.from && i.imported === spec.imported);
   if (alreadyImported) return source;
 
   mod.imports.$prepend({ from: spec.from, imported: spec.imported });
@@ -44,16 +42,17 @@ function buildPatch(source: string, spec: PatchSpec): string {
 /**
  * Return what applying spec would produce without touching the file.
  * Returns null when the patch is already applied (idempotent / no-op).
+ * Pass `modulePath` to target a module other than `src/module.ts`.
  */
-export function suggestModule(cwd: string, spec: PatchSpec): PatchSuggestion | null {
-  const modulePath = resolveModulePath(cwd);
-  if (!exists(modulePath)) return null;
+export function suggestModule(cwd: string, spec: PatchSpec, modulePath?: string): PatchSuggestion | null {
+  const resolvedPath = modulePath ?? resolveModulePath(cwd);
+  if (!exists(resolvedPath)) return null;
 
-  const original = text.sync(modulePath);
+  const original = text.sync(resolvedPath);
   const after = buildPatch(original, spec);
   if (after === original) return null;
 
-  return { modulePath, before: original, after, spec };
+  return { modulePath: resolvedPath, before: original, after, spec };
 }
 
 /**
@@ -61,4 +60,32 @@ export function suggestModule(cwd: string, spec: PatchSpec): PatchSuggestion | n
  */
 export function applyPatch(suggestion: PatchSuggestion): void {
   text.write.sync(suggestion.modulePath, suggestion.after);
+}
+
+function buildIndexPatch(source: string, spec: PatchSpec): string {
+  const mod = parseModule(source);
+
+  const alreadyImported = mod.imports.$items.some((i) => i.from === spec.from && i.imported === spec.imported);
+  if (alreadyImported) return source;
+
+  mod.imports.$prepend({ from: spec.from, imported: spec.imported });
+
+  let code = generateCode(mod).code;
+  code = code.replace(/^(const app = createApp\([^)]*\);)$/m, `$1\napp.register(${spec.plugin});`);
+  return code;
+}
+
+/**
+ * Patch src/index.ts by adding an import and registering via app.register().
+ * Returns null when already applied or index.ts doesn't exist.
+ */
+export function suggestIndex(cwd: string, spec: PatchSpec): PatchSuggestion | null {
+  const indexPath = join(cwd, "src", "index.ts");
+  if (!exists(indexPath)) return null;
+
+  const original = text.sync(indexPath);
+  const after = buildIndexPatch(original, spec);
+  if (after === original) return null;
+
+  return { modulePath: indexPath, before: original, after, spec };
 }
