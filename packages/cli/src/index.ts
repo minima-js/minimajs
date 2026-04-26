@@ -1,17 +1,14 @@
 export { run } from "./command.js";
-export type { CliOption, Config } from "./config/types.js";
+export type { CliOption, Config, ConfigEnv, ConfigFactory } from "./config/types.js";
 
-import type { Config } from "./config/types.js";
+import type { Config, ConfigEnv, ConfigFactory } from "./config/types.js";
+import { resolveConfig } from "./config/resolve.js";
 
-interface ConfigEnv {
-  build: boolean;
-  watch: boolean;
-}
-
-type ConfigFactory = (env: ConfigEnv) => Partial<Config>;
-
-export function defineConfig(config: Partial<Config>): Partial<Config>;
-export function defineConfig(config: ConfigFactory): ConfigFactory;
-export function defineConfig(config: Partial<Config> | ConfigFactory): Partial<Config> | ConfigFactory {
-  return config;
+export function defineConfig(config: Partial<Config>): ConfigFactory;
+export function defineConfig(config: (env: ConfigEnv) => Partial<Config>): ConfigFactory;
+export function defineConfig(config: Partial<Config> | ((env: ConfigEnv) => Partial<Config>)): ConfigFactory {
+  if (typeof config === "function") {
+    return (env: ConfigEnv) => resolveConfig(config(env));
+  }
+  return () => resolveConfig(config);
 }

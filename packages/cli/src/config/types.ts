@@ -34,6 +34,11 @@ export interface BaseConfig {
   esbuild?: EsbuildOverrides;
 }
 
+export interface ConfigEnv {
+  build: boolean;
+  watch: boolean;
+}
+
 export interface CliOption extends Partial<BaseConfig> {
   grace?: boolean;
   build?: boolean;
@@ -42,3 +47,5 @@ export interface CliOption extends Partial<BaseConfig> {
 export interface Config extends BaseConfig {
   external?: { include?: string[] };
 }
+
+export type ConfigFactory = (env: ConfigEnv) => Promise<Config>;
