@@ -2,13 +2,12 @@ import type { Plugin, PluginBuild } from "esbuild";
 import { runProcess } from "./node-runner.js";
 import chalk from "chalk";
 import { logger } from "#/utils/logger.js";
-import { loadEnvFile } from "#/config/env.js";
 
 interface RunOption {
   bin: string;
   args: string[];
   killSignal?: NodeJS.Signals;
-  envFile?: string | string[];
+  env: NodeJS.ProcessEnv;
 }
 
 export function run(opt: RunOption): Plugin {
@@ -48,14 +47,12 @@ export function createRunner(option: RunOption): () => Promise<void> {
   let stopProcess: ReturnType<typeof runProcess> | null = null;
   let isExecuting = false;
 
-  const envVars = option.envFile ? loadEnvFile(option.envFile) : undefined;
-
   return async function execute(): Promise<void> {
     if (isExecuting) return;
     isExecuting = true;
     try {
       await stopProcess?.(option.killSignal);
-      stopProcess = runProcess(option.bin, option.args, envVars);
+      stopProcess = runProcess(option.bin, option.args, option.env);
     } finally {
       isExecuting = false;
     }

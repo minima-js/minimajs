@@ -7,7 +7,7 @@ import { logger } from "#/utils/logger.js";
 import { templates } from "./templates/index.js";
 import type { Runtime } from "../config/types.js";
 import * as pm from "../pm/index.js";
-import { exec } from "../exec/index.js";
+import { exec } from "../utils/exec.js";
 import { exists, text, mkdir } from "../utils/fs.js";
 import { runtime } from "../runtime/index.js";
 import { EOL } from "node:os";

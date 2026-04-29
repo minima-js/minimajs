@@ -1,15 +1,9 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { logger } from "#/utils/logger.js";
 
-export function runProcess(
-  bin: string,
-  args: string[],
-  envVars?: Record<string, string>
-): (signal?: NodeJS.Signals) => Promise<void> {
+export function runProcess(bin: string, args: string[], env: NodeJS.ProcessEnv): (signal?: NodeJS.Signals) => Promise<void> {
   let isStopping = false;
   let proc: ChildProcess;
-
-  const env = envVars ? { ...process.env, ...envVars } : process.env;
 
   const promise = new Promise<void>((resolve) => {
     proc = spawn(bin, args, { stdio: "inherit", env });

@@ -25,7 +25,7 @@ export interface BaseConfig {
   check: boolean;
   reset: boolean;
   killSignal: NodeJS.Signals;
-  import?: string[];
+  import: string[];
   outdir: string;
   loader: Record<string, Loader>;
   target?: string;

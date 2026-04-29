@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { exec } from "../exec/index.js";
+import { exec } from "../utils/exec.js";
 import { exists } from "../utils/fs.js";
 import { manifest } from "../config/pkg.js";
 

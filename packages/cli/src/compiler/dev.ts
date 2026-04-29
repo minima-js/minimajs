@@ -66,8 +66,7 @@ export const devCommand = defineCommand({
     const { _, ...options } = args;
     delete options["env-file"];
     delete options["kill-signal"];
-    options.watch = true;
-    const config = await loadConfig(options);
+    const config = await loadConfig({ ...options, watch: true });
     return watch(config);
   },
 });
