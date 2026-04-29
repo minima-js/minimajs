@@ -25,7 +25,7 @@ export async function runStart(opts: StartOptions): Promise<void> {
   const { bin, args, env } = resolveRunCommand(config, entry!);
 
   await new Promise<void>((resolve) => {
-    const proc = spawn(bin, args, { stdio: "inherit", killSignal: config.killSignal, env });
+    const proc = spawn(bin, args, { stdio: "inherit", env });
     proc.on("exit", () => resolve());
     proc.on("error", (err) => {
       logger.error(`Failed to start process "${bin}": ${err.message}`);

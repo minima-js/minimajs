@@ -20,7 +20,6 @@ export function resolveRunCommand(config: Config, outputFile: string) {
   const args: string[] = [];
   if (sourcemap && runtime.isNode(bin!)) args.push("--enable-source-maps");
   args.push(...imports.flatMap((x) => ["--import", getOutputFilename(x, outdir)]));
-
   const env = { ...process.env, ...(envFile ? loadEnvFile(envFile) : undefined) };
   return { bin: bin!, env, args: [...args, ...userArgs] };
 }
