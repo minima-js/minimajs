@@ -11,6 +11,110 @@ description: >
 
 minimajs is a TypeScript-first, ESM-only HTTP framework for Node.js and Bun. Its central idea: **request context lives in `AsyncLocalStorage`**, so you never thread `req`/`res` through function calls — just import and call context helpers from anywhere in the request scope.
 
+## Scaffolding a new project
+
+```sh
+# Node.js (default)
+npx @minimajs/cli new hello-world
+
+# Bun
+bunx @minimajs/cli new hello-world --bun
+
+# With options
+npx @minimajs/cli new hello-world --pm pnpm      # package manager: bun | pnpm | yarn | npm
+npx @minimajs/cli new hello-world --no-install   # skip dependency installation
+npx @minimajs/cli new hello-world --no-git       # skip git init
+```
+
+The scaffolded project includes `./app` — a shell script entry point for all CLI commands.
+
+---
+
+## CLI
+
+minimajs ships a CLI accessed via the `./app` shell script scaffolded into every project.
+
+### Dev workflow
+
+```sh
+./app dev          # watch + rebuild + auto-restart
+./app dev --no-run # watch/rebuild only, don't run
+./app build        # one-shot production build
+./app start        # run the compiled output
+```
+
+### Configuration — `minimajs.config.ts`
+
+```typescript
+import { defineConfig } from "@minimajs/cli";
+
+export default defineConfig(({ watch }) => ({
+  envFile: ".env",
+  sourcemap: watch, // sourcemaps in dev only
+  // import: ["./src/instrument.ts"], // pre-load before entry (instrumentation, APM)
+}));
+```
+
+`defineConfig` always wraps a function receiving `{ watch, build }` env flags.
+
+### Generators — `./app add <type> <name>`
+
+All generators create a file and auto-patch the nearest `module.ts` to register it.
+
+#### Module
+
+```sh
+./app add module orders           # src/orders/module.ts
+./app add module api/orders       # src/api/orders/module.ts
+```
+
+#### Hook
+
+```sh
+./app add hook request                  # src/hooks/request.hook.ts → src/module.ts
+./app add hook orders/request           # src/orders/request.hook.ts → src/orders/module.ts
+./app add hook request --type send      # hook type: request | send | transform | ...
+./app add hook request --global         # registers via app.register() in src/index.ts
+```
+
+#### Plugin
+
+```sh
+./app add plugin hello                  # src/plugins/hello.plugin.ts → src/module.ts
+./app add plugin orders/hello           # src/orders/hello.plugin.ts → src/orders/module.ts
+```
+
+Plugin export name is `toCamelCase(name)` — e.g. `hello` → `export const hello: Plugin`.
+
+#### Middleware
+
+Middleware is always global — always registered in root `src/module.ts`.
+
+```sh
+./app add middleware request            # src/middlewares/request.middleware.ts
+./app add middleware auth/jwt           # src/auth/jwt.middleware.ts
+```
+
+Export name is `toCamelCase(name)` — e.g. `request` → `export const request = middleware(...)`.
+
+#### Service
+
+```sh
+./app add service users                 # src/users/service.ts
+```
+
+#### Disk
+
+```sh
+./app add disk                          # src/disks/index.ts  →  export const disk = createDisk()
+./app add disk uploads                  # src/disks/uploads.ts →  export const uploads = createDisk()
+./app add disk primary --driver aws-s3  # S3 driver
+./app add disk cdn --driver azure-blob  # Azure Blob driver
+./app add disk router --proto           # createProtoDisk() for multi-provider routing
+```
+
+---
+
 ## App creation
 
 ```typescript
@@ -72,15 +176,6 @@ export const routes: Routes = {
   "GET /:id": getUser,
   "DELETE /:id": deleteUser,
 };
-```
-
-### 2. Programmatic routing
-
-```typescript
-app.get("/users", listUsers);
-app.post("/users", createUser);
-app.get("/users/:id", getUser);
-app.delete("/users/:id", deleteUser);
 ```
 
 Route params: `:id`, `:id?` (optional), `*` (wildcard), `:id(\\d+)` (regex).

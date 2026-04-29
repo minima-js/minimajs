@@ -150,11 +150,12 @@ const config = defineConfig({
     logo: "/logo.svg",
     nav: [
       { text: "Guide", link: "/intro" },
+      { text: "CLI", link: "/cli/" },
       { text: "Architecture", link: "/core-concepts/architecture" },
       { text: "Cookbook", link: "/cookbook/jwt-authentication" },
       { text: "Advanced", link: "/advanced" },
       { text: "API Reference", link: "/api/README" },
-      { text: "Packages", link: "/packages/cli" },
+      { text: "Packages", link: "/packages/auth" },
     ],
 
     sidebar: [
@@ -210,6 +211,27 @@ const config = defineConfig({
           { text: "Route Descriptors", link: "/guides/route-descriptors" },
         ],
       },
+        {
+        text: "CLI",
+        items: [
+          { text: "Overview", link: "/cli/" },
+          { text: "Configuration", link: "/cli/configuration" },
+          {
+            text: "add",
+            collapsed: true,
+            items: [
+              { text: "hook", link: "/cli/add/hook" },
+              { text: "plugin", link: "/cli/add/plugin" },
+              { text: "middleware", link: "/cli/add/middleware" },
+              { text: "disk", link: "/cli/add/disk" },
+              { text: "openapi", link: "/cli/add/openapi" },
+              { text: "swagger", link: "/cli/add/swagger" },
+              { text: "dockerfile", link: "/cli/add/dockerfile" },
+              { text: "skills", link: "/cli/add/skills" },
+            ],
+          },
+        ],
+      },
       {
         text: "Plugins",
         items: [
@@ -242,28 +264,10 @@ const config = defineConfig({
           { text: "Context Provider", link: "/advanced/context-provider" },
         ],
       },
-      {
-        text: "CLI",
-        items: [
-          { text: "Configuration", link: "/cli/configuration" },
-          {
-            text: "add",
-            collapsed: false,
-            items: [
-              { text: "disk", link: "/cli/add/disk" },
-              { text: "openapi", link: "/cli/add/openapi" },
-              { text: "swagger", link: "/cli/add/swagger" },
-              { text: "dockerfile", link: "/cli/add/dockerfile" },
-              { text: "skills", link: "/cli/add/skills" },
-              { text: 'hook', link: '/cli/add/hook' }
-            ],
-          },
-        ],
-      },
+    
       {
         text: "Packages",
         items: [
-          { text: "CLI", link: "/packages/cli" },
           { text: "Auth", link: "/packages/auth" },
           { text: "Schema", link: "/packages/schema" },
           { text: "OpenAPI", link: "/packages/openapi" },

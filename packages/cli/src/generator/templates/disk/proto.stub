@@ -1,0 +1,9 @@
+import { createProtoDisk } from "@minimajs/disk";
+
+export const {{ instance }} = createProtoDisk({
+  protocols: {
+    // "s3://": createS3Driver({ bucket: process.env.AWS_BUCKET!, region: process.env.AWS_REGION! }),
+    // "https://cdn.example.com/": createAzureBlobDriver({ connectionString: process.env.AZURE_CONNECTION!, container: "cdn" }),
+  },
+  defaultProtocol: "file://",
+});

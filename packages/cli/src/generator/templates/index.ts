@@ -7,6 +7,7 @@ import hook from "./hook.stub";
 import diskFile from "./disk/file.stub";
 import diskS3 from "./disk/s3.stub";
 import diskAzureBlob from "./disk/azure-blob.stub";
+import diskProto from "./disk/proto.stub";
 import dockerBun from "./docker/bun.stub";
 import dockerNpm from "./docker/npm.stub";
 import dockerPnpm from "./docker/pnpm.stub";
@@ -24,9 +25,10 @@ type DockerVars = { version: string; user: string };
 
 export const templates = {
   disk: {
-    file: diskFile as Stub,
-    s3: diskS3 as Stub,
-    "azure-blob": diskAzureBlob as Stub,
+    file: diskFile as Stub<InstanceVars>,
+    s3: diskS3 as Stub<InstanceVars>,
+    "azure-blob": diskAzureBlob as Stub<InstanceVars>,
+    proto: diskProto as Stub<InstanceVars>,
   },
   docker: {
     bun: dockerBun as Stub<DockerVars>,
