@@ -27,7 +27,7 @@ export default defineConfig({
 | `minify`      | `boolean`                | `false`                                | Minify output                                |
 | `sourcemap`   | `boolean`                | `false`                                | Emit source maps                             |
 | `tsconfig`    | `string`                 | `"tsconfig.json"`                      | Path to tsconfig                             |
-| `watch`       | `boolean`                | `false`                                | Watch for changes                            |
+| `watch`       | `boolean`                | `false`                                | Watch for changes (set automatically by `dev` command) |
 | `run`         | `boolean`                | `false`                                | Run the output after build                   |
 | `import`      | `string[]`               | `[]`                                   | Additional entry points to import at startup |
 | `loader`      | `Record<string, Loader>` | `{}`                                   | Custom esbuild loaders                       |

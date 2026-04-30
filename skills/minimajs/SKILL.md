@@ -48,14 +48,14 @@ minimajs ships a CLI accessed via the `./app` shell script scaffolded into every
 ```typescript
 import { defineConfig } from "@minimajs/cli";
 
-export default defineConfig(({ watch }) => ({
+export default defineConfig(({ dev, mode }) => ({
   envFile: ".env",
-  sourcemap: watch, // sourcemaps in dev only
+  sourcemap: dev, // sourcemaps in dev only
   // import: ["./src/instrument.ts"], // pre-load before entry (instrumentation, APM)
 }));
 ```
 
-`defineConfig` always wraps a function receiving `{ watch, build }` env flags.
+`defineConfig` accepts a plain config object or a factory receiving `{ mode, dev }` — where `mode` is `"dev" | "build" | "start"` and `dev` is shorthand for `mode === "dev"`.
 
 ### Generators — `./app add <type> <name>`
 

@@ -1,5 +1,5 @@
 export { run } from "./command.js";
-export type { CliOption, Config, ConfigEnv, ConfigFactory } from "./config/types.js";
+export type { CliOption, Config, ConfigEnv, ConfigFactory, ConfigMode } from "./config/types.js";
 
 import type { Config, ConfigEnv, ConfigFactory } from "./config/types.js";
 import { resolveConfig } from "./config/resolve.js";

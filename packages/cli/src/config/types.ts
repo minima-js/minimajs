@@ -34,14 +34,16 @@ export interface BaseConfig {
   esbuild?: EsbuildOverrides;
 }
 
+export type ConfigMode = "dev" | "build" | "start";
+
 export interface ConfigEnv {
-  build: boolean;
-  watch: boolean;
+  mode: ConfigMode;
+  dev: boolean;
 }
 
 export interface CliOption extends Partial<BaseConfig> {
   grace?: boolean;
-  build?: boolean;
+  mode: ConfigMode;
 }
 
 export interface Config extends BaseConfig {

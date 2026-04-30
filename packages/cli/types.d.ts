@@ -34,12 +34,14 @@ interface BaseConfig {
 
 export interface Config extends Partial<BaseConfig> {}
 
+export type ConfigMode = "dev" | "build" | "start";
+
 interface ConfigEnv {
-  build: boolean;
-  watch: boolean;
+  mode: ConfigMode;
+  dev: boolean;
 }
 
 type ConfigFactory = (env: ConfigEnv) => Config;
 
-export function defineConfig(config: Config): Config;
+export function defineConfig(config: Config): ConfigFactory;
 export function defineConfig(config: ConfigFactory): ConfigFactory;

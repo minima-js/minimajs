@@ -24,8 +24,9 @@ export function resolveRunCommand(config: Config, outputFile: string) {
   return { bin: bin!, env, args: [...args, ...userArgs] };
 }
 
-export async function loadConfig(cliOption: CliOption = {}): Promise<Config> {
-  const env: ConfigEnv = { build: !!cliOption.build, watch: !!cliOption.watch };
+export async function loadConfig(cliOption: CliOption): Promise<Config> {
+  const { mode, grace, ...cliOverrides } = cliOption;
+  const env: ConfigEnv = { mode, dev: mode === "dev" };
 
   let factory: ConfigFactory = () => resolveConfig({});
 
@@ -47,11 +48,9 @@ export async function loadConfig(cliOption: CliOption = {}): Promise<Config> {
 
   const config = await factory(env);
 
-  const { grace, build: _build, ...cliOverrides } = cliOption;
-
   if (grace === false) {
     config.killSignal = "SIGKILL";
   }
 
-  return { ...config, ...cliOverrides };
+  return { ...config, ...cliOverrides, watch: mode === "dev" };
 }

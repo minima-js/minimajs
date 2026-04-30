@@ -43,7 +43,7 @@ export const buildCommand = defineCommand({
     },
   },
   async run({ args }) {
-    const config = await loadConfig({ ...args, build: true, run: false });
+    const config = await loadConfig({ ...args, mode: "build", run: false });
     return build(config);
   },
 });

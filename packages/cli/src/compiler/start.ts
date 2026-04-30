@@ -12,7 +12,7 @@ export interface StartOptions {
 }
 
 export async function runStart(opts: StartOptions): Promise<void> {
-  const config = await loadConfig(opts);
+  const config = await loadConfig({ ...opts, mode: "start" });
   const entry = getOutputFilename(config.entry[0]!, config.outdir);
   const needsEntry = !config.exec || config.exec.includes("[filename]");
 

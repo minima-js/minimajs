@@ -1,8 +1,8 @@
 import { defineConfig } from "@minimajs/cli";
 
-export default defineConfig(({ watch }) => ({
+export default defineConfig(({ dev }) => ({
   exec: "{{ runtime }} [filename]",
   envFile: ".env",
-  sourcemap: watch,
+  sourcemap: dev,
   // import: ["./src/instrument.ts"],
 }));
