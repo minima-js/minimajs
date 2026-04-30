@@ -6,7 +6,7 @@ import { logger } from "#/utils/logger.js";
 import { toCamel } from "#/utils/str.js";
 import { templates } from "../templates/index.js";
 import { resolveCwd, relativeId } from "#/utils/path.js";
-import * as pm from "#/pm/index.js";
+import { pkgm } from "#/pkgm/index.js";
 
 const drivers = {
   file: {
@@ -54,7 +54,7 @@ function handle({ args }: { args: { name?: string; driver: string; proto: boolea
 
   if (args.install) {
     logger.info(`  Installing ${chalk.bold(packages.join(" "))}...`);
-    pm.add(packages, { skipInstalled: true });
+    pkgm.add(packages, { skipInstalled: true });
   }
 
   text.write.sync(diskFile, content, { ensuredir: true });

@@ -6,7 +6,7 @@ import { createSpinner } from "#/utils/spinner.js";
 import { logger } from "#/utils/logger.js";
 import { templates } from "./templates/index.js";
 import type { Runtime } from "../config/types.js";
-import * as pm from "../pm/index.js";
+import { pkgm, type PM } from "../pkgm/index.js";
 import { exec } from "../utils/exec.js";
 import { exists, text, mkdir } from "../utils/fs.js";
 import { runtime } from "../runtime/index.js";
@@ -52,7 +52,7 @@ function getScaffoldFiles({
   rt,
 }: {
   name: string;
-  manager: pm.PM;
+  manager: PM;
   packageManagerField: string | null;
   rt: Runtime;
 }): ScaffoldFile[] {
@@ -60,7 +60,7 @@ function getScaffoldFiles({
   const appContent =
     rt === "bun"
       ? templates.app.bun()
-      : templates.app.node({ exec: pm.EXEC[manager as Exclude<pm.PM, "bun">] ?? pm.EXEC.npm });
+      : templates.app.node({ exec: pkgm.EXEC[manager as Exclude<PM, "bun">] ?? pkgm.EXEC.npm });
 
   return [
     { path: "package.json", content: renderPackageJson(name, rt, packageManagerField) },
@@ -79,7 +79,7 @@ function getScaffoldFiles({
 
 async function handle({ args }: { args: NewArgs }) {
   const { name, git } = args;
-  const manager = (args.pm as pm.PM) ?? pm.detect();
+  const manager = (args.pm as PM) ?? pkgm();
   if (args.bun) args.runtime = "bun";
   const rt = (args.runtime as Runtime) ?? runtime();
   const cwd = resolveCwd(name);
@@ -88,7 +88,7 @@ async function handle({ args }: { args: NewArgs }) {
     logger.fatal(`Directory ${chalk.bold(name)} already exists.`);
   }
 
-  const packageManagerField = pm.getVersion(manager);
+  const packageManagerField = pkgm.version(manager);
   const spinner = createSpinner();
 
   spinner.start(`Scaffolding ${chalk.bold(chalk.cyan(name))}...`);
@@ -108,7 +108,7 @@ async function handle({ args }: { args: NewArgs }) {
   if (args.install) {
     logger.info(`  Installing dependencies with ${chalk.bold(manager)}...`);
     try {
-      pm.install({ cwd });
+      pkgm.install({ cwd });
     } catch {
       logger.error(`  Failed to install. Run ${chalk.bold(`${manager} install`)} manually.`);
     }

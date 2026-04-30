@@ -5,7 +5,7 @@ import { runtime } from "../runtime/index.js";
 import { exists, json } from "#/utils/fs.js";
 import { loadConfig } from "../config/index.js";
 import { logger } from "#/utils/logger.js";
-import * as pm from "../pm/index.js";
+import { pkgm } from "../pkgm/index.js";
 
 type Row = [label: string, value: string];
 
@@ -46,7 +46,7 @@ export async function printInfo(): Promise<void> {
       ["Name", chalk.bold(pkgName)],
       ["Version", pkgVersion],
       ["Runtime", chalk.cyan(runtime.detect())],
-      ["Package Manager", chalk.cyan(pm.detect())],
+      ["Package Manager", chalk.cyan(pkgm())],
     ]),
     "",
     ...table("Build", [

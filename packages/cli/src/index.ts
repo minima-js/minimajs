@@ -1,10 +1,11 @@
-export type { CliOption, Config, ConfigEnv, ConfigFactory, ConfigMode } from "./config/types.js";
-export * from "./runtime/index.js";
-export * as pm from "./pm/index.js";
-
 import type { Config, ConfigEnv, ConfigFactory } from "./config/types.js";
 import { resolveConfig } from "./config/resolve.js";
 import { kFactoryFn } from "./symbols.js";
+
+export type { Config, ConfigEnv, ConfigFactory, ConfigMode } from "./config/types.js";
+export * from "./runtime/index.js";
+export * from "./pkgm/index.js";
+export * from "./manifest/index.js";
 
 export function defineConfig(config: Partial<Config>): ConfigFactory;
 export function defineConfig(config: (env: ConfigEnv) => Partial<Config>): ConfigFactory;

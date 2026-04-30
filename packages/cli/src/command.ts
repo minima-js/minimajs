@@ -8,16 +8,16 @@ import { checkCommand } from "./check/index.js";
 import { infoCommand } from "./info/index.js";
 import { initCommand } from "./init/index.js";
 import { runtime } from "./runtime/index.js";
-import { detect as detectPM, isYarnBerry, getVersion } from "./pm/index.js";
+import { pkgm } from "./pkgm/index.js";
 import pkg from "../package.json" with { type: "json" };
 
 export type { CliOption } from "./config/types.js";
 
 const rt = runtime();
 const rtVersion = runtime.version();
-const pm = detectPM();
-const pmVersion = getVersion(pm)?.split("@")[1] ?? "";
-const pmLabel = pm === "yarn" && isYarnBerry() ? "yarn (berry)" : pm;
+const pm = pkgm();
+const pmVersion = pkgm.version(pm)?.split("@")[1] ?? "";
+const pmLabel = pm === "yarn" && pkgm.isYarnBerry() ? "yarn (berry)" : pm;
 
 const rtLine = `  Runtime:         ${rt} ${rtVersion}`;
 const pmLine = `  Package manager: ${pmLabel} ${pmVersion}`;

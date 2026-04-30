@@ -1,1 +1,1 @@
-export const kFactoryFn = Symbol("minimajs.cli.factoryFn");
+export const kFactoryFn = Symbol.for("minimajs.cli.factoryFn");

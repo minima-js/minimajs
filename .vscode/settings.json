@@ -14,6 +14,7 @@
     "LOCKFILES",
     "minimajs",
     "pino",
+    "pkgm",
     "softprops",
     "unsign",
     "Vite",

@@ -1,4 +1,5 @@
 /// <reference types="node" />
+
 import * as esbuild from "esbuild";
 import { generateDtsBundle } from "dts-bundle-generator";
 import { spawn } from "node:child_process";
@@ -57,9 +58,7 @@ if (watch) {
   await ctx.watch();
 } else {
   const [typeErrors] = await Promise.all([spawnTsc(["--noEmit"]), esbuild.build(buildOptions)]);
-
   if (typeErrors !== 0) process.exit(typeErrors);
-
   const [types] = generateDtsBundle([{ filePath: "src/index.ts" }]);
-  writeFileSync("types.d.ts", types);
+  writeFileSync("lib/index.d.ts", types);
 }

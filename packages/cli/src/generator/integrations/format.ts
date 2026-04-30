@@ -3,8 +3,8 @@ import chalk from "chalk";
 import { exists, text } from "#/utils/fs.js";
 import { logger } from "#/utils/logger.js";
 import { templates } from "../templates/index.js";
-import { manifest } from "#/config/pkg.js";
-import * as pm from "#/pm/index.js";
+import { manifest } from "#/manifest/index.js";
+import { pkgm } from "#/pkgm/index.js";
 
 const PRETTIER_PACKAGES = ["prettier"];
 const CONFIG_FILE = "prettier.config.js";
@@ -19,7 +19,7 @@ function handle({ args }: { args: { install: boolean } }) {
   const hasIgnoreFile = exists(IGNORE_FILE);
 
   if (args.install) {
-    pm.add(PRETTIER_PACKAGES, { dev: true });
+    pkgm.add(PRETTIER_PACKAGES, { dev: true });
   }
 
   text.write.sync(CONFIG_FILE, templates.configs.prettier());
@@ -46,7 +46,7 @@ function handle({ args }: { args: { install: boolean } }) {
     `  ${chalk.green("✔")} Added ${chalk.bold(chalk.cyan("format:check"))} script to ${chalk.bold("package.json")}`,
     "",
     `  ${chalk.dim("Tool:")} integrated ${chalk.cyan("Prettier")} for code formatting`,
-    `  ${chalk.dim("Tip:")} run ${chalk.cyan(`${pm.detect()} run format`)} to format your project`,
+    `  ${chalk.dim("Tip:")} run ${chalk.cyan(`${pkgm()} run format`)} to format your project`,
     ""
   );
 }
