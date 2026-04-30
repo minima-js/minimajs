@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { Config, ConfigFactory, ConfigEnv } from "./types.js";
+import type { Config, ConfigFactory, ConfigEnv, CliPlugin, PluginsFactory } from "./types.js";
 import { resolveConfig } from "./resolve.js";
 import type { CliOption } from "../command.js";
 import { exists } from "#/utils/fs.js";
@@ -11,6 +11,11 @@ import { getOutputFilename } from "#/utils/path.js";
 import { loadEnvFile } from "./env.js";
 
 export type { Config };
+
+function cached<TArgs extends unknown[], T>(fn: (...args: TArgs) => Promise<T>): (...args: TArgs) => Promise<T> {
+  let promise: Promise<T> | undefined;
+  return (...args) => (promise ??= fn(...args));
+}
 
 export function resolveRunCommand(config: Config, outputFile: string) {
   const { exec, sourcemap, import: imports, outdir, envFile } = config;
@@ -24,26 +29,46 @@ export function resolveRunCommand(config: Config, outputFile: string) {
   return { bin: bin!, env, args: [...args, ...userArgs] };
 }
 
+const importConfig = cached(async () => {
+  for (const ext of ["js", "ts"]) {
+    const filename = `minimajs.config.${ext}`;
+    const configPath = join(process.cwd(), filename);
+    if (!exists(configPath)) continue;
+    return { filename, module: await import(pathToFileURL(configPath).href) };
+  }
+  return null;
+});
+
+export const loadPlugins = cached(async (env: ConfigEnv): Promise<CliPlugin[]> => {
+  const result = await importConfig();
+  if (!result) return [];
+  const { filename, module } = result;
+  const factory = module.plugins;
+  if (!factory) return [];
+  if (typeof factory !== "function") {
+    logger.warn(`"${filename}" plugins export must be a function or use definePlugins() — skipping.`);
+    return [];
+  }
+  return (factory as PluginsFactory)(env);
+});
+
 export async function loadConfig(cliOption: CliOption): Promise<Config> {
   const { mode, grace, ...cliOverrides } = cliOption;
   const env: ConfigEnv = { mode, dev: mode === "dev" };
 
   let factory: ConfigFactory = () => resolveConfig({});
 
-  for (const ext of ["js", "ts"]) {
-    const filename = `minimajs.config.${ext}`;
-    const configPath = join(process.cwd(), filename);
-    if (!exists(configPath)) continue;
-    const module = await import(pathToFileURL(configPath).href);
+  const result = await importConfig();
+  if (result) {
+    const { filename, module } = result;
     if (typeof module.default !== "function") {
       logger.warn(`"${filename}" does not export a defineConfig() function — skipping.`);
-      continue;
+    } else {
+      factory = module.default;
+      if (!(factory as any)[kFactoryFn]) {
+        logger.warn(`Use defineConfig in "${filename}" to avoid unexpected configuration errors`);
+      }
     }
-    factory = module.default;
-    if (!(factory as any)[kFactoryFn]) {
-      logger.warn(`Use defineConfig in "${filename}" to avoid unexpected configuration errors`);
-    }
-    break;
   }
 
   const config = await factory(env);
@@ -52,5 +77,5 @@ export async function loadConfig(cliOption: CliOption): Promise<Config> {
     config.killSignal = "SIGKILL";
   }
 
-  return { ...config, ...cliOverrides, watch: mode === "dev" };
+  return { ...config, ...cliOverrides };
 }

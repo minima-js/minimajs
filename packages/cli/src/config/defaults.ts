@@ -14,5 +14,4 @@ export const defaults: BaseConfig = {
   run: false,
   tsconfig: "tsconfig.json",
   sourcemap: false,
-  watch: false,
 };

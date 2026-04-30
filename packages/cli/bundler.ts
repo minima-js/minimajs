@@ -37,7 +37,7 @@ const buildOptions: esbuild.BuildOptions = {
   bundle: true,
   platform: "node",
   format: "esm",
-  external: ["esbuild", "typescript"],
+  external: ["esbuild", "typescript", "citty"],
   plugins: [stubPlugin],
   banner: { js: cjsShim },
   logLevel: "info",

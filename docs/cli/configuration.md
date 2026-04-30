@@ -5,7 +5,7 @@ sidebar_position: 1
 
 # CLI Configuration
 
-Minimajs is configured via a `minimajs.config.ts` file in the root of your project.
+Minimajs is configured via a `minimajs.config.ts` (or `.js`) file in the root of your project.
 
 ```ts
 import { defineConfig } from "@minimajs/cli";
@@ -16,62 +16,51 @@ export default defineConfig({
 });
 ```
 
-## Options
-
-| Option        | Type                     | Default                                | Description                                  |
-| ------------- | ------------------------ | -------------------------------------- | -------------------------------------------- |
-| `entry`       | `string[]`               | `["src/index.ts", "src/**/module.ts"]` | Entry points or glob patterns                |
-| `outdir`      | `string`                 | `"dist"`                               | Output directory                             |
-| `clean`       | `boolean`                | `true`                                 | Clean output directory before each build     |
-| `check`       | `boolean`                | `true`                                 | Run TypeScript type checking in watch mode   |
-| `minify`      | `boolean`                | `false`                                | Minify output                                |
-| `sourcemap`   | `boolean`                | `false`                                | Emit source maps                             |
-| `tsconfig`    | `string`                 | `"tsconfig.json"`                      | Path to tsconfig                             |
-| `watch`       | `boolean`                | `false`                                | Watch for changes (set automatically by `dev` command) |
-| `run`         | `boolean`                | `false`                                | Run the output after build                   |
-| `import`      | `string[]`               | `[]`                                   | Additional entry points to import at startup |
-| `loader`      | `Record<string, Loader>` | `{}`                                   | Custom esbuild loaders                       |
-| `killSignal`  | `NodeJS.Signals`         | `"SIGTERM"`                            | Signal used to stop the running process      |
-| `plugins`     | `MinimaPlugin[]`         | `[]`                                   | Minimajs CLI plugins                         |
-| `esbuild`     | `EsbuildOverrides`       | —                                      | Raw esbuild options (merged last)            |
-
-## Plugins
-
-Plugins extend the CLI build pipeline. A plugin can contribute entry glob patterns and/or hook into the esbuild lifecycle via `setup`.
+`defineConfig` also accepts a factory receiving `{ mode, dev }` — where `mode` is `"dev" | "build" | "start"` and `dev` is shorthand for `mode === "dev"`:
 
 ```ts
 import { defineConfig } from "@minimajs/cli";
-import type { MinimaPlugin } from "@minimajs/cli";
 
-const myPlugin = (): MinimaPlugin => ({
-  name: "my-plugin",
-  entry: ["src/**/worker.ts"],
-});
-
-export default defineConfig({
-  plugins: [myPlugin()],
-});
+export default defineConfig(({ dev, mode }) => ({
+  sourcemap: dev,
+  minify: mode === "build",
+  envFile: ".env",
+}));
 ```
 
-With the above plugin, any `src/*/worker.ts` file is automatically picked up as a build entry — no manual registration needed.
+## Options
 
-### Hooking into esbuild
+| Option       | Type                     | Default                                | Description                                  |
+| ------------ | ------------------------ | -------------------------------------- | -------------------------------------------- |
+| `entry`      | `string[]`               | `["src/index.ts", "src/**/module.ts"]` | Entry points or glob patterns                |
+| `outdir`     | `string`                 | `"dist"`                               | Output directory                             |
+| `clean`      | `boolean`                | `true`                                 | Clean output directory before each build     |
+| `check`      | `boolean`                | `true`                                 | Run TypeScript type checking in watch mode   |
+| `minify`     | `boolean`                | `false`                                | Minify output                                |
+| `sourcemap`  | `boolean`                | `false`                                | Emit source maps                             |
+| `tsconfig`   | `string`                 | `"tsconfig.json"`                      | Path to tsconfig                             |
+| `run`        | `boolean`                | `false`                                | Run the output after build                   |
+| `import`     | `string[]`               | `[]`                                   | Additional entry points to import at startup |
+| `loader`     | `Record<string, Loader>` | `{}`                                   | Custom esbuild loaders                       |
+| `killSignal` | `NodeJS.Signals`         | `"SIGTERM"`                            | Signal used to stop the running process      |
+| `esbuild`    | `EsbuildOverrides`       | —                                      | Raw esbuild options (merged last)            |
 
-If a plugin needs to transform files or intercept the build, implement `setup`:
+## Plugins
+
+Plugins are registered via a named `plugins` export — separate from `defineConfig`. The same `CliPlugin` type covers all extension points: esbuild `entry`/`setup`, CLI `commands` (root-level), and `generators` (under `./app add`).
 
 ```ts
-const myPlugin = (): MinimaPlugin => ({
-  name: "my-plugin",
-  entry: ["src/**/worker.ts"],
-  setup(build) {
-    build.onLoad({ filter: /\.txt$/ }, (args) => ({
-      contents: `export default ${JSON.stringify(args.path)}`,
-    }));
-  },
-});
+// minimajs.config.ts
+import { defineConfig, definePlugins } from "@minimajs/cli";
+import { queuePlugin } from "@myapp/queue-plugin";
+
+export default defineConfig(({ dev }) => ({ sourcemap: dev }));
+
+export const plugins = definePlugins([queuePlugin()]);
+// or factory: definePlugins(({ dev }) => [queuePlugin({ verbose: dev })])
 ```
 
-> Plugins without `setup` are not registered with esbuild — only their `entry` patterns are used.
+See [Plugins](/cli/plugins) for the full guide — esbuild hooks, CLI commands, generators, and publishing.
 
 ## esbuild Passthrough
 

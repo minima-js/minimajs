@@ -5,11 +5,16 @@ import { progress } from "../plugins/progress.js";
 import { run } from "../plugins/run/index.js";
 import { tsCheckPlugin } from "../plugins/typescript/index.js";
 
-export async function buildPlugins(config: Config, filename: string): Promise<Plugin[]> {
+export interface PluginContext {
+  filename: string;
+  dev: boolean;
+}
+
+export async function buildPlugins(config: Config, { filename, dev }: PluginContext): Promise<Plugin[]> {
   const { outdir } = config;
   const plugins: Plugin[] = [];
 
-  if (config.watch) {
+  if (dev) {
     if (config.check) {
       plugins.push(tsCheckPlugin(config.tsconfig));
     }

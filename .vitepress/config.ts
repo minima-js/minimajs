@@ -216,6 +216,7 @@ const config = defineConfig({
         items: [
           { text: "Overview", link: "/cli/" },
           { text: "Configuration", link: "/cli/configuration" },
+          { text: "Plugins", link: "/cli/plugins" },
           {
             text: "add",
             collapsed: true,

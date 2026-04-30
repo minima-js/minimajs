@@ -57,6 +57,59 @@ export default defineConfig(({ dev, mode }) => ({
 
 `defineConfig` accepts a plain config object or a factory receiving `{ mode, dev }` — where `mode` is `"dev" | "build" | "start"` and `dev` is shorthand for `mode === "dev"`.
 
+### CLI Plugins — `definePlugins`
+
+Plugins are registered separately from build config via a named `plugins` export. They can extend the CLI with new commands (root-level) and generators (under `./app add`).
+
+```typescript
+// minimajs.config.ts
+import { defineConfig, definePlugins } from "@minimajs/cli";
+import { queuePlugin } from "@myapp/queue-plugin";
+
+export default defineConfig(({ dev }) => ({ sourcemap: dev }));
+
+// static array
+export const plugins = definePlugins([queuePlugin()]);
+
+// or factory — receives { mode, dev }
+export const plugins = definePlugins(({ dev }) => [queuePlugin({ verbose: dev })]);
+```
+
+#### Writing a plugin
+
+```typescript
+import { defineCommand } from "@minimajs/cli";
+import type { CliPlugin } from "@minimajs/cli";
+
+export const queuePlugin = (): CliPlugin => ({
+  name: "queue",
+
+  // root-level commands: ./app queue flush
+  commands: {
+    queue: defineCommand({
+      meta: { description: "Manage the job queue" },
+      subCommands: {
+        flush: defineCommand({
+          meta: { description: "Flush all pending jobs" },
+          async run() { /* ... */ },
+        }),
+      },
+    }),
+  },
+
+  // generators under ./app add: ./app add job send-email
+  generators: {
+    job: defineCommand({
+      meta: { description: "Scaffold a queue job" },
+      args: { name: { type: "positional", description: "Job name" } },
+      async run({ args }) { /* scaffold src/jobs/<name>.job.ts */ },
+    }),
+  },
+});
+```
+
+Plugin commands appear at the **root** of `./app` — not under a `command` namespace. Generator commands appear under `./app add <generator-name>`.
+
 ### Generators — `./app add <type> <name>`
 
 All generators create a file and auto-patch the nearest `module.ts` to register it.
@@ -419,6 +472,7 @@ export const meta: Meta = {
 
 For deeper API details, read the relevant reference file:
 
+- [references/cli-plugins.md](references/cli-plugins.md) — full `CliPlugin` shape, esbuild hooks, CLI commands, generators, publishing guide
 - [references/server.md](references/server.md) — full hook lifecycle, plugin system, built-in plugins, module discovery config
 - [references/schema.md](references/schema.md) — all `createBody`/`createParams`/`createSearchParams`/`createHeaders` options, async variants, response schemas
 - [references/auth.md](references/auth.md) — `createAuth` options, `required` mode, `UnauthorizedError`/`ForbiddenError`

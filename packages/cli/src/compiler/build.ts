@@ -1,6 +1,6 @@
 import { defineCommand } from "citty";
 import { build } from "./esbuild/index.js";
-import { loadConfig } from "#/config/index.js";
+import { loadConfig, loadPlugins } from "#/config/index.js";
 
 export const buildCommand = defineCommand({
   meta: {
@@ -43,7 +43,8 @@ export const buildCommand = defineCommand({
     },
   },
   async run({ args }) {
-    const config = await loadConfig({ ...args, mode: "build", run: false });
-    return build(config);
+    const env = { mode: "build" as const, dev: false };
+    const [config, plugins] = await Promise.all([loadConfig({ ...args, mode: "build", run: false }), loadPlugins(env)]);
+    return build(config, plugins);
   },
 });

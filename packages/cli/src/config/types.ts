@@ -1,8 +1,10 @@
 import type { BuildOptions, Loader, Plugin } from "esbuild";
 
-export interface MinimaPlugin extends Omit<Plugin, "setup"> {
+export interface CliPlugin extends Omit<Plugin, "setup"> {
   setup?: Plugin["setup"];
   entry?: string[];
+  commands?: Record<string, unknown>;
+  generators?: Record<string, unknown>;
 }
 
 type EsbuildOverrides = Omit<
@@ -17,7 +19,6 @@ export interface BaseConfig {
   entry: string[];
   run: boolean;
   exec: string;
-  watch: boolean;
   clean: boolean;
   sourcemap: boolean;
   tsconfig: string;
@@ -30,7 +31,6 @@ export interface BaseConfig {
   loader: Record<string, Loader>;
   target?: string;
   envFile?: string | string[];
-  plugins?: MinimaPlugin[];
   esbuild?: EsbuildOverrides;
 }
 
@@ -51,3 +51,4 @@ export interface Config extends BaseConfig {
 }
 
 export type ConfigFactory = (env: ConfigEnv) => Promise<Config>;
+export type PluginsFactory = (env: ConfigEnv) => CliPlugin[] | Promise<CliPlugin[]>;
