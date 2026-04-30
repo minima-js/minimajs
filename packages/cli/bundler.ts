@@ -1,8 +1,9 @@
 /// <reference types="node" />
 import * as esbuild from "esbuild";
+import { generateDtsBundle } from "dts-bundle-generator";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 
 const stubPlugin: esbuild.Plugin = {
   name: "stub",
@@ -25,27 +26,21 @@ const tsc = fileURLToPath(import.meta.resolve("typescript/bin/tsc"));
 
 const cjsShim = `import { createRequire } from "module"; const require = createRequire(import.meta.url);`;
 
-const shared: esbuild.BuildOptions = {
+const buildOptions: esbuild.BuildOptions = {
+  entryPoints: {
+    index: "src/index.ts",
+    command: "src/command.ts",
+    worker: "src/compiler/plugins/typescript/worker.ts",
+  },
+  outdir: "lib",
   bundle: true,
   platform: "node",
   format: "esm",
+  external: ["esbuild", "typescript"],
   plugins: [stubPlugin],
   banner: { js: cjsShim },
   logLevel: "info",
 };
-
-const entries: esbuild.BuildOptions[] = [
-  {
-    entryPoints: ["src/index.ts"],
-    outfile: "lib/index.js",
-    external: ["esbuild", "typescript"],
-  },
-  {
-    entryPoints: ["src/compiler/plugins/typescript/worker.ts"],
-    outfile: "lib/worker.js",
-    external: ["typescript"],
-  },
-];
 
 function spawnTsc(args: string[]): Promise<number> {
   return new Promise((resolve) => {
@@ -58,13 +53,13 @@ if (watch) {
   const tscProc = spawn(tsc, ["--noEmit", "--watch", "--preserveWatchOutput"], { stdio: "inherit" });
   process.on("exit", () => tscProc.kill());
 
-  const contexts = await Promise.all(entries.map((e) => esbuild.context({ ...shared, ...e })));
-  await Promise.all(contexts.map((ctx) => ctx.watch()));
+  const ctx = await esbuild.context(buildOptions);
+  await ctx.watch();
 } else {
-  const [typeErrors] = await Promise.all([
-    spawnTsc(["--noEmit"]),
-    Promise.all(entries.map((e) => esbuild.build({ ...shared, ...e }))),
-  ]);
+  const [typeErrors] = await Promise.all([spawnTsc(["--noEmit"]), esbuild.build(buildOptions)]);
 
   if (typeErrors !== 0) process.exit(typeErrors);
+
+  const [types] = generateDtsBundle([{ filePath: "src/index.ts" }]);
+  writeFileSync("types.d.ts", types);
 }

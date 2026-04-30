@@ -7,7 +7,7 @@ function runtime(): Runtime {
   return "node";
 }
 
-function detect(): Runtime {
+export function detect(): Runtime {
   if (exists(".bun-version")) return "bun";
   if (exists(".node-version")) return "node";
   const pkg = manifest.sync();

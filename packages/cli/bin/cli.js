@@ -1,4 +1,4 @@
 #!/usr/bin/env node
-import { run } from "../lib/index.js";
+import { run } from "../lib/command.js";
 
 run();

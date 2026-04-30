@@ -10,7 +10,7 @@ export async function text(name: string): Promise<string> {
   return readFile(resolve(process.cwd(), name), "utf8");
 }
 
-async function write(name: string, content: string, opts?: { mode?: number; ensuredir?: boolean }): Promise<string> {
+export async function write(name: string, content: string, opts?: { mode?: number; ensuredir?: boolean }): Promise<string> {
   const path = resolve(process.cwd(), name);
   if (opts?.ensuredir) mkdirSync(dirname(path), { recursive: true });
   await writeFile(path, content, { mode: opts?.mode });

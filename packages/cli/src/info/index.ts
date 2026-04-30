@@ -29,7 +29,7 @@ export const infoCommand = defineCommand({
 });
 
 export async function printInfo(): Promise<void> {
-  const config = await loadConfig();
+  const config = await loadConfig({ mode: "start" });
 
   let pkgName = "unknown";
   let pkgVersion = "—";

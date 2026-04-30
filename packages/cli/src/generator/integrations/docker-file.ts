@@ -36,7 +36,7 @@ interface DockerfileArgs {
 }
 
 async function handle({ args }: { args: DockerfileArgs }) {
-  const config = await loadConfig();
+  const config = await loadConfig({ mode: "start" });
   const detected = pm.detect();
   const berry = detected === "yarn" && pm.isYarnBerry();
   const destPath = "Dockerfile";

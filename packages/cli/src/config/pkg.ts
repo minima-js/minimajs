@@ -22,7 +22,7 @@ const PKG = "package.json";
  * Writes data to `package.json` in the current working directory.
  * Use `write.sync` for the synchronous variant.
  */
-async function write(data: Manifest, indent = 2): Promise<void> {
+export async function write(data: Manifest, indent = 2): Promise<void> {
   await text.write(PKG, JSON.stringify(data, null, indent) + EOL);
 }
 
