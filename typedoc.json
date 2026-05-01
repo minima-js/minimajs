@@ -7,7 +7,10 @@
     "./packages/schema",
     "./packages/multipart",
     "./packages/cookie",
-    "./packages/openapi"
+    "./packages/openapi",
+    "./packages/disk",
+    "./packages/aws-s3",
+    "./packages/azure-blob"
   ],
   "entryPointStrategy": "packages",
   "out": "docs/api",

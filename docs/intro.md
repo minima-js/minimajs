@@ -20,8 +20,6 @@ Minima.js is built around five key ideas:
 
 Let's explore each one.
 
----
-
 ## Runtime-Native Support
 
 Minima.js is designed for native integration with modern JavaScript runtimes like Bun and Node.js. You can switch between runtimes by changing a single import, ensuring optimal performance without abstraction overhead.
@@ -69,14 +67,34 @@ await app.listen({ port: 3000 });
 - **No compatibility layers** - Not a legacy framework ported to modern runtimes
 - **Runtime-optimized** - Each import is tailored for its runtime's strengths
 
-**Why this matters:**
+> **Learn more:** [Getting Started](/getting-started) | [Architecture](/core-concepts/architecture)
 
-- Your code runs at native speed with no framework overhead
-- Easy to test across runtimes in CI/CD
-- Future-proof as new runtimes emerge
-- Full control over runtime-specific features when needed
+## Web Standard First
 
----
+Minima.js favors native Web APIs (`Request`, `Response`, `File`, `Blob`, streams, `Uint8Array`) so your code and ecosystem integrations stay consistent.
+
+This helps both sides:
+
+- **Library creators** can design one clean API surface around standards.
+- **Application teams** can compose plugins/libraries faster because data types already match.
+
+Example with `@minimajs/disk` using only native data types:
+
+```typescript
+import { createDisk } from "@minimajs/disk";
+
+const disk = createDisk();
+
+const avatar = new File(["avatar-bytes"], "avatar.txt", { type: "text/plain" });
+await disk.put(avatar);
+
+const raw = new Blob([new Uint8Array([1, 2, 3, 4])], { type: "application/octet-stream" });
+await disk.put("uploads/raw.bin", raw);
+
+await disk.put("uploads/chunk.bin", new Uint8Array([10, 20, 30]));
+```
+
+> **Learn more:** [Disk Package](/packages/disk/) | [Multipart](/packages/multipart/)
 
 ## File-Based Modules
 
@@ -218,17 +236,7 @@ export const routes: Routes = {
 
 :::
 
-**Perfect for:**
-
-- Global authentication
-- Body parsing
-- CORS configuration
-- Rate limiting
-- Request logging
-
 > **Learn more:** [Full module tutorial →](/core-concepts/modules)
-
----
 
 ## Context Functions
 
@@ -297,6 +305,8 @@ export const routes: Routes = {
 };
 ```
 
+> **Learn more:** [HTTP Helpers](/guides/http) | [Routing Guide](/guides/routing)
+
 ## Hooks & Plugins
 
 **In Minima.js, everything is a plugin** - even hooks are plugins. Apply them via `meta.plugins` in your modules.
@@ -355,16 +365,15 @@ export const routes: Routes = {
 
 > **Learn more:** [Hooks Guide](/guides/hooks) | [Error Handling](/guides/error-handling)
 
----
-
 ## Summary
 
-**Minima.js** gives you four superpowers:
+**Minima.js** gives you five superpowers:
 
 1. **Runtime-native** - Built for Bun and Node.js with zero overhead
-2. **File-based modules** - Structure your app naturally, no wiring needed
-3. **Context everywhere** - Access request data from any function
-4. **Plugin-based everything** - Compose behavior with `meta.plugins`
+2. **Web-standard APIs** - Use native data types across framework and libraries
+3. **File-based modules** - Structure your app naturally, no wiring needed
+4. **Context everywhere** - Access request data from any function
+5. **Plugin-based everything** - Compose behavior with `meta.plugins`
 
 Together, these create a framework where your architecture stays intentional, not accidental—and your code stays clean, not cluttered.
 

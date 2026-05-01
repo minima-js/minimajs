@@ -21,7 +21,7 @@ export function toRelativePath(inputPath: string): string {
   return `.${sep}${inputPath}`;
 }
 
-export function getOutputFilename(src: string, outdir: string, ext: string): string {
+export function getOutputFilename(src: string, outdir: string, ext = ".js"): string {
   const filename = basename(src, extname(src));
   return toRelativePath(join(outdir, filename) + ext);
 }

@@ -19,8 +19,16 @@ Plugins extend `@minimajs/disk` by hooking into file operation lifecycle events.
 
 Pass plugins as rest arguments to `createDisk` or `createProtoDisk`. They are applied in the order given:
 
+Rule of thumb for ordering:
+
+1. `storeAs` / `partition` first (determine final path and filename)
+2. `compression` before `encryption` (better compression ratio)
+3. integrity/atomic plugins (`checksum`, `atomicWrite`) after transforms
+4. progress/logging plugins last for observability
+
 ```typescript
-import { createDisk, storeAs, partition, atomicWrite, checksum, compression, encryption } from "@minimajs/disk";
+import { createDisk } from "@minimajs/disk";
+import { storeAs, partition, atomicWrite, checksum, compression, encryption } from "@minimajs/disk/plugins";
 import { createFsDriver } from "@minimajs/disk/adapters";
 
 const disk = createDisk(
@@ -53,7 +61,7 @@ function myPlugin(): DiskPlugin {
 Automatically rename files when a `File` object is passed to `put`. Without this plugin, `put(file)` preserves the original filename (`file.name`) as-is.
 
 ```typescript
-import { storeAs } from "@minimajs/disk";
+import { storeAs } from "@minimajs/disk/plugins";
 ```
 
 ### Strategies
@@ -130,7 +138,7 @@ console.log(uploaded.metadata.originalName); // "photo.jpg"
 Automatically organize files into subdirectories when stored. The filename is preserved — only a path prefix is added.
 
 ```typescript
-import { partition } from "@minimajs/disk";
+import { partition } from "@minimajs/disk/plugins";
 ```
 
 ### Date-based
@@ -212,7 +220,7 @@ type PartitionGenerator = (path: string, data: DiskData, opts: PutOptions) => st
 Writes files to a temporary location first, then renames to the final path. Prevents partial or corrupted files from ever being visible to readers during a write.
 
 ```typescript
-import { atomicWrite } from "@minimajs/disk";
+import { atomicWrite } from "@minimajs/disk/plugins";
 ```
 
 ```typescript
@@ -259,7 +267,7 @@ await disk.put("config.json", data);
 Writes a SHA-256 sidecar file alongside each stored file and verifies integrity on every read. Detects silent data corruption (bit rot).
 
 ```typescript
-import { checksum } from "@minimajs/disk";
+import { checksum } from "@minimajs/disk/plugins";
 ```
 
 ```typescript
@@ -313,7 +321,7 @@ const disk = createDisk({ driver }, checksum({ algorithm: "sha512", extension: "
 Transparently compresses files on write and decompresses on read. Uses the Web API `CompressionStream` / `DecompressionStream` (Node 18+, Bun, modern browsers — no native dependencies).
 
 ```typescript
-import { compression } from "@minimajs/disk";
+import { compression } from "@minimajs/disk/plugins";
 ```
 
 ```typescript
@@ -364,7 +372,7 @@ const disk = createDisk({ driver: createFsDriver({ … }) }, compression());
 Transparently encrypts files on write and decrypts on read using AES-256-GCM. All crypto parameters (salt, IV, auth tag) are embedded in the stream — no external metadata or sidecar files are needed.
 
 ```typescript
-import { encryption } from "@minimajs/disk";
+import { encryption } from "@minimajs/disk/plugins";
 ```
 
 ```typescript
@@ -419,7 +427,7 @@ The encrypted stream is self-contained: `[MAGIC(4)] [salt(32)] [IV(16)] [ciphert
 Tracks bytes written to the driver during an upload. Fires a callback for each chunk as it passes through.
 
 ```typescript
-import { uploadProgress } from "@minimajs/disk";
+import { uploadProgress } from "@minimajs/disk/plugins";
 ```
 
 ```typescript
@@ -460,7 +468,7 @@ interface UploadProgress {
 Tracks bytes read from the driver during a download. Fires a callback for each chunk as it passes through.
 
 ```typescript
-import { downloadProgress } from "@minimajs/disk";
+import { downloadProgress } from "@minimajs/disk/plugins";
 ```
 
 ```typescript
@@ -611,4 +619,3 @@ const disk = createDisk({ driver }, logger("[uploads]"));
 - [Filesystem Driver](./filesystem.md)
 - [AWS S3 Driver](./aws-s3.md)
 - [Azure Blob Driver](./azure-blob.md)
-- [Examples](./examples.md)

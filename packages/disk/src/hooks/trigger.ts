@@ -3,7 +3,7 @@ import { getMimeType, resolveKey, setDisk, toReadableStream } from "../helpers.j
 import type { Disk, DiskData, DiskDriver, FileMetadata, FileSource, ListOptions, PutOptions, UrlOptions } from "../types.js";
 import type { DiskHooks } from "./types.js";
 
-type DiskHookStore = {
+export type DiskHookStore = {
   [K in keyof DiskHooks]?: Set<DiskHooks[K]>;
 };
 

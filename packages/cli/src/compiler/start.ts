@@ -1,12 +1,11 @@
 import { spawn } from "node:child_process";
 import { defineCommand } from "citty";
 import chalk from "chalk";
-import { loadConfig } from "../config/index.js";
+import { loadConfig, resolveRunCommand } from "../config/index.js";
 import { logger } from "#/utils/logger.js";
-import { loadEnvFile } from "../config/env.js";
+
 import { exists } from "#/utils/fs.js";
-import { runtime } from "../runtime/index.js";
-import { getOutputFilename } from "../utils/path.js";
+import { getOutputFilename } from "#/utils/path.js";
 
 export interface StartOptions {
   envFile?: string;
@@ -14,32 +13,21 @@ export interface StartOptions {
 }
 
 export async function runStart(opts: StartOptions): Promise<void> {
-  const config = await loadConfig(opts);
-  const entry = getOutputFilename(config.entry[0]!, config.outdir, ".js");
-  const needsEntry = !config.exec || config.exec.includes("[filename]");
+  const config = await loadConfig({ ...opts, mode: "start" });
 
-  if (needsEntry) {
-    if (!entry || !exists(entry)) {
-      logger.fatal(`Cannot find compiled output. Run ${chalk.bold(chalk.cyan("minimajs build"))} first.`);
-    }
+  if (!config.entry[0]) {
+    logger.fatal(`No entry points found. Check your config`);
   }
 
-  const cmd = config.exec ? config.exec.replace("[filename]", entry ?? "") : `${runtime.bin(runtime.detect())} ${entry!}`;
-
-  const [bin, ...args] = cmd.trim().split(/\s+/);
-
-  if (config.sourcemap && runtime.isNode(bin!)) {
-    args.unshift("--enable-source-maps");
+  const entry = getOutputFilename(config.entry[0], config.outdir);
+  if (!exists(entry)) {
+    logger.fatal(`Cannot find compiled output. Run ${chalk.bold(chalk.cyan("minimajs build"))} first.`);
   }
 
-  const importArgs = config.import.flatMap((x) => ["--import", getOutputFilename(x, config.outdir, ".js")]);
-  args.push(...importArgs);
-
-  const envVars = config.envFile ? loadEnvFile(config.envFile) : undefined;
-  const env = envVars ? { ...process.env, ...envVars } : process.env;
+  const { bin, args, env } = resolveRunCommand(config, entry);
 
   await new Promise<void>((resolve) => {
-    const proc = spawn(bin!, args, { stdio: "inherit", env });
+    const proc = spawn(bin, args, { stdio: "inherit", env });
     proc.on("exit", () => resolve());
     proc.on("error", (err) => {
       logger.error(`Failed to start process "${bin}": ${err.message}`);

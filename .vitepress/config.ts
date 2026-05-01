@@ -6,6 +6,21 @@ import llmstxt from "vitepress-plugin-llms";
 const tagId = 'GTM-P9NLW275';
 const hostname = 'https://minimajs.com';
 
+const toCanonicalPath = (pathname: string): string => {
+  if (pathname === "/") return pathname;
+  return pathname.replace(/\/+$/, "");
+};
+
+const toCanonicalUrl = (value: string): string => {
+  try {
+    const url = new URL(value, hostname);
+    url.pathname = toCanonicalPath(url.pathname);
+    return url.toString();
+  } catch {
+    return value;
+  }
+};
+
 const keywords = [
   // Brand
   'minimajs', 'minima.js',
@@ -32,6 +47,12 @@ const config = defineConfig({
   cleanUrls: true,
   sitemap: {
     hostname,
+    transformItems(items) {
+      return items.map((item) => ({
+        ...item,
+        url: toCanonicalUrl(item.url),
+      }));
+    },
   },
 
    head: [
@@ -129,9 +150,10 @@ const config = defineConfig({
     logo: "/logo.svg",
     nav: [
       { text: "Guide", link: "/intro" },
+      { text: "CLI", link: "/cli/" },
       { text: "Architecture", link: "/core-concepts/architecture" },
       { text: "Cookbook", link: "/cookbook/jwt-authentication" },
-      { text: "Advanced", link: "/advanced/index" },
+      { text: "Advanced", link: "/advanced" },
       { text: "API Reference", link: "/api/README" },
       { text: "Packages", link: "/packages/auth" },
     ],
@@ -152,7 +174,7 @@ const config = defineConfig({
             text: "Task Board API",
             collapsed: true,
             items: [
-              { text: "Overview", link: "/tutorials/task-board-api/" },
+              { text: "Overview", link: "/tutorials/task-board-api" },
               { text: "1. Project Setup", link: "/tutorials/task-board-api/01-setup" },
               { text: "2. Database & Root Module", link: "/tutorials/task-board-api/02-database" },
               { text: "3. Authentication", link: "/tutorials/task-board-api/03-auth" },
@@ -189,10 +211,32 @@ const config = defineConfig({
           { text: "Route Descriptors", link: "/guides/route-descriptors" },
         ],
       },
+        {
+        text: "CLI",
+        items: [
+          { text: "Overview", link: "/cli/" },
+          { text: "Configuration", link: "/cli/configuration" },
+          { text: "Plugins", link: "/cli/plugins" },
+          {
+            text: "add",
+            collapsed: true,
+            items: [
+              { text: "hook", link: "/cli/add/hook" },
+              { text: "plugin", link: "/cli/add/plugin" },
+              { text: "middleware", link: "/cli/add/middleware" },
+              { text: "disk", link: "/cli/add/disk" },
+              { text: "openapi", link: "/cli/add/openapi" },
+              { text: "swagger", link: "/cli/add/swagger" },
+              { text: "dockerfile", link: "/cli/add/dockerfile" },
+              { text: "skills", link: "/cli/add/skills" },
+            ],
+          },
+        ],
+      },
       {
         text: "Plugins",
         items: [
-          { text: "Introduction", link: "/plugins/index" },
+          { text: "Introduction", link: "/plugins" },
           { text: "Descriptor", link: "/plugins/descriptor" },
           { text: "Body Parser", link: "/plugins/body-parser" },
           { text: "CORS", link: "/plugins/cors" },
@@ -214,31 +258,14 @@ const config = defineConfig({
       {
         text: "Advanced",
         items: [
-          { text: "Overview", link: "/advanced/index" },
+          { text: "Overview", link: "/advanced" },
           { text: "Module Discovery", link: "/advanced/module-discovery" },
           { text: "Custom Runtime Adapters", link: "/advanced/custom-adapters" },
           { text: "Container & Encapsulation", link: "/advanced/container-encapsulation" },
           { text: "Context Provider", link: "/advanced/context-provider" },
         ],
       },
-      {
-        text: "CLI",
-        items: [
-          { text: "Configuration", link: "/cli/configuration" },
-          {
-            text: "add",
-            collapsed: false,
-            items: [
-              { text: "disk", link: "/cli/add/disk" },
-              { text: "openapi", link: "/cli/add/openapi" },
-              { text: "swagger", link: "/cli/add/swagger" },
-              { text: "dockerfile", link: "/cli/add/dockerfile" },
-              { text: "skills", link: "/cli/add/skills" },
-              { text: 'hook', link: '/cli/add/hook' }
-            ],
-          },
-        ],
-      },
+    
       {
         text: "Packages",
         items: [
@@ -247,9 +274,9 @@ const config = defineConfig({
           { text: "OpenAPI", link: "/packages/openapi" },
           {
             text: "Multipart",
-            collapsed: false,
+            collapsed: true,
             items: [
-              { text: "Overview", link: "/packages/multipart/" },
+              { text: "Overview", link: "/packages/multipart" },
               { text: "Schema Validation", link: "/packages/multipart/schema" },
               { text: "Helpers", link: "/packages/multipart/helpers" },
             ],
@@ -257,16 +284,15 @@ const config = defineConfig({
           { text: "Cookie", link: "/packages/cookie" },
           {
             text: "Disk",
-            collapsed: false,
+            collapsed: true,
             items: [
-              { text: "Overview", link: "/packages/disk/" },
+              { text: "Overview", link: "/packages/disk" },
               { text: "Plugins", link: "/packages/disk/plugins" },
               { text: "Protocol Disk", link: "/packages/disk/protocol-disk" },
               { text: "AWS S3", link: "/packages/disk/aws-s3" },
               { text: "Azure Blob", link: "/packages/disk/azure-blob" },
               { text: "Filesystem", link: "/packages/disk/filesystem" },
               { text: "Memory", link: "/packages/disk/memory" },
-              { text: "Examples", link: "/packages/disk/examples" },
             ],
           },
         ],

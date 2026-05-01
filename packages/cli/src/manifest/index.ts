@@ -19,18 +19,6 @@ export interface Manifest {
 const PKG = "package.json";
 
 /**
- * Writes data to `package.json` in the current working directory.
- * Use `write.sync` for the synchronous variant.
- */
-async function write(data: Manifest, indent = 2): Promise<void> {
-  await text.write(PKG, JSON.stringify(data, null, indent) + EOL);
-}
-
-write.sync = function writeSync(data: Manifest, indent = 2): void {
-  text.write.sync(PKG, JSON.stringify(data, null, indent) + EOL);
-};
-
-/**
  * Reads and parses `package.json` from the current working directory.
  * Returns an empty object if the file is missing or unreadable.
  *
@@ -48,33 +36,43 @@ export async function manifest(): Promise<Manifest> {
   }
 }
 
-manifest.sync = function manifestSync(): Manifest {
-  try {
-    const raw = json.sync<Manifest>(PKG);
-    str.ensureCase(raw, "type");
-    return raw;
-  } catch {
-    return {};
+export namespace manifest {
+  export function sync(): Manifest {
+    try {
+      const raw = json.sync<Manifest>(PKG);
+      str.ensureCase(raw, "type");
+      return raw;
+    } catch {
+      return {};
+    }
   }
-};
 
-manifest.write = write;
+  /**
+   * Writes data to `package.json` in the current working directory.
+   * Use `write.sync` for the synchronous variant.
+   */
+  export async function write(data: Manifest, indent = 2): Promise<void> {
+    await text.write(PKG, JSON.stringify(data, null, indent) + EOL);
+  }
+
+  export namespace write {
+    export function sync(data: Manifest, indent = 2): void {
+      text.write.sync(PKG, JSON.stringify(data, null, indent) + EOL);
+    }
+  }
+
+  export function target(node: string, prefix = "node"): string {
+    const match = node.match(/(\d+)(?:\.(\d+))?(?:\.(\d+))?/);
+    if (!match) {
+      throw new Error(`Invalid node version: ${node}`);
+    }
+    const version = `${match[1]}.${match[2] ?? "0"}.${match[3] ?? "0"}`;
+    return `${prefix}${version}`;
+  }
+}
 
 let CACHED_MANIFEST: Manifest | null = null;
 manifest.cached = async function cachedManifest() {
   CACHED_MANIFEST ??= await manifest();
   return CACHED_MANIFEST;
 };
-
-/**
- * Converts a Node.js version string into an esbuild-compatible target string.
- * @example getTarget("20.1") // => "node20.1.0"
- */
-export function getTarget(node: string, prefix = "node"): string {
-  const match = node.match(/(\d+)(?:\.(\d+))?(?:\.(\d+))?/);
-  if (!match) {
-    throw new Error(`Invalid node version: ${node}`);
-  }
-  const version = `${match[1]}.${match[2] ?? "0"}.${match[3] ?? "0"}`;
-  return `${prefix}${version}`;
-}

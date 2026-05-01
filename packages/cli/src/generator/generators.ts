@@ -6,7 +6,7 @@ import { templates } from "./templates/index.js";
 import { toCamel } from "../utils/str.js";
 import { logger } from "#/utils/logger.js";
 
-type GenerateFileTypes = keyof Pick<typeof templates, "middleware" | "service" | "plugin">;
+type GenerateFileTypes = keyof Pick<typeof templates, "service">;
 
 export function generateFile(type: GenerateFileTypes, name: string, dir = "src"): void {
   const targetDir = resolveCwd(dir, name);
@@ -18,10 +18,7 @@ export function generateFile(type: GenerateFileTypes, name: string, dir = "src")
 
   const camel = toCamel(name);
 
-  const content = templates[type]({
-    name: camel,
-    instance: camel + type.charAt(0).toUpperCase() + type.slice(1),
-  });
+  const content = templates[type]({ name: camel });
 
   text.write.sync(filePath, content, { ensuredir: true });
 

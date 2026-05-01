@@ -2,11 +2,11 @@ import { defineCommand } from "citty";
 import chalk from "chalk";
 import { logger } from "#/utils/logger.js";
 import { suggestModule, applyPatch } from "../patch.js";
-import * as pm from "#/pm/index.js";
+import { pkgm } from "#/pkgm/index.js";
 
 export function integrateOpenapi(cwd: string, install: boolean): void {
   if (install) {
-    pm.add(["@minimajs/openapi"], { skipInstalled: true });
+    pkgm.add(["@minimajs/openapi"], { skipInstalled: true });
   }
 
   const suggestion = suggestModule(cwd, {

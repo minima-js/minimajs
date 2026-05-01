@@ -9,267 +9,129 @@ tags:
 
 # Getting Started with Minima.js
 
-This guide introduces the core concepts of Minima.js to get you up and running quickly. We'll start with a minimal application and then explore the key features that make the framework powerful and elegant.
+This guide takes you from zero to a running modular API using the Minima.js CLI.
 
-> **New to Minima.js?** Check out the [Introduction](/intro) for a conceptual overview before diving into this tutorial.
+## Prerequisites
 
-## Setup
+- Bun `>=1.3` or Node.js `>=22`
+- Basic TypeScript familiarity
 
-First, choose your runtime and create a new project directory.
+## 1) Scaffold a Project
 
-**Option 1: Bun**
-
-```bash
-mkdir minimajs-app
-cd minimajs-app
-bun init -y
-bun add @minimajs/server
-```
-
-Then start your server:
-
-```bash
-bun --watch src/index.ts  # development with auto-reload
-bun src/index.ts          # production
-```
-
-**Option 2: Node.js**
-
-```bash
-mkdir minimajs-app
-cd minimajs-app
-npm init -y
-npm install @minimajs/server
-npm install -D typescript tsx @types/node
-```
-
-Update your `package.json` to enable ES modules and add start scripts:
-
-```json
-{
-  "type": "module",
-  "scripts": {
-    "start": "tsx src/index.ts",
-    "dev": "tsx watch src/index.ts"
-  }
-}
-```
-
-Create a `tsconfig.json` for TypeScript support:
-
-```json
-{
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true
-  }
-}
-```
-
-Then start your server:
-
-```bash
-npm run dev    # development with auto-reload
-npm run start  # production
-```
-
-## Choose Your Runtime
-
-Minima.js is optimized for both runtimes. You select your target by changing the import path:
-
-- `@minimajs/server/bun`: Uses Bun's native, high-performance `Bun.serve()`.
-- `@minimajs/server/node`: Uses Node.js's standard `http.createServer()`.
-- `@minimajs/server`: Defaults to the Node.js runtime.
-
-This provides native performance with zero abstraction overhead.
-
-## A Minimal Application
-
-Create a `src/index.ts` file. Here is a very basic Minima.js application:
+The fastest way to start is with `@minimajs/cli`:
 
 ::: code-group
 
-```typescript [Bun]
-import { createApp } from "@minimajs/server/bun";
-import { params } from "@minimajs/server";
-
-const app = createApp();
-
-// Simple functional route
-app.get("/", () => ({ message: "Hello, World!" }));
-
-// Demonstrates context-aware access to route parameters
-app.get("/hello/:name", () => {
-  const name = params.get("name");
-  return { message: `Hello, ${name}!` };
-});
-
-const address = await app.listen({ port: 3000 });
-console.log(`Server listening on ${address}`);
+```bash [Bun]
+bunx @minimajs/cli new my-app --bun
+cd my-app
 ```
 
-```typescript [Node.js]
-import { createApp } from "@minimajs/server/node";
-import { params } from "@minimajs/server";
-
-const app = createApp();
-
-// Simple functional route
-app.get("/", () => ({ message: "Hello, World!" }));
-
-// Demonstrates context-aware access to route parameters
-app.get("/hello/:name", () => {
-  const name = params.get("name");
-  return { message: `Hello, ${name}!` };
-});
-
-const address = await app.listen({ port: 3000 });
-console.log(`Server listening on ${address}`);
+```bash [Node.js]
+npx @minimajs/cli new my-app
+cd my-app
 ```
 
 :::
 
-This short example already showcases several core concepts. Let's build on this foundation.
+This creates a fully configured project with TypeScript, a root module, and an `./app` runner script.
 
-## Access Request Data Anywhere
+::: tip Use the `./app` runner
+Every scaffolded project includes an executable `./app` script that wraps the CLI. You don't need a global install — the project always uses its own pinned version.
+:::
 
-Notice we imported `params` and used it directly in the route handler without it being passed as an argument:
+## 2) Start the Dev Server
+
+```bash
+./app dev
+```
+
+Watch mode starts, TypeScript is compiled on save, and the server restarts automatically.
+
+## 3) Understand File-Based Routing
+
+Minima.js uses **file-based module discovery** — routes are defined in `module.ts` files, not registered imperatively with `app.get()`. The framework scans your `src/` directory and mounts each module automatically.
+
+::: warning Prefer `module.ts` over imperative registration
+Don't do this:
+```typescript
+// ❌ not the Minima.js way
+app.get("/users", listUsers);
+```
+Do this instead — create `src/users/module.ts`:
+```typescript
+// ✅ file-based routing
+export const routes: Routes = {
+  "GET /list": listUsers,
+};
+```
+The file's directory path becomes the URL prefix automatically.
+:::
+
+## 4) Add a Feature Module
+
+Generate a module with the CLI:
+
+```bash
+./app add module users
+```
+
+This creates `src/users/module.ts`. Edit it to define your routes:
 
 ```typescript
-import { params } from "@minimajs/server";
-
-app.get("/hello/:name", () => {
-  const name = params.get("name"); // ✅ No req.params.name
-  return { message: `Hello, ${name}!` };
-});
-```
-
-**Available context functions:** `request`, `response`, `params`, `body`, `headers`, `searchParams`
-
-For more details, see the [Http Helpers Guide](/guides/http).
-
-## Organize with File-Based Modules
-
-As your application grows, organize routes by creating `module.ts` files. They're auto-discovered based on folder structure:
-
-```
-src/
-├── index.ts          # Entry point
-├── users/
-│   └── module.ts     # → /users/*
-└── posts/
-    └── module.ts     # → /posts/*
-```
-
-::: code-group
-
-```typescript [src/index.ts]
-import { createApp } from "@minimajs/server";
-
-const app = createApp(); // Auto-discovers modules!
-
-await app.listen({ port: 3000 });
-```
-
-```typescript [src/users/module.ts]
-import { params } from "@minimajs/server";
 import type { Routes } from "@minimajs/server";
+import { params, body } from "@minimajs/server";
 
 function listUsers() {
-  return [{ id: 1, name: "John" }];
+  return [
+    { id: 1, name: "Alice" },
+    { id: 2, name: "Bob" },
+  ];
 }
 
 function getUser() {
   const id = params.get("id");
-  return { id, name: "John" };
+  return { id, name: "Alice" };
+}
+
+function createUser() {
+  const payload = body();
+  return { created: payload };
 }
 
 export const routes: Routes = {
   "GET /list": listUsers,
   "GET /:id": getUser,
+  "POST /create": createUser,
 };
 ```
 
-:::
+With the root module's `/api` prefix you now have:
 
-**Your API is ready:**
+- `GET /api/users/list`
+- `GET /api/users/:id`
+- `POST /api/users/create`
 
-- `GET /users/list`
-- `GET /users/:id`
-- `GET /posts/list`
+No registration needed — adding the file is enough.
 
-**Want to add plugins to a module?** Use `meta.plugins`:
+## 5) Build for Production
 
-```typescript
-import { type Meta, type Routes, hook } from "@minimajs/server";
-
-export const meta: Meta = {
-  plugins: [hook("request", () => console.log("User route accessed"))],
-};
-
-function listUsers() {
-  return [
-    /* users */
-  ];
-}
-
-export const routes: Routes = {
-  "GET /list": listUsers,
-};
+```bash
+./app build    # compile TypeScript → dist/
+./app start    # run the compiled output
 ```
 
-Learn more: [Module Tutorial](/core-concepts/modules)
+## 6) What You Just Used
 
-## Add Lifecycle Hooks
+- **File-based module discovery** — `module.ts` files are found and mounted automatically
+- **Scoped module config** via `meta` (prefix, plugins, hooks)
+- **Context helpers** (`params`, `body`) — no request object passed around
+- **CLI scaffolding** — `add module`, `add service`, `add middleware` and more
 
-Use hooks to tap into request/app lifecycle events. Perfect for logging, auth, error handling:
+## 7) Next Steps
 
-```ts
-import { createApp } from "@minimajs/server";
-import { hook } from "@minimajs/server";
-
-const app = createApp();
-
-// Log every request
-app.register(
-  hook("request", ({ request, pathname }) => {
-    console.log(`[REQ] ${request.method} ${pathname}`);
-  })
-);
-```
-
-**Common hooks:** `request`, `transform`, `send`, `error`, `hook.lifespan`
-
-Learn more: [Hooks Guide](/guides/hooks)
-
-## Handle Errors Centrally
-
-Use an `error` hook to catch all errors in one place:
-
-```ts
-import { createApp } from "@minimajs/server";
-import { hook, abort } from "@minimajs/server";
-
-const app = createApp();
-
-app.register(
-  hook("error", (error) => {
-    console.error("Error:", error.message);
-    abort("Something went wrong!", { status: 500 });
-  })
-);
-```
-
-Learn more: [Error Handling Guide](/guides/error-handling)
-
-## Next Steps
-
-You now have a working Minima.js application! Here's what to explore next:
-
-- **[Task Board Tutorial](/tutorials/task-board-api/)** - Build a complete REST API from scratch
-- **[Module Tutorial](/core-concepts/modules)** - Step-by-step guide to structuring your app
-- **[JWT Authentication Recipe](/cookbook/jwt-authentication)** - Add auth in 5 minutes
-- **[Hooks Guide](/guides/hooks)** - Master the lifecycle system
-- **[Routing Guide](/guides/routing)** - Advanced routing patterns
+- Learn module architecture: [Modules](/core-concepts/modules)
+- Learn request helpers: [HTTP Guide](/guides/http)
+- Learn hooks and lifecycle: [Hooks Guide](/guides/hooks)
+- Explore all CLI commands: [CLI Reference](/packages/cli)
+- Build a complete example: [Task Board Tutorial](/tutorials/task-board-api/)

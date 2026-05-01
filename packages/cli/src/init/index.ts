@@ -4,16 +4,16 @@ import { exists, text } from "../utils/fs.js";
 import { logger } from "#/utils/logger.js";
 import { templates } from "../creator/templates/index.js";
 import { runtime } from "../runtime/index.js";
-import * as pm from "../pm/index.js";
+import { pkgm, type PM } from "../pkgm/index.js";
 
 function handle() {
   const rt = runtime.detect();
-  const manager = pm.detect();
+  const manager = pkgm();
   const configFile = `minimajs.config.${rt === "bun" ? "ts" : "js"}`;
   const appContent =
     rt === "bun"
       ? templates.app.bun()
-      : templates.app.node({ exec: pm.EXEC[manager as Exclude<pm.PM, "bun">] ?? pm.EXEC.npm });
+      : templates.app.node({ exec: pkgm.EXEC[manager as Exclude<PM, "bun">] ?? pkgm.EXEC.npm });
 
   const files = [
     { path: "app", content: appContent, mode: 0o755 },

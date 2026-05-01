@@ -1,5 +1,6 @@
 import { defineCommand } from "citty";
-import { handleAction } from "./esbuild/index.js";
+import { watch } from "./esbuild/watch.js";
+import { loadConfig, loadPlugins } from "#/config/index.js";
 
 export const devCommand = defineCommand({
   meta: {
@@ -61,11 +62,12 @@ export const devCommand = defineCommand({
       valueHint: "'node [filename]'",
     },
   },
-  run({ args }) {
+  async run({ args }) {
     const { _, ...options } = args;
     delete options["env-file"];
     delete options["kill-signal"];
-    options.watch = true;
-    return handleAction(options);
+    const env = { mode: "dev" as const, dev: true };
+    const [config, plugins] = await Promise.all([loadConfig({ ...options, mode: "dev" }), loadPlugins(env)]);
+    return watch(config, plugins);
   },
 });

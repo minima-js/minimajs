@@ -1,8 +1,8 @@
 import { createDisk } from "@minimajs/disk";
 import { createAzureBlobDriver } from "@minimajs/azure-blob";
 
-export const disk = createDisk({
-  adapter: createAzureBlobDriver({
+export const {{ instance }} = createDisk({
+  driver: createAzureBlobDriver({
     connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING!,
     container: "uploads",
   }),

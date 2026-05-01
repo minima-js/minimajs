@@ -1,5 +1,5 @@
-import type { Plugin } from "@minimajs/server";
+import { plugin } from "@minimajs/server";
 
-export const {{ instance }}: Plugin = async (app) => {
+export const {{ instance }} = plugin(async (app) => {
   // TODO: implement plugin logic
-};
+});
