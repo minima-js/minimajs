@@ -79,8 +79,11 @@ function getScaffoldFiles({
 
 async function handle({ args }: { args: NewArgs }) {
   const { name, git } = args;
+  if (args.bun) {
+    args.runtime = "bun";
+    args.pm = "bun";
+  }
   const manager = (args.pm as PM) ?? pkgm();
-  if (args.bun) args.runtime = "bun";
   const rt = (args.runtime as Runtime) ?? runtime();
   const cwd = resolveCwd(name);
 
