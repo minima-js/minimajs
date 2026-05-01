@@ -40,7 +40,11 @@ const buildOptions: esbuild.BuildOptions = {
   external: ["esbuild", "typescript", "citty"],
   plugins: [stubPlugin],
   banner: { js: cjsShim },
+  splitting: true,
   logLevel: "info",
+  chunkNames: "shared/index",
+  minifySyntax: true,
+  minifyWhitespace: true,
 };
 
 function spawnTsc(args: string[]): Promise<number> {
