@@ -42,7 +42,7 @@ const buildOptions: esbuild.BuildOptions = {
   banner: { js: cjsShim },
   splitting: true,
   logLevel: "info",
-  chunkNames: "shared/index",
+  chunkNames: "shared/[name]",
   minifySyntax: true,
   minifyWhitespace: true,
 };
