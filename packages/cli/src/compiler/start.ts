@@ -3,6 +3,7 @@ import { defineCommand } from "citty";
 import chalk from "chalk";
 import { loadConfig, resolveRunCommand } from "../config/index.js";
 import { logger } from "#/utils/logger.js";
+
 import { exists } from "#/utils/fs.js";
 import { getOutputFilename } from "#/utils/path.js";
 
@@ -13,16 +14,17 @@ export interface StartOptions {
 
 export async function runStart(opts: StartOptions): Promise<void> {
   const config = await loadConfig({ ...opts, mode: "start" });
-  const entry = getOutputFilename(config.entry[0]!, config.outdir);
-  const needsEntry = !config.exec || config.exec.includes("[filename]");
 
-  if (needsEntry) {
-    if (!config.entry[0] || !exists(entry)) {
-      logger.fatal(`Cannot find compiled output. Run ${chalk.bold(chalk.cyan("minimajs build"))} first.`);
-    }
+  if (!config.entry[0]) {
+    logger.fatal(`No entry points found. Check your config`);
   }
 
-  const { bin, args, env } = resolveRunCommand(config, entry!);
+  const entry = getOutputFilename(config.entry[0], config.outdir);
+  if (!exists(entry)) {
+    logger.fatal(`Cannot find compiled output. Run ${chalk.bold(chalk.cyan("minimajs build"))} first.`);
+  }
+
+  const { bin, args, env } = resolveRunCommand(config, entry);
 
   await new Promise<void>((resolve) => {
     const proc = spawn(bin, args, { stdio: "inherit", env });
