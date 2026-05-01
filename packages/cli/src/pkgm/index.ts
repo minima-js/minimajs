@@ -26,9 +26,14 @@ function fromUserAgent(): PM | null {
   return null;
 }
 
+export interface UserAgentInfo {
+  manager: PM;
+  version: string;
+}
+
 export function pkgm(cwd = process.cwd()): PM {
   try {
-    const pkg = manifest.sync();
+    const pkg = manifest.sync(cwd);
     if (pkg.packageManager) {
       const name = pkg.packageManager.split("@")[0] as PM;
       if (["bun", "pnpm", "yarn", "npm"].includes(name)) return name;
@@ -54,6 +59,19 @@ export namespace pkgm {
     yarn: "yarn minimajs",
   };
 
+  export const VALID: readonly PM[] = ["bun", "pnpm", "yarn", "npm"];
+
+  export function isValid(manager: string): manager is PM {
+    return (VALID as readonly string[]).includes(manager);
+  }
+
+  export function userAgent(): UserAgentInfo | null {
+    const agent = process.env.npm_config_user_agent ?? "";
+    const match = agent.match(/^(bun|pnpm|yarn|npm)\/([^\s]+)/);
+    if (!match || !match[2]) return null;
+    return { manager: match[1] as PM, version: match[2] };
+  }
+
   export function isYarnBerry(cwd = process.cwd()): boolean {
     try {
       const { stdout } = exec.capture.sync("yarn", ["--version"], { cwd });
@@ -69,7 +87,7 @@ export namespace pkgm {
       const result = exec.capture.sync(manager, ["--version"]);
       const version = result.stdout.replace(/^v/, "");
       if (!version) return null;
-      return `${manager}@${version}`;
+      return version;
     } catch {
       return null;
     }

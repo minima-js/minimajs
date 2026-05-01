@@ -7,6 +7,8 @@ import { logger } from "#/utils/logger.js";
 import { templates } from "./templates/index.js";
 import type { Runtime } from "../config/types.js";
 import { pkgm, type PM } from "../pkgm/index.js";
+import { corepack } from "../corepack/index.js";
+import { resolvePM } from "./package-manager.js";
 import { exec } from "../utils/exec.js";
 import { exists, text, mkdir } from "../utils/fs.js";
 import { runtime } from "../runtime/index.js";
@@ -81,9 +83,9 @@ async function handle({ args }: { args: NewArgs }) {
   const { name, git } = args;
   if (args.bun) {
     args.runtime = "bun";
-    args.pm = "bun";
+    args.pm ??= "bun";
   }
-  const manager = (args.pm as PM) ?? pkgm();
+  const { manager, version } = resolvePM(args.pm);
   const rt = (args.runtime as Runtime) ?? runtime();
   const cwd = resolveCwd(name);
 
@@ -91,7 +93,7 @@ async function handle({ args }: { args: NewArgs }) {
     logger.fatal(`Directory ${chalk.bold(name)} already exists.`);
   }
 
-  const packageManagerField = pkgm.version(manager);
+  const packageManagerField = `${manager}@${version}`;
   const spinner = createSpinner();
 
   spinner.start(`Scaffolding ${chalk.bold(chalk.cyan(name))}...`);
@@ -111,7 +113,11 @@ async function handle({ args }: { args: NewArgs }) {
   if (args.install) {
     logger.info(`  Installing dependencies with ${chalk.bold(manager)}...`);
     try {
-      pkgm.install({ cwd });
+      if (corepack.isManaged(manager) && corepack()) {
+        corepack.install(manager, { cwd });
+      } else {
+        pkgm.install({ cwd });
+      }
     } catch {
       logger.error(`  Failed to install. Run ${chalk.bold(`${manager} install`)} manually.`);
     }

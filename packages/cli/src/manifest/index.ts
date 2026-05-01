@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { json, text } from "../utils/fs.js";
 import { str } from "../utils/index.js";
 import { EOL } from "node:os";
@@ -37,9 +38,9 @@ export async function manifest(): Promise<Manifest> {
 }
 
 export namespace manifest {
-  export function sync(): Manifest {
+  export function sync(cwd = process.cwd()): Manifest {
     try {
-      const raw = json.sync<Manifest>(PKG);
+      const raw = json.sync<Manifest>(join(cwd, PKG));
       str.ensureCase(raw, "type");
       return raw;
     } catch {

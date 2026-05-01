@@ -26,7 +26,7 @@ export async function run(): Promise<void> {
   const rt = runtime();
   const rtVersion = runtime.version();
   const pm = pkgm();
-  const pmVersion = pkgm.version(pm)?.split("@")[1] ?? "";
+  const pmVersion = pkgm.version(pm) ?? "";
   const pmLabel = pm === "yarn" && pkgm.isYarnBerry() ? "yarn (berry)" : pm;
 
   const rtLine = `  Runtime:         ${rt} ${rtVersion}`;
