@@ -1,5 +1,6 @@
 import { defineCommand } from "citty";
-import { handleAction } from "./esbuild/index.js";
+import { build } from "./esbuild/index.js";
+import { loadConfig, loadPlugins } from "#/config/index.js";
 
 export const buildCommand = defineCommand({
   meta: {
@@ -41,11 +42,9 @@ export const buildCommand = defineCommand({
       valueHint: "node22",
     },
   },
-  run({ args }) {
-    return handleAction({
-      build: true,
-      run: false,
-      ...args,
-    });
+  async run({ args }) {
+    const env = { mode: "build" as const, dev: false };
+    const [config, plugins] = await Promise.all([loadConfig({ ...args, mode: "build", run: false }), loadPlugins(env)]);
+    return build(config, plugins);
   },
 });

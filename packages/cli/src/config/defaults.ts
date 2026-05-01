@@ -2,6 +2,7 @@ import type { BaseConfig } from "./types.js";
 
 export const defaults: BaseConfig = {
   entry: ["src/index.ts", "src/**/module.ts"],
+  exec: "node [filename]",
   outdir: "dist",
   loader: {},
   clean: true,
@@ -13,5 +14,4 @@ export const defaults: BaseConfig = {
   run: false,
   tsconfig: "tsconfig.json",
   sourcemap: false,
-  watch: false,
 };

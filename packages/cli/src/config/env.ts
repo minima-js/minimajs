@@ -10,7 +10,7 @@ export function loadEnvFile(filepath: string | string[]): Record<string, string>
   const absolutePath = isAbsolute(filepath) ? filepath : resolve(process.cwd(), filepath);
   try {
     const parsed = parse(readFileSync(absolutePath, "utf8"));
-    dotenvExpand.expand({ parsed, processEnv: {} });
+    dotenvExpand.expand({ parsed });
     return parsed;
   } catch (err: any) {
     if (err.code === "ENOENT") return {};

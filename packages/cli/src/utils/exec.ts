@@ -92,14 +92,18 @@ export async function exec(file: string, args: string[] = [], options: ExecOptio
  * Forces `stdio: pipe` — output is not printed to the terminal.
  * Throws `ExecError` on non-zero exit code.
  */
-function capture(file: string, args: string[] = [], options: ExecOptions = {}): Promise<ExecResult> {
+export function capture(file: string, args: string[] = [], options: ExecOptions = {}): Promise<ExecResult> {
   return exec(file, args, { ...options, stdio: ["ignore", "pipe", "pipe"] });
 }
 capture.sync = function captureSync(file: string, args: string[] = [], options: ExecOptions = {}): ExecResult {
   return execSync(file, args, { ...options, stdio: ["ignore", "pipe", "pipe"] });
 };
 
-async function safe(file: string, args: string[] = [], options: ExecOptions = {}): Promise<ExecResult & { ok: boolean }> {
+export async function safe(
+  file: string,
+  args: string[] = [],
+  options: ExecOptions = {}
+): Promise<ExecResult & { ok: boolean }> {
   try {
     return { ...(await exec(file, args, options)), ok: true };
   } catch (e) {

@@ -1,63 +1,81 @@
-import { dirname, join, resolve } from "node:path";
+import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { Config } from "./types.js";
-import { defaults } from "./defaults.js";
+import type { Config, ConfigFactory, ConfigEnv, CliPlugin, PluginsFactory } from "./types.js";
+import { resolveConfig } from "./resolve.js";
 import type { CliOption } from "../command.js";
-import { getTarget, manifest } from "./pkg.js";
-import { exists } from "../utils/fs.js";
-import { isCurrentPath } from "../utils/path.js";
+import { exists } from "#/utils/fs.js";
+import { logger } from "#/utils/logger.js";
+import { kFactoryFn } from "#/symbols.js";
+import { runtime } from "#/runtime/index.js";
+import { getOutputFilename } from "#/utils/path.js";
+import { loadEnvFile } from "./env.js";
 
 export type { Config };
 
-export async function loadConfig(cliOption: CliOption = {}): Promise<Config> {
-  let config: Partial<Config> = {};
+function cached<TArgs extends unknown[], T>(fn: (...args: TArgs) => Promise<T>): (...args: TArgs) => Promise<T> {
+  let promise: Promise<T> | undefined;
+  return (...args) => (promise ??= fn(...args));
+}
 
+export function resolveRunCommand(config: Config, outputFile: string) {
+  const { exec, sourcemap, import: imports, outdir, envFile } = config;
+  const cmd = exec ? exec.replace("[filename]", outputFile) : `${runtime.bin(runtime.detect())} ${outputFile}`;
+  const [bin, ...userArgs] = cmd.trim().split(/\s+/);
+
+  const args: string[] = [];
+  if (sourcemap && runtime.isNode(bin!)) args.push("--enable-source-maps");
+  args.push(...imports.flatMap((x) => ["--import", getOutputFilename(x, outdir)]));
+  const env = { ...process.env, ...(envFile ? loadEnvFile(envFile) : undefined) };
+  return { bin: bin!, env, args: [...args, ...userArgs] };
+}
+
+const importConfig = cached(async () => {
   for (const ext of ["js", "ts"]) {
-    const configPath = join(process.cwd(), `minimajs.config.${ext}`);
+    const filename = `minimajs.config.${ext}`;
+    const configPath = join(process.cwd(), filename);
     if (!exists(configPath)) continue;
+    return { filename, module: await import(pathToFileURL(configPath).href) };
+  }
+  return null;
+});
 
-    const module = await import(pathToFileURL(configPath).href);
-    const raw = module.default ?? module;
+export const loadPlugins = cached(async (env: ConfigEnv): Promise<CliPlugin[]> => {
+  const result = await importConfig();
+  if (!result) return [];
+  const { filename, module } = result;
+  const factory = module.plugins;
+  if (!factory) return [];
+  if (typeof factory !== "function") {
+    logger.warn(`"${filename}" plugins export must be a function or use definePlugins() — skipping.`);
+    return [];
+  }
+  return (factory as PluginsFactory)(env);
+});
 
-    const build = !!cliOption.build;
-    const watch = !!cliOption.watch;
+export async function loadConfig(cliOption: CliOption): Promise<Config> {
+  const { mode, grace, ...cliOverrides } = cliOption;
+  const env: ConfigEnv = { mode, dev: mode === "dev" };
 
-    config =
-      typeof raw === "function"
-        ? (raw as (env: { build: boolean; watch: boolean }) => Partial<Config>)({ build, watch })
-        : (raw as Partial<Config>);
-    break;
+  let factory: ConfigFactory = () => resolveConfig({});
+
+  const result = await importConfig();
+  if (result) {
+    const { filename, module } = result;
+    if (typeof module.default !== "function") {
+      logger.warn(`"${filename}" does not export a defineConfig() function — skipping.`);
+    } else {
+      factory = module.default;
+      if (!(factory as any)[kFactoryFn]) {
+        logger.warn(`Use defineConfig in "${filename}" to avoid unexpected configuration errors`);
+      }
+    }
   }
 
-  const { main, engines } = await manifest();
+  const config = await factory(env);
 
-  if (main) {
-    config.outdir ??= dirname(resolve(main));
-  }
-
-  if (engines?.node) {
-    config.target ??= getTarget(engines.node);
-  }
-
-  const { grace, ...rawOverrides } = cliOption;
-
-  // grace: false means force kill instead of graceful shutdown
   if (grace === false) {
     config.killSignal = "SIGKILL";
   }
 
-  // Only apply overrides that were explicitly set (not undefined)
-  const cliOverrides = Object.fromEntries(Object.entries(rawOverrides).filter(([, v]) => v !== undefined));
-
-  const resolved: Config = {
-    ...defaults,
-    ...config,
-    ...cliOverrides,
-  };
-
-  if (isCurrentPath(resolved.outdir)) {
-    resolved.clean = false;
-  }
-
-  return resolved;
+  return { ...config, ...cliOverrides };
 }

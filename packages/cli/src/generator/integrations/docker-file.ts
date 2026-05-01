@@ -4,7 +4,7 @@ import { exists, text } from "#/utils/fs.js";
 import { logger } from "#/utils/logger.js";
 import { templates } from "../templates/index.js";
 import { runtime } from "#/runtime/index.js";
-import * as pm from "#/pm/index.js";
+import { pkgm } from "#/pkgm/index.js";
 import { loadConfig } from "#/config/index.js";
 
 async function fetchDockerVersion(repo: string, fallback: string): Promise<string> {
@@ -36,9 +36,9 @@ interface DockerfileArgs {
 }
 
 async function handle({ args }: { args: DockerfileArgs }) {
-  const config = await loadConfig();
-  const detected = pm.detect();
-  const berry = detected === "yarn" && pm.isYarnBerry();
+  const config = await loadConfig({ mode: "start" });
+  const detected = pkgm();
+  const berry = detected === "yarn" && pkgm.isYarnBerry();
   const destPath = "Dockerfile";
 
   if (exists(destPath)) {
