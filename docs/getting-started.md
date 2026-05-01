@@ -54,17 +54,21 @@ Minima.js uses **file-based module discovery** — routes are defined in `module
 
 ::: warning Prefer `module.ts` over imperative registration
 Don't do this:
+
 ```typescript
 // ❌ not the Minima.js way
 app.get("/users", listUsers);
 ```
+
 Do this instead — create `src/users/module.ts`:
+
 ```typescript
 // ✅ file-based routing
 export const routes: Routes = {
   "GET /list": listUsers,
 };
 ```
+
 The file's directory path becomes the URL prefix automatically.
 :::
 
@@ -133,5 +137,5 @@ No registration needed — adding the file is enough.
 - Learn module architecture: [Modules](/core-concepts/modules)
 - Learn request helpers: [HTTP Guide](/guides/http)
 - Learn hooks and lifecycle: [Hooks Guide](/guides/hooks)
-- Explore all CLI commands: [CLI Reference](/packages/cli)
+- Explore all CLI commands: [CLI Reference](/cli/)
 - Build a complete example: [Task Board Tutorial](/tutorials/task-board-api/)
