@@ -105,6 +105,12 @@ export namespace pkgm {
     }
   }
 
+  export interface AddOptions extends PMOptions {
+    manager?: PM;
+    dev?: boolean;
+    skipInstalled?: boolean;
+  }
+
   function spawn(manager: PM, args: string[], opts: PMOptions): void {
     if (opts.corepack) {
       exec.sync("corepack", [manager, ...args], { cwd: opts.cwd });
@@ -113,10 +119,10 @@ export namespace pkgm {
     }
   }
 
-  export function add(packages: string[], opts: PMOptions & { dev?: boolean; skipInstalled?: boolean } = {}): void {
+  export function add(packages: string[], opts: AddOptions = {}): void {
     const toInstall = opts.skipInstalled ? packages.filter((p) => !isInstalled(p)) : packages;
     if (toInstall.length === 0) return;
-    const manager = pkgm(opts.cwd);
+    const { manager = pkgm(opts.cwd) } = opts;
     const sub = manager === "npm" ? "install" : "add";
     const flag = opts.dev ? (manager === "npm" ? ["--save-dev"] : ["-D"]) : [];
     spawn(manager, [sub, ...toInstall, ...flag], opts);

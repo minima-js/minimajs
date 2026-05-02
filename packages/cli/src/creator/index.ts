@@ -12,6 +12,7 @@ import { exec } from "../utils/exec.js";
 import { exists, text, mkdir } from "../utils/fs.js";
 import { runtime } from "../runtime/index.js";
 import { EOL } from "node:os";
+import { manifest } from "#/manifest/index.js";
 
 function renderPackageJson(name: string, rt: Runtime, packageManager?: string | null): string {
   const stub = rt === "bun" ? templates.package.bun : templates.package.node;
@@ -60,6 +61,7 @@ function getScaffoldFiles({ projectName, runtime: rt, runtimeVersion, pm, pmSpec
     { path: ".env", content: templates.env() },
     { path: versionFile, content: runtimeVersion + EOL },
     { path: "app", content: appContent, mode: 0o755 },
+    ...(pm === "yarn" ? [{ path: "yarn.lock", content: "" }] : []),
   ];
 }
 
@@ -104,7 +106,12 @@ async function handle({ args }: { args: NewArgs }) {
   if (args.install) {
     logger.info(`  Installing dependencies with ${chalk.bold(manager)}...`);
     try {
-      pkgm.install({ cwd, corepack: isCorepack });
+      const { dependencies = {}, devDependencies = {}, ...rest } = manifest.sync(cwd);
+      const deps = Object.keys(dependencies);
+      const devDeps = Object.keys(devDependencies);
+      manifest.write.sync(rest, 2, { cwd });
+      if (deps.length) pkgm.add(deps, { manager, cwd, corepack: isCorepack });
+      if (devDeps.length) pkgm.add(devDeps, { manager, cwd, dev: true, corepack: isCorepack });
     } catch {
       logger.error(`  Failed to install. Run ${chalk.bold(`${manager} install`)} manually.`);
     }

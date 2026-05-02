@@ -14,9 +14,9 @@
     "@minimajs/server": "latest"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0",
+    "@types/node": "latest",
     "@minimajs/cli": "latest",
-    "typescript": "^5.9.0"
+    "typescript": "latest"
   },
   "engines": {
     "node": ">=v22.22.2"

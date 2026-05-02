@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { json, text } from "../utils/fs.js";
 import { str } from "../utils/index.js";
 import { EOL } from "node:os";
+import type { WorkdirOption } from "../types.js";
 
 export interface Manifest {
   name?: string;
@@ -52,13 +53,13 @@ export namespace manifest {
    * Writes data to `package.json` in the current working directory.
    * Use `write.sync` for the synchronous variant.
    */
-  export async function write(data: Manifest, indent = 2): Promise<void> {
-    await text.write(PKG, JSON.stringify(data, null, indent) + EOL);
+  export async function write(data: Manifest, indent = 2, { cwd = process.cwd() }: WorkdirOption = {}): Promise<void> {
+    await text.write(join(cwd, PKG), JSON.stringify(data, null, indent) + EOL);
   }
 
   export namespace write {
-    export function sync(data: Manifest, indent = 2): void {
-      text.write.sync(PKG, JSON.stringify(data, null, indent) + EOL);
+    export function sync(data: Manifest, indent = 2, { cwd = process.cwd() }: WorkdirOption = {}): void {
+      text.write.sync(join(cwd, PKG), JSON.stringify(data, null, indent) + EOL);
     }
   }
 
