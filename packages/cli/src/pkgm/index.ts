@@ -2,11 +2,13 @@ import { join } from "node:path";
 import { exec } from "../utils/exec.js";
 import { exists } from "../utils/fs.js";
 import { manifest } from "../manifest/index.js";
+import { logger } from "#/utils/logger.js";
 
 export type PM = "bun" | "pnpm" | "yarn" | "npm";
 
 export interface PMOptions {
   cwd?: string;
+  corepack?: boolean;
 }
 
 const LOCKFILES: [string, PM][] = [
@@ -82,15 +84,15 @@ export namespace pkgm {
     }
   }
 
-  export function version(manager: PM): string | null {
+  export function version(manager: PM): string {
     try {
       const result = exec.capture.sync(manager, ["--version"]);
       const version = result.stdout.replace(/^v/, "");
-      if (!version) return null;
-      return version;
+      if (version) return version;
     } catch {
-      return null;
+      // passed
     }
+    logger.fatal(`${manager} is not installed or could not be detected.`);
   }
 
   export function isInstalled(pkg: string): boolean {
@@ -103,26 +105,34 @@ export namespace pkgm {
     }
   }
 
+  function spawn(manager: PM, args: string[], opts: PMOptions): void {
+    if (opts.corepack) {
+      exec.sync("corepack", [manager, ...args], { cwd: opts.cwd });
+    } else {
+      exec.sync(manager, args, { cwd: opts.cwd });
+    }
+  }
+
   export function add(packages: string[], opts: PMOptions & { dev?: boolean; skipInstalled?: boolean } = {}): void {
     const toInstall = opts.skipInstalled ? packages.filter((p) => !isInstalled(p)) : packages;
     if (toInstall.length === 0) return;
     const manager = pkgm(opts.cwd);
     const sub = manager === "npm" ? "install" : "add";
     const flag = opts.dev ? (manager === "npm" ? ["--save-dev"] : ["-D"]) : [];
-    exec.sync(manager, [sub, ...toInstall, ...flag], { cwd: opts.cwd });
+    spawn(manager, [sub, ...toInstall, ...flag], opts);
   }
 
   export function remove(packages: string[], opts: PMOptions = {}): void {
     const manager = pkgm(opts.cwd);
     const sub = manager === "npm" ? "uninstall" : "remove";
-    exec.sync(manager, [sub, ...packages], { cwd: opts.cwd });
+    spawn(manager, [sub, ...packages], opts);
   }
 
   export function install(opts: PMOptions = {}): void {
-    exec.sync(pkgm(opts.cwd), ["install"], { cwd: opts.cwd });
+    spawn(pkgm(opts.cwd), ["install"], opts);
   }
 
   export function run(script: string, args: string[] = [], opts: PMOptions = {}): void {
-    exec.sync(pkgm(opts.cwd), ["run", script, ...args], { cwd: opts.cwd });
+    spawn(pkgm(opts.cwd), ["run", script, ...args], opts);
   }
 }

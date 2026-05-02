@@ -7,23 +7,11 @@ import { logger } from "#/utils/logger.js";
 import { templates } from "./templates/index.js";
 import type { Runtime } from "../config/types.js";
 import { pkgm, type PM } from "../pkgm/index.js";
-import { corepack } from "../corepack/index.js";
 import { resolvePM } from "./package-manager.js";
 import { exec } from "../utils/exec.js";
 import { exists, text, mkdir } from "../utils/fs.js";
 import { runtime } from "../runtime/index.js";
 import { EOL } from "node:os";
-
-function resolveVersionFileValue(rt: Runtime): string {
-  if (rt === "bun" && typeof process.versions.bun === "string") return process.versions.bun;
-  if (rt === "node" && typeof process.versions.bun !== "string") return process.versions.node;
-
-  try {
-    return exec.capture.sync(rt, ["--version"]).stdout.replace(/^v/, "");
-  } catch {
-    return rt === "bun" ? "latest" : process.versions.node;
-  }
-}
 
 function renderPackageJson(name: string, rt: Runtime, packageManager?: string | null): string {
   const stub = rt === "bun" ? templates.package.bun : templates.package.node;
@@ -47,25 +35,21 @@ interface ScaffoldFile {
   mode?: number;
 }
 
-function getScaffoldFiles({
-  name,
-  manager,
-  packageManagerField,
-  rt,
-}: {
-  name: string;
-  manager: PM;
-  packageManagerField: string | null;
-  rt: Runtime;
-}): ScaffoldFile[] {
+interface ScaffoldContext {
+  projectName: string;
+  runtime: Runtime;
+  runtimeVersion: string;
+  pm: PM;
+  pmSpec: string;
+}
+
+function getScaffoldFiles({ projectName, runtime: rt, runtimeVersion, pm, pmSpec }: ScaffoldContext): ScaffoldFile[] {
   const versionFile = rt === "bun" ? ".bun-version" : ".node-version";
   const appContent =
-    rt === "bun"
-      ? templates.app.bun()
-      : templates.app.node({ exec: pkgm.EXEC[manager as Exclude<PM, "bun">] ?? pkgm.EXEC.npm });
+    rt === "bun" ? templates.app.bun() : templates.app.node({ exec: pkgm.EXEC[pm as Exclude<PM, "bun">] ?? pkgm.EXEC.npm });
 
   return [
-    { path: "package.json", content: renderPackageJson(name, rt, packageManagerField) },
+    { path: "package.json", content: renderPackageJson(projectName, rt, pmSpec) },
     { path: "tsconfig.json", content: templates.tsconfig() },
     { path: `minimajs.config.${rt === "bun" ? "ts" : "js"}`, content: templates.minimajsConfig({ runtime: rt }) },
     { path: join("src", "index.ts"), content: templates.index({ runtime: rt }) },
@@ -74,7 +58,7 @@ function getScaffoldFiles({
     { path: join("src", "users", "users.handler.ts"), content: templates.usersHandler() },
     { path: ".gitignore", content: templates.gitignore() },
     { path: ".env", content: templates.env() },
-    { path: versionFile, content: resolveVersionFileValue(rt) + EOL },
+    { path: versionFile, content: runtimeVersion + EOL },
     { path: "app", content: appContent, mode: 0o755 },
   ];
 }
@@ -85,20 +69,27 @@ async function handle({ args }: { args: NewArgs }) {
     args.runtime = "bun";
     args.pm ??= "bun";
   }
-  const { manager, version } = resolvePM(args.pm);
-  const rt = (args.runtime as Runtime) ?? runtime();
+
+  const { name: rt, version: rtVersion } = runtime.resolve(args.runtime as Runtime | undefined);
+  const { manager, version, isCorepack } = resolvePM(args.pm);
   const cwd = resolveCwd(name);
 
   if (exists(cwd)) {
     logger.fatal(`Directory ${chalk.bold(name)} already exists.`);
   }
 
-  const packageManagerField = `${manager}@${version}`;
+  const pmSpec = `${manager}@${version}`;
   const spinner = createSpinner();
 
   spinner.start(`Scaffolding ${chalk.bold(chalk.cyan(name))}...`);
 
-  const files = getScaffoldFiles({ name, manager, packageManagerField, rt });
+  const files = getScaffoldFiles({
+    projectName: name,
+    runtime: rt,
+    runtimeVersion: rtVersion,
+    pm: manager,
+    pmSpec,
+  });
 
   await Promise.all([mkdir(join(cwd, "src")), mkdir(join(cwd, "src", "users"))]);
   await Promise.all(files.map((file) => text.write(join(cwd, file.path), file.content, { mode: file.mode })));
@@ -113,11 +104,7 @@ async function handle({ args }: { args: NewArgs }) {
   if (args.install) {
     logger.info(`  Installing dependencies with ${chalk.bold(manager)}...`);
     try {
-      if (corepack.isManaged(manager) && corepack()) {
-        corepack.install(manager, { cwd });
-      } else {
-        pkgm.install({ cwd });
-      }
+      pkgm.install({ cwd, corepack: isCorepack });
     } catch {
       logger.error(`  Failed to install. Run ${chalk.bold(`${manager} install`)} manually.`);
     }

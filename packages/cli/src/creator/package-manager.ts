@@ -1,12 +1,19 @@
 import chalk from "chalk";
 import { logger } from "#/utils/logger.js";
 import { pkgm, type PM } from "../pkgm/index.js";
-import { corepack } from "../corepack/index.js";
+import { corepack, type CorepackPM } from "../corepack/index.js";
 
-export interface ResolvedPM {
-  manager: PM;
-  version: string;
-}
+export type ResolvedPM =
+  | {
+      manager: PM;
+      version: string;
+      isCorepack: false;
+    }
+  | {
+      manager: CorepackPM;
+      version: string;
+      isCorepack: true;
+    };
 
 interface PMArg {
   manager: PM;
@@ -30,35 +37,40 @@ function parsePMArg(arg: string): PMArg {
   return { manager: name, versionHint };
 }
 
-function resolveVersion(manager: PM, hint?: string): string {
-  if (hint && corepack.isManaged(manager)) {
-    return corepack.version(manager, hint);
-  }
-  const version = pkgm.version(manager);
-  if (!version) logger.fatal(`${manager} is not installed or could not be detected.`);
-  return version;
-}
-
 export function resolvePM(pmArg?: string): ResolvedPM {
-  let manager: PM;
-  let versionHint: string | undefined;
-
-  if (pmArg) {
-    const parsed = parsePMArg(pmArg);
-    manager = parsed.manager;
-    versionHint = parsed.versionHint;
-  } else {
+  if (!pmArg) {
     const agent = pkgm.userAgent();
-    manager = agent?.manager ?? "npm";
-    versionHint = agent?.version;
+    if (!agent) {
+      return {
+        isCorepack: false,
+        manager: "npm",
+        version: pkgm.version("npm"),
+      };
+    }
+    return {
+      isCorepack: false,
+      manager: agent.manager,
+      version: agent.version,
+    };
   }
+
+  const { manager, versionHint } = parsePMArg(pmArg);
 
   if (manager === "yarn") {
-    const isBerry = versionHint ? parseInt(versionHint, 10) >= 2 : pkgm.isYarnBerry();
+    const isBerry = versionHint ? parseInt(versionHint, 10) >= 2 : false;
     if (isBerry && !corepack()) {
       logger.fatal(`Yarn Berry requires Corepack. Install it with: ${chalk.bold("npm install -g corepack")}`);
     }
   }
 
-  return { manager, version: resolveVersion(manager, versionHint) };
+  if (versionHint && corepack.isManaged(manager)) {
+    return {
+      isCorepack: true,
+      manager,
+      version: corepack.version(manager, versionHint),
+    };
+  }
+
+  const version = pkgm.version(manager);
+  return { isCorepack: false, manager, version };
 }

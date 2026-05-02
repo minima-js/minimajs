@@ -23,8 +23,7 @@ function modeFromArgv(): ConfigMode {
 }
 
 export async function run(): Promise<void> {
-  const rt = runtime();
-  const rtVersion = runtime.version();
+  const { name: rt, version: rtVersion } = runtime.resolve();
   const pm = pkgm();
   const pmVersion = pkgm.version(pm) ?? "";
   const pmLabel = pm === "yarn" && pkgm.isYarnBerry() ? "yarn (berry)" : pm;

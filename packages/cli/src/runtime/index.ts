@@ -1,6 +1,7 @@
 import type { Runtime } from "../config/types.js";
 import { exists, text } from "../utils/fs.js";
 import { manifest } from "../manifest/index.js";
+import { exec } from "../utils/exec.js";
 
 export function runtime(): Runtime {
   if (typeof process.versions.bun === "string") return "bun";
@@ -33,6 +34,24 @@ export namespace runtime {
   export function version(): string {
     if (typeof process.versions.bun === "string") return process.versions.bun;
     return process.versions.node;
+  }
+
+  export function resolve(name?: Runtime): { name: Runtime; version: string } {
+    if (name) {
+      const v = exec.capture.sync(name, ["--version"]).stdout.replace(/^v/, "").trim();
+      return { name, version: v };
+    }
+
+    const agent = process.env.npm_config_user_agent ?? "";
+
+    const bunAgent = agent.match(/^bun\/(\S+)/);
+    if (bunAgent?.[1]) return { name: "bun", version: bunAgent[1] };
+
+    const nodeAgent = agent.match(/node\/v(\S+)/);
+    if (nodeAgent?.[1]) return { name: "node", version: nodeAgent[1] };
+
+    if (typeof process.versions.bun === "string") return { name: "bun", version: process.versions.bun };
+    return { name: "node", version: process.versions.node };
   }
 
   export function bin(rt?: Runtime): string {

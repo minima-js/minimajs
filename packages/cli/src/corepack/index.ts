@@ -28,7 +28,4 @@ export namespace corepack {
     return stdout.replace(/^v/, "").trim();
   }
 
-  export function install(manager: CorepackPM, opts: CorepackOptions = {}): void {
-    exec.sync("corepack", [manager, "install"], { cwd: opts.cwd });
-  }
 }
