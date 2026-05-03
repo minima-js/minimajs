@@ -68,7 +68,7 @@ export interface CreateBaseSeverOptions {
  * });
  *
  * app.get("/health", () => ({ status: "ok" }));
- * await app.listen({ port: 3000 });
+ * await app.listen({ port: 6464 });
  * ```
  */
 export function createBaseServer<T>(server: ServerAdapter<T>, options: CreateBaseSeverOptions) {

@@ -9,10 +9,10 @@ const mockAdapter: ServerAdapter<any> = {
     server: {} as any,
     address: {
       hostname: "localhost",
-      port: 3000,
+      port: 6464,
       family: "IPv4",
       protocol: "http",
-      href: "http://localhost:3000/",
+      href: "http://localhost:6464/",
     } as AddressInfo,
   }),
   close: async () => {},

@@ -32,6 +32,8 @@ async function fetchDockerVersion(repo: string, fallback: string): Promise<strin
 interface DockerfileArgs {
   user: string;
   version?: string;
+  port: string;
+  force: boolean;
 }
 
 async function handle({ args }: { args: DockerfileArgs }) {
@@ -39,8 +41,8 @@ async function handle({ args }: { args: DockerfileArgs }) {
   const berry = detected === "yarn" && pkgm.isYarnBerry();
   const destPath = "Dockerfile";
 
-  if (exists(destPath)) {
-    logger.fatal("Dockerfile already exists");
+  if (exists(destPath) && !args.force) {
+    logger.fatal("Dockerfile already exists (use --force to overwrite)");
   }
 
   const rt = runtime.detect();
@@ -49,8 +51,12 @@ async function handle({ args }: { args: DockerfileArgs }) {
   const detectedVersion = runtime.detect.version();
   const version = args.version ?? (detectedVersion ? `${detectedVersion}-alpine` : await fetchDockerVersion(repo, fallback));
 
+  const isAlpine = version.includes("alpine");
+  const userCreate = isAlpine
+    ? `addgroup --system ${args.user} && adduser --system --ingroup ${args.user} ${args.user}`
+    : `groupadd --system ${args.user} && useradd --system --gid ${args.user} --no-create-home ${args.user}`;
 
-  const templateVars = { version, user: args.user };
+  const templateVars = { version, user: args.user, port: args.port, userCreate };
   const content = berry ? templates.docker.berry(templateVars) : templates.docker[detected](templateVars);
   text.write.sync(destPath, content);
 
@@ -63,7 +69,8 @@ async function handle({ args }: { args: DockerfileArgs }) {
     `  ${chalk.green("✔")} Created ${chalk.bold(chalk.cyan("Dockerfile"))} for ${chalk.bold(label)}`,
     ...(dockerignoreCreated ? [`  ${chalk.green("✔")} Created ${chalk.bold(chalk.cyan(".dockerignore"))}`] : []),
     `  ${chalk.dim("Version:")} ${chalk.cyan(version)}`,
-    `  ${chalk.dim("User:")} ${chalk.cyan(args.user)}`,
+    `  ${chalk.dim("User:")}    ${chalk.cyan(args.user)}`,
+    `  ${chalk.dim("Port:")}    ${chalk.cyan(args.port)}`,
     "",
     `  ${chalk.dim("Tip:")} build with ${chalk.cyan("docker build -t my-app .")}`,
     ""
@@ -81,6 +88,16 @@ export const dockerfile = defineCommand({
     version: {
       type: "string",
       description: "Base image version tag (e.g. 24-alpine, lts-alpine)",
+    },
+    port: {
+      type: "string",
+      description: "Port the container listens on",
+      default: "6464",
+    },
+    force: {
+      type: "boolean",
+      description: "Overwrite existing Dockerfile",
+      default: false,
     },
   },
   run: handle,

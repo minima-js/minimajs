@@ -25,7 +25,7 @@ import type { Stub } from "#/types.js";
 type NamedVars = { name: string };
 type InstanceVars = { instance: string };
 type HookVars = { instance: string; hookType: string };
-type DockerVars = { version: string; user: string };
+type DockerVars = { version: string; user: string; port: string; userCreate: string };
 
 export const templates = {
   disk: {

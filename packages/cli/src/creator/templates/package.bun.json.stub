@@ -5,7 +5,6 @@
   "private": true,
   "packageManager": "{{ packageManager }}",
   "scripts": {
-    "app": "minimajs",
     "dev": "minimajs dev",
     "build": "minimajs build",
     "start": "minimajs start"

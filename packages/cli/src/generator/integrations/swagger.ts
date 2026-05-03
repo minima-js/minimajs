@@ -32,7 +32,7 @@ function handle({ args }: { args: SwaggerArgs }) {
     "",
     `  ${chalk.dim("Created:")} ${chalk.cyan(moduleFile)}`,
     `  ${chalk.dim("Spec:")}    ${chalk.cyan(args.spec)}`,
-    `  ${chalk.dim("View:")}    ${chalk.cyan(`http://localhost:3000/${args.path}`)}`,
+    `  ${chalk.dim("View:")}    ${chalk.cyan(`http://localhost:6464/${args.path}`)}`,
     ""
   );
 }
