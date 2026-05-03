@@ -1,0 +1,14 @@
+/** @type {import('jest').Config} */
+export default {
+  testEnvironment: "node",
+  extensionsToTreatAsEsm: [".ts"],
+  transform: {
+    "^.+\\.tsx?$": "<rootDir>/jest.transform.cjs",
+  },
+  moduleNameMapper: {
+    "^(\\.{1,2}/.*)\\.js$": "$1",
+  },
+  testMatch: ["**/__tests__/**/*.test.ts", "**/*.spec.ts"],
+  coverageDirectory: "coverage",
+  collectCoverageFrom: ["src/**/*.ts", "!src/**/*.d.ts"],
+};

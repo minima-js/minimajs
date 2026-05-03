@@ -8,6 +8,7 @@ import { templates } from "./templates/index.js";
 import type { Runtime } from "../config/types.js";
 import { pkgm, type PM } from "../pkgm/index.js";
 import { resolvePM } from "./package-manager.js";
+import { corepack } from "../corepack/index.js";
 import { exec } from "../utils/exec.js";
 import { exists, text, mkdir } from "../utils/fs.js";
 import { runtime } from "../runtime/index.js";
@@ -26,6 +27,7 @@ interface NewArgs {
   pm?: string;
   runtime?: string;
   bun?: boolean;
+  corepack?: boolean;
   install: boolean;
   git: boolean;
 }
@@ -42,17 +44,33 @@ interface ScaffoldContext {
   runtimeVersion: string;
   pm: PM;
   pmSpec: string;
+  isCorepack: boolean;
 }
 
-function getScaffoldFiles({ projectName, runtime: rt, runtimeVersion, pm, pmSpec }: ScaffoldContext): ScaffoldFile[] {
+function getScaffoldFiles({
+  projectName,
+  runtime: rt,
+  runtimeVersion,
+  pm,
+  pmSpec,
+  isCorepack,
+}: ScaffoldContext): ScaffoldFile[] {
   const versionFile = rt === "bun" ? ".bun-version" : ".node-version";
   const appContent =
-    rt === "bun" ? templates.app.bun() : templates.app.node({ exec: pkgm.EXEC[pm as Exclude<PM, "bun">] ?? pkgm.EXEC.npm });
+    rt === "bun"
+      ? templates.app.bun()
+      : templates.app.node({
+          exec: pkgm.EXEC[pm as Exclude<PM, "bun">] ?? pkgm.EXEC.npm,
+          corepackFlag: isCorepack ? "--corepack-enabled" : "",
+        });
+
+  const configContent = templates.minimajsConfig({ runtime: rt });
+  const minimajsConfig = isCorepack ? `${configContent}\nexport const corepack = true;\n` : configContent;
 
   return [
     { path: "package.json", content: renderPackageJson(projectName, rt, pmSpec) },
     { path: "tsconfig.json", content: templates.tsconfig() },
-    { path: `minimajs.config.${rt === "bun" ? "ts" : "js"}`, content: templates.minimajsConfig({ runtime: rt }) },
+    { path: `minimajs.config.${rt === "bun" ? "ts" : "js"}`, content: minimajsConfig },
     { path: join("src", "index.ts"), content: templates.index({ runtime: rt }) },
     { path: join("src", "module.ts"), content: templates.rootModule() },
     { path: join("src", "users", "module.ts"), content: templates.usersModule() },
@@ -73,7 +91,9 @@ async function handle({ args }: { args: NewArgs }) {
   }
 
   const { name: rt, version: rtVersion } = runtime.resolve(args.runtime as Runtime | undefined);
-  const { manager, version, isCorepack } = resolvePM(args.pm);
+  const { manager, version, isCorepack: pmCorepack } = resolvePM(args.pm);
+  if (args.corepack) corepack.ensure();
+  const isCorepack = args.corepack ?? pmCorepack;
   const cwd = resolveCwd(name);
 
   if (exists(cwd)) {
@@ -91,6 +111,7 @@ async function handle({ args }: { args: NewArgs }) {
     runtimeVersion: rtVersion,
     pm: manager,
     pmSpec,
+    isCorepack,
   });
 
   await Promise.all([mkdir(join(cwd, "src")), mkdir(join(cwd, "src", "users"))]);
@@ -157,6 +178,10 @@ export const newCommand = defineCommand({
     bun: {
       type: "boolean",
       description: "Use Bun runtime (shorthand for --runtime=bun)",
+    },
+    corepack: {
+      type: "boolean",
+      description: "Enable Corepack for package manager version enforcement",
     },
     install: {
       type: "boolean",

@@ -58,9 +58,7 @@ export function resolvePM(pmArg?: string): ResolvedPM {
 
   if (manager === "yarn") {
     const isBerry = versionHint ? parseInt(versionHint, 10) >= 2 : false;
-    if (isBerry && !corepack()) {
-      logger.fatal(`Yarn Berry requires Corepack. Install it with: ${chalk.bold("npm install -g corepack")}`);
-    }
+    if (isBerry) corepack.ensure();
   }
 
   if (versionHint && corepack.isManaged(manager)) {

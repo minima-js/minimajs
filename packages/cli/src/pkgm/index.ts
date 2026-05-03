@@ -3,6 +3,8 @@ import { exec } from "../utils/exec.js";
 import { exists } from "../utils/fs.js";
 import { manifest } from "../manifest/index.js";
 import { logger } from "#/utils/logger.js";
+import { corepack, type CorepackPM } from "../corepack/index.js";
+import { isCorepackEnabled } from "../config/index.js";
 
 export type PM = "bun" | "pnpm" | "yarn" | "npm";
 
@@ -95,16 +97,6 @@ export namespace pkgm {
     logger.fatal(`${manager} is not installed or could not be detected.`);
   }
 
-  export function isInstalled(pkg: string): boolean {
-    try {
-      const raw = manifest.sync();
-      if (!raw.dependencies) return false;
-      return pkg in raw.dependencies;
-    } catch {
-      return false;
-    }
-  }
-
   export interface AddOptions extends PMOptions {
     manager?: PM;
     dev?: boolean;
@@ -112,15 +104,22 @@ export namespace pkgm {
   }
 
   function spawn(manager: PM, args: string[], opts: PMOptions): void {
-    if (opts.corepack) {
-      exec.sync("corepack", [manager, ...args], { cwd: opts.cwd });
+    const useCorepack = opts.corepack ?? isCorepackEnabled;
+    if (useCorepack) {
+      corepack.ensure();
+      corepack(manager as CorepackPM, args, { cwd: opts.cwd });
     } else {
       exec.sync(manager, args, { cwd: opts.cwd });
     }
   }
 
   export function add(packages: string[], opts: AddOptions = {}): void {
-    const toInstall = opts.skipInstalled ? packages.filter((p) => !isInstalled(p)) : packages;
+    let toInstall = packages;
+    if (opts.skipInstalled) {
+      const raw = manifest.sync(opts.cwd);
+      const installed = { ...raw.dependencies, ...raw.devDependencies };
+      toInstall = packages.filter((p) => !(p in installed));
+    }
     if (toInstall.length === 0) return;
     const { manager = pkgm(opts.cwd) } = opts;
     const sub = manager === "npm" ? "install" : "add";
@@ -134,8 +133,19 @@ export namespace pkgm {
     spawn(manager, [sub, ...packages], opts);
   }
 
-  export function install(opts: PMOptions = {}): void {
-    spawn(pkgm(opts.cwd), ["install"], opts);
+  export interface InstallOptions extends PMOptions {
+    manager?: PM;
+    frozen?: boolean;
+  }
+
+  export function install(opts: InstallOptions = {}): void {
+    const manager = opts.manager ?? pkgm(opts.cwd);
+    if (opts.frozen && manager === "npm") {
+      spawn(manager, ["ci"], opts);
+      return;
+    }
+    const frozenFlag = opts.frozen ? (manager === "yarn" ? "--immutable" : "--frozen-lockfile") : null;
+    spawn(manager, frozenFlag ? ["install", frozenFlag] : ["install"], opts);
   }
 
   export function run(script: string, args: string[] = [], opts: PMOptions = {}): void {

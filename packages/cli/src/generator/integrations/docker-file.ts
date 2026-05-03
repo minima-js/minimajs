@@ -5,7 +5,6 @@ import { logger } from "#/utils/logger.js";
 import { templates } from "../templates/index.js";
 import { runtime } from "#/runtime/index.js";
 import { pkgm } from "#/pkgm/index.js";
-import { loadConfig } from "#/config/index.js";
 
 async function fetchDockerVersion(repo: string, fallback: string): Promise<string> {
   try {
@@ -36,7 +35,6 @@ interface DockerfileArgs {
 }
 
 async function handle({ args }: { args: DockerfileArgs }) {
-  const config = await loadConfig({ mode: "start" });
   const detected = pkgm();
   const berry = detected === "yarn" && pkgm.isYarnBerry();
   const destPath = "Dockerfile";
@@ -51,13 +49,8 @@ async function handle({ args }: { args: DockerfileArgs }) {
   const detectedVersion = runtime.detect.version();
   const version = args.version ?? (detectedVersion ? `${detectedVersion}-alpine` : await fetchDockerVersion(repo, fallback));
 
-  const cmd =
-    rt === "node" && config.sourcemap
-      ? `["node", "--enable-source-maps", "dist/index.js"]`
-      : rt === "bun"
-        ? `["bun", "run", "dist/index.js"]`
-        : `["node", "dist/index.js"]`;
-  const templateVars = { version, cmd, user: args.user };
+
+  const templateVars = { version, user: args.user };
   const content = berry ? templates.docker.berry(templateVars) : templates.docker[detected](templateVars);
   text.write.sync(destPath, content);
 

@@ -16,7 +16,7 @@ import type { Stub } from "#/types.js";
 export const templates = {
   app: {
     bun: appBun as Stub,
-    node: appNode as Stub<{ exec: string }>,
+    node: appNode as Stub<{ exec: string; corepackFlag: string }>,
   },
   package: {
     bun: packageBun as Stub<{ name: string; packageManager: string }>,

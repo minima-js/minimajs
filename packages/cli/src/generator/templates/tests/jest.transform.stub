@@ -1,0 +1,14 @@
+const { transformSync } = require("esbuild");
+
+module.exports = {
+  process(source, filename) {
+    if (filename.endsWith(".d.ts")) return { code: "" };
+    const { code } = transformSync(source, {
+      format: "esm",
+      loader: /\.tsx?$/.test(filename) ? "ts" : "js",
+      target: "esnext",
+      sourcefile: filename,
+    });
+    return { code };
+  },
+};

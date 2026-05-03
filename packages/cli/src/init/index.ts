@@ -13,7 +13,7 @@ function handle() {
   const appContent =
     rt === "bun"
       ? templates.app.bun()
-      : templates.app.node({ exec: pkgm.EXEC[manager as Exclude<PM, "bun">] ?? pkgm.EXEC.npm });
+      : templates.app.node({ corepackFlag: "", exec: pkgm.EXEC[manager as Exclude<PM, "bun">] ?? pkgm.EXEC.npm });
 
   const files = [
     { path: "app", content: appContent, mode: 0o755 },

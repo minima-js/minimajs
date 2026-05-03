@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
 if command -v fnm > /dev/null 2>&1 && [ -f ".node-version" ]; then
-  fnm use --install-if-missing > /dev/null
+  exec fnm exec {{ corepackFlag }} -- {{ exec }} "$@"
+else
+  exec {{ exec }} "$@"
 fi
-{{ exec }} "$@"

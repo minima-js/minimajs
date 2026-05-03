@@ -35,4 +35,4 @@ USER {{ user }}
 ENV PORT=3000
 EXPOSE 3000
 
-CMD {{ cmd }}
+CMD ["yarn", "run", "start"]

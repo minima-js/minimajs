@@ -16,6 +16,9 @@ import dockerBerry from "./docker/berry.stub";
 import eslintConfig from "./eslint.config.js.stub";
 import prettierConfig from "./prettier.config.js.stub";
 import swaggerModule from "./swagger.module.stub";
+import jestConfig from "./tests/jest.config.stub";
+import jestTransform from "./tests/jest.transform.stub";
+import testExample from "./tests/test.example.stub";
 import type { Stub } from "#/types.js";
 
 type NamedVars = { name: string };
@@ -40,6 +43,11 @@ export const templates = {
   configs: {
     eslint: eslintConfig as Stub,
     prettier: prettierConfig as Stub,
+  },
+  tests: {
+    config: jestConfig as Stub,
+    transform: jestTransform as Stub,
+    example: testExample as Stub,
   },
   swaggerModule: swaggerModule as Stub<{ spec: string }>,
   module: $module as Stub<NamedVars>,
