@@ -1,0 +1,20 @@
+node_modules
+dist
+coverage
+
+# Environment variables — never bake secrets into an image
+.env
+.env.local
+.env.*.local
+
+# Version control
+.git
+.gitignore
+
+# Yarn Berry cache
+.yarn/cache
+.yarn/install-state.gz
+
+# Logs and OS noise
+*.log
+.DS_Store

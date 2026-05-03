@@ -54,10 +54,14 @@ async function handle({ args }: { args: DockerfileArgs }) {
   const content = berry ? templates.docker.berry(templateVars) : templates.docker[detected](templateVars);
   text.write.sync(destPath, content);
 
+  const dockerignoreCreated = !exists(".dockerignore");
+  if (dockerignoreCreated) text.write.sync(".dockerignore", templates.docker.ignore());
+
   const label = berry ? "yarn berry" : detected;
   logger.info(
     "",
     `  ${chalk.green("✔")} Created ${chalk.bold(chalk.cyan("Dockerfile"))} for ${chalk.bold(label)}`,
+    ...(dockerignoreCreated ? [`  ${chalk.green("✔")} Created ${chalk.bold(chalk.cyan(".dockerignore"))}`] : []),
     `  ${chalk.dim("Version:")} ${chalk.cyan(version)}`,
     `  ${chalk.dim("User:")} ${chalk.cyan(args.user)}`,
     "",

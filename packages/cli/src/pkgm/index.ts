@@ -58,7 +58,7 @@ export function pkgm(cwd = process.cwd()): PM {
 
 export namespace pkgm {
   export const EXEC: Record<Exclude<PM, "bun">, string> = {
-    npm: "npx --no minimajs",
+    npm: "node_modules/.bin/minimajs",
     pnpm: "pnpm exec minimajs",
     yarn: "yarn minimajs",
   };

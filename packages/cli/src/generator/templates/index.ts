@@ -13,6 +13,7 @@ import dockerNpm from "./docker/npm.stub";
 import dockerPnpm from "./docker/pnpm.stub";
 import dockerYarn from "./docker/yarn.stub";
 import dockerBerry from "./docker/berry.stub";
+import dockerignore from "./dockerignore.stub";
 import eslintConfig from "./eslint.config.js.stub";
 import prettierConfig from "./prettier.config.js.stub";
 import swaggerModule from "./swagger.module.stub";
@@ -39,6 +40,7 @@ export const templates = {
     pnpm: dockerPnpm as Stub<DockerVars>,
     yarn: dockerYarn as Stub<DockerVars>,
     berry: dockerBerry as Stub<DockerVars>,
+    ignore: dockerignore as Stub,
   },
   configs: {
     eslint: eslintConfig as Stub,
