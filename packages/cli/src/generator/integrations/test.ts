@@ -10,9 +10,17 @@ import { pkgm } from "#/pkgm/index.js";
 const TEST_PACKAGES = ["jest", "@jest/globals", "esbuild"];
 const CONFIG_FILE = "jest.config.js";
 const TRANSFORM_FILE = "jest.transform.cjs";
-const TEST_SCRIPT = "node --no-warnings --experimental-vm-modules node_modules/.bin/jest";
+
+function testScript(berry: boolean): string {
+  const base = berry
+    ? "yarn node --no-warnings --experimental-vm-modules $(yarn bin jest)"
+    : "node --no-warnings --experimental-vm-modules node_modules/.bin/jest";
+  return base;
+}
 
 function handle({ args }: { args: { install: boolean; example: boolean } }) {
+  const berry = pkgm() === "yarn" && pkgm.isYarnBerry();
+  const script = testScript(berry);
   if (exists(CONFIG_FILE)) {
     logger.fatal(`${CONFIG_FILE} already exists`);
   }
@@ -25,22 +33,22 @@ function handle({ args }: { args: { install: boolean; example: boolean } }) {
   text.write.sync(TRANSFORM_FILE, templates.tests.transform());
 
   if (args.example) {
-    text.write.sync(join("src", "__tests__", "example.test.ts"), templates.tests.example());
+    text.write.sync(join("src", "__tests__", "example.test.ts"), templates.tests.example(), { ensuredir: true });
   }
 
   const info = manifest.sync();
   info.scripts ??= {};
   let scriptsChanged = false;
   if (!info.scripts["test"]) {
-    info.scripts["test"] = TEST_SCRIPT;
+    info.scripts["test"] = script;
     scriptsChanged = true;
   }
   if (!info.scripts["test:watch"]) {
-    info.scripts["test:watch"] = `${TEST_SCRIPT} --watch`;
+    info.scripts["test:watch"] = `${script} --watch`;
     scriptsChanged = true;
   }
   if (!info.scripts["test:coverage"]) {
-    info.scripts["test:coverage"] = `${TEST_SCRIPT} --coverage`;
+    info.scripts["test:coverage"] = `${script} --coverage`;
     scriptsChanged = true;
   }
   if (scriptsChanged) manifest.write.sync(info);
