@@ -6,7 +6,7 @@ import { templates } from "../creator/templates/index.js";
 import { runtime } from "../runtime/index.js";
 import { pkgm, type PM } from "../pkgm/index.js";
 
-function handle() {
+function handle({ force }: { force: boolean }) {
   const rt = runtime.detect();
   const manager = pkgm();
   const configFile = `minimajs.config.${rt === "bun" ? "ts" : "js"}`;
@@ -21,26 +21,45 @@ function handle() {
     { path: configFile, content: templates.minimajsConfig({ runtime: rt }) },
   ];
 
-  const created: string[] = [];
+  const written: string[] = [];
+  const overwritten: string[] = [];
+  const skipped: string[] = [];
 
   for (const file of files) {
-    if (exists(file.path)) {
-      logger.warn(`${file.path} already exists, skipping`);
+    if (!force && exists(file.path)) {
+      skipped.push(file.path);
     } else {
+      const isOverwrite = exists(file.path);
       text.write.sync(file.path, file.content, { mode: file.mode });
-      created.push(file.path);
+      (isOverwrite ? overwritten : written).push(file.path);
     }
   }
 
-  if (created.length === 0) {
-    logger.warn("Nothing to do — all files already exist");
+  if (written.length === 0 && overwritten.length === 0) {
+    logger.warn("Nothing to do — all files already exist. Use --force to overwrite.");
     return;
   }
 
-  logger.info("", ...created.map((f) => `  ${chalk.green("✔")} Created ${chalk.bold(chalk.cyan(f))}`), "");
+  logger.info(
+    "",
+    ...written.map((f) => `  ${chalk.green("✔")} Created ${chalk.bold(chalk.cyan(f))}`),
+    ...overwritten.map((f) => `  ${chalk.yellow("✔")} Overwrote ${chalk.bold(chalk.cyan(f))}`),
+    ...skipped.map((f) => `  ${chalk.dim("-")} Skipped ${chalk.dim(f)} (already exists)`),
+    ""
+  );
 }
 
 export const initCommand = defineCommand({
   meta: { name: "init", description: "Scaffold tsconfig.json and minimajs.config in the current directory" },
-  run: handle,
+  args: {
+    force: {
+      type: "boolean",
+      alias: ["f"],
+      description: "Overwrite existing files and update packageManager field",
+      default: false,
+    },
+  },
+  run({ args }) {
+    return handle(args);
+  },
 });

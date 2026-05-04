@@ -19,6 +19,21 @@ export function toCamel(name: string): string {
 }
 
 /**
+ * Returns a naive singular form of a lowercase noun.
+ * Handles the most common English plural patterns:
+ *   - "categories" → "category"  (ies → y)
+ *   - "statuses"   → "status"    (ses → s)
+ *   - "orders"     → "order"     (trailing s)
+ * Leaves the word unchanged if none of the patterns match.
+ */
+export function toSingular(word: string): string {
+  if (word.endsWith("ies")) return word.slice(0, -3) + "y";
+  if (word.endsWith("ses")) return word.slice(0, -2);
+  if (word.endsWith("s") && !word.endsWith("ss")) return word.slice(0, -1);
+  return word;
+}
+
+/**
  * Lower-cases the values of the specified keys in `data` in place.
  *
  * Only string values are modified; missing or non-string fields are skipped.

@@ -8,7 +8,7 @@ import { templates } from "../templates/index.js";
 import { suggestModule, applyPatch } from "../patch.js";
 import { resolveCwd, relativeId } from "#/utils/path.js";
 
-function handle({ args }: { args: { name: string; dir: string } }) {
+function handle({ args }: { args: { name: string; dir: string; force: boolean } }) {
   const segments = args.name.split("/");
   const middlewareName = segments.at(-1)!;
   const folderSegments = segments.slice(0, -1);
@@ -21,8 +21,8 @@ function handle({ args }: { args: { name: string; dir: string } }) {
 
   const moduleFile = join(srcDir, "module.ts");
 
-  if (exists(middlewareFile)) {
-    logger.fatal(`Middleware already exists at ${chalk.cyan(relativeId(middlewareFile))}`);
+  if (!args.force && exists(middlewareFile)) {
+    logger.fatal(`Middleware already exists at ${chalk.cyan(relativeId(middlewareFile))} (use --force to overwrite)`);
   }
 
   const instance = toCamel(middlewareName);
@@ -59,6 +59,12 @@ export const middleware = defineCommand({
       description: "Root source directory",
       valueHint: "path",
       default: "src",
+    },
+    force: {
+      type: "boolean",
+      alias: ["f"],
+      description: "Overwrite existing middleware file",
+      default: false,
     },
   },
   run: handle,

@@ -1,4 +1,7 @@
 import $module from "./module.stub";
+import crudModule from "./crud-module.stub";
+import crudHandler from "./crud-handler.stub";
+import crudRepository from "./crud-repository.stub";
 import handler from "./handler.stub";
 import service from "./service.stub";
 import middleware from "./middleware.stub";
@@ -23,6 +26,7 @@ import testExample from "./tests/test.example.stub";
 import type { Stub } from "#/types.js";
 
 type NamedVars = { name: string };
+type CrudVars = { name: string; Name: string; singular: string };
 type InstanceVars = { instance: string };
 type HookVars = { instance: string; hookType: string };
 type DockerVars = { version: string; user: string; port: string; userCreate: string };
@@ -53,6 +57,9 @@ export const templates = {
   },
   swaggerModule: swaggerModule as Stub<{ spec: string }>,
   module: $module as Stub<NamedVars>,
+  crudModule: crudModule as Stub<CrudVars>,
+  crudHandler: crudHandler as Stub<CrudVars>,
+  crudRepository: crudRepository as Stub<CrudVars>,
   handler: handler as Stub,
   service: service as Stub<NamedVars>,
   middleware: middleware as Stub<InstanceVars>,

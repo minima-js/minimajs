@@ -1,0 +1,33 @@
+export interface {{ Name }} {
+  id: string;
+  [key: string]: unknown;
+}
+
+const store = new Map<string, {{ Name }}>();
+
+export function findAll(): {{ Name }}[] {
+  return Array.from(store.values());
+}
+
+export function findOne(id: string): {{ Name }} | undefined {
+  return store.get(id);
+}
+
+export function create(data: Omit<{{ Name }}, "id">): {{ Name }} {
+  const id = crypto.randomUUID();
+  const item: {{ Name }} = { id, ...data };
+  store.set(id, item);
+  return item;
+}
+
+export function update(id: string, data: Partial<Omit<{{ Name }}, "id">>): {{ Name }} | undefined {
+  const existing = store.get(id);
+  if (!existing) return undefined;
+  const updated: {{ Name }} = { ...existing, ...data, id };
+  store.set(id, updated);
+  return updated;
+}
+
+export function remove(id: string): boolean {
+  return store.delete(id);
+}

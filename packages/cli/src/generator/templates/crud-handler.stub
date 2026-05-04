@@ -1,0 +1,22 @@
+import { params, body } from "@minimajs/server";
+import * as repo from "./{{ name }}.repository.js";
+
+export async function list() {
+  return repo.findAll();
+}
+
+export async function get() {
+  return repo.findOne(params.get("{{ singular }}"));
+}
+
+export async function create() {
+  return repo.create(body());
+}
+
+export async function update() {
+  return repo.update(params.get("{{ singular }}"), body());
+}
+
+export async function remove() {
+  return repo.remove(params.get("{{ singular }}"));
+}

@@ -28,9 +28,9 @@ const IGNORE_CONTENT =
     ".pnp.*",
   ].join("\n") + "\n";
 
-function handle({ args }: { args: { install: boolean } }) {
-  if (exists(CONFIG_FILE)) {
-    logger.fatal(`${CONFIG_FILE} already exists`);
+function handle({ args }: { args: { install: boolean; force: boolean } }) {
+  if (!args.force && exists(CONFIG_FILE)) {
+    logger.fatal(`${CONFIG_FILE} already exists (use --force to overwrite)`);
   }
 
   const hasIgnoreFile = exists(IGNORE_FILE);
@@ -75,6 +75,12 @@ export const format = defineCommand({
       type: "boolean",
       default: true,
       negativeDescription: "Skip dependency installation",
+    },
+    force: {
+      type: "boolean",
+      alias: ["f"],
+      description: "Overwrite existing Prettier config",
+      default: false,
     },
   },
   run: handle,

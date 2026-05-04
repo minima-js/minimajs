@@ -41,7 +41,7 @@ async function handle({ args }: { args: DockerfileArgs }) {
   const berry = detected === "yarn" && pkgm.isYarnBerry();
   const destPath = "Dockerfile";
 
-  if (exists(destPath) && !args.force) {
+  if (!args.force && exists(destPath)) {
     logger.fatal("Dockerfile already exists (use --force to overwrite)");
   }
 
@@ -95,6 +95,7 @@ export const dockerfile = defineCommand({
       default: "6464",
     },
     force: {
+      alias: ["f"],
       type: "boolean",
       description: "Overwrite existing Dockerfile",
       default: false,

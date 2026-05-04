@@ -25,15 +25,15 @@ const drivers = {
 
 type Driver = keyof typeof drivers;
 
-function handle({ args }: { args: { name?: string; driver: string; proto: boolean; install: boolean } }) {
+function handle({ args }: { args: { name?: string; driver: string; proto: boolean; install: boolean; force: boolean } }) {
   const cwd = process.cwd();
   const srcDir = resolveCwd("src");
   const named = !!args.name;
   const instance = named ? toCamel(args.name!) : "disk";
   const diskFile = join(srcDir, "disks", named ? `${args.name}.ts` : "index.ts");
 
-  if (exists(diskFile)) {
-    logger.fatal(`Disk already exists at ${chalk.cyan(relativeId(diskFile))}`);
+  if (!args.force && exists(diskFile)) {
+    logger.fatal(`Disk already exists at ${chalk.cyan(relativeId(diskFile))} (use --force to overwrite)`);
   }
 
   let content: string;
@@ -93,6 +93,12 @@ export const disk = defineCommand({
       type: "boolean",
       default: true,
       negativeDescription: "Skip dependency installation",
+    },
+    force: {
+      type: "boolean",
+      alias: ["f"],
+      description: "Overwrite existing disk file",
+      default: false,
     },
   },
   run: handle,
