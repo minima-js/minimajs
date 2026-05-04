@@ -7,6 +7,8 @@ WORKDIR /app
 COPY package.json yarn.lock ./
 COPY .yarn ./.yarn
 
+RUN yarn -v
+
 # ── Builder stage ───────────────────────────────────────────────────────────────
 FROM base AS builder
 RUN yarn install --immutable

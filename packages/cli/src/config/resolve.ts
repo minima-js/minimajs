@@ -6,7 +6,7 @@ import { isCurrentPath } from "../utils/path.js";
 
 export async function resolveConfig(partial: Partial<Config>): Promise<Config> {
   const config = { ...partial };
-  const { main, engines } = await manifest();
+  const { main, engines } = await manifest.cached();
 
   if (main) {
     config.outdir ??= dirname(resolve(main));
