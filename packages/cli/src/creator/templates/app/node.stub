@@ -1,0 +1,30 @@
+#!/usr/bin/env sh
+set -e
+
+PM="{{ pm }}"
+
+execute() {
+  if command -v fnm > /dev/null 2>&1 && [ -f ".node-version" ]; then
+    exec fnm exec -- "$@"
+  else
+    exec "$@"
+  fi
+}
+
+sync() {
+  command -v "$PM" > /dev/null 2>&1 || { echo "error: $PM is not installed" >&2; exit 1; }
+  case "$PM" in
+    npm)  execute npm ci ;;
+    pnpm) execute pnpm install --frozen-lockfile ;;
+    yarn) execute yarn install --immutable ;;
+  esac
+}
+
+run() {
+  execute ./node_modules/.bin/minimajs "$@"
+}
+
+case "$1" in
+  sync) sync ;;
+  *)    run "$@" ;;
+esac

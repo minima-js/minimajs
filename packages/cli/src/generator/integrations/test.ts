@@ -9,7 +9,7 @@ import { pkgm } from "#/pkgm/index.js";
 
 const TEST_PACKAGES = ["jest", "@jest/globals", "esbuild"];
 const CONFIG_FILE = "jest.config.js";
-const TRANSFORM_FILE = "jest.transform.cjs";
+const TRANSFORM_FILE = "jest.transform.js";
 
 function testScript(berry: boolean): string {
   const base = berry
