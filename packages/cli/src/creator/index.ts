@@ -78,7 +78,7 @@ function getScaffoldFiles({
   ];
 }
 
-async function handle({ args }: { args: NewArgs }) {
+async function handle(args: NewArgs) {
   const { name, git } = args;
   if (args.bun) {
     args.runtime = "bun";
@@ -86,9 +86,8 @@ async function handle({ args }: { args: NewArgs }) {
   }
 
   const { name: rt, version: rtVersion } = runtime.resolve(args.runtime as Runtime | undefined);
-  const { manager, version, isCorepack: pmCorepack } = resolvePM(args.pm);
   if (args.corepack) corepack.ensure();
-  const isCorepack = args.corepack ?? pmCorepack;
+  const { manager, version, isCorepack } = resolvePM(args.pm, args.corepack);
   const cwd = resolveCwd(name);
 
   if (exists(cwd)) {
@@ -189,5 +188,5 @@ export const newCommand = defineCommand({
       negativeDescription: "Skip git init",
     },
   },
-  run: handle,
+  run: ({ args }) => handle(args),
 });

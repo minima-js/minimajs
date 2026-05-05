@@ -27,7 +27,19 @@ run() {
   esac
 }
 
+_install() {
+  if [ $# -gt 0 ]; then
+    case "$PM" in
+      npm) _exec corepack npm install "$@" ;;
+      *)   _exec corepack "$PM" add "$@" ;;
+    esac
+  else
+    _exec corepack "$PM" install
+  fi
+}
+
 case "$1" in
-  sync) sync ;;
-  *)    run "$@" ;;
+  sync)      sync ;;
+  i|install) shift; _install "$@" ;;
+  *)         run "$@" ;;
 esac

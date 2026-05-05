@@ -39,8 +39,12 @@ export namespace corepack {
     return (manages as readonly string[]).includes(manager);
   }
 
-  export function version(manager: CorepackPM, hint: string, opts: CorepackOptions = {}): string {
-    const { stdout } = exec.capture.sync("corepack", [`${manager}@${hint}`, "--version"], { cwd: opts.cwd });
+  export function version(manager: CorepackPM, hint?: string, opts: CorepackOptions = {}): string {
+    const spec = hint ? `${manager}@${hint}` : manager;
+    const { stdout } = exec.capture.sync("corepack", [spec, "--version"], {
+      cwd: opts.cwd,
+      env: { COREPACK_ENABLE_STRICT: "0" },
+    });
     return stdout.replace(/^v/, "").trim();
   }
 }

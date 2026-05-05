@@ -24,7 +24,19 @@ run() {
   _exec ./node_modules/.bin/minimajs "$@"
 }
 
+_install() {
+  if [ $# -gt 0 ]; then
+    case "$PM" in
+      npm) _exec npm install "$@" ;;
+      *)   _exec "$PM" add "$@" ;;
+    esac
+  else
+    _exec "$PM" install
+  fi
+}
+
 case "$1" in
-  sync) sync ;;
-  *)    run "$@" ;;
+  sync)      sync ;;
+  i|install) shift; _install "$@" ;;
+  *)         run "$@" ;;
 esac

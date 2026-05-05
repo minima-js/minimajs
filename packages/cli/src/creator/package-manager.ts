@@ -37,21 +37,15 @@ function parsePMArg(arg: string): PMArg {
   return { manager: name, versionHint };
 }
 
-export function resolvePM(pmArg?: string): ResolvedPM {
+export function resolvePM(pmArg?: string, forceCorepack?: boolean): ResolvedPM {
   if (!pmArg) {
     const agent = pkgm.userAgent();
-    if (!agent) {
-      return {
-        isCorepack: false,
-        manager: "npm",
-        version: pkgm.version("npm"),
-      };
+    const manager = agent?.manager ?? "npm";
+    const version = agent?.version ?? pkgm.version("npm");
+    if (forceCorepack && corepack.isManaged(manager)) {
+      return { isCorepack: true, manager, version: corepack.version(manager, version) };
     }
-    return {
-      isCorepack: false,
-      manager: agent.manager,
-      version: agent.version,
-    };
+    return { isCorepack: false, manager, version };
   }
 
   const { manager, versionHint } = parsePMArg(pmArg);
@@ -61,7 +55,7 @@ export function resolvePM(pmArg?: string): ResolvedPM {
     if (isBerry) corepack.ensure();
   }
 
-  if (versionHint && corepack.isManaged(manager)) {
+  if ((forceCorepack || versionHint) && corepack.isManaged(manager)) {
     return {
       isCorepack: true,
       manager,

@@ -3,7 +3,6 @@ import crudModule from "./crud-module.stub";
 import crudHandler from "./crud-handler.stub";
 import crudRepository from "./crud-repository.stub";
 import handler from "./handler.stub";
-import service from "./service.stub";
 import middleware from "./middleware.stub";
 import plugin from "./plugin.stub";
 import hook from "./hook.stub";
@@ -61,7 +60,6 @@ export const templates = {
   crudHandler: crudHandler as Stub<CrudVars>,
   crudRepository: crudRepository as Stub<CrudVars>,
   handler: handler as Stub,
-  service: service as Stub<NamedVars>,
   middleware: middleware as Stub<InstanceVars>,
   plugin: plugin as Stub<InstanceVars>,
   hook: hook as Stub<HookVars>,
