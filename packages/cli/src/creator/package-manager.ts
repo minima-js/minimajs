@@ -38,6 +38,10 @@ function parsePMArg(arg: string): PMArg {
 }
 
 export function resolvePM(pmArg?: string, forceCorepack?: boolean): ResolvedPM {
+  if (forceCorepack) {
+    corepack.ensure();
+  }
+
   if (!pmArg) {
     const agent = pkgm.userAgent();
     const manager = agent?.manager ?? "npm";
@@ -50,19 +54,10 @@ export function resolvePM(pmArg?: string, forceCorepack?: boolean): ResolvedPM {
 
   const { manager, versionHint } = parsePMArg(pmArg);
 
-  if (manager === "yarn") {
-    const isBerry = versionHint ? parseInt(versionHint, 10) >= 2 : false;
-    if (isBerry) corepack.ensure();
+  if (corepack.isManaged(manager) && (forceCorepack || versionHint)) {
+    corepack.ensure();
+    return { isCorepack: true, manager, version: corepack.version(manager, versionHint ?? "latest") };
   }
 
-  if ((forceCorepack || versionHint) && corepack.isManaged(manager)) {
-    return {
-      isCorepack: true,
-      manager,
-      version: corepack.version(manager, versionHint),
-    };
-  }
-
-  const version = pkgm.version(manager);
-  return { isCorepack: false, manager, version };
+  return { isCorepack: false, manager, version: pkgm.version(manager) };
 }
