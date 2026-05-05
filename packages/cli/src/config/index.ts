@@ -9,7 +9,6 @@ import { loadEnvFile } from "./env.js";
 import { configFilename, configModule } from "./loader.js";
 
 export type { Config };
-export { isCorepackEnabled } from "./loader.js";
 
 function cached<TArgs extends unknown[], T>(fn: (...args: TArgs) => Promise<T>): (...args: TArgs) => Promise<T> {
   let promise: Promise<T> | undefined;

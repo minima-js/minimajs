@@ -44,7 +44,6 @@ const buildOptions: esbuild.BuildOptions = {
   logLevel: "info",
   chunkNames: "shared/[name]",
   minifySyntax: true,
-  minifyWhitespace: true,
 };
 
 function spawnTsc(args: string[]): Promise<number> {

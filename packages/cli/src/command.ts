@@ -7,8 +7,7 @@ import { buildAddCommand } from "./generator/index.js";
 import { checkCommand } from "./check/index.js";
 import { infoCommand } from "./info/index.js";
 import { initCommand } from "./init/index.js";
-import { syncCommand } from "./installer/sync.js";
-import { upgradeCommand } from "./installer/upgrade.js";
+import { installerCommands } from "./installer/index.js";
 import { runtime } from "./runtime/index.js";
 import { pkgm } from "./pkgm/index.js";
 import { loadPlugins } from "./config/index.js";
@@ -58,8 +57,7 @@ export async function run(): Promise<void> {
       add: buildAddCommand(pluginGenerators),
       check: checkCommand,
       info: infoCommand,
-      sync: syncCommand,
-      upgrade: upgradeCommand,
+      ...installerCommands,
       ...pluginCommands,
     },
   });

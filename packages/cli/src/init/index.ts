@@ -4,7 +4,6 @@ import { exists, text } from "../utils/fs.js";
 import { logger } from "#/utils/logger.js";
 import { templates } from "../creator/templates/index.js";
 import { runtime } from "../runtime/index.js";
-import { resolvePM } from "#/creator/package-manager.js";
 import { manifest } from "#/manifest/index.js";
 import { pkgm } from "#/pkgm/index.js";
 
@@ -16,9 +15,10 @@ interface HandleInit {
 }
 function handle(args: HandleInit) {
   const { force } = args;
+
   const rt = runtime.detect();
 
-  const { manager, version, isCorepack } = resolvePM(args.pm, args.corepack);
+  const { manager, version, isCorepack } = pkgm.resolve(args.pm, args.corepack);
   const configFile = `minimajs.config.${rt === "bun" ? "ts" : "js"}`;
   const appContent =
     rt === "bun"

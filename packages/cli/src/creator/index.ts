@@ -7,7 +7,6 @@ import { logger } from "#/utils/logger.js";
 import { templates } from "./templates/index.js";
 import type { Runtime } from "../config/types.js";
 import { pkgm, type PM } from "../pkgm/index.js";
-import { resolvePM } from "./package-manager.js";
 import { corepack } from "../corepack/index.js";
 import { exec } from "../utils/exec.js";
 import { exists, text, mkdir } from "../utils/fs.js";
@@ -87,7 +86,7 @@ async function handle(args: NewArgs) {
 
   const { name: rt, version: rtVersion } = runtime.resolve(args.runtime as Runtime | undefined);
   if (args.corepack) corepack.ensure();
-  const { manager, version, isCorepack } = resolvePM(args.pm, args.corepack);
+  const { manager, version, isCorepack } = pkgm.resolve(args.pm, args.corepack);
   const cwd = resolveCwd(name);
 
   if (exists(cwd)) {
