@@ -35,8 +35,16 @@ _install() {
   fi
 }
 
+_uninstall() {
+  case "$PM" in
+    npm) _exec npm uninstall "$@" ;;
+    *)   _exec "$PM" remove "$@" ;;
+  esac
+}
+
 case "$1" in
-  sync)      sync ;;
-  i|install) shift; _install "$@" ;;
-  *)         run "$@" ;;
+  sync)        sync ;;
+  i|install)   shift; _install "$@" ;;
+  un|uninstall) shift; _uninstall "$@" ;;
+  *)           run "$@" ;;
 esac

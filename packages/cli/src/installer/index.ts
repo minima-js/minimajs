@@ -19,11 +19,24 @@ export const installerCommands = {
   install: defineCommand({
     meta: {
       name: "install",
+      alias: ["i"],
       description: "Install dependencies using your favorite package manager",
     },
 
     run() {
       logger.fatal("use ./app install");
+    },
+  }),
+
+  uninstall: defineCommand({
+    meta: {
+      name: "uninstall",
+      alias: ["un"],
+      description: "Uninstall dependencies using your favorite package manager",
+    },
+
+    run() {
+      logger.fatal("use ./app uninstall");
     },
   }),
 };
