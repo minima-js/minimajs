@@ -377,4 +377,6 @@ export const routes: Routes = {
 
 Together, these create a framework where your architecture stays intentional, not accidental—and your code stays clean, not cluttered.
 
+All of this comes wired up from the start. `npx @minimajs/cli new my-app` scaffolds the folder structure, TypeScript config, and an `./app` runner that handles dev, build, package management, and code generation — so you spend your time on the five concepts above, not on tooling setup. [See the CLI →](/cli/)
+
 **Ready to start building?** → [Getting Started Guide](/getting-started)

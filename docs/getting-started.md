@@ -23,7 +23,7 @@ The fastest way to start is with `@minimajs/cli`:
 ::: code-group
 
 ```bash [Bun]
-bunx @minimajs/cli new my-app --bun
+bunx @minimajs/cli new my-app
 cd my-app
 ```
 

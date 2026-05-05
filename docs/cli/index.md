@@ -4,7 +4,7 @@ title: CLI
 
 # CLI
 
-The Minima.js CLI scaffolds projects, runs the development server, builds for production, and generates code.
+The Minima.js CLI scaffolds projects, runs the development server, builds for production, generates code, and manages dependencies — all through a single `./app` script that lives in your project.
 
 ## The `./app` runner
 
@@ -14,6 +14,9 @@ Every scaffolded project includes an executable `./app` script that forwards com
 ./app dev          # start dev server
 ./app build        # production build
 ./app start        # run compiled output
+./app sync         # install from lockfile
+./app i zod        # add a package
+./app un zod       # remove a package
 ./app add module users  # generate a module
 ```
 
@@ -26,7 +29,7 @@ Every scaffolded project includes an executable `./app` script that forwards com
 npx @minimajs/cli new my-app
 
 # Bun
-bunx @minimajs/cli new my-app --bun
+bunx @minimajs/cli new my-app
 
 # With options
 npx @minimajs/cli new my-app --pm pnpm --no-git
@@ -52,9 +55,10 @@ my-app/
 │       └── users.handler.ts
 ├── minimajs.config.ts     # project config
 ├── tsconfig.json
+├── .node-version          # pinned Node.js version (or .bun-version for Bun)
 ├── .env
 ├── .gitignore
-└── app                    # runner script (executable)
+└── app                    # ./app runner (executable)
 ```
 
 ---
@@ -69,17 +73,17 @@ my-app/
 ./app dev --env-file .env.local
 ```
 
-| Flag                     | Default  | Description                                                        |
-| ------------------------ | -------- | ------------------------------------------------------------------ |
-| `-s, --sourcemap`        | `false`  | Enable sourcemaps (`--enable-source-maps` on Node)                 |
-| `--env-file`             | —        | Path to `.env` file                                                |
-| `-p, --tsconfig`         | —        | Path to `tsconfig.json`                                            |
-| `--check` / `--no-check` | `true`   | Run TypeScript type checking on each rebuild                       |
-| `--reset`                | —        | Clear screen on each rebuild                                       |
-| `--kill-signal`          | `SIGTERM`| Signal used to stop process before restart                         |
-| `--grace` / `--no-grace` | `true`   | Graceful shutdown before restart                                   |
-| `--run` / `--no-run`     | `true`   | Watch and rebuild without running the process                      |
-| `--exec`                 | —        | Custom run command (e.g. `'node [filename]'`)                      |
+| Flag                     | Default   | Description                                        |
+| ------------------------ | --------- | -------------------------------------------------- |
+| `-s, --sourcemap`        | `false`   | Enable sourcemaps (`--enable-source-maps` on Node) |
+| `--env-file`             | —         | Path to `.env` file                                |
+| `-p, --tsconfig`         | —         | Path to `tsconfig.json`                            |
+| `--check` / `--no-check` | `true`    | Run TypeScript type checking on each rebuild       |
+| `--reset`                | —         | Clear screen on each rebuild                       |
+| `--kill-signal`          | `SIGTERM` | Signal used to stop process before restart         |
+| `--grace` / `--no-grace` | `true`    | Graceful shutdown before restart                   |
+| `--run` / `--no-run`     | `true`    | Watch and rebuild without running the process      |
+| `--exec`                 | —         | Custom run command (e.g. `'node [filename]'`)      |
 
 ---
 
@@ -110,10 +114,47 @@ my-app/
 ./app start --env-file .env.production
 ```
 
-| Flag              | Default | Description                         |
-| ----------------- | ------- | ----------------------------------- |
-| `-s, --sourcemap` | —       | Enable sourcemaps on Node           |
-| `--env-file`      | —       | Path to `.env` file                 |
+| Flag              | Default | Description               |
+| ----------------- | ------- | ------------------------- |
+| `-s, --sourcemap` | —       | Enable sourcemaps on Node |
+| `--env-file`      | —       | Path to `.env` file       |
+
+---
+
+## Package management
+
+The `./app` runner wraps your package manager so you always use the right one for the project — no need to remember whether it's `bun`, `pnpm`, `yarn`, or `npm`.
+
+The package manager is read from the `packageManager` field in `package.json` (set automatically by `./app init` or `npx @minimajs/cli new`) and will be automatically installed if missing — no need to worry about which version to use.
+
+If you have [fnm](https://github.com/Schniz/fnm) installed, the correct Node.js version is selected automatically — you never have to think about it again.
+
+### `sync` — Install from lockfile
+
+Performs a clean, reproducible install from the lockfile. Equivalent to `npm ci`, `pnpm install --frozen-lockfile`, `yarn install --immutable`, or `bun install --frozen-lockfile`.
+
+```bash
+./app sync
+```
+
+### `install` / `i` — Add packages
+
+Installs one or more packages, or re-installs all dependencies when no arguments are given.
+
+```bash
+./app install          # re-install all deps
+./app i zod            # add a package
+./app i -D vitest      # add a dev dependency
+```
+
+### `uninstall` / `un` — Remove packages
+
+Removes one or more packages.
+
+```bash
+./app uninstall zod
+./app un lodash uuid
+```
 
 ---
 
@@ -121,18 +162,19 @@ my-app/
 
 ### Code generators
 
-All generators create a file and auto-patch the nearest `module.ts` to register it.
+All generators create a file and auto-patch the nearest `module.ts` to register it. Pass `--force` / `-f` to overwrite an existing file.
 
-| Command                 | Description                                                    |
-| ----------------------- | -------------------------------------------------------------- |
-| `add module <name>`     | Scaffold a route module                                        |
-| `add service <name>`    | Scaffold a service file                                        |
-| `add hook <name>`       | Scaffold a lifecycle hook, register in nearest `module.ts`     |
-| `add plugin <name>`     | Scaffold a plugin, register in nearest `module.ts`             |
-| `add middleware <name>` | Scaffold a middleware, register in root `src/module.ts`        |
+| Command                    | Description                                                |
+| -------------------------- | ---------------------------------------------------------- |
+| `add module <name>`        | Scaffold a route module                                    |
+| `add module <name> --crud` | Scaffold a full CRUD module (handler + repository)         |
+| `add hook <name>`          | Scaffold a lifecycle hook, register in nearest `module.ts` |
+| `add plugin <name>`        | Scaffold a plugin, register in nearest `module.ts`         |
+| `add middleware <name>`    | Scaffold a middleware, register in root `src/module.ts`    |
 
 ```bash
 ./app add module orders
+./app add module orders --crud       # creates module.ts, orders.handler.ts, orders.repository.ts
 ./app add hook request-logger
 ./app add hook users/validate --type=request
 ./app add plugin rate-limit

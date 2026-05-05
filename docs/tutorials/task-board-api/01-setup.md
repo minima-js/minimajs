@@ -8,58 +8,31 @@ title: "1. Project Setup"
 
 After this step, you will have:
 
-- a running Minima.js app on port `3000`
+- a running Minima.js app on port `6464`
 - a generated Prisma client
 - the full initial database schema migrated to SQLite
 
-## Install Dependencies
+## Scaffold the project
 
 ::: code-group
 
 ```bash [Terminal]
-mkdir task-board && cd task-board
-npm init -y
-npm install @minimajs/server @minimajs/auth @minimajs/cookie @minimajs/schema @minimajs/multipart @minimajs/openapi
-npm install prisma @prisma/client zod jsonwebtoken bcryptjs
-npm install -D typescript tsc-watch @types/node @types/jsonwebtoken @types/bcryptjs
+npx @minimajs/cli new task-board
+cd task-board
+```
+
+:::
+
+This creates a fully configured project with TypeScript, `minimajs.config.js`, an `./app` runner, and a starter module structure. Node.js version is pinned via `.node-version` and picked up automatically if you have [fnm](https://github.com/Schniz/fnm) installed.
+
+## Install Prisma and additional dependencies
+
+::: code-group
+
+```bash [Terminal]
+./app i prisma @prisma/client zod jsonwebtoken bcryptjs @minimajs/auth @minimajs/cookie @minimajs/schema @minimajs/multipart @minimajs/openapi
+./app i -D @types/jsonwebtoken @types/bcryptjs
 npx prisma init --datasource-provider sqlite
-```
-
-:::
-
-Update `package.json`:
-
-::: code-group
-
-```json [package.json]
-{
-  "type": "module",
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "dev": "tsc-watch --onSuccess \"node dist/index.js\"",
-    "start": "node dist/index.js"
-  }
-}
-```
-
-:::
-
-Create `tsconfig.json`:
-
-::: code-group
-
-```json [tsconfig.json]
-{
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "strict": true,
-    "rootDir": "src",
-    "outDir": "dist"
-  },
-  "include": ["src"]
-}
 ```
 
 :::
@@ -174,22 +147,9 @@ npx prisma studio
 
 ## Entry Point
 
-Create `src/index.ts`:
+The scaffold already created `src/index.ts` for you.
 
-::: code-group
-
-```typescript [src/index.ts]
-import { createApp } from "@minimajs/server/node";
-
-const app = createApp();
-
-const address = await app.listen({ port: 3000 });
-console.log(`Task Board API running at ${address}`);
-```
-
-:::
-
-At this point `npm run dev` should start without errors. The `createApp()` call auto-discovers all `module.ts` files under `src/` — we'll add those next.
+The `createApp()` call auto-discovers all `module.ts` files under `src/` — we'll add those next.
 
 ## Smoke Check
 
@@ -198,7 +158,7 @@ Run:
 ::: code-group
 
 ```bash [Terminal]
-npm run dev
+./app dev
 ```
 
 :::
@@ -208,7 +168,7 @@ Expected output:
 ::: code-group
 
 ```text [Output]
-Task Board API running at http://localhost:3000
+Task Board API running at http://localhost:6464
 ```
 
 :::
@@ -218,18 +178,12 @@ And in a second terminal:
 ::: code-group
 
 ```bash [Terminal]
-curl -i http://localhost:3000/
+curl -i http://localhost:6464/
 ```
 
 :::
 
 Any HTTP response here is fine for now. The important part is that the process boots cleanly.
-
-## Troubleshooting
-
-- `prisma: command not found`: use `npx prisma ...` (not global prisma).
-- ESM import errors: ensure `"type": "module"` is present in `package.json`.
-- SQLite file issues: check `DATABASE_URL` in `.env` created by `prisma init`.
 
 ---
 

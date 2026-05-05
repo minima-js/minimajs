@@ -9,7 +9,7 @@ The official CLI for [MinimaJS](https://minimajs.com) — scaffold, develop, bui
 npx @minimajs/cli new my-app
 
 # Bun
-bunx @minimajs/cli new my-app --bun
+bunx @minimajs/cli new my-app
 
 # With options
 npx @minimajs/cli new my-app --pm pnpm     # package manager: bun | pnpm | yarn | npm
