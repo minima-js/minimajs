@@ -1,6 +1,0 @@
-#!/usr/bin/env sh
-if command -v fnm > /dev/null 2>&1 && [ -f ".node-version" ]; then
-  exec fnm exec {{ corepackFlag }} -- {{ exec }} "$@"
-else
-  exec {{ exec }} "$@"
-fi

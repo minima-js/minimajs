@@ -1,5 +1,6 @@
-import appBun from "./app.bun.stub";
-import appNode from "./app.node.stub";
+import appBun from "./app/bun.stub";
+import appNode from "./app/node.stub";
+import appNodeCorepack from "./app/node-corepack.stub";
 import env from "./env.stub";
 import gitignore from "./gitignore.stub";
 import index from "./index.ts.stub";
@@ -16,7 +17,8 @@ import type { Stub } from "#/types.js";
 export const templates = {
   app: {
     bun: appBun as Stub,
-    node: appNode as Stub<{ exec: string; corepackFlag: string }>,
+    node: appNode as Stub<{ pm: string }>,
+    nodeCorepack: appNodeCorepack as Stub<{ pm: string }>,
   },
   package: {
     bun: packageBun as Stub<{ name: string; packageManager: string }>,

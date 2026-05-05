@@ -1,0 +1,34 @@
+#!/usr/bin/env sh
+set -e
+
+PM="{{ pm }}"
+
+execute() {
+  if command -v fnm > /dev/null 2>&1 && [ -f ".node-version" ]; then
+    exec fnm exec --corepack-enabled -- "$@"
+  else
+    exec "$@"
+  fi
+}
+
+sync() {
+  command -v "$PM" > /dev/null 2>&1 || { echo "error: $PM is not installed" >&2; exit 1; }
+  case "$PM" in
+    npm)  execute npm ci ;;
+    pnpm) execute corepack pnpm install --frozen-lockfile ;;
+    yarn) execute corepack yarn install --immutable ;;
+  esac
+}
+
+run() {
+  case "$PM" in
+    yarn) execute corepack yarn minimajs "$@" ;;
+    pnpm) execute corepack pnpm exec minimajs "$@" ;;
+    *)    execute ./node_modules/.bin/minimajs "$@" ;;
+  esac
+}
+
+case "$1" in
+  sync) sync ;;
+  *)    run "$@" ;;
+esac

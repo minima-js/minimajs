@@ -49,6 +49,14 @@ export namespace manifest {
     }
   }
 
+  export namespace sync {
+    let CACHED_MANIFEST: Manifest;
+    export function cached() {
+      CACHED_MANIFEST ??= sync();
+      return CACHED_MANIFEST;
+    }
+  }
+
   /**
    * Writes data to `package.json` in the current working directory.
    * Use `write.sync` for the synchronous variant.
@@ -71,10 +79,10 @@ export namespace manifest {
     const version = `${match[1]}.${match[2] ?? "0"}.${match[3] ?? "0"}`;
     return `${prefix}${version}`;
   }
-}
 
-let CACHED_MANIFEST: Manifest | null = null;
-manifest.cached = async function cachedManifest() {
-  CACHED_MANIFEST ??= await manifest();
-  return CACHED_MANIFEST;
-};
+  let CACHED_MANIFEST: Promise<Manifest>;
+  export function cached(): Promise<Manifest> {
+    CACHED_MANIFEST ??= manifest();
+    return CACHED_MANIFEST;
+  }
+}

@@ -46,7 +46,7 @@ function handle({ args }: { args: { all: boolean | undefined } }) {
     return;
   }
 
-  const info = manifest.sync();
+  const info = manifest.sync.cached();
   const deps = Object.keys(info.dependencies ?? {}).filter((p) => p.startsWith(MINIMAJS_SCOPE));
   const devDeps = Object.keys(info.devDependencies ?? {}).filter((p) => p.startsWith(MINIMAJS_SCOPE));
 

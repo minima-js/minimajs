@@ -57,12 +57,7 @@ function getScaffoldFiles({
 }: ScaffoldContext): ScaffoldFile[] {
   const versionFile = rt === "bun" ? ".bun-version" : ".node-version";
   const appContent =
-    rt === "bun"
-      ? templates.app.bun()
-      : templates.app.node({
-          exec: pkgm.EXEC[pm as Exclude<PM, "bun">] ?? pkgm.EXEC.npm,
-          corepackFlag: isCorepack ? "--corepack-enabled" : "",
-        });
+    rt === "bun" ? templates.app.bun() : isCorepack ? templates.app.nodeCorepack({ pm }) : templates.app.node({ pm });
 
   const configContent = templates.minimajsConfig({ runtime: rt });
   const minimajsConfig = isCorepack ? `${configContent}\nexport const corepack = true;\n` : configContent;

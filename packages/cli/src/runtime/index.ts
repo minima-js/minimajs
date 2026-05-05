@@ -12,7 +12,7 @@ export namespace runtime {
   export function detect(): Runtime {
     if (exists(".bun-version")) return "bun";
     if (exists(".node-version")) return "node";
-    const pkg = manifest.sync();
+    const pkg = manifest.sync.cached();
     if (pkg.engines?.bun) return "bun";
     if (pkg.engines?.node) return "node";
     return runtime();
@@ -22,7 +22,7 @@ export namespace runtime {
     export function version(): string | null {
       if (exists(".bun-version")) return text.sync(".bun-version").trim().replace(/^v/, "");
       if (exists(".node-version")) return text.sync(".node-version").trim().replace(/^v/, "");
-      const pkg = manifest.sync();
+      const pkg = manifest.sync.cached();
       const engine = pkg.engines?.bun ?? pkg.engines?.node ?? null;
       if (!engine) return null;
       // engines values are semver ranges (e.g. ">=20.0.0", "^1.0.0") — extract the first version number

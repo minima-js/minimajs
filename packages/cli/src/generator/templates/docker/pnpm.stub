@@ -1,17 +1,17 @@
 # ── Base stage ─────────────────────────────────────────────────────────────────
 FROM node:{{ version }} AS base
 
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
 RUN npm i -g corepack --force && corepack enable
 
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml ./
 
+RUN pnpm -v
+
 # ── Builder stage ───────────────────────────────────────────────────────────────
 FROM base AS builder
-RUN pnpm install --frozen-lockfile --store-dir /pnpm/store
+RUN pnpm install --frozen-lockfile --store-dir /root/.cache/pnpm
 
 COPY . .
 RUN pnpm run build
@@ -22,8 +22,8 @@ RUN {{ userCreate }}
 
 ENV NODE_ENV=production
 
-RUN --mount=type=bind,from=builder,source=/pnpm/store,target=/pnpm/store \
-    pnpm install --frozen-lockfile --prod --store-dir /pnpm/store
+RUN --mount=type=bind,from=builder,source=/root/.cache/pnpm,target=/root/.cache/pnpm \
+    pnpm install --frozen-lockfile --prod --store-dir /root/.cache/pnpm
 
 COPY --chown={{ user }}:{{ user }} --from=builder /app/dist ./dist
 
