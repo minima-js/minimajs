@@ -3,7 +3,7 @@ set -e
 
 PM="{{ pm }}"
 
-execute() {
+_exec() {
   if command -v fnm > /dev/null 2>&1 && [ -f ".node-version" ]; then
     exec fnm exec -- "$@"
   else
@@ -14,14 +14,14 @@ execute() {
 sync() {
   command -v "$PM" > /dev/null 2>&1 || { echo "error: $PM is not installed" >&2; exit 1; }
   case "$PM" in
-    npm)  execute npm ci ;;
-    pnpm) execute pnpm install --frozen-lockfile ;;
-    yarn) execute yarn install --immutable ;;
+    npm)  _exec npm ci ;;
+    pnpm) _exec pnpm install --frozen-lockfile ;;
+    yarn) _exec yarn install --immutable ;;
   esac
 }
 
 run() {
-  execute ./node_modules/.bin/minimajs "$@"
+  _exec ./node_modules/.bin/minimajs "$@"
 }
 
 case "$1" in

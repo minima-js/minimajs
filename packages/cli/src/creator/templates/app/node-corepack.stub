@@ -3,7 +3,7 @@ set -e
 
 PM="{{ pm }}"
 
-execute() {
+_exec() {
   if command -v fnm > /dev/null 2>&1 && [ -f ".node-version" ]; then
     exec fnm exec --corepack-enabled -- "$@"
   else
@@ -12,19 +12,18 @@ execute() {
 }
 
 sync() {
-  command -v "$PM" > /dev/null 2>&1 || { echo "error: $PM is not installed" >&2; exit 1; }
   case "$PM" in
-    npm)  execute npm ci ;;
-    pnpm) execute corepack pnpm install --frozen-lockfile ;;
-    yarn) execute corepack yarn install --immutable ;;
+    npm)  _exec corepack npm ci ;;
+    pnpm) _exec corepack pnpm install --frozen-lockfile ;;
+    yarn) _exec corepack yarn install --immutable ;;
   esac
 }
 
 run() {
   case "$PM" in
-    yarn) execute corepack yarn minimajs "$@" ;;
-    pnpm) execute corepack pnpm exec minimajs "$@" ;;
-    *)    execute ./node_modules/.bin/minimajs "$@" ;;
+    yarn) _exec corepack yarn minimajs "$@" ;;
+    pnpm) _exec corepack pnpm exec minimajs "$@" ;;
+    *)    _exec ./node_modules/.bin/minimajs "$@" ;;
   esac
 }
 
