@@ -5,17 +5,21 @@ An HTTP framework for Node.js and Bun built entirely on Web-native APIs (`Reques
 [![npm version](https://img.shields.io/npm/v/@minimajs/server.svg)](https://www.npmjs.com/package/@minimajs/server)
 [![License](https://img.shields.io/npm/l/@minimajs/server.svg)](https://github.com/minima-js/minimajs/blob/main/LICENSE)
 
-## Installation
+## Quick Start
+
+Scaffold a new project with the CLI:
 
 ```bash
-# Bun
-bun add @minimajs/server
-
-# Node.js
-npm install @minimajs/server
+npx @minimajs/cli new my-app   # Node.js
+bunx @minimajs/cli new my-app  # Bun
 ```
 
-## Quick Start
+Or install manually:
+
+```bash
+bun add @minimajs/server        # Bun
+npm install @minimajs/server    # Node.js
+```
 
 ```typescript
 // src/index.ts
@@ -221,7 +225,7 @@ export const meta = {
 // custom discovery options
 const app = createApp({
   moduleDiscovery: {
-    root: new URL("./modules", import.meta.url).pathname, // must be an absolute path
+    root: resolve("src/modules"), // must be an absolute path
     index: "route.{js,ts}", // default: module.{js,ts}
   },
 });
@@ -230,13 +234,25 @@ const app = createApp({
 ## Testing
 
 ```typescript
-import { createApp } from "@minimajs/server/bun";
+import { createApp } from "@minimajs/server/node";
+import type { Routes } from "@minimajs/server";
 
 const app = createApp({ moduleDiscovery: false, logger: false });
-app.get("/", () => "Hello");
+
+const routes: Routes = {
+  "GET /": () => "Hello",
+};
+
+app.register({ routes });
 
 const res = await app.handle(new Request("http://localhost/"));
 expect(await res.text()).toBe("Hello");
+```
+
+For integration tests against a full module-discovered app, scaffold with:
+
+```bash
+./app add test
 ```
 
 ## Documentation
@@ -251,11 +267,13 @@ Full guides and API reference at **[minimajs.com](https://minimajs.com/)**.
 
 ## Related Packages
 
+- [`@minimajs/cli`](https://www.npmjs.com/package/@minimajs/cli) — CLI scaffold, build tool, and `./app` runner
 - [`@minimajs/multipart`](https://www.npmjs.com/package/@minimajs/multipart) — file upload handling
 - [`@minimajs/schema`](https://www.npmjs.com/package/@minimajs/schema) — request validation with Zod
 - [`@minimajs/cookie`](https://www.npmjs.com/package/@minimajs/cookie) — cookie parsing and signing
 - [`@minimajs/auth`](https://www.npmjs.com/package/@minimajs/auth) — authentication and authorization
 - [`@minimajs/openapi`](https://www.npmjs.com/package/@minimajs/openapi) — OpenAPI/Swagger generation
+- [`@minimajs/disk`](https://www.npmjs.com/package/@minimajs/disk) — file storage (local, S3, Azure)
 
 ## Credits
 
