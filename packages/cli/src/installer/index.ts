@@ -3,7 +3,7 @@ import { logger } from "#/utils/logger.js";
 import { upgradeCommand } from "./upgrade.js";
 
 export const installerCommands = {
-  update: upgradeCommand,
+  upgrade: upgradeCommand,
 
   sync: defineCommand({
     meta: {
