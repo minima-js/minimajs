@@ -1,5 +1,6 @@
-import appBun from "./app.bun.stub";
-import appNode from "./app.node.stub";
+import appBun from "./app/bun.stub";
+import appNode from "./app/node.stub";
+import appNodeCorepack from "./app/node-corepack.stub";
 import env from "./env.stub";
 import gitignore from "./gitignore.stub";
 import index from "./index.ts.stub";
@@ -9,6 +10,7 @@ import packageNode from "./package.node.json.stub";
 import rootModule from "./module.ts.stub";
 import usersModule from "./users.module.stub";
 import usersHandler from "./users.handler.stub";
+import homeHtml from "./home.html.stub";
 import tsconfig from "./tsconfig.stub.json" with { type: "json" };
 
 import type { Stub } from "#/types.js";
@@ -16,7 +18,8 @@ import type { Stub } from "#/types.js";
 export const templates = {
   app: {
     bun: appBun as Stub,
-    node: appNode as Stub<{ exec: string }>,
+    node: appNode as Stub<{ pm: string }>,
+    nodeCorepack: appNodeCorepack as Stub<{ pm: string }>,
   },
   package: {
     bun: packageBun as Stub<{ name: string; packageManager: string }>,
@@ -29,5 +32,6 @@ export const templates = {
   rootModule: rootModule as Stub,
   usersModule: usersModule as Stub,
   usersHandler: usersHandler as Stub,
+  homeHtml: homeHtml as Stub<{ name: string }>,
   tsconfig: () => JSON.stringify(tsconfig, null, 2),
 };

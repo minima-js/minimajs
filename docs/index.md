@@ -40,14 +40,14 @@ features:
     details: "Access params, headers, body, and search params anywhere in request scope without passing req/res through every function."
 
   - icon:
-      src: /icon-lightning.svg
+      src: /icon-hook.svg
     title: Scoped Plugins and Hooks
     details: "Apply behavior per module or globally with predictable inheritance and isolation."
 
   - icon:
-      src: /icon-typescript.svg
-    title: TypeScript by Default
-    details: "APIs are designed for inference, so you spend less time on annotations and more on logic."
+      src: /icon-lightning.svg
+    title: Zero-Config CLI
+    details: "One ./app script scaffolds a TypeScript-ready project, builds, runs, and manages packages. Node.js version and package manager are auto-detected — nothing to set up."
 ---
 
 ## Try It Now
@@ -55,7 +55,7 @@ features:
 ::: code-group
 
 ```bash [Bun]
-bunx @minimajs/cli new my-app --bun && cd my-app && ./app dev
+bunx @minimajs/cli new my-app && cd my-app && ./app dev
 ```
 
 ```bash [Node.js]
@@ -65,6 +65,43 @@ npx @minimajs/cli new my-app && cd my-app && ./app dev
 :::
 
 That's it — a scaffolded project with TypeScript, file-based routing, and a running dev server.
+
+## One Script to Run Everything
+
+Every scaffolded project gets a `./app` runner — a single executable that wraps your runtime, package manager, and the Minima.js CLI. No global installs, no version mismatches.
+
+::: code-group
+
+```bash [Develop]
+./app dev              # watch mode with TypeScript checking
+./app dev --no-check   # skip type checking for speed
+```
+
+```bash [Build & Run]
+./app build            # production build via esbuild
+./app start            # run compiled output
+```
+
+```bash [Packages]
+./app sync             # reproducible install from lockfile
+./app i zod            # add a package
+./app un lodash        # remove a package
+```
+
+```bash [Generate]
+./app add module orders          # scaffold a route module
+./app add module orders --crud   # full CRUD (handler + repository)
+./app add middleware auth
+./app add plugin rate-limit
+./app add openapi
+./app add dockerfile
+```
+
+:::
+
+The correct Node.js version and package manager are picked up automatically — no `nvm use`, no `corepack enable` needed.
+
+[See the full CLI reference →](/cli/)
 
 ## Start Here
 

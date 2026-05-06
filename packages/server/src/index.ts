@@ -9,7 +9,7 @@
  *
  * app.get("/", () => ({ message: "Hello World" }));
  *
- * app.listen({ port: 3000 });
+ * app.listen({ port: 6464 });
  * ```
  */
 

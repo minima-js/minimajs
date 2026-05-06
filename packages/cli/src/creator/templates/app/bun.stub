@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+set -e
+
+sync()    { bun install --frozen-lockfile; }
+run()     { exec bun ./node_modules/.bin/minimajs "$@"; }
+_uninstall() { exec bun remove "$@"; }
+
+case "$1" in
+  sync)           sync ;;
+  i|install)      shift; exec bun install "$@" ;;
+  un|uninstall)   shift; _uninstall "$@" ;;
+  *)              run "$@" ;;
+esac

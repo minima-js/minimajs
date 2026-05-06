@@ -1,0 +1,53 @@
+#!/usr/bin/env sh
+set -e
+
+PM="{{ pm }}"
+
+_exec() {
+  if command -v fnm > /dev/null 2>&1 && [ -f ".node-version" ]; then
+    exec fnm exec --corepack-enabled -- "$@"
+  else
+    exec "$@"
+  fi
+}
+
+sync() {
+  case "$PM" in
+    npm)  _exec corepack npm ci ;;
+    pnpm) _exec corepack pnpm install --frozen-lockfile ;;
+    yarn) _exec corepack yarn install --immutable ;;
+  esac
+}
+
+run() {
+  case "$PM" in
+    yarn) _exec corepack yarn minimajs "$@" ;;
+    pnpm) _exec corepack pnpm exec minimajs "$@" ;;
+    *)    _exec ./node_modules/.bin/minimajs "$@" ;;
+  esac
+}
+
+_install() {
+  if [ $# -gt 0 ]; then
+    case "$PM" in
+      npm) _exec corepack npm install "$@" ;;
+      *)   _exec corepack "$PM" add "$@" ;;
+    esac
+  else
+    _exec corepack "$PM" install
+  fi
+}
+
+_uninstall() {
+  case "$PM" in
+    npm) _exec corepack npm uninstall "$@" ;;
+    *)   _exec corepack "$PM" remove "$@" ;;
+  esac
+}
+
+case "$1" in
+  sync)        sync ;;
+  i|install)   shift; _install "$@" ;;
+  un|uninstall) shift; _uninstall "$@" ;;
+  *)           run "$@" ;;
+esac

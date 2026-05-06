@@ -12,7 +12,7 @@ const TEST_BASE_DIR = TEST_MODULES_DIR;
 let TEST_DIR: string;
 
 const mockAdapter: ServerAdapter<any> = {
-  listen: async () => ({ port: 3000, host: "localhost" }) as any,
+  listen: async () => ({ port: 6464, host: "localhost" }) as any,
   close: async () => {},
   remoteAddr: () => null,
 };

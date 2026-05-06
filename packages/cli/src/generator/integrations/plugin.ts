@@ -8,7 +8,7 @@ import { templates } from "../templates/index.js";
 import { suggestModule, applyPatch } from "../patch.js";
 import { resolveCwd, relativeId } from "#/utils/path.js";
 
-function handle({ args }: { args: { name: string; dir: string } }) {
+function handle({ args }: { args: { name: string; dir: string; force: boolean } }) {
   const segments = args.name.split("/");
   const pluginName = segments.at(-1)!;
   const moduleSegments = segments.slice(0, -1);
@@ -22,8 +22,8 @@ function handle({ args }: { args: { name: string; dir: string } }) {
 
   const moduleFile = isRootLevel ? join(srcDir, "module.ts") : join(srcDir, ...moduleSegments, "module.ts");
 
-  if (exists(pluginFile)) {
-    logger.fatal(`Plugin already exists at ${chalk.cyan(relativeId(pluginFile))}`);
+  if (!args.force && exists(pluginFile)) {
+    logger.fatal(`Plugin already exists at ${chalk.cyan(relativeId(pluginFile))} (use --force to overwrite)`);
   }
 
   if (!isRootLevel && !exists(moduleFile)) {
@@ -66,6 +66,12 @@ export const plugin = defineCommand({
       description: "Root source directory",
       valueHint: "path",
       default: "src",
+    },
+    force: {
+      type: "boolean",
+      alias: ["f"],
+      description: "Overwrite existing plugin file",
+      default: false,
     },
   },
   run: handle,

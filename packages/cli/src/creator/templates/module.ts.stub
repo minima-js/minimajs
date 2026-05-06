@@ -1,4 +1,20 @@
-import type { Meta } from "@minimajs/server";
+import type { Meta, Routes } from "@minimajs/server";
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 
-export const meta: Meta = {
+export const meta: Meta = {};
+
+const home = await readFile(resolve("public/index.html"), "utf-8");
+
+function index() {
+  return new Response(home, { headers: { "content-type": "text/html; charset=utf-8" } });
+}
+
+function health() {
+  return { status: "ok" };
+}
+
+export const routes: Routes = {
+  "GET /": index,
+  "GET /_health": health,
 };

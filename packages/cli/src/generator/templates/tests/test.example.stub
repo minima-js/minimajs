@@ -1,0 +1,14 @@
+import { describe, it, expect, beforeAll, afterAll } from "@jest/globals";
+import { app } from "./app.js";
+
+
+beforeAll(() => app.ready());
+
+afterAll(() => app.close());
+
+describe("health", () => {
+  it("GET /_health returns 200", async () => {
+    const res = await app.handle(new Request("http://localhost/_health"));
+    expect(res.status).toBe(200);
+  });
+});

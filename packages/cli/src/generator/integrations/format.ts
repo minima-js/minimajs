@@ -9,11 +9,28 @@ import { pkgm } from "#/pkgm/index.js";
 const PRETTIER_PACKAGES = ["prettier"];
 const CONFIG_FILE = "prettier.config.js";
 const IGNORE_FILE = ".prettierignore";
-const IGNORE_CONTENT = ["dist", "node_modules"].join("\n") + "\n";
+const IGNORE_CONTENT =
+  [
+    "node_modules",
+    "dist",
+    "coverage",
+    "*.tsbuildinfo",
+    "",
+    "# Lockfiles",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "package-lock.json",
+    "bun.lock",
+    "bun.lockb",
+    "",
+    "# Yarn Berry",
+    ".yarn",
+    ".pnp.*",
+  ].join("\n") + "\n";
 
-function handle({ args }: { args: { install: boolean } }) {
-  if (exists(CONFIG_FILE)) {
-    logger.fatal(`${CONFIG_FILE} already exists`);
+function handle({ args }: { args: { install: boolean; force: boolean } }) {
+  if (!args.force && exists(CONFIG_FILE)) {
+    logger.fatal(`${CONFIG_FILE} already exists (use --force to overwrite)`);
   }
 
   const hasIgnoreFile = exists(IGNORE_FILE);
@@ -58,6 +75,12 @@ export const format = defineCommand({
       type: "boolean",
       default: true,
       negativeDescription: "Skip dependency installation",
+    },
+    force: {
+      type: "boolean",
+      alias: ["f"],
+      description: "Overwrite existing Prettier config",
+      default: false,
     },
   },
   run: handle,

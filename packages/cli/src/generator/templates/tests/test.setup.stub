@@ -1,0 +1,9 @@
+import { createApp } from "@minimajs/server/node";
+import { join } from "node:path";
+
+export const app = createApp({
+  logger: false,
+  moduleDiscovery: {
+    root: join(process.cwd(), "src")
+  }
+});

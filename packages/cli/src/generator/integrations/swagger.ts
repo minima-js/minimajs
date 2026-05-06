@@ -10,6 +10,7 @@ interface SwaggerArgs {
   path: string;
   spec: string;
   install: boolean;
+  force: boolean;
 }
 
 function handle({ args }: { args: SwaggerArgs }) {
@@ -17,8 +18,8 @@ function handle({ args }: { args: SwaggerArgs }) {
   const moduleDir = resolve(cwd, "src", args.path);
   const moduleFile = join(moduleDir, "module.ts");
 
-  if (exists(moduleFile)) {
-    logger.fatal(`Swagger UI already exists at ${chalk.cyan(moduleFile)}`);
+  if (!args.force && exists(moduleFile)) {
+    logger.fatal(`Swagger UI already exists at ${chalk.cyan(moduleFile)} (use --force to overwrite)`);
   }
 
   integrateOpenapi(cwd, args.install);
@@ -32,7 +33,7 @@ function handle({ args }: { args: SwaggerArgs }) {
     "",
     `  ${chalk.dim("Created:")} ${chalk.cyan(moduleFile)}`,
     `  ${chalk.dim("Spec:")}    ${chalk.cyan(args.spec)}`,
-    `  ${chalk.dim("View:")}    ${chalk.cyan(`http://localhost:3000/${args.path}`)}`,
+    `  ${chalk.dim("View:")}    ${chalk.cyan(`http://localhost:6464/${args.path}`)}`,
     ""
   );
 }
@@ -54,6 +55,12 @@ export const swagger = defineCommand({
       type: "boolean",
       default: true,
       negativeDescription: "Skip dependency installation",
+    },
+    force: {
+      type: "boolean",
+      alias: ["f"],
+      description: "Overwrite existing Swagger UI module",
+      default: false,
     },
   },
   run: handle,

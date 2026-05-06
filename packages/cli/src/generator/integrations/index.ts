@@ -8,9 +8,9 @@ import { skills } from "./skills.js";
 import { middleware } from "./middleware.js";
 import { plugin } from "./plugin.js";
 import { hook } from "./hook.js";
-import { service } from "./service.js";
 import { lint } from "./lint.js";
 import { format } from "./format.js";
+import { test } from "./test.js";
 
 export const integrations: Record<string, CommandDef<any>> = {
   openapi,
@@ -22,7 +22,7 @@ export const integrations: Record<string, CommandDef<any>> = {
   middleware,
   plugin,
   hook,
-  service,
   lint,
   format,
+  test,
 };

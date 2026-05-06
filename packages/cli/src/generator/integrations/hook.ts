@@ -8,7 +8,7 @@ import { templates } from "../templates/index.js";
 import { suggestModule, suggestIndex, applyPatch } from "../patch.js";
 import { resolveCwd, relativeId } from "#/utils/path.js";
 
-function handle({ args }: { args: { name: string; type: string; dir: string; global: boolean } }) {
+function handle({ args }: { args: { name: string; type: string; dir: string; global: boolean; force: boolean } }) {
   const hookType = args.type;
   const segments = args.name.split("/");
   const hookName = segments.at(-1)!;
@@ -24,8 +24,8 @@ function handle({ args }: { args: { name: string; type: string; dir: string; glo
   const moduleFile = isRootLevel ? join(srcDir, "module.ts") : join(srcDir, ...moduleSegments, "module.ts");
   const indexFile = join(srcDir, "index.ts");
 
-  if (exists(hookFile)) {
-    logger.fatal(`Hook already exists at ${chalk.cyan(relativeId(hookFile))}`);
+  if (!args.force && exists(hookFile)) {
+    logger.fatal(`Hook already exists at ${chalk.cyan(relativeId(hookFile))} (use --force to overwrite)`);
   }
 
   if (!args.global && !isRootLevel && !exists(moduleFile)) {
@@ -82,6 +82,12 @@ export const hook = defineCommand({
     global: {
       type: "boolean",
       description: "Register hook via app.register() in src/index.ts instead of the nearest module",
+      default: false,
+    },
+    force: {
+      type: "boolean",
+      alias: ["f"],
+      description: "Overwrite existing hook file",
       default: false,
     },
   },

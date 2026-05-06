@@ -7,6 +7,7 @@ import { buildAddCommand } from "./generator/index.js";
 import { checkCommand } from "./check/index.js";
 import { infoCommand } from "./info/index.js";
 import { initCommand } from "./init/index.js";
+import { installerCommands } from "./installer/index.js";
 import { runtime } from "./runtime/index.js";
 import { pkgm } from "./pkgm/index.js";
 import { loadPlugins } from "./config/index.js";
@@ -23,10 +24,9 @@ function modeFromArgv(): ConfigMode {
 }
 
 export async function run(): Promise<void> {
-  const rt = runtime();
-  const rtVersion = runtime.version();
+  const { name: rt, version: rtVersion } = runtime.resolve();
   const pm = pkgm();
-  const pmVersion = pkgm.version(pm)?.split("@")[1] ?? "";
+  const pmVersion = pkgm.version(pm) ?? "";
   const pmLabel = pm === "yarn" && pkgm.isYarnBerry() ? "yarn (berry)" : pm;
 
   const rtLine = `  Runtime:         ${rt} ${rtVersion}`;
@@ -57,6 +57,7 @@ export async function run(): Promise<void> {
       add: buildAddCommand(pluginGenerators),
       check: checkCommand,
       info: infoCommand,
+      ...installerCommands,
       ...pluginCommands,
     },
   });

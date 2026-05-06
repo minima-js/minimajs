@@ -17,7 +17,7 @@
  *   return { message: 'Hello from Node.js!' };
  * });
  *
- * app.listen({ port: 3000 });
+ * app.listen({ port: 6464 });
  * ```
  */
 
@@ -52,7 +52,7 @@ export interface NodeAppOptions extends CreateBaseSeverOptions {
  *
  * const app = createApp();
  * app.get('/api/users', () => [{ id: 1, name: 'John' }]);
- * app.listen({ port: 3000 });
+ * app.listen({ port: 6464 });
  * ```
  */
 export function createApp({ server, ...options }: NodeAppOptions = {}) {

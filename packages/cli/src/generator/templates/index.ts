@@ -1,6 +1,8 @@
 import $module from "./module.stub";
+import crudModule from "./crud-module.stub";
+import crudHandler from "./crud-handler.stub";
+import crudRepository from "./crud-repository.stub";
 import handler from "./handler.stub";
-import service from "./service.stub";
 import middleware from "./middleware.stub";
 import plugin from "./plugin.stub";
 import hook from "./hook.stub";
@@ -13,15 +15,21 @@ import dockerNpm from "./docker/npm.stub";
 import dockerPnpm from "./docker/pnpm.stub";
 import dockerYarn from "./docker/yarn.stub";
 import dockerBerry from "./docker/berry.stub";
+import dockerignore from "./dockerignore.stub";
 import eslintConfig from "./eslint.config.js.stub";
 import prettierConfig from "./prettier.config.js.stub";
 import swaggerModule from "./swagger.module.stub";
+import jestConfig from "./tests/jest.config.stub";
+import jestTransform from "./tests/jest.transform.stub";
+import testSetup from "./tests/test.setup.stub";
+import testExample from "./tests/test.example.stub";
 import type { Stub } from "#/types.js";
 
 type NamedVars = { name: string };
+type CrudVars = { name: string; Name: string; singular: string };
 type InstanceVars = { instance: string };
 type HookVars = { instance: string; hookType: string };
-type DockerVars = { version: string; user: string };
+type DockerVars = { version: string; user: string; port: string; userCreate: string };
 
 export const templates = {
   disk: {
@@ -36,15 +44,24 @@ export const templates = {
     pnpm: dockerPnpm as Stub<DockerVars>,
     yarn: dockerYarn as Stub<DockerVars>,
     berry: dockerBerry as Stub<DockerVars>,
+    ignore: dockerignore as Stub,
   },
   configs: {
     eslint: eslintConfig as Stub,
     prettier: prettierConfig as Stub,
   },
+  tests: {
+    config: jestConfig as Stub,
+    transform: jestTransform as Stub,
+    setup: testSetup as Stub,
+    example: testExample as Stub,
+  },
   swaggerModule: swaggerModule as Stub<{ spec: string }>,
   module: $module as Stub<NamedVars>,
+  crudModule: crudModule as Stub<CrudVars>,
+  crudHandler: crudHandler as Stub<CrudVars>,
+  crudRepository: crudRepository as Stub<CrudVars>,
   handler: handler as Stub,
-  service: service as Stub<NamedVars>,
   middleware: middleware as Stub<InstanceVars>,
   plugin: plugin as Stub<InstanceVars>,
   hook: hook as Stub<HookVars>,

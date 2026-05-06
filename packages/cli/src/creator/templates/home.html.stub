@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ name }}</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #0f0f0f;
+        color: #e5e5e5;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .card {
+        text-align: center;
+        max-width: 480px;
+        padding: 3rem 2.5rem;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 12px;
+      }
+
+      .badge {
+        display: inline-block;
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #22c55e;
+        background: rgba(34,197,94,0.1);
+        border: 1px solid rgba(34,197,94,0.25);
+        border-radius: 999px;
+        padding: 0.25rem 0.75rem;
+        margin-bottom: 1.5rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 0.75rem;
+      }
+
+      p {
+        font-size: 0.95rem;
+        color: #888;
+        line-height: 1.6;
+        margin-bottom: 2rem;
+      }
+
+      .routes {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+      }
+
+      .route {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: #111;
+        border: 1px solid #222;
+        border-radius: 8px;
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+        text-align: left;
+      }
+
+      .method {
+        font-weight: 700;
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        padding: 0.2rem 0.45rem;
+        border-radius: 4px;
+        flex-shrink: 0;
+      }
+
+      .method.get  { color: #22c55e; background: rgba(34,197,94,0.1); }
+      .method.post { color: #3b82f6; background: rgba(59,130,246,0.1); }
+
+      .path { color: #e5e5e5; font-family: monospace; }
+      .desc { color: #555; margin-left: auto; font-size: 0.8rem; }
+
+      .links {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      a {
+        font-size: 0.85rem;
+        color: #888;
+        text-decoration: none;
+        padding: 0.45rem 1rem;
+        border: 1px solid #2a2a2a;
+        border-radius: 6px;
+        transition: border-color 0.15s, color 0.15s;
+      }
+
+      a:hover { color: #fff; border-color: #444; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="badge">Running</div>
+      <h1>{{ name }}</h1>
+      <p>Your Minima.js API is up. Start building by adding modules under <code>src/</code>.</p>
+
+      <div class="routes">
+        <div class="route">
+          <span class="method get">GET</span>
+          <span class="path">/_health</span>
+          <span class="desc">Health check</span>
+        </div>
+        <div class="route">
+          <span class="method get">GET</span>
+          <span class="path">/users</span>
+          <span class="desc">List users</span>
+        </div>
+        <div class="route">
+          <span class="method post">POST</span>
+          <span class="path">/users</span>
+          <span class="desc">Create user</span>
+        </div>
+      </div>
+
+      <div class="links">
+        <a href="https://minimajs.com" target="_blank">Docs</a>
+        <a href="https://minimajs.com/cli" target="_blank">CLI</a>
+        <a href="https://github.com/minima-js/minimajs" target="_blank">GitHub</a>
+      </div>
+    </div>
+  </body>
+</html>

@@ -18,7 +18,7 @@ minimajs is a TypeScript-first, ESM-only HTTP framework for Node.js and Bun. Its
 npx @minimajs/cli new hello-world
 
 # Bun
-bunx @minimajs/cli new hello-world --bun
+bunx @minimajs/cli new hello-world
 
 # With options
 npx @minimajs/cli new hello-world --pm pnpm      # package manager: bun | pnpm | yarn | npm
@@ -91,7 +91,9 @@ export const queuePlugin = (): CliPlugin => ({
       subCommands: {
         flush: defineCommand({
           meta: { description: "Flush all pending jobs" },
-          async run() { /* ... */ },
+          async run() {
+            /* ... */
+          },
         }),
       },
     }),
@@ -102,7 +104,9 @@ export const queuePlugin = (): CliPlugin => ({
     job: defineCommand({
       meta: { description: "Scaffold a queue job" },
       args: { name: { type: "positional", description: "Job name" } },
-      async run({ args }) { /* scaffold src/jobs/<name>.job.ts */ },
+      async run({ args }) {
+        /* scaffold src/jobs/<name>.job.ts */
+      },
     }),
   },
 });

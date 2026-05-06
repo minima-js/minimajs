@@ -1,39 +1,35 @@
-# ── Build stage ────────────────────────────────────────────────────────────────
-FROM node:{{ version }} AS builder
+# ── Base stage ─────────────────────────────────────────────────────────────────
+FROM node:{{ version }} AS base
+
+RUN npm i -g corepack --force && corepack enable
 
 WORKDIR /app
 
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
-
 COPY package.json pnpm-lock.yaml ./
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+
+RUN pnpm -v
+
+# ── Builder stage ───────────────────────────────────────────────────────────────
+FROM base AS builder
+RUN pnpm install --frozen-lockfile --store-dir /root/.cache/pnpm
 
 COPY . .
 RUN pnpm run build
 
-# ── Production stage ───────────────────────────────────────────────────────────
-FROM node:{{ version }}
-
-WORKDIR /app
+# ── Runner stage ────────────────────────────────────────────────────────────────
+FROM base AS runner
+RUN {{ userCreate }}
 
 ENV NODE_ENV=production
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
 
-# Create non-root user
-RUN addgroup --system {{ user }} && adduser --system --ingroup {{ user }} {{ user }}
-
-COPY package.json pnpm-lock.yaml ./
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prod
+RUN --mount=type=bind,from=builder,source=/root/.cache/pnpm,target=/root/.cache/pnpm \
+    pnpm install --frozen-lockfile --prod --store-dir /root/.cache/pnpm
 
 COPY --chown={{ user }}:{{ user }} --from=builder /app/dist ./dist
 
 USER {{ user }}
 
-ENV PORT=3000
-EXPOSE 3000
+ENV PORT={{ port }}
+EXPOSE {{ port }}
 
-CMD {{ cmd }}
+CMD ["pnpm", "run", "start"]
