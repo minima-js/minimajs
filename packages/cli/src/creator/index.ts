@@ -69,6 +69,7 @@ function getScaffoldFiles({
     { path: join("src", "module.ts"), content: templates.rootModule() },
     { path: join("src", "users", "module.ts"), content: templates.usersModule() },
     { path: join("src", "users", "users.handler.ts"), content: templates.usersHandler() },
+    { path: join("public", "index.html"), content: templates.homeHtml({ name: projectName }) },
     { path: ".gitignore", content: templates.gitignore() },
     { path: ".env", content: templates.env() },
     { path: versionFile, content: runtimeVersion + EOL },
@@ -107,7 +108,11 @@ async function handle(args: NewArgs) {
     isCorepack,
   });
 
-  await Promise.all([mkdir(join(cwd, "src")), mkdir(join(cwd, "src", "users"))]);
+  await Promise.all([
+    mkdir(join(cwd, "src")), // src
+    mkdir(join(cwd, "src", "users")),
+    mkdir(join(cwd, "public")),
+  ]);
   await Promise.all(files.map((file) => text.write(join(cwd, file.path), file.content, { mode: file.mode })));
 
   spinner.succeed(`Scaffolded ${chalk.bold(chalk.cyan(name))}`);

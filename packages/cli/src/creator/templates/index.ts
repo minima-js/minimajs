@@ -10,6 +10,7 @@ import packageNode from "./package.node.json.stub";
 import rootModule from "./module.ts.stub";
 import usersModule from "./users.module.stub";
 import usersHandler from "./users.handler.stub";
+import homeHtml from "./home.html.stub";
 import tsconfig from "./tsconfig.stub.json" with { type: "json" };
 
 import type { Stub } from "#/types.js";
@@ -31,5 +32,6 @@ export const templates = {
   rootModule: rootModule as Stub,
   usersModule: usersModule as Stub,
   usersHandler: usersHandler as Stub,
+  homeHtml: homeHtml as Stub<{ name: string }>,
   tsconfig: () => JSON.stringify(tsconfig, null, 2),
 };
