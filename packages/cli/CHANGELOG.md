@@ -1,5 +1,11 @@
 # @minimajs/cli
 
+## 0.0.5
+
+### Patch Changes
+
+- 8d50f53: fix circular deps on nodejs
+
 ## 0.0.4
 
 ### Patch Changes
