@@ -1,5 +1,11 @@
 # @minimajs/cli
 
+## 0.0.4
+
+### Patch Changes
+
+- 6c54ffa: auto-detect package manager improvement
+
 ## 0.0.3
 
 ### Patch Changes
