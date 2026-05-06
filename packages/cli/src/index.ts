@@ -5,7 +5,6 @@ import { kFactoryFn } from "./symbols.js";
 export type { Config, ConfigEnv, ConfigFactory, ConfigMode, CliPlugin, PluginsFactory } from "./config/types.js";
 export { defineCommand } from "citty";
 export * from "./runtime/index.js";
-export * from "./pkgm/index.js";
 export * from "./manifest/index.js";
 
 export function defineConfig(config: Partial<Config>): ConfigFactory;
