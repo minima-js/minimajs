@@ -23,7 +23,7 @@ export async function handleError(err: unknown, ctx: Context): Promise<Response>
   }
 
   // Log non-HTTP errors
-  ctx.app.log.error(err);
+  ctx.app.logger.error(err);
 
   // Return generic error response
   return createResponse({ message: "Unable to process request" }, { status: 500 }, ctx);

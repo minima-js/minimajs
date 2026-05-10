@@ -150,14 +150,14 @@ export function bodyParser(opts: BodyParserOptions = { type: ["json"] }) {
     } catch (err) {
       if (!Error.isError(err)) throw err;
       // Parse error - keep null value
-      app.log.error(err, "Failed to parse request body as %s", parseType);
+      app.logger.error(err, "Failed to parse request body as %s", parseType);
       // The body() function will return null
     }
   }
   return hook.factory((hooks, app) => {
     // Warn if form type is used (deprecated)
     if (allowedTypes.has("form")) {
-      app.log.warn(
+      app.logger.warn(
         "[bodyParser] The 'form' type is deprecated and will be removed in a future version. " +
           "Please use @minimajs/multipart for form data parsing instead."
       );

@@ -15,7 +15,7 @@ describe("Logger", () => {
   describe("mixin function", () => {
     test("should return data with module name if present", async () => {
       app.get("/", function homePage() {
-        const result = mixin({});
+        const result = mixin({}, 0, {} as any);
         expect(result).toEqual({ name: "homePage" });
         return "done";
       });
@@ -24,7 +24,7 @@ describe("Logger", () => {
 
     test("should not override existing name property", async () => {
       app.get("/test", function testRoute() {
-        const result = mixin({ name: "custom-name" });
+        const result = mixin({ name: "custom-name" }, 0, {} as any);
         expect(result).toEqual({ name: "custom-name" });
         return "done";
       });
@@ -33,13 +33,13 @@ describe("Logger", () => {
 
     test("should return data as-is when no context available", () => {
       // Outside of request context
-      const result = mixin({ foo: "bar" });
+      const result = mixin({ foo: "bar" }, 0, {} as any);
       expect(result).toEqual({ foo: "bar" });
     });
 
     test("should handle empty data object", async () => {
       app.get("/empty", function emptyRoute() {
-        const result = mixin({});
+        const result = mixin({}, 0, {} as any);
         expect(result).toHaveProperty("name");
         return "done";
       });
@@ -48,7 +48,7 @@ describe("Logger", () => {
 
     test("should preserve other properties in data", async () => {
       app.get("/props", function propsRoute() {
-        const result = mixin({ level: 30, msg: "test message", timestamp: Date.now() });
+        const result = mixin({ level: 30, msg: "test message", timestamp: Date.now() }, 0, {} as any);
         expect(result).toHaveProperty("name");
         expect(result).toHaveProperty("level", 30);
         expect(result).toHaveProperty("msg", "test message");
@@ -61,7 +61,7 @@ describe("Logger", () => {
     test("should handle routes without plugin chain (null/undefined)", async () => {
       const currentApp = createApp({ logger: false });
       currentApp.get("/no-plugin-null", function noPluginRouteNull() {
-        const result = mixin({});
+        const result = mixin({}, 0, {} as any);
         expect(result.name).toBe("");
         return "done";
       });
@@ -72,7 +72,7 @@ describe("Logger", () => {
     test("should handle routes without plugin chain (empty array)", async () => {
       const currentApp = createApp({ logger: false });
       currentApp.get("/no-plugin-empty", function noPluginRouteEmpty() {
-        const result = mixin({});
+        const result = mixin({}, 0, {} as any);
         expect(result.name).toBe("");
         return "done";
       });
@@ -82,7 +82,7 @@ describe("Logger", () => {
 
     test("should handle routes without handler name", async () => {
       app.get("/no-handler", () => {
-        const result = mixin({});
+        const result = mixin({}, 0, {} as any);
         expect(result).toHaveProperty("name");
         return "done";
       });
@@ -92,7 +92,7 @@ describe("Logger", () => {
     test("should handle nested route handlers", async () => {
       app.register(async (instance) => {
         instance.get("/nested", function nestedRoute() {
-          const result = mixin({});
+          const result = mixin({}, 0, {} as any);
           expect(result).toHaveProperty("name");
           return "done";
         });
@@ -103,9 +103,9 @@ describe("Logger", () => {
     test("should cache module name in local context", async () => {
       app.get("/cached", function cachedRoute() {
         // First call should set the cache
-        const result1 = mixin({});
+        const result1 = mixin({}, 0, {} as any);
         // Second call should use cached value
-        const result2 = mixin({ other: "data" });
+        const result2 = mixin({ other: "data" }, 0, {} as any);
         expect(result1.name).toBe(result2.name);
         return "done";
       });

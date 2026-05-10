@@ -35,7 +35,12 @@ export class Server<S> implements App<S> {
 
   private boot: Avvio<App>;
 
-  public log: Logger;
+  public logger: Logger;
+
+  /** @deprecated Use `logger` instead */
+  get log() {
+    return this.logger;
+  }
 
   public serialize: Serializer<S> = serialize;
 
@@ -44,7 +49,7 @@ export class Server<S> implements App<S> {
     opts: ServerOptions
   ) {
     this.container = createRootContainer(this);
-    this.log = opts.logger;
+    this.logger = opts.logger;
     this.prefix = opts.prefix;
     this.router = opts.router;
     this.boot = createBoot(this);

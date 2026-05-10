@@ -16,66 +16,53 @@
  * ```
  */
 
-import { pino, type LoggerOptions } from "pino";
+import { pino, type Logger, type LoggerOptions } from "pino";
 import merge from "deepmerge";
 import { maybeContext } from "./context.js";
-import type { App } from "./interfaces/app.js";
-import { kModulesChain, kModuleName } from "./symbols.js";
+import { kModuleName } from "./symbols.js";
+import { buildModuleName, isPrettyEnabled } from "./utils/logger.internal.js";
 
-export const loggerOptions: LoggerOptions = {
-  transport: {
-    target: "pino-pretty",
-    options: {
-      ignore: "hostname,pid",
-      singleLine: true,
-      colorize: true,
-    },
-  },
+const kPretty = Symbol("minimajs.logger.pretty");
+
+export function isLoggerPretty(logger: Logger): boolean {
+  return Boolean((logger as any)[kPretty]);
+}
+
+const prettyTransport: LoggerOptions["transport"] = {
+  target: "pino-pretty",
+  options: { singleLine: true, colorize: true },
 };
 
-function getPluginNames(server: App): string {
-  const chain = server.container[kModulesChain].slice(-3);
-  return chain
-    .map((app) => app.container[kModuleName])
-    .filter(Boolean)
-    .join("/");
+export const loggerOptions: LoggerOptions = {
+  base: null,
+  formatters: { level: (label) => ({ level: label }) },
+};
+
+if (process.env.LOG_LEVEL) {
+  loggerOptions.level = process.env.LOG_LEVEL;
 }
 
-function getModuleName() {
+export function mixin(data: Dict<unknown>, _level: number, logger: Logger) {
   const ctx = maybeContext();
   if (!ctx) {
-    return null;
-  }
-  const { route, locals } = ctx;
-  if (!locals[kModuleName]) {
-    let name = getPluginNames(ctx.app);
-    const handler = route?.handler.name;
-    if (handler) {
-      name = name + ":" + handler;
-    }
-    locals[kModuleName] = name;
-  }
-  return locals[kModuleName];
-}
-/**
- * Mixin function for Pino logger that enriches log data with module name context.
- * Automatically adds the current module name to log entries if not already present.
- */
-export function mixin(data: Dict<unknown>) {
-  const name = getModuleName();
-  if (!name || data.name) {
+    if (!data.name) data.name = (logger as any)[kModuleName];
     return data;
   }
-  data.name = name;
+  if (!data.requestId) data.requestId = ctx.$metadata.requestId;
+  if (!data.name) {
+    const { route, locals } = ctx;
+    if (!(kModuleName in locals)) {
+      locals[kModuleName] = buildModuleName(ctx.app, route?.handler.name);
+    }
+    data.name = locals[kModuleName] as string | null;
+  }
   return data;
 }
 
-/**
- * Creates a Pino logger instance with merged default options and mixin support.
- * Combines default logger options with user-provided options and adds module name context.
- */
-export function createLogger(option: LoggerOptions = {}) {
-  return pino(merge({ ...loggerOptions, mixin }, option));
+export function createLogger({ pretty = isPrettyEnabled(), ...option }: LoggerOptions & { pretty?: boolean } = {}) {
+  const log = pino(merge({ ...loggerOptions, mixin, ...(pretty && { transport: prettyTransport }) }, option));
+  (log as any)[kPretty] = pretty;
+  return log;
 }
 
-export const logger = createLogger();
+export const defaultLogger = createLogger();

@@ -6,13 +6,13 @@ import type { ResponseState } from "./response.js";
 import type { Route } from "./route.js";
 import type { ServerAdapter } from "../index.js";
 import type { kIpAddr } from "../symbols.js";
-
 export interface ContextMetadata {
   url?: URL;
   host?: string;
   proto?: string;
   pathStart: number;
   pathEnd: number;
+  requestId: string;
 }
 
 export interface ContextLocals {

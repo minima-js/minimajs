@@ -21,7 +21,10 @@ export interface App<S = any> {
 
   readonly prefix: string;
 
-  log: Logger;
+  logger: Logger;
+
+  /** @deprecated Use `logger` instead */
+  readonly log: Logger;
 
   serialize: Serializer<S>;
 

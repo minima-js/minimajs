@@ -54,7 +54,7 @@ export function mockContext<S, T = void>(callback: MockContextCallback<T, S>, op
     incomingMessage: undefined as any,
     serverResponse: undefined as any,
     ...partialContext,
-    $metadata: { pathEnd, pathStart, ...partialContext.$metadata },
+    $metadata: { pathEnd, pathStart, ...partialContext.$metadata, requestId: crypto.randomUUID() },
   };
 
   if (reqOptions.body) {

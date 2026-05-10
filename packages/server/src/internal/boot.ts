@@ -5,6 +5,7 @@ import { runHooks } from "../hooks/store.js";
 import { kModuleName, kModulesChain, kPlugin } from "../symbols.js";
 import { plugin, type PluginOptions, type RegisterOptions, type Registerable } from "../plugin.js";
 import { cloneContainer } from "./container.js";
+import { buildModuleName } from "../utils/logger.internal.js";
 
 const METADATA_SYMBOLS = [kModuleName, kPlugin];
 
@@ -17,6 +18,7 @@ function pluginOverride<S>(app: App<S>, fn: Registerable<S>, options: OverrideOp
   if (plugin.is(fn)) return app;
 
   const { prefix: parentPrefix } = app;
+  const moduleName = plugin.getName(fn, options);
 
   const child: App<S> = Object.create(app, {
     container: {
@@ -31,7 +33,16 @@ function pluginOverride<S>(app: App<S>, fn: Registerable<S>, options: OverrideOp
   });
 
   child.container[kModulesChain].push(child);
-  child.container[kModuleName] = plugin.getName(fn, options);
+  child.container[kModuleName] = moduleName;
+
+  const chainName = buildModuleName(child, undefined);
+  const childLogger = app.logger.child({});
+  if (chainName) (childLogger as any)[kModuleName] = chainName;
+
+  Object.defineProperty(child, "logger", {
+    value: childLogger,
+  });
+
   return child;
 }
 
