@@ -5,7 +5,7 @@ import { runHooks } from "../hooks/store.js";
 import { kModuleName, kModulesChain, kPlugin } from "../symbols.js";
 import { plugin, type PluginOptions, type RegisterOptions, type Registerable } from "../plugin.js";
 import { cloneContainer } from "./container.js";
-import { buildModuleName } from "../utils/logger.internal.js";
+import { buildModuleName } from "../logger/helpers.js";
 
 const METADATA_SYMBOLS = [kModuleName, kPlugin];
 

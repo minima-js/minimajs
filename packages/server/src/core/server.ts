@@ -11,7 +11,7 @@ import type { Serializer } from "../interfaces/response.js";
 import { plugin as p } from "../plugin.js";
 import type { RouteConfig, RouteMetaDescriptor, RouteOptions } from "../interfaces/route.js";
 import { createBoot, wrapPlugin } from "../internal/boot.js";
-import type { AddressInfo, ServerAdapter, ListenOptions } from "../interfaces/server.js";
+import type { AddressInfo, CloseOptions, ServerAdapter, ListenOptions } from "../interfaces/server.js";
 import type { Container, RequestHandlerContext } from "../interfaces/index.js";
 import { createRootContainer } from "../internal/container.js";
 import { kModuleName } from "../symbols.js";
@@ -172,10 +172,10 @@ export class Server<S> implements App<S> {
     return address;
   }
 
-  async close(): Promise<void> {
+  async close(options?: CloseOptions): Promise<void> {
     // 1. Stop accepting new connections immediately
     if (this.server && this.adapter) {
-      await this.adapter.close(this.server);
+      await this.adapter.close(this.server, options);
     }
     // 2. Run user cleanup hooks (database connections, file handles, etc.)
     await runHooks(this, "close");

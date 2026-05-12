@@ -1,6 +1,7 @@
 import { type Server as BunServer, type Serve } from "bun";
 import type {
   AddressInfo,
+  CloseOptions,
   ServerAdapter,
   ListenOptions,
   RequestHandler,
@@ -54,7 +55,7 @@ export class BunServerAdapter<T = unknown> implements ServerAdapter<BunServer<T>
     return { server, address };
   }
 
-  async close(server: BunServer<T>): Promise<void> {
-    await server.stop();
+  async close(server: BunServer<T>, options: CloseOptions = {}): Promise<void> {
+    await server.stop(options.force ?? false);
   }
 }

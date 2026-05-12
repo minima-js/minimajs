@@ -18,15 +18,9 @@
 
 import { pino, type Logger, type LoggerOptions } from "pino";
 import merge from "deepmerge";
-import { maybeContext } from "./context.js";
-import { kModuleName } from "./symbols.js";
-import { buildModuleName, isPrettyEnabled } from "./utils/logger.internal.js";
-
-const kPretty = Symbol("minimajs.logger.pretty");
-
-export function isLoggerPretty(logger: Logger): boolean {
-  return Boolean((logger as any)[kPretty]);
-}
+import { maybeContext } from "../context.js";
+import { kModuleName } from "../symbols.js";
+import { buildModuleName, isPrettyEnabled, kPretty } from "./helpers.js";
 
 const prettyTransport: LoggerOptions["transport"] = {
   target: "pino-pretty",
@@ -54,7 +48,8 @@ export function mixin(data: Dict<unknown>, _level: number, logger: Logger) {
     if (!(kModuleName in locals)) {
       locals[kModuleName] = buildModuleName(ctx.app, route?.handler.name);
     }
-    data.name = locals[kModuleName] as string | null;
+    const name = locals[kModuleName] as string;
+    if (name) data.name = name;
   }
   return data;
 }
@@ -64,5 +59,3 @@ export function createLogger({ pretty = isPrettyEnabled(), ...option }: LoggerOp
   (log as any)[kPretty] = pretty;
   return log;
 }
-
-export const defaultLogger = createLogger();

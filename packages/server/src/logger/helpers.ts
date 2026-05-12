@@ -1,5 +1,8 @@
+import type { Logger } from "pino";
 import type { App } from "../interfaces/index.js";
 import { kIsRoot, kModulesChain, kModuleName } from "../symbols.js";
+
+export const kPretty = Symbol("minimajs.logger.pretty");
 
 export function buildModuleName(app: App, handlerName: string | undefined): string {
   const chain: string[] = [];
@@ -12,8 +15,12 @@ export function buildModuleName(app: App, handlerName: string | undefined): stri
   if (handlerName) name = `${name}:${handlerName}`;
   return name;
 }
+
 export function isPrettyEnabled() {
   if (process.env.LOG_FORMAT === "pretty") return true;
   if (process.env.LOG_FORMAT === "json") return false;
   return Boolean(process.stdout.isTTY);
+}
+export function isLoggerPretty(logger: Logger): boolean {
+  return Boolean((logger as any)[kPretty]);
 }

@@ -3,7 +3,7 @@ import { type App } from "../../interfaces/index.js";
 import { hook } from "../../hooks/index.js";
 import { setTimeout as sleep } from "node:timers/promises";
 import { prettyPrintByModule, routesToJSON } from "./grouping.js";
-import { isLoggerPretty } from "../../logger.js";
+import { isLoggerPretty } from "../../logger/helpers.js";
 export { prettyPrintByModule };
 
 export interface RouteLoggerOptions {
