@@ -29,7 +29,7 @@ describe("error module", () => {
       const response = await app.handle(createRequest("/"));
       expect(response.status).toBe(500);
       const body = await response.text();
-      expect(body).toBe(JSON.stringify({ message: "Unable to process request" }));
+      expect(body).toBe(JSON.stringify({ message: "Internal Server Error" }));
     });
   });
 

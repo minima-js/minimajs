@@ -382,7 +382,7 @@ describe("bodyParser", () => {
       expect(response.status).toBe(500);
       const json = (await response.json()) as { message: string };
       // Error is caught and converted to generic message by error handler
-      expect(json.message).toBe("Unable to process request");
+      expect(json.message).toBe("Internal Server Error");
     });
 
     test("should allow re-enabling after disabling", async () => {

@@ -42,7 +42,7 @@ export function mixin(data: Dict<unknown>, _level: number, logger: Logger) {
     if (!data.name) data.name = (logger as any)[kModuleName];
     return data;
   }
-  if (!data.requestId) data.requestId = ctx.$metadata.requestId;
+  if (!data.requestId) data.requestId = ctx.requestId;
   if (!data.name) {
     const { route, locals } = ctx;
     if (!(kModuleName in locals)) {

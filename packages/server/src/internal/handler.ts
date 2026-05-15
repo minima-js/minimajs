@@ -31,8 +31,8 @@ export async function handleRequest<S>(
     $metadata: {
       pathStart,
       pathEnd,
-      requestId,
     },
+    requestId,
     app,
     pathname,
     server: server.server!,
