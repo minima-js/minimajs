@@ -376,16 +376,12 @@ export const routes: Routes = {
 ### Authentication
 
 ```typescript
-// auth/context.ts
-import { createAuth } from "@minimajs/auth";
-import { UnauthorizedError } from "@minimajs/auth";
-import { headers } from "@minimajs/server";
+// src/auth.ts
+import { createAuth, bearer } from "@minimajs/auth";
 
-export const [authPlugin, getUser] = createAuth(async () => {
-  const token = headers.get("authorization")?.replace("Bearer ", "");
-  if (!token) throw new UnauthorizedError();
+export const [authPlugin, getUser] = createAuth(bearer(async (token) => {
   return await verifyToken(token); // return user object
-});
+}));
 
 // root module.ts — register globally
 export const meta: Meta = { plugins: [authPlugin] };
