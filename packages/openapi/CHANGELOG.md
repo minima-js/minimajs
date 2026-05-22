@@ -1,5 +1,13 @@
 # @minimajs/openapi
 
+## 0.3.1
+
+### Patch Changes
+
+- 280bbba: logger improved
+- Updated dependencies [280bbba]
+  - @minimajs/server@0.11.1
+
 ## 0.3.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @minimajs/server
 
+## 0.11.1
+
+### Patch Changes
+
+- 280bbba: logger improved
+
 ## 0.11.0
 
 ### Minor Changes
