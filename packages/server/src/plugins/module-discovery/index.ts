@@ -7,7 +7,7 @@ import type { ImportedModule, ModuleDiscoveryOptions, Routes } from "./types.js"
 import type { HTTPMethod } from "find-my-way";
 
 import { getHandlerDescriptors } from "../../internal/route.js";
-import { kRouteMeta } from "../../symbols.js";
+import { kIsRoot, kRouteMeta } from "../../symbols.js";
 
 function addRoutes(app: App, routes: Routes) {
   for (const [route, handler] of Object.entries(routes)) {
@@ -24,9 +24,12 @@ function addRoutes(app: App, routes: Routes) {
 export function moduleDiscovery(options: ModuleDiscoveryOptions) {
   const { index = "module.{ts,js}", scanner = scanModules, root: modulesPath = getRunningFilePath() } = options;
 
-  async function loadModules(app: App, current: ImportedModule): Promise<void> {
+  async function loadModules(app: App, current: ImportedModule, { root = false }: { root?: boolean } = {}): Promise<void> {
     app.register(async function unknown(child: App, opts: any) {
+      child.container[kIsRoot] = root;
+
       child.container[kRouteMeta] = current.meta;
+
       current.meta.plugins?.forEach((x) => child.register(x));
       if (current.routes) {
         addRoutes(child, current.routes);
@@ -45,7 +48,7 @@ export function moduleDiscovery(options: ModuleDiscoveryOptions) {
   return plugin(async function moduleDiscovery(app) {
     const root = await importRootModule(scanner(`${modulesPath}/${index}`));
     if (root) {
-      await loadModules(app, root);
+      await loadModules(app, root, { root: true });
       return;
     }
 

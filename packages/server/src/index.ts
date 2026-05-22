@@ -15,8 +15,7 @@
 
 // Re-export core for backwards compatibility (App interface, types, etc.)
 export * from "./core/server.js";
-
-export { logger } from "./logger.js";
+export { logger } from "./logger/instance.js";
 
 // Exporting all types
 export * from "./interfaces/index.js";
@@ -29,7 +28,6 @@ export * from "./hooks/index.js";
 
 export { type StatusCode } from "./internal/response.js";
 export { defer, onError, type DeferCallback, type ErrorCallback } from "./plugins/deferrer/index.js";
-export { controller } from "./plugins/controller/index.js";
 
 export * from "./plugin.js";
 export * from "./plugins/module-discovery/types.js";

@@ -80,6 +80,10 @@ export interface ListenResult<T> {
  * };
  * ```
  */
+export interface CloseOptions {
+  force?: boolean;
+}
+
 export interface ServerAdapter<T> {
   /**
    * Starts the server and begins listening for requests.
@@ -98,5 +102,5 @@ export interface ServerAdapter<T> {
    * @param server - The native server instance to close
    * @returns Promise that resolves when server is closed
    */
-  close(server: T): Promise<void>;
+  close(server: T, options?: CloseOptions): Promise<void>;
 }

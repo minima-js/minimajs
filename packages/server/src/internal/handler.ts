@@ -26,11 +26,13 @@ export async function handleRequest<S>(
     app = result.store.app;
   }
 
+  const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID();
   const ctx: Context<any> = {
     $metadata: {
       pathStart,
       pathEnd,
     },
+    requestId,
     app,
     pathname,
     server: server.server!,
@@ -39,7 +41,7 @@ export async function handleRequest<S>(
     locals: partial.locals || {},
     container: app.container,
     request: req,
-    responseState: { headers: new Headers() }, // Initialize mutable response headers
+    responseState: { headers: new Headers({ "x-request-id": requestId }) },
     incomingMessage: partial.incomingMessage,
     serverResponse: partial.serverResponse,
   };

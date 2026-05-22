@@ -18,6 +18,7 @@
  * app.register(shutdown());
  * ```
  */
+export * from "./access-log/index.js";
 export * from "./module-discovery/index.js";
 export * from "./deferrer/index.js";
 export * from "./context-provider/index.js";

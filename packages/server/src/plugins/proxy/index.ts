@@ -1,5 +1,5 @@
 import { hook, type Context } from "../../index.js";
-import { kIpAddr } from "../../symbols.js";
+import { kIpAddr, kHost, kProto } from "../../symbols.js";
 import type { ProxyOptions, ProxyIpPluginOptions } from "./types.js";
 import { createTrustValidator } from "./trust.js";
 import { createHostExtractor, createIpExtractor, createProtoExtractor, defaultExtractProto } from "./extractors.js";
@@ -95,12 +95,12 @@ export function proxy<S>(options: ProxyOptions<S> = {}) {
     if (extractHost) {
       const host = extractHost(ctx);
       if (host) {
-        ctx.$metadata.host = host;
+        ctx.locals[kHost] = host;
       }
     }
 
     if (extractProto) {
-      ctx.$metadata.proto = extractProto(ctx);
+      ctx.locals[kProto] = extractProto(ctx);
     }
   });
 }

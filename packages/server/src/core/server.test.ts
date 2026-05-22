@@ -192,7 +192,7 @@ describe("Core Server", () => {
 
       const errorResponse = await app.handle(createRequest("/error"));
       expect(errorResponse.status).toBeGreaterThanOrEqual(500);
-      expect((await getBody(errorResponse)).message).toBe("Unable to process request");
+      expect((await getBody(errorResponse)).message).toBe("Internal Server Error");
 
       expect((await app.handle(createRequest("/non-existent"))).status).toBe(404);
     });

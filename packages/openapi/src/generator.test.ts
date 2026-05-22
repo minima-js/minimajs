@@ -114,6 +114,33 @@ describe("generateOpenAPIDocument", () => {
     });
   });
 
+  test("hoists description from property schema to parameter level", () => {
+    app.get(
+      "/search",
+      [
+        kRequestSchema,
+        {
+          headers: {
+            type: "object",
+            properties: { authorization: { type: "string", description: "Bearer token" } },
+            required: ["authorization"],
+          },
+          searchParams: { type: "object", properties: { q: { type: "string", description: "Search query" } } },
+          params: { type: "object", properties: {} },
+        },
+      ],
+      () => ({})
+    );
+
+    const doc = generateOpenAPIDocument(app, createBaseDocument());
+
+    const params = doc.paths!["/search"]!.get!.parameters as OpenAPI.ParameterObject[];
+    const authParam = params.find((p) => p.name === "authorization")!;
+    const qParam = params.find((p) => p.name === "q")!;
+    expect(authParam.description).toBe("Bearer token");
+    expect(qParam.description).toBe("Search query");
+  });
+
   test("includes response headers", () => {
     app.get(
       "/with-headers",
@@ -125,6 +152,50 @@ describe("generateOpenAPIDocument", () => {
 
     const headers = (doc.paths!["/with-headers"]!.get!.responses!["200"] as OpenAPI.ResponseObject).headers;
     expect(headers!["x-request-id"]).toBeDefined();
+  });
+
+  test("hoists description on response headers and cleans schema", () => {
+    app.get(
+      "/with-headers",
+      [
+        kResponseSchema,
+        {
+          200: {
+            headers: {
+              type: "object",
+              properties: { "x-token": { type: "string", description: "Auth token", $schema: "ignore" } },
+            },
+          },
+        },
+      ],
+      () => ({})
+    );
+
+    const doc = generateOpenAPIDocument(app, createBaseDocument());
+
+    const header = (doc.paths!["/with-headers"]!.get!.responses!["200"] as OpenAPI.ResponseObject).headers![
+      "x-token"
+    ] as OpenAPI.HeaderObject;
+    expect(header.description).toBe("Auth token");
+    expect((header.schema as Record<string, unknown>)?.["$schema"]).toBeUndefined();
+  });
+
+  test("does not overwrite existing component schema on title collision", () => {
+    app.post(
+      "/a",
+      [kRequestSchema, { body: { type: "object", title: "Thing", properties: { x: { type: "string" } } } }],
+      () => ({})
+    );
+    app.post(
+      "/b",
+      [kRequestSchema, { body: { type: "object", title: "Thing", properties: { y: { type: "number" } } } }],
+      () => ({})
+    );
+
+    const doc = generateOpenAPIDocument(app, createBaseDocument());
+
+    expect(doc.components!.schemas!.Thing).toMatchObject({ properties: { x: { type: "string" } } });
+    expect(doc.components!.schemas!.Thing).not.toMatchObject({ properties: { y: expect.anything() } });
   });
 
   test("applies operation metadata from kOperation", () => {

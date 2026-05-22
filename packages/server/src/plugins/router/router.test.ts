@@ -22,9 +22,9 @@ describe("routeLogger", () => {
   });
 
   test("should log routes with default options using app.log.info", async () => {
-    const spy = jest.spyOn(app.log, "info").mockImplementation(() => {});
+    const spy = jest.spyOn(app.logger, "info").mockImplementation(() => {});
 
-    app.register(routeLogger({ groupBy: "path" }));
+    app.register(routeLogger({ groupBy: "path", pretty: true }));
     await app.ready();
 
     const printedRoutes = EOL + app.router.prettyPrint({ commonPrefix: false }) + EOL;

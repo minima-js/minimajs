@@ -5,23 +5,25 @@ import type { App, Container } from "./app.js";
 import type { ResponseState } from "./response.js";
 import type { Route } from "./route.js";
 import type { ServerAdapter } from "../index.js";
-import type { kIpAddr } from "../symbols.js";
+import type { kIpAddr, kHost, kProto, kUrl } from "../symbols.js";
 
+/** @internal */
 export interface ContextMetadata {
-  url?: URL;
-  host?: string;
-  proto?: string;
   pathStart: number;
   pathEnd: number;
 }
 
 export interface ContextLocals {
   [kIpAddr]?: string | null;
+  [kHost]?: string;
+  [kProto]?: string;
+  [kUrl]?: URL;
   [key: symbol]: unknown;
 }
 
 export interface Context<S = unknown> {
   readonly $metadata: ContextMetadata;
+  readonly requestId: string;
   readonly app: App<S>;
   readonly server: S;
   readonly serverAdapter: ServerAdapter<S>;

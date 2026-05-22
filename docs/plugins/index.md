@@ -36,6 +36,7 @@ export const routes: Routes = {
 
 ## Available Plugins
 
+- **[Access Log](./access-log.md)**: Logs every request with method, path, status code, and duration.
 - **[Body Parser](./body-parser.md)**: For parsing incoming request bodies (e.g., JSON, text).
 - **[CORS](./cors.md)**: For managing Cross-Origin Resource Sharing headers.
 - **[Descriptor](./descriptor.md)**: For applying route metadata to entire scopes.

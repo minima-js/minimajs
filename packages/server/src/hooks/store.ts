@@ -103,7 +103,7 @@ export namespace runHooks {
       try {
         await hook(...args);
       } catch (e) {
-        app.log.child({ hook: name, handler: hook.name || undefined }).error(e);
+        app.logger.child({ hook: name, handler: hook.name || undefined }).error(e);
       }
     }
   }

@@ -10,12 +10,12 @@ export function getDefaultTags(app: App): string[] {
   const modules = app.container[kModulesChain];
   const routeMeta = modules[1]?.container[kRouteMeta] as any;
   const start = routeMeta?.[kIsRoot] ? 2 : 1;
-  return [
-    modules
-      .slice(start)
-      .map((x) => capitalize(x.container[kModuleName] as string))
-      .join(" / "),
-  ];
+  const tag = modules
+    .slice(start)
+    .map((x) => capitalize(x.container[kModuleName] as string))
+    .filter(Boolean)
+    .join(" / ");
+  return tag ? [tag] : [];
 }
 
 export function generateOperationId(method: string, path: string): string {

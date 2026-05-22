@@ -8,99 +8,160 @@ tags:
 
 # Logger
 
-Minima.js includes a built-in logger powered by Pino. You can use it in handlers, hooks, and plugins without manually wiring logger instances.
+Minima.js includes a built-in structured logger powered by [Pino](https://getpino.io). It automatically enriches every log entry with a `name` (the module that logged it) and — inside a request — a `requestId`, with no extra wiring required.
 
-## Quick Reference
+## Imports
 
-- [`logger.info()`](#loggerinfo) - Log normal operational events
-- [`logger.warn()`](#loggerwarn) - Log recoverable issues
-- [`logger.error()`](#loggererror) - Log failures
-- [`logger.debug()`](#loggerdebug) - Log debug details
-- [`app.log`](#applog) - Access app-level logger during setup
+```typescript
+// Pre-built instance — use this in handlers and plugins
+import { logger } from "@minimajs/server";
 
----
+// Factory — use this when you need a custom logger instance
+import { createLogger } from "@minimajs/server/logger";
+```
 
 ## Basic Usage
 
 ```typescript
-import { logger, searchParams, type Routes } from "@minimajs/server";
+import { logger } from "@minimajs/server";
 
-async function listServices() {
-  logger.info("Service request", { query: searchParams().toJSON() });
-  return { ok: true };
+async function listUsers() {
+  logger.info("Fetching users");
+  const users = await db.users.findAll();
+  logger.info({ count: users.length }, "Users fetched");
+  return users;
 }
-
-export const routes: Routes = {
-  "GET /services": listServices,
-};
 ```
 
-## `logger.info()`
+Pino's argument order is **`(mergeObject, message)`**. Always put structured fields first, the message string second.
 
-Use for expected, successful application flow.
+## Log Methods
+
+### `logger.info()`
+
+Normal operational events.
 
 ```typescript
-import { logger } from "@minimajs/server";
-
-logger.info("User signed in", { userId: "u_123" });
+logger.info({ userId: "u_123" }, "User signed in");
 ```
 
-## `logger.warn()`
+### `logger.warn()`
 
-Use for non-fatal issues you should monitor.
+Recoverable issues worth monitoring.
 
 ```typescript
-import { logger } from "@minimajs/server";
-
-logger.warn("Rate limit near threshold", { ip: "203.0.113.10" });
+logger.warn({ ip: "203.0.113.10" }, "Rate limit near threshold");
 ```
 
-## `logger.error()`
+### `logger.error()`
 
-Use for failed operations and exceptions.
+Failed operations and exceptions. Pass the error under the `err` key — Pino serializes it with stack trace and type automatically.
 
 ```typescript
-import { logger } from "@minimajs/server";
-
 try {
-  await saveUser();
-} catch (error) {
-  logger.error("Failed to save user", { error });
+  await saveUser(data);
+} catch (err) {
+  logger.error({ err }, "Failed to save user");
 }
 ```
 
-## `logger.debug()`
+### `logger.debug()`
 
-Use for verbose diagnostics during development.
+Verbose diagnostics for development.
 
 ```typescript
-import { logger } from "@minimajs/server";
-
-logger.debug("Payload received", { size: 1024 });
+logger.debug({ payload, size: payload.length }, "Payload received");
 ```
 
-## `app.log`
+## Automatic Context Enrichment
 
-Use the app-level logger in bootstrap/setup code.
+Every log entry is automatically enriched — no manual fields needed.
+
+### `name` — module path
+
+Minima.js tracks which plugin/module each logger belongs to. Every entry gets a `name` field derived from the module chain and the handler function name:
+
+```json
+{ "level": "info", "name": "users:listUsers", "msg": "Fetching users" }
+```
+
+The format is `module/sub-module:handlerName`. If no module name is registered, the handler name alone is used (`:handlerName`).
+
+### `requestId` — inside a request
+
+Inside a request handler or hook, `requestId` is injected automatically from the `x-request-id` header (or a generated UUID if the header is absent):
+
+```json
+{
+  "level": "info",
+  "requestId": "376ed309-bd4b-47a8-b81b-3fb4437f783e",
+  "name": "users:listUsers",
+  "msg": "Fetching users"
+}
+```
+
+You never need to thread `requestId` manually.
+
+## App-Level Logger
+
+Use `app.logger` in bootstrap code and plugins where there is no request context yet:
 
 ```typescript
-import { createApp } from "@minimajs/server/bun";
+import { createApp } from "@minimajs/server/node";
 
 const app = createApp();
-app.log.info("Bootstrapping application");
+app.logger.info("Bootstrapping application");
+
+app.register(async (child) => {
+  child.logger.info("Plugin initializing");
+});
 ```
 
-## Best Practices
+Each registered plugin scope gets its own child logger with the module name pre-set.
 
-- Prefer structured fields over string interpolation.
-- Use consistent keys (`requestId`, `userId`, `durationMs`) to simplify queries.
-- Keep debug logs focused to avoid noisy production output.
+## Configuration
 
----
+### Log level
 
-## Related Guides
+Set `LOG_LEVEL` to control verbosity:
 
-- [Hooks](/guides/hooks) - Log request/response lifecycle events with `request` and `send`
-- [Error Handling](/guides/error-handling) - Standardize error logging and formatting
-- [HTTP Helpers](/guides/http) - Add request metadata (headers, params) to logs
-- [Middleware](/guides/middleware) - Wrap full request timing or tracing flows
+```bash
+LOG_LEVEL=debug node server.js
+```
+
+Supported values: `trace`, `debug`, `info`, `warn`, `error`, `fatal`.
+
+### Output format
+
+```bash
+LOG_FORMAT=pretty node server.js   # human-readable (default in TTY)
+LOG_FORMAT=json  node server.js    # structured JSON (default in non-TTY)
+```
+
+Pretty mode is automatically enabled when stdout is a TTY (interactive terminal) and disabled in CI/production pipelines.
+
+## Custom Logger
+
+Use `createLogger` when you need a logger with different options:
+
+```typescript
+import { createLogger } from "@minimajs/server/logger";
+
+const log = createLogger({ level: "debug", pretty: false });
+log.info("Custom logger ready");
+```
+
+To use a custom logger as the app logger, pass it to `createApp`:
+
+```typescript
+import { createApp } from "@minimajs/server/node";
+import { createLogger } from "@minimajs/server/logger";
+
+const app = createApp({ logger: createLogger({ level: "debug" }) });
+```
+
+## Related
+
+- [Access Log](/plugins/access-log) — Automatic request/response logging with duration
+- [Hooks](/guides/hooks) — Log lifecycle events with `request` and `send` hooks
+- [Error Handling](/guides/error-handling) — Structured error responses and logging

@@ -5,7 +5,7 @@ import type { HeadersInit, HttpHeader, HttpHeaderIncoming, ResponseBody, Respons
 import { toStatusCode, type StatusCode } from "./internal/response.js";
 import { isAbortError } from "./utils/errors.js";
 import { mergeHeaders } from "./utils/headers.js";
-import { kBody, kIpAddr } from "./symbols.js";
+import { kBody, kIpAddr, kHost, kProto, kUrl } from "./symbols.js";
 import type { Dict, RemoteAddr } from "./interfaces/index.js";
 
 // ============================================================================
@@ -251,15 +251,13 @@ export namespace request {
    */
 
   export function url(): URL {
-    const { $metadata: metadata, request } = context();
-    if (metadata.url) return metadata.url;
-    metadata.proto ??= "http";
-    if (!metadata.host) {
-      metadata.host = request.headers.get("host")!;
-    }
+    const { $metadata: metadata, request, locals } = context();
+    if (locals[kUrl]) return locals[kUrl];
+    const proto = locals[kProto] ?? "http";
+    const host = locals[kHost] ?? request.headers.get("host")!;
     const path = request.url.slice(metadata.pathStart);
-    metadata.url = new URL(`${metadata.proto}://${metadata.host}${path}`);
-    return metadata.url;
+    locals[kUrl] = new URL(`${proto}://${host}${path}`);
+    return locals[kUrl];
   }
 
   /**
@@ -307,6 +305,10 @@ export namespace request {
    */
   export function signal(): AbortSignal {
     return request().signal;
+  }
+
+  export function id() {
+    return context().requestId;
   }
 }
 

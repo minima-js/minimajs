@@ -19,14 +19,16 @@ import { type Logger } from "pino";
 import type { ServerAdapter } from "../interfaces/server.js";
 import { deferrer } from "../plugins/deferrer/index.js";
 import { Server } from "./server.js";
-import { createLogger, logger as defaultLogger } from "../logger.js";
+import { createLogger } from "../logger/index.js";
+import { logger as defaultLogger } from "../logger/instance.js";
 import { moduleDiscovery } from "../plugins/module-discovery/index.js";
 import type { ModuleDiscoveryOptions } from "../plugins/module-discovery/types.js";
 import { bodyParser, routeLogger } from "../plugins/index.js";
-import { executionContext, hook } from "../index.js";
+import { executionContext } from "../context.js";
 import { composeMiddleware } from "../internal/middleware.js";
 import { kMiddlewares } from "../symbols.js";
 import { contextProvider } from "../plugins/context-provider/index.js";
+import { hook } from "../hooks/index.js";
 
 export * from "./server.js";
 

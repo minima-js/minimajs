@@ -70,6 +70,9 @@ export const kBodySkip = Symbol("minimajs.body.skip");
 export const kMiddlewares = Symbol("minimajs.middlewares");
 
 export const kIpAddr = Symbol("minimajs.ipAddr");
+export const kHost = Symbol("minimajs.host");
+export const kProto = Symbol("minimajs.proto");
+export const kUrl = Symbol("minimajs.url");
 
 export const kIsRoot = Symbol("minimajs.modules.isRoot");
 export const kRouteMeta = Symbol("minimajs.modules.route.meta");

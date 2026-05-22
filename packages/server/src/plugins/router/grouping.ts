@@ -3,6 +3,18 @@ import { type App } from "../../interfaces/index.js";
 import type { RouteConfig } from "../../interfaces/route.js";
 import { kModuleName, kModulesChain } from "../../symbols.js";
 
+export function routesToJSON(app: App): { method: string; path: string; module: string }[] {
+  const rawRoutes = (app.router as any).routes as Array<{ method: string; path: string; store: RouteConfig<any> }>;
+  return rawRoutes.map(({ method, path, store }) => {
+    const chain = store.app.container[kModulesChain] as App[];
+    const module = chain
+      .map((a) => a.container[kModuleName])
+      .filter(Boolean)
+      .join("/");
+    return { method, path, module };
+  });
+}
+
 type ModuleNode = {
   name: string;
   routes: Map<string, string[]>; // path → methods

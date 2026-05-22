@@ -6,6 +6,7 @@ import { createApp } from "./bun/index.js";
 import { bodyParser } from "./plugins/body-parser/index.js";
 import { createRequest } from "./mock/request.js";
 import { proxy } from "./plugins/proxy/index.js";
+import { kUrl } from "./symbols.js";
 
 const setHeader = headers.set;
 
@@ -49,7 +50,7 @@ describe("Http", () => {
           expect(url1).toBe(url2); // should be memoized
         },
         {
-          context: { $metadata: { url: new URL("http://example.com/test") } },
+          context: { locals: { [kUrl]: new URL("http://example.com/test") } },
         }
       );
     });
@@ -61,7 +62,7 @@ describe("Http", () => {
           expect(url.pathname).toBe("/users/123");
           expect(url.search).toBe("?page=1");
         },
-        { context: { $metadata: { url: new URL("http://example.com/users/123?page=1") } } }
+        { context: { locals: { [kUrl]: new URL("http://example.com/users/123?page=1") } } }
       );
     });
   });
@@ -524,7 +525,7 @@ describe("Http", () => {
       const response = await app.handle(createRequest("/test"));
       expect(response.status).toBe(500);
       const json: any = await response.json();
-      expect(json.message).toContain("Unable to process request");
+      expect(json.message).toContain("Internal Server Error");
 
       await app.close();
     });

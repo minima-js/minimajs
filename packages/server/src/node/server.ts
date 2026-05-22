@@ -8,6 +8,7 @@ import {
 import { toWebRequest, fromWebResponse } from "./utils.js";
 import type {
   AddressInfo,
+  CloseOptions,
   ServerAdapter,
   ListenOptions,
   RequestHandler,
@@ -21,6 +22,8 @@ export type NodeServerOptions = ServerOptions<typeof IncomingMessage, typeof Ser
 
 export class NodeServerAdapter implements ServerAdapter<NodeServer> {
   constructor(private readonly serverOptions?: NodeServerOptions) {}
+
+  private closing = false;
 
   remoteAddr({ incomingMessage }: Context<NodeServer>): RemoteAddr | null {
     const socket = incomingMessage.socket;
@@ -54,12 +57,14 @@ export class NodeServerAdapter implements ServerAdapter<NodeServer> {
 
     // Use the actual address from server.address(), fallback to provided host
     const hostname = info.address;
+    const family = info.family as AddressInfo["family"];
+    const href = family === "IPv6" ? `http://[${hostname}]:${info.port}/` : `http://${hostname}:${info.port}/`;
     return {
       hostname,
       port: info.port,
       family: info.family as AddressInfo["family"],
       protocol: "http",
-      href: `http://${hostname}:${info.port}/`,
+      href,
       toString() {
         return this.href;
       },
@@ -71,7 +76,11 @@ export class NodeServerAdapter implements ServerAdapter<NodeServer> {
     opts: ListenOptions,
     requestHandler: RequestHandler<NodeServer>
   ): Promise<ListenResult<NodeServer>> {
+    this.closing = false;
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const self = this;
     async function onRequest(req: IncomingMessage, res: ServerResponse) {
+      if (self.closing) res.setHeader("Connection", "close");
       const request = toWebRequest(req);
       const response = await requestHandler(srv, request, {
         incomingMessage: req,
@@ -84,8 +93,10 @@ export class NodeServerAdapter implements ServerAdapter<NodeServer> {
     const port = opts.port;
     const server = this.serverOptions ? createServer(this.serverOptions, onRequest) : createServer(onRequest);
 
-    await new Promise<void>((resolve) => {
+    await new Promise<void>((resolve, reject) => {
+      server.once("error", reject);
       server.listen(port, hostname, () => {
+        server.off("error", reject); // clean up
         resolve();
       });
     });
@@ -94,12 +105,15 @@ export class NodeServerAdapter implements ServerAdapter<NodeServer> {
     return { server, address };
   }
 
-  async close(server: NodeServer): Promise<void> {
+  async close(server: NodeServer, options: CloseOptions = {}): Promise<void> {
+    this.closing = true;
+    if (options.force) {
+      server.closeAllConnections();
+    } else {
+      server.closeIdleConnections();
+    }
     await new Promise<void>((resolve, reject) => {
-      server.close((err) => {
-        if (err) reject(err);
-        else resolve();
-      });
+      server.close((err) => (err ? reject(err) : resolve()));
     });
   }
 }

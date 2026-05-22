@@ -2,7 +2,7 @@ import { describe, test, expect, beforeEach, afterEach } from "@jest/globals";
 import type { Server as BunServer } from "bun";
 import { createApp } from "../../bun/index.js";
 import { proxy } from "./index.js";
-import { kIpAddr } from "../../symbols.js";
+import { kIpAddr, kHost, kProto } from "../../symbols.js";
 import type { Server } from "../../core/index.js";
 import { logger } from "../../index.js";
 
@@ -41,7 +41,7 @@ describe("plugins/proxy", () => {
 
   test("should extract host from X-Forwarded-Host header", async () => {
     app.register(proxy({ ip: false }));
-    app.get("/host", (ctx) => ctx.$metadata.host);
+    app.get("/host", (ctx) => ctx.locals[kHost]);
 
     const req = new Request("http://localhost/host", {
       headers: {
@@ -55,7 +55,7 @@ describe("plugins/proxy", () => {
 
   test("should extract proto from X-Forwarded-Proto header", async () => {
     app.register(proxy({ ip: false }));
-    app.get("/proto", (ctx) => ctx.$metadata.proto);
+    app.get("/proto", (ctx) => ctx.locals[kProto]);
 
     const req = new Request("http://localhost/proto", {
       headers: {
@@ -77,8 +77,8 @@ describe("plugins/proxy", () => {
     );
     app.get("/all", (ctx) => ({
       ip: ctx.locals[kIpAddr],
-      host: ctx.$metadata.host,
-      proto: ctx.$metadata.proto,
+      host: ctx.locals[kHost],
+      proto: ctx.locals[kProto],
     }));
 
     const res = await app.handle(new Request("http://localhost/all"));
@@ -106,8 +106,8 @@ describe("plugins/proxy", () => {
     app.register(proxy());
     app.get("/all", (ctx) => ({
       ip: ctx.locals[kIpAddr],
-      host: ctx.$metadata.host,
-      proto: ctx.$metadata.proto,
+      host: ctx.locals[kHost],
+      proto: ctx.locals[kProto],
     }));
 
     const req = new Request("http://localhost/all", {
@@ -129,8 +129,8 @@ describe("plugins/proxy", () => {
     app.register(proxy({ trustProxies: [] })); // Empty array means no trust
     app.get("/all", (ctx) => ({
       ip: ctx.locals[kIpAddr],
-      host: ctx.$metadata.host,
-      proto: ctx.$metadata.proto,
+      host: ctx.locals[kHost],
+      proto: ctx.locals[kProto],
     }));
 
     const req = new Request("http://localhost/all", {
@@ -149,7 +149,7 @@ describe("plugins/proxy", () => {
 
   test("should extract proto when host is enabled", async () => {
     app.register(proxy({ ip: false }));
-    app.get("/proto", (ctx) => ctx.$metadata.proto);
+    app.get("/proto", (ctx) => ctx.locals[kProto]);
 
     const req = new Request("http://localhost/proto", {
       headers: { "x-forwarded-host": "example.com" },
@@ -224,7 +224,7 @@ describe("plugins/proxy", () => {
 
   test("should fallback host to Host header when no forwarded-host", async () => {
     app.register(proxy({ ip: false, proto: false }));
-    app.get("/host", (ctx) => ctx.$metadata.host);
+    app.get("/host", (ctx) => ctx.locals[kHost]);
 
     const res = await app.handle(new Request("http://localhost/host", { headers: { host: "example.com" } }));
     expect(await res.text()).toBe("example.com");
@@ -244,8 +244,8 @@ describe("plugins/proxy", () => {
     );
     app.get("/all", (ctx) => ({
       ip: ctx.locals[kIpAddr],
-      host: ctx.$metadata.host,
-      proto: ctx.$metadata.proto,
+      host: ctx.locals[kHost],
+      proto: ctx.locals[kProto],
     }));
 
     const res = await app.handle(new Request("http://localhost/all"));

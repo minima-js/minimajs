@@ -2,13 +2,16 @@ import { EOL } from "node:os";
 import { type App } from "../../interfaces/index.js";
 import { hook } from "../../hooks/index.js";
 import { setTimeout as sleep } from "node:timers/promises";
-import { prettyPrintByModule } from "./grouping.js";
+import { prettyPrintByModule, routesToJSON } from "./grouping.js";
+import { isLoggerPretty } from "../../logger/helpers.js";
 export { prettyPrintByModule };
 
 export interface RouteLoggerOptions {
   enabled?: boolean;
-  /** Custom logger function to output routes. Defaults to app.log.info */
+  /** Custom logger function to output routes. Defaults to app.logger.info */
   logger?: (message: string) => void;
+  /** Force pretty (ASCII tree) or JSON output, overriding the logger's detected format */
+  pretty?: boolean;
   /**
    * How to group and display routes:
    * - `"path"` — flat list ordered by path (default)
@@ -35,21 +38,26 @@ const kRouteLogger = Symbol();
  * app.register(routeLogger({ groupBy: "common" }));
  * ```
  */
-export function routeLogger({ enabled, delay = 1, groupBy = "module", logger }: RouteLoggerOptions = {}) {
+export function routeLogger({ enabled, delay = 1, groupBy = "module", logger, pretty: _pretty }: RouteLoggerOptions = {}) {
   if (enabled === false) {
     return hook.factory((hooks, app) => {
       hooks.ready.delete(app.$root.container[kRouteLogger] as any);
     });
   }
 
+  function buildText(app: App) {
+    return groupBy === "module" ? prettyPrintByModule(app) : app.router.prettyPrint({ commonPrefix: groupBy === "common" });
+  }
+
   function onReady(app: App) {
-    logger ??= (routes) => app.log.info(EOL + routes + EOL);
-    if (groupBy === "module") {
-      logger(prettyPrintByModule(app));
+    const pretty = _pretty ?? isLoggerPretty(app.$root.logger);
+    if (pretty || logger) {
+      const text = buildText(app);
+      logger ? logger(text) : app.logger.info(EOL + text + EOL);
     } else {
-      logger(app.router.prettyPrint({ commonPrefix: groupBy === "common" }));
+      app.logger.info({ routes: routesToJSON(app) }, "registered routes");
     }
-    return sleep(delay); // give some space for other loggers
+    return sleep(delay);
   }
 
   return hook.factory((hooks, app) => {

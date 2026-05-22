@@ -5,6 +5,7 @@ import { kRequestSchema, kResponseSchema } from "@minimajs/server/symbols";
 import { kInternal, kOperation } from "./symbols.js";
 import { getRoutes } from "./router.js";
 import { generateOperationId, getDefaultTags } from "./helpers.js";
+import { getReasonPhrase } from "http-status-codes";
 
 type JSONSchema = {
   type?: string;
@@ -26,27 +27,6 @@ type ResponseSchema = {
     body?: JSONSchema;
     headers?: JSONSchema;
   };
-};
-
-const HTTP_STATUS_DESCRIPTIONS: Record<number, string> = {
-  200: "OK",
-  201: "Created",
-  202: "Accepted",
-  204: "No Content",
-  301: "Moved Permanently",
-  302: "Found",
-  304: "Not Modified",
-  400: "Bad Request",
-  401: "Unauthorized",
-  403: "Forbidden",
-  404: "Not Found",
-  405: "Method Not Allowed",
-  409: "Conflict",
-  422: "Unprocessable Entity",
-  429: "Too Many Requests",
-  500: "Internal Server Error",
-  502: "Bad Gateway",
-  503: "Service Unavailable",
 };
 
 export function generateOpenAPIDocument(app: App, document: OpenAPI.Document): OpenAPI.Document {
@@ -80,10 +60,29 @@ function resolveSchemaRef(document: OpenAPI.Document, schema: JSONSchema): OpenA
   if (schema.title) {
     document.components ??= {};
     document.components.schemas ??= {};
-    document.components.schemas[schema.title] = cleaned;
+    if (!document.components.schemas[schema.title]) {
+      document.components.schemas[schema.title] = cleaned;
+    }
     return { $ref: `#/components/schemas/${schema.title}` };
   }
   return cleaned;
+}
+
+function buildParameter(
+  name: string,
+  location: "path" | "header" | "query",
+  required: boolean,
+  propSchema: JSONSchema
+): OpenAPI.ParameterObject {
+  const { description, ...rest } = propSchema as JSONSchema & { description?: string };
+  const param: OpenAPI.ParameterObject = {
+    name,
+    in: location,
+    required,
+    schema: cleanJSONSchema(rest) as OpenAPI.ReferenceObject,
+  };
+  if (description) param.description = description;
+  return param;
 }
 
 function buildOperation(
@@ -104,33 +103,22 @@ function buildOperation(
   // Add path parameters - use schema from createParams() if available
   for (const name of pathParams) {
     const paramSchema = requestSchema?.params?.properties?.[name] ?? { type: "string" };
-    parameters.push({
-      name,
-      in: "path",
-      required: true,
-      schema: paramSchema as OpenAPI.ReferenceObject,
-    });
+    parameters.push(buildParameter(name, "path", true, paramSchema as JSONSchema));
   }
 
   if (requestSchema?.headers?.properties) {
     for (const [name, propSchema] of Object.entries(requestSchema.headers.properties)) {
-      parameters.push({
-        name,
-        in: "header",
-        required: requestSchema.headers.required?.includes(name) || false,
-        schema: propSchema as OpenAPI.ReferenceObject,
-      });
+      parameters.push(
+        buildParameter(name, "header", requestSchema.headers.required?.includes(name) || false, propSchema as JSONSchema)
+      );
     }
   }
 
   if (requestSchema?.searchParams?.properties) {
     for (const [name, propSchema] of Object.entries(requestSchema.searchParams.properties)) {
-      parameters.push({
-        name,
-        in: "query",
-        required: requestSchema.searchParams.required?.includes(name) || false,
-        schema: propSchema as OpenAPI.ReferenceObject,
-      });
+      parameters.push(
+        buildParameter(name, "query", requestSchema.searchParams.required?.includes(name) || false, propSchema as JSONSchema)
+      );
     }
   }
 
@@ -153,7 +141,12 @@ function buildOperation(
     operation.responses = {};
     for (const [statusCode, response] of Object.entries(responseSchema)) {
       const statusNum = Number(statusCode);
-      const description = HTTP_STATUS_DESCRIPTIONS[statusNum] || `Response ${statusCode}`;
+      let description: string;
+      try {
+        description = getReasonPhrase(statusNum);
+      } catch {
+        description = `Response ${statusCode}`;
+      }
       operation.responses[statusCode] = { description };
 
       if (response.body) {
@@ -167,9 +160,10 @@ function buildOperation(
       if (response.headers?.properties) {
         operation.responses[statusCode]!.headers = {};
         for (const [headerName, headerSchema] of Object.entries(response.headers.properties)) {
-          operation.responses[statusCode]!.headers![headerName] = {
-            schema: headerSchema,
-          } as OpenAPI.HeaderObject;
+          const { description, ...rest } = (headerSchema ?? {}) as JSONSchema & { description?: string };
+          const header: OpenAPI.HeaderObject = { schema: cleanJSONSchema(rest) as OpenAPI.ReferenceObject };
+          if (description) header.description = description;
+          operation.responses[statusCode]!.headers![headerName] = header;
         }
       }
     }
